@@ -33,3 +33,12 @@ Each behavior in a batch still has its own test, and each entry records the fail
 - refactor: none needed
 - note: "identity" is the one load log line. The design does not define it, so the choice is recorded in `docs/DECISIONS.md`.
 - commit: G2
+
+## Cycle G3: U9 repository layout
+
+- test: `test/acceptance/layout.test.ts::has the milestone 1 to 3 directories and none for later milestones` (new, U9)
+- red: `pnpm vitest run test/acceptance/layout.test.ts`
+  -> `AssertionError: src/machine should exist: expected false to be true` (1 failed)
+- green: created `src/machine/.gitkeep` and `src/store/.gitkeep`. Suite `pnpm test` -> 4 files, 7 passed, 0 failed. Lint and type-check clean.
+- refactor: none needed
+- commit: G3
