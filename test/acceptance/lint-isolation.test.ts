@@ -50,3 +50,33 @@ describe("src/machine isolation from bb", () => {
     expect(await importRestrictions("src/machine/probe.ts", 'export { createFakePluginHost } from "@get-bb/plugin-sdk";\n')).toHaveLength(1);
   });
 });
+
+describe("src/machine purity", () => {
+  it("fails lint on an import of better-sqlite3", async () => {
+    const code = 'import Database from "better-sqlite3";\nexport const db = Database;\n';
+    expect(await importRestrictions("src/machine/probe.ts", code)).toHaveLength(1);
+  });
+
+  it("fails lint on an import of a node built-in, with or without the node: prefix", async () => {
+    const prefixed = 'import { readFileSync } from "node:fs";\nexport const read = readFileSync;\n';
+    const bare = 'import { readFileSync } from "fs";\nexport const read = readFileSync;\n';
+    expect(await importRestrictions("src/machine/probe.ts", prefixed)).toHaveLength(1);
+    expect(await importRestrictions("src/machine/probe.ts", bare)).toHaveLength(1);
+  });
+
+  it("fails lint on an import from src/store", async () => {
+    const code = 'import { TaskLog } from "../store/task-log";\nexport const log = TaskLog;\n';
+    expect(await importRestrictions("src/machine/probe.ts", code)).toHaveLength(1);
+  });
+
+  it("passes lint on xstate, zod, and sibling machine imports", async () => {
+    const code = [
+      'import { createMachine } from "xstate";',
+      'import { z } from "zod";',
+      'import { shape } from "./types";',
+      "export const parts = [createMachine, z, shape];",
+      "",
+    ].join("\n");
+    expect(await importRestrictions("src/machine/probe.ts", code)).toEqual([]);
+  });
+});

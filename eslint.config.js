@@ -1,5 +1,8 @@
+import { builtinModules } from "node:module";
 import js from "@eslint/js";
 import tseslint from "typescript-eslint";
+
+const nodeBuiltins = builtinModules.filter((name) => !name.startsWith("_"));
 
 export default tseslint.config(
   {
@@ -18,6 +21,18 @@ export default tseslint.config(
             {
               group: ["@get-bb/*"],
               message: "src/machine/ must not import bb packages. Pass plain data in and out.",
+            },
+            {
+              group: ["better-sqlite3"],
+              message: "src/machine/ must not touch storage. Storage depends on the machine, not the reverse.",
+            },
+            {
+              group: ["node:*", ...nodeBuiltins],
+              message: "src/machine/ must not use Node built-ins, because the machine performs no input or output.",
+            },
+            {
+              group: ["**/store", "**/store/**"],
+              message: "src/machine/ must not import src/store. Storage depends on the machine, not the reverse.",
             },
           ],
         },

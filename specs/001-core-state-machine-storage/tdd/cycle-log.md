@@ -56,3 +56,15 @@ Each behavior in a batch still has its own test, and each entry records the fail
 - refactor: none needed
 - note: the rule bans every dynamic import in `src/machine/`, not only `@get-bb` ones, so a computed specifier cannot hide a bb import. Recorded in `docs/DECISIONS.md`.
 - commit: G4
+
+## Cycle G5: U5, U6, U7, U8 lint rule keeps storage, Node built-ins, and src/store out of src/machine
+
+- tests: `test/acceptance/lint-isolation.test.ts` (extended): `fails lint on an import of better-sqlite3` (U5), `fails lint on an import of a node built-in, with or without the node: prefix` (U6), `fails lint on an import from src/store` (U7), `passes lint on xstate, zod, and sibling machine imports` (U8)
+- red: `pnpm vitest run test/acceptance/lint-isolation.test.ts`
+  -> 3 failed, 7 passed. U5, U6, U7 each: `AssertionError: expected [] to have a length of 1 but got +0`
+- U8 passed on first run (negative test). Deliberate mutant: added `"xstate"` to the `better-sqlite3` pattern group, ran
+  `pnpm vitest run test/acceptance/lint-isolation.test.ts -t "passes lint on xstate"`
+  -> `AssertionError: expected [ Array(1) ] to deeply equal []` (1 failed). Restored `eslint.config.js` exactly.
+- green: `eslint.config.js` gained three pattern groups: `better-sqlite3`, `node:*` plus the names in `builtinModules`, and `**/store` plus `**/store/**`. Suite `pnpm test` -> 5 files, 17 passed, 0 failed. Lint and type-check clean.
+- refactor: none needed
+- commit: G5
