@@ -40,6 +40,7 @@ const eventSchema = z.discriminatedUnion("type", [
   event("resolve", {}),
   event("validated", { prUrl: z.url(), pipelineFinished: z.boolean() }),
   event("request_approval", {}),
+  event("request_changes", {}),
   event("record_approval", { scope: z.enum(APPROVAL_SCOPES), decision: z.enum(APPROVAL_DECISIONS) }),
   event("merge", { yolo: z.boolean() }),
   event("promote", {}),

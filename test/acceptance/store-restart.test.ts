@@ -69,6 +69,40 @@ describe.each(STORES)("%s store: recording events", (_name, make) => {
   });
 });
 
+describe.each(STORES)("%s store: a denied approval and a rework", (_name, make) => {
+  it("keeps the denial in the log, returns the task to working, and needs a fresh approval to merge", () => {
+    const store = make();
+    const log = new TaskLog(store, { now: fakeClock() });
+    drive(log, "task-1", shipPath().slice(0, 5));
+    expect(log.apply("task-1", validEvent("request_approval")).ok).toBe(true);
+    expect(log.apply("task-1", validEvent("record_approval", { decision: "denied" })).ok).toBe(true);
+
+    const changes = log.apply("task-1", validEvent("request_changes", { evidence: "owner wants clearer error messages" }));
+
+    expect(changes.ok).toBe(true);
+    expect(store.getTask("task-1")?.state).toBe("working");
+    // The denial stays in the log and in the approval list.
+    expect(store.listApprovals("task-1")).toMatchObject([{ scope: "merge", decision: "denied" }]);
+    const events = store.listEvents({ taskId: "task-1" });
+    expect(events.map((e) => e.event).slice(-3)).toEqual(["request_approval", "record_approval", "request_changes"]);
+    expect(events.at(-1)).toMatchObject({ fromState: "awaiting_approval", toState: "working", evidence: "owner wants clearer error messages", outcome: "applied" });
+
+    for (const type of ["handoff", "validated", "request_approval"] as const) expect(log.apply("task-1", validEvent(type)).ok, type).toBe(true);
+    const early = log.apply("task-1", validEvent("merge", { yolo: false }));
+    expect(early.ok).toBe(false);
+    if (!early.ok) expect(early.refusal.code).toBe("approval_required");
+    expect(log.apply("task-1", validEvent("record_approval", { decision: "approved" })).ok).toBe(true);
+    expect(log.apply("task-1", validEvent("merge", { yolo: false })).ok).toBe(true);
+
+    // Replay and a rebuilt cache agree, and the denial is still the first approval row.
+    const before = store.listTasks();
+    store.clearTasks();
+    expect(rebuildCache(store).corrupt).toEqual([]);
+    expect(store.listTasks()).toEqual(before);
+    expect(store.listApprovals("task-1").map((a) => a.decision)).toEqual(["denied", "approved"]);
+  });
+});
+
 describe("log immutability", () => {
   it("rejects a raw UPDATE or DELETE on a stored log row", () => {
     const path = join(dir, "immutable.db");

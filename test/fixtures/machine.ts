@@ -82,6 +82,7 @@ const VALID_EVENTS: Record<EventType, Record<string, unknown>> = {
     pipelineFinished: true,
   },
   request_approval: { type: "request_approval", actor: "supervisor" },
+  request_changes: { type: "request_changes", actor: "supervisor", evidence: "owner denied the merge and asked for changes" },
   record_approval: { type: "record_approval", actor: "user", scope: "merge", decision: "approved" },
   merge: { type: "merge", actor: "supervisor", yolo: false },
   promote: { type: "promote", actor: "supervisor" },

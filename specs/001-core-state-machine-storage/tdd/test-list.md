@@ -2,7 +2,7 @@
 feature: 001-core-state-machine-storage
 loop: outside-in
 profile: .specify/memory/tdd-profile.md
-spec_criteria: 26
+spec_criteria: 27
 planned_at: d4a96f4
 updated_at: 0ef5f71
 suite_baseline: green
@@ -47,6 +47,7 @@ One per acceptance criterion in `spec.md`.
 | A24 | The shared contract suite passes against both the in-memory and the SQLite store | AC-3.7, FR-032, SC-006 | example | DONE | `test/acceptance/store-contract.test.ts::memory store contract / sqlite store contract` |
 | A25 | An unregistered project reads as `no-mistakes` with `yolo` off | AC-3.8, FR-038 | example | DONE | `test/acceptance/store-contract.test.ts::project config defaults` |
 | A26 | Start-up recovery on a reopened SQLite file replays every non-terminal task | AC-3.9, FR-039 | example | DONE | `test/acceptance/store-restart.test.ts::start-up recovery` |
+| A27 | A ship task in `review_ready` or `awaiting_approval` returns to `working` on `request_changes`, keeps the denial in the log, and needs a new approval to merge | AC-2.13, FR-024 | example | DONE | `test/acceptance/machine-gates.test.ts::request_changes sends a denied task back to rework`, `test/acceptance/store-restart.test.ts::%s store: a denied approval and a rework` |
 
 ## Inner loop: unit behaviors
 
@@ -68,7 +69,7 @@ One per acceptance criterion in `spec.md`.
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| U10 | Each of the 15 event types parses from a valid example | FR-011, FR-023 | example | DONE | `src/machine/events.test.ts::parseEvent parses a valid %s event` |
+| U10 | Each of the 16 event types parses from a valid example | FR-011, FR-023 | example | DONE | `src/machine/events.test.ts::parseEvent parses a valid %s event` |
 | U11 | An unknown event type is refused with `unknown_event` | FR-023, edge cases | example | DONE | `src/machine/events.test.ts::refuses an unknown event type as unknown_event` |
 | U12 | An event with an unknown extra key is refused with `invalid_event` | FR-023 | example | DONE | `src/machine/events.test.ts::refuses an event with an unknown extra key` |
 | U13 | An event missing a required field is refused with `invalid_event` | FR-017, FR-023 | example | DONE | `src/machine/events.test.ts::refuses %s without %s as invalid_event` |
@@ -186,6 +187,16 @@ One per acceptance criterion in `spec.md`.
 | U85 | An observation for an unknown or corrupt task is reported and not logged | FR-037 | example | DONE | `src/store/reconcile.test.ts::reports an observation for an unknown or corrupt task ...` |
 | U86 | Reconcile never changes the replayed state, the task rows, or the approvals | FR-037 | example | DONE | `src/store/reconcile.test.ts::never changes the replayed state, the task rows, or the approvals` |
 
+### `request_changes` (added on 2026-11-06 for the captain's decision D-010)
+
+| id | behavior | traces | kind | state | test |
+| --- | --- | --- | --- | --- | --- |
+| U87 | A `request_changes` event parses from a valid example | FR-024 | example | DONE | `src/machine/events.test.ts::parseEvent parses a valid %s event` |
+| U88 | The table lists `request_changes` from `review_ready` and from `awaiting_approval` to `working`, guarded by `notWorker`, for ship tasks only | FR-024 | example | DONE | `src/machine/table.test.ts`, `test/acceptance/machine-matrix.test.ts` |
+| U89 | `request_changes` is refused for a worker actor, outside those two states, and for scout tasks | FR-019, FR-024 | example | DONE | `src/machine/transition.test.ts::request_changes` |
+| U90 | `request_changes` clears the merge decision and keeps the rest of the context | FR-024 | example | DONE | `src/machine/transition.test.ts::request_changes clears the merge decision ...` |
+| U91 | The denial, its approval row, and the `request_changes` row stay in the log, and replay and rebuild agree | FR-024, FR-034 | example | DONE | `test/acceptance/store-restart.test.ts::%s store: a denied approval and a rework` |
+
 ## Invariants and edge cases still to place
 
 SC-005 (the suite finishes in under 60 seconds) is a measured property of the whole suite and not a behavior, so no line traces to it. `pnpm run check` timing is its check.
@@ -234,6 +245,8 @@ The outer-loop tests for a milestone are written first and stay red until their 
 | G24 | U76 to U79 | 3 |
 | G25 | U80 | 3 |
 | G26 | U81 to U86 | 3 |
+| G27 | A27, U87, U88, U89, U91 (captain decision D-010) | 2 and 3 |
+| G28 | U90 | 2 |
 
 Execution notes: replay (G23) ran before the task log (G21 and G22), because the task log decides from a replay. A follow-up cycle G5b fixed a lint rule defect, and G1c added the manifest branding that `bb plugin build` needs. The cycle log records both.
 

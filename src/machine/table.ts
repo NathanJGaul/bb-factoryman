@@ -37,10 +37,15 @@ const ship: Lane = {
     fail,
   },
   needs_decision: { resolve: go("validating"), fail },
-  review_ready: { request_approval: go("awaiting_approval", "notWorker"), fail },
+  review_ready: {
+    request_approval: go("awaiting_approval", "notWorker"),
+    request_changes: go("working", "notWorker"),
+    fail,
+  },
   awaiting_approval: {
     record_approval: go("awaiting_approval", "ownerOnly", "approvalScopeIsMerge"),
     merge: go("merged", "notWorker", "mergeAuthorized"),
+    request_changes: go("working", "notWorker"),
     fail,
   },
   merged: { teardown: go("torn_down", "notWorker", "worktreeLanded"), fail },

@@ -39,7 +39,7 @@
 | `branch` | string or null | `start` |
 | `machine` | string or null | `start` |
 | `prUrl` | string or null | `ready` and `validated`; `promote` resets to null |
-| `approvals` | map of scope to latest decision | `record_approval`; `promote` resets to empty |
+| `approvals` | map of scope to latest decision | `record_approval`; `promote` and `request_changes` reset to empty |
 
 ### Task snapshot
 
@@ -64,6 +64,7 @@ Schemas are strict: unknown keys are invalid.
 | `resolve` | none | `needs_decision` to `validating` |
 | `validated` | `prUrl` (URL), `pipelineFinished` (boolean) | `validating` to `review_ready` |
 | `request_approval` | none | `review_ready` to `awaiting_approval` |
+| `request_changes` | none | `review_ready` or `awaiting_approval` to `working` (ship only) |
 | `record_approval` | `scope`, `decision` | self, in `awaiting_approval` (scope `merge`) and `report_ready` (scope `promote`) |
 | `merge` | `yolo` (boolean) | `awaiting_approval` to `merged` |
 | `promote` | none | `report_ready` to `queued`, kind becomes `ship` |
@@ -88,6 +89,8 @@ The first failing guard names the refusal.
 | ship | `review_ready` | `request_approval` | `awaiting_approval` | `notWorker` |
 | ship | `awaiting_approval` | `record_approval` | same | `ownerOnly`, `approvalScopeIsMerge` |
 | ship | `awaiting_approval` | `merge` | `merged` | `notWorker`, `mergeAuthorized` |
+| ship | `review_ready` | `request_changes` | `working` | `notWorker` |
+| ship | `awaiting_approval` | `request_changes` | `working` | `notWorker` |
 | ship | `merged` | `teardown` | `torn_down` | `notWorker`, `worktreeLanded` |
 | scout | `working` | `report` | `report_ready` | `evidenceProvided` |
 | scout | `report_ready` | `record_approval` | same | `ownerOnly`, `approvalScopeIsPromote` |

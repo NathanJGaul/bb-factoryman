@@ -519,3 +519,33 @@ They show that the test can fail for the right reason, and they do not show that
 - U69: `apply` decided from the cache row's state -> `pnpm vitest run src/store/task-log.test.ts`: `refuses an event that only a tampered cache row would allow` and `repairs a tampered cache row ...` failed (`expected true to be false`).
 - U80: the cache row for a freshly merged task gets a wrong `branch` -> `pnpm vitest run test/acceptance/store-random-walk.test.ts`: `AssertionError: seed 0 step 9: expected { taskId: 'walk-0', …(8) } to deeply equal { taskId: 'walk-0', …(8) }`; and `rebuildCache` writing `queued` for failed tasks -> `AssertionError: seed 77 rebuilt: expected [ { taskId: 'walk-77', …(8) } ] to deeply equal [ { taskId: 'walk-77', …(8) } ]`.
 - after all of the above: `git status` showed only the intended test edits and `src/machine/transition.ts`; the gate script was green (19 files, 336 passed, 0 failed).
+
+## Cycle G27: A27, U87, U88, U89, U91 the `request_changes` transition (captain decision D-010)
+
+- trigger: steering message 002 said the captain decided yes on D-010: add a `request_changes` transition from `awaiting_approval` and from `review_ready` back to `working`, keep the denial in the log, keep the hard rules, and make a later approval a fresh one.
+- tests, written before any code:
+  - `test/fixtures/machine.ts` gained a valid `request_changes` event, and `test/fixtures/legal-set.ts` gained the two legal rows and their `notWorker` guard. The hand-written oracle changed first.
+  - `test/acceptance/machine-matrix.test.ts` now expects 352 pairs, 35 legal and 317 illegal (it expected 330, 33, and 297). `src/machine/events.test.ts::covers all 16 event types` replaced the count of 15. Both are count changes that follow from the new event. No assertion was weakened.
+  - `test/acceptance/machine-gates.test.ts::request_changes sends a denied task back to rework` (3 cases, A27) and `test/acceptance/store-restart.test.ts::%s store: a denied approval and a rework` (2 stores, A27 and U91).
+  - `src/machine/transition.test.ts::request_changes` (7 cases: U89 and, for the next cycle, U90).
+- red: `pnpm vitest run`
+  -> `Tests  20 failed | 330 passed (350)`. Decisive lines: `parses a valid request_changes event` (the event type is unknown), `accepts every legal pair, with its gates satisfied, and lands on the expected state`, `refuses every illegal pair with illegal_transition ...`, `lists exactly the legal pairs and targets for ship tasks`, `accepts exactly the table's transitions in the ship machine` and the scout machine, and the three `request_changes` cases in the gates, restart, and unit files.
+- green: `src/machine/types.ts` lists `request_changes`. `src/machine/events.ts` has a strict `request_changes` schema. `src/machine/table.ts` adds `request_changes: go("working", "notWorker")` to the `review_ready` and `awaiting_approval` rows of the ship lane. `pnpm vitest run` -> `Tests  2 failed | 348 passed (350)`. The two failures are the effect tests of G28.
+- refactor: none needed
+- commit: G27
+
+## Cycle G28: U90 `request_changes` clears the merge decision
+
+- tests: written in G27. `src/machine/transition.test.ts::request_changes clears the merge decision, whether it was a denial or an approval, so a later approval is a fresh one` and `does not let an approval given before the rework carry over`.
+- red: `pnpm vitest run` after G27's code
+  -> `AssertionError: denied: expected { merge: 'denied' } to deeply equal {}`, and the carry-over case (2 failed, 348 passed). A27's own denial path already passed, because a `denied` decision never authorizes a merge. These two tests are the ones that pin the rule for an earlier approval.
+- green: `src/machine/effects.ts` sets `approvals` to `{}` on `request_changes` and keeps everything else. Gate script (lint, type-check, suite) -> 19 files, 350 passed, 0 failed.
+- deliberate mutants, each run on the named test file and restored exactly:
+  - Q1: `notWorker` removed from the `review_ready` row -> `is refused for a worker actor`: `expected a refusal but the task moved to working`.
+  - Q2: the `awaiting_approval` row targets `review_ready` -> the matrix: `ship/awaiting_approval/request_changes: expected 'review_ready' to be 'working'`.
+  - Q3: the effect keeps approvals -> two tests failed (`denied: expected { merge: 'denied' } to deeply equal {}`).
+  - Q4: the effect also clears `prUrl` -> the two `keeps what the worker built` cases failed.
+  - Q5: the effect clears only a denial -> `approved: expected { merge: 'approved' } to deeply equal {}` (2 failed).
+  - Q6: scout tasks may request changes -> `is refused outside review_ready and awaiting_approval, and for scout tasks`: `expected a refusal but the task moved to working`.
+- refactor: none needed
+- commit: G27 and G28 share one commit, because G27 alone was not green.

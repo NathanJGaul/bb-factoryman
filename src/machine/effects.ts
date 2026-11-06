@@ -24,6 +24,10 @@ export function applyEffects(context: TaskContext, event: TaskEvent): TaskContex
     case "record_approval":
       // The latest decision per scope wins, so a later "approved" replaces an earlier "denied".
       return { ...context, approvals: { ...context.approvals, [event.scope]: event.decision } };
+    case "request_changes":
+      // A denial or an approval of the old work says nothing about the reworked work.
+      // The record_approval rows stay in the log. Only the task's current decision is cleared.
+      return { ...context, approvals: {} };
     case "promote":
       // The scout's report authorizes nothing. The new ship task needs its own profile and approvals.
       return { ...context, kind: "ship", profile: null, prUrl: null, approvals: {} };

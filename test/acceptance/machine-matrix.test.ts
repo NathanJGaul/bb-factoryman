@@ -9,13 +9,13 @@ describe("state and event matrix", () => {
   );
 
   it("covers every kind, state, and event type once", () => {
-    expect(pairs).toHaveLength(2 * 11 * 15);
+    expect(pairs).toHaveLength(2 * 11 * 16);
   });
 
-  it("has 33 legal pairs and 297 illegal pairs", () => {
+  it("has 35 legal pairs and 317 illegal pairs", () => {
     const legal = pairs.filter(({ kind, state, type }) => LEGAL[kind][state]?.[type] !== undefined);
-    expect(legal).toHaveLength(33);
-    expect(pairs.length - legal.length).toBe(297);
+    expect(legal).toHaveLength(35);
+    expect(pairs.length - legal.length).toBe(317);
   });
 
   it("refuses every illegal pair with illegal_transition and leaves the snapshot unchanged", () => {

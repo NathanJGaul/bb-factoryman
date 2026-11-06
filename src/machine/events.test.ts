@@ -16,8 +16,8 @@ describe("parseEvent", () => {
     if (result.ok) expect(result.event.type).toBe(type);
   });
 
-  it("covers all 15 event types", () => {
-    expect(EVENT_TYPES).toHaveLength(15);
+  it("covers all 16 event types", () => {
+    expect(EVENT_TYPES).toHaveLength(16);
   });
 
   it("refuses an unknown event type as unknown_event", () => {

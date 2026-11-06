@@ -377,3 +377,59 @@ describe("fail-closed cross-check", () => {
     });
   });
 });
+
+describe("request_changes", () => {
+  it.each(["review_ready", "awaiting_approval"] as const)("returns a ship task in %s to working and keeps what the worker built", (state) => {
+    const before = snapshot(state, { prUrl: "https://github.com/acme/widgets/pull/7", machine: "builder-2" });
+    const next = nextSnapshot(before, validEvent("request_changes"));
+    expect(next.state).toBe("working");
+    expect(next.context).toEqual({ ...before.context, approvals: {} });
+  });
+
+  it("clears the merge decision, whether it was a denial or an approval, so a later approval is a fresh one", () => {
+    for (const decision of ["denied", "approved"] as const) {
+      const next = nextSnapshot(snapshot("awaiting_approval", { approvals: { merge: decision } }), validEvent("request_changes"));
+      expect(next.context.approvals, decision).toEqual({});
+    }
+  });
+
+  it("makes the task earn a new approval before it can merge again", () => {
+    let task = snapshot("awaiting_approval");
+    task = nextSnapshot(task, validEvent("record_approval", { decision: "denied" }));
+    task = nextSnapshot(task, validEvent("request_changes"));
+    for (const type of ["handoff", "validated", "request_approval"] as const) task = nextSnapshot(task, validEvent(type));
+    expect(task.state).toBe("awaiting_approval");
+    expect(refusedCode(task, validEvent("merge", { yolo: false }))).toBe("approval_required");
+    task = nextSnapshot(task, validEvent("record_approval", { decision: "approved" }));
+    expect(nextSnapshot(task, validEvent("merge", { yolo: false })).state).toBe("merged");
+  });
+
+  it("does not let an approval given before the rework carry over", () => {
+    let task = snapshot("awaiting_approval");
+    task = nextSnapshot(task, validEvent("record_approval", { decision: "approved" }));
+    task = nextSnapshot(task, validEvent("request_changes"));
+    for (const type of ["handoff", "validated", "request_approval"] as const) task = nextSnapshot(task, validEvent(type));
+    expect(refusedCode(task, validEvent("merge", { yolo: false }))).toBe("approval_required");
+  });
+
+  it("is refused for a worker actor", () => {
+    for (const state of ["review_ready", "awaiting_approval"] as const) {
+      expect(refusedCode(snapshot(state), validEvent("request_changes", { actor: "worker" })), state).toBe("actor_forbidden");
+    }
+  });
+
+  it("is accepted from the supervisor, the owner, and the system", () => {
+    for (const actor of ["supervisor", "user", "system"]) {
+      expect(nextSnapshot(snapshot("review_ready"), validEvent("request_changes", { actor })).state, actor).toBe("working");
+    }
+  });
+
+  it("is refused outside review_ready and awaiting_approval, and for scout tasks", () => {
+    for (const state of ["queued", "working", "blocked", "validating", "needs_decision", "merged", "failed", "torn_down"] as const) {
+      expect(refusedCode(snapshot(state), validEvent("request_changes")), state).toBe("illegal_transition");
+    }
+    for (const state of ["working", "report_ready", "failed"] as const) {
+      expect(refusedCode(snapshot(state, { kind: "scout" }), validEvent("request_changes")), `scout ${state}`).toBe("illegal_transition");
+    }
+  });
+});

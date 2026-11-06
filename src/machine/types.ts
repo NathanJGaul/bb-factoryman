@@ -41,6 +41,7 @@ export const EVENT_TYPES = [
   "resolve",
   "validated",
   "request_approval",
+  "request_changes",
   "record_approval",
   "merge",
   "promote",

@@ -59,14 +59,15 @@ The scaffold milestone asks that the empty plugin loads in the fake host.
 The plugin factory logs `bb-factoryman loaded` and registers nothing else.
 The log line gives the load test a real assertion to fail first.
 
-### D-007: Spec-Kit sequencing and approvals (Gap)
+### D-007: Spec-Kit sequencing and approvals (Resolved by the captain)
 
 `/speckit.tdd.plan` needs `.specify/memory/tdd-profile.md`, which `/speckit.tdd.setup` writes after the test stack exists.
 The order was therefore specify, plan, tasks, toolchain files, `tdd.setup`, then `tdd.plan`.
 The toolchain files hold configuration and one smoke test, and no feature code.
 The captain's intent fixed the scope, so the specification, plan, and task list were approved by that intent and not by a separate review.
 The constitution's test-first principle uses the exact wording of the Spec-Kit workflow.
-**Open**: the owner may confirm or reword principle V in `.specify/memory/constitution.md`.
+**Resolved**: on 2026-11-06 the captain decided to keep the standard principle V wording in `.specify/memory/constitution.md`.
+The constitution is unchanged, and the entry is closed.
 
 ## Milestone 2: state machine
 
@@ -87,13 +88,12 @@ The machine provides the `blocked` state and events.
 Its gate list is a closed constant, so no extension point exists to remove a gate today.
 `CLAUDE.md` forbids placement code before the spike results confirm the assumptions.
 
-### D-010: A denied approval has no rework path (Open)
+### D-010: A denied approval has no rework path (Resolved by the captain)
 
 The design has no arrow back from `awaiting_approval` or `review_ready` to `working`.
-A denied approval is recorded and the task stays in `awaiting_approval`.
-A later approved decision replaces the denial.
-The only other exits are `fail` and, after that, `teardown`.
-**Open**: the owner should decide whether a denial needs a `request_changes` arrow back to `working`.
+The first build recorded a denied approval and left the task in `awaiting_approval`, with `fail` as the only other exit.
+**Resolved**: on 2026-11-06 the captain decided to add a `request_changes` transition from `awaiting_approval` and from `review_ready` back to `working`.
+D-028 records how it works.
 
 ### D-011: `failed` can still be torn down (Gap)
 
@@ -113,7 +113,7 @@ The hard rules name approvals, evidence, and landed work.
 The machine adds two actor rules, both of which only tighten:
 
 - `record_approval` accepts only the `user` actor, so an agent cannot record the owner's approval.
-- A `worker` actor is refused on `request_approval`, `merge`, `promote`, and `teardown`, because the design says workers cannot merge or tear down.
+- A `worker` actor is refused on `request_approval`, `request_changes`, `merge`, `promote`, and `teardown`, because the design says workers cannot merge or tear down, and a worker must not send its own work back or forward through review.
 
 ### D-014: Which transitions count as `done` (Gap)
 
@@ -212,3 +212,26 @@ The design gives no default for them, so the store invents none.
 `openSqliteStore` accepts a file path, `:memory:`, or an open `better-sqlite3` database, and closes only what it opened.
 How the plugin gets its per-plugin database from bb is unverified, so milestone 0 settles it.
 Wiring the store into the plugin factory waits for those results, as `CLAUDE.md` requires.
+
+## Captain decisions of 2026-11-06
+
+### D-028: `request_changes` sends a task back to rework (Deviation, decided by the captain)
+
+The design draws no arrow from `review_ready` or `awaiting_approval` back to `working`.
+The captain added one, as the resolution of D-010.
+The rules that carry it:
+
+- `request_changes` moves a ship task from `review_ready` or from `awaiting_approval` to `working`.
+  Scout tasks, and every other state, refuse it with `illegal_transition`.
+- A `worker` actor is refused (`actor_forbidden`).
+  The supervisor, the owner, and the system may send it.
+- The event needs no evidence, but it can carry the owner's reason as evidence, and the log stores it.
+- The event clears the task's current merge decision, whether that decision was a denial or an approval.
+  A later merge therefore needs a new recorded approval from the owner, as hard rule 1 requires.
+- Nothing in the log is rewritten.
+  The `record_approval` row that denied the merge, its approval row, and the `request_changes` row all stay.
+  Replay still reaches `working` with no merge decision, and a rebuilt cache matches.
+- The worker, thread, branch, machine, and pull request URL stay, because the rework happens on the same branch.
+  The worker then hands off again, and the delivery mode's review-ready check runs again.
+- The `yolo` flag is untouched. `request_changes` is legal under `yolo` too.
+

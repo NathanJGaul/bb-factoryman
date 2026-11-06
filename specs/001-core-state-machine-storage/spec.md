@@ -93,6 +93,9 @@ Each gate has a test for both the refusal and the permitted case.
 12. **Given** an approval event, **When** its actor is not the owner, **Then** the machine refuses.
     A worker actor is also refused on `request_approval`, `merge`, `promote`, and `teardown`.
     (AC-2.12)
+13. **Given** a ship task in `review_ready` or `awaiting_approval`, **When** a `request_changes` event arrives from any actor except a worker, **Then** the task returns to `working` and its current merge decision is cleared.
+    Any denial stays in the log, and a later merge needs a new recorded approval.
+    (AC-2.13, hard rule 1)
 
 ---
 
@@ -140,6 +143,7 @@ Then feed a conflicting live observation to reconcile and read the log.
 - Evidence made only of whitespace counts as empty.
 - A merge approval recorded for a different scope, such as `promote`, does not satisfy the merge gate.
 - A denied approval does not satisfy the gate, and a later approved decision replaces it.
+- A `request_changes` event clears the merge decision, so an approval given before the rework does not carry over.
 - A merge approval recorded while the task is not in `awaiting_approval` is refused, so approval cannot be banked in advance.
 - Two events recorded back to back for one task keep strict sequence order.
 - Reconcile on a task that already matches live state appends nothing.
@@ -169,11 +173,13 @@ Then feed a conflicting live observation to reconcile and read the log.
 - **FR-016**: `merged` MUST require a recorded approval for the `merge` scope with an approved decision, unless the project's `yolo` flag is on for that merge.
 - **FR-017**: `torn_down` MUST require a worktree report that shows no uncommitted changes and no unpushed commits, and a missing report MUST be a refusal.
 - **FR-018**: Promotion from scout to ship MUST require a recorded approval for the `promote` scope with an approved decision.
-- **FR-019**: Approval events MUST come from the owner actor, and worker actors MUST be refused on `request_approval`, `merge`, `promote`, and `teardown`.
+- **FR-019**: Approval events MUST come from the owner actor, and worker actors MUST be refused on `request_approval`, `request_changes`, `merge`, `promote`, and `teardown`.
 - **FR-020**: Review ready MUST apply the delivery mode's check as the "Delivery modes" table in `CLAUDE.md` defines it.
 - **FR-021**: `start` MUST require a complete dispatch profile of provider, model, reasoning level, and permission mode.
 - **FR-022**: `blocked` MUST be reachable only from `working` and MUST return only to `working`.
 - **FR-023**: The machine MUST validate every event payload and MUST turn a validation error into a refusal.
+- **FR-024**: A ship task in `review_ready` or `awaiting_approval` MUST return to `working` on a `request_changes` event from a non-worker actor.
+  The event MUST clear the task's current merge decision and MUST leave every earlier log row and approval row in place.
 
 **Storage**
 
@@ -222,6 +228,6 @@ Then feed a conflicting live observation to reconcile and read the log.
   This feature never gathers them.
 - Task, project, and thread IDs are opaque strings.
   Times are ISO 8601 UTC strings supplied by the caller.
-- A denied approval keeps the task in `awaiting_approval`.
-  The design has no rework arrow, so `docs/DECISIONS.md` records this as an open question.
+- A denied approval keeps the task in `awaiting_approval` until someone sends `request_changes` or `fail`.
+  The captain added the `request_changes` rework arrow on 2026-11-06 (D-010, D-028).
 - Scout reports, dispatch rules, tools, event wiring, validators, machine placement, extension surface, caps, spend, notifications, and the firstmate import are out of scope.

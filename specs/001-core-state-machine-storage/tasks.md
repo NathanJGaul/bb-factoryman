@@ -162,6 +162,19 @@ Fix each finding by changing the test first where a test is at fault, and record
 
 ---
 
+## Phase 7: Captain decisions of 2026-11-06 (steering message 002)
+
+The captain resolved D-010 (add `request_changes`) and D-007 (keep principle V as written).
+The tests came first, as the constitution requires.
+
+- [x] T100 [US2] [A27] [U87] [U88] [U89] [U91] Write the `request_changes` tests first: the fixture event, the legal-set oracle, the matrix counts, the gates, restart, and unit tests (`test/fixtures/machine.ts`, `test/fixtures/legal-set.ts`, `test/acceptance/machine-matrix.test.ts`, `test/acceptance/machine-gates.test.ts`, `test/acceptance/store-restart.test.ts`, `src/machine/transition.test.ts`, `src/machine/events.test.ts`)
+- [x] T101 [US2] [A27] [U87] [U88] [U89] [U91] Add the `request_changes` event, the two ship-lane rows, and the vocabulary entry in `src/machine/types.ts`, `src/machine/events.ts`, and `src/machine/table.ts`
+- [x] T102 [US2] [U90] Clear the merge decision on `request_changes` in `src/machine/effects.ts`
+- [x] T103 [US2] Update `spec.md` (AC-2.13, FR-019, FR-024), `data-model.md`, `tdd/test-list.md`, and `docs/DECISIONS.md` (D-007 and D-010 resolved, D-013 updated, D-028 added)
+- [x] T104 Re-run `/speckit.tdd.verify`, `/speckit.checklist`, `/speckit.analyze`, and `/speckit.converge` so the artifacts agree with the code
+
+---
+
 ## Dependencies and order
 
 - Phase 1 blocks everything.

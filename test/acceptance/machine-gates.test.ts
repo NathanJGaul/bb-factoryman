@@ -285,3 +285,31 @@ describe("approvals and authority", () => {
     }
   });
 });
+
+describe("request_changes sends a denied task back to rework", () => {
+  it("returns a task from review_ready or awaiting_approval to working", () => {
+    for (const state of ["review_ready", "awaiting_approval"] as const) {
+      expect(applied(transition(snapshot(state), validEvent("request_changes"))).state, state).toBe("working");
+    }
+  });
+
+  it("keeps hard rule 1: after a denial and a rework, merge still needs a new recorded approval", () => {
+    let task = snapshot("awaiting_approval");
+    task = applied(transition(task, validEvent("record_approval", { decision: "denied" })));
+    expect(refused(transition(task, validEvent("merge", { yolo: false }))).code).toBe("approval_required");
+
+    task = applied(transition(task, validEvent("request_changes")));
+    expect(task.state).toBe("working");
+    for (const type of ["handoff", "validated", "request_approval"] as const) task = applied(transition(task, validEvent(type)));
+
+    expect(refused(transition(task, validEvent("merge", { yolo: false }))).code).toBe("approval_required");
+    task = applied(transition(task, validEvent("record_approval", { decision: "approved" })));
+    expect(applied(transition(task, validEvent("merge", { yolo: false }))).state).toBe("merged");
+  });
+
+  it("does not let a worker ask for changes, and refuses the event anywhere else", () => {
+    expect(refused(transition(snapshot("review_ready"), validEvent("request_changes", { actor: "worker" }))).code).toBe("actor_forbidden");
+    expect(refused(transition(snapshot("merged"), validEvent("request_changes"))).code).toBe("illegal_transition");
+    expect(refused(transition(snapshot("report_ready", { kind: "scout" }), validEvent("request_changes"))).code).toBe("illegal_transition");
+  });
+});
