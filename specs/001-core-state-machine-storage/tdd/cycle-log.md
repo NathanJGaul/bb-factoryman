@@ -103,3 +103,12 @@ Each behavior in a batch still has its own test, and each entry records the fail
 - green: `src/machine/guards.ts` implements `evidenceProvided` (trimmed, non-empty), `profileResolved`, `notWorker`, and `ownerOnly`. The other nine guards are placeholders that refuse with `internal_mismatch`, so an unwritten gate fails closed. `pnpm vitest run src/machine/guards.test.ts` -> 12 passed. Gate script (lint, type-check, suite without the two open outer files) -> 7 files, 80 passed, 0 failed.
 - refactor: none needed
 - commit: G8
+
+## Cycle G9: U19, U20, U21, U22 mode, ready, pipeline, and scope guards
+
+- tests: `src/machine/guards.test.ts` (extended, 13 new): `modeIsNoMistakes accepts only the no-mistakes mode` and `modeIsNotNoMistakes accepts direct-PR and local-only and refuses no-mistakes` (U19); `direct-PR needs a pull request URL`, `direct-PR does not need landed commits`, `local-only needs one or more landed commits, so 0 and a missing count fail and 1 passes`, `local-only does not need a pull request URL`, `refuses for the no-mistakes mode ...`, `refuses an event that is not a ready event` (U20); `refuses an unfinished pipeline and accepts a finished one`, `refuses an event that is not a validated event` (U21); `approvalScopeIsMerge accepts only the merge scope`, `approvalScopeIsPromote accepts only the promote scope`, `refuse an event that is not an approval event` (U22)
+- red: `pnpm vitest run src/machine/guards.test.ts`
+  -> 13 failed, 12 passed. Decisive lines: `AssertionError: expected 'internal_mismatch' to be 'mode_check_failed'` (x5), `expected { code: 'internal_mismatch', …(1) } to be null` (x5), `expected 'internal_mismatch' to be 'mode_mismatch'` (x2). The placeholders from G8 refuse, so the accepting and the coded-refusal cases both fail.
+- green: `src/machine/guards.ts` implements the two mode guards, `readyModeCheck`, `pipelineFinishedWithPr`, and the two scope guards. Guards file -> 25 passed. Gate script -> 7 files, 93 passed, 0 failed.
+- refactor: none needed
+- commit: G9
