@@ -1,0 +1,28 @@
+{
+  "bbVersion": "0.48.1",
+  "sdk": "0.6.104",
+  "requestInput": {
+    "submitted": {
+      "outcome": "submitted",
+      "value": {
+        "decision": "approved",
+        "comment": "ok"
+      }
+    },
+    "timeout": {
+      "outcome": "cancelled",
+      "reason": "timeout"
+    },
+    "threadStopped": {
+      "outcome": "cancelled",
+      "reason": "thread-stopped"
+    }
+  },
+  "submittedBy": "bb thread interactions respond <id> --value <json> (the resolution row records only kind plugin_submitted, not who answered)",
+  "threadsSend": {
+    "idleThreadAuto": {
+      "ok": true,
+      "delivery": "sent"
+    }
+  }
+}

@@ -1,0 +1,60 @@
+run:
+  id: "01M6SKG1YZY54AJVFKK02MVXWH"
+  branch: bb/spike-check-do-not-read-or-edit-any-files-first-thr_n5rjcahnfk
+  status: running
+  awaiting_agent: parked 0s
+  head: db76f309
+  head_sha: db76f3091c2894a7f0e03426005e373ff89a8899
+  verification_plan: none
+  findings: 2 auto-fix
+  steps[9]{step,status,findings,duration_ms}:
+    intent,completed,0,6
+    rebase,completed,0,68
+    review,awaiting_approval,2,7999
+    test,pending,0,0
+    document,pending,0,0
+    lint,pending,0,0
+    push,pending,0,0
+    pr,pending,0,0
+    ci,pending,0,0
+branch_sync:
+  state: pipeline_owned
+  changed: false
+  local:
+    branch: bb/spike-check-do-not-read-or-edit-any-files-first-thr_n5rjcahnfk
+    head: db76f3091c2894a7f0e03426005e373ff89a8899
+    clean: true
+  pipeline:
+    run: "01M6SKG1YZY54AJVFKK02MVXWH"
+    status: running
+    phase: pre_push
+    submitted_head: db76f3091c2894a7f0e03426005e373ff89a8899
+    current_head: db76f3091c2894a7f0e03426005e373ff89a8899
+    pushed_head: ""
+    pushed_at: 0
+    push_generation: 0
+  target:
+    kind: ""
+    remote: origin
+    url: /tmp/throwaway/nm-origin.git
+    ref: ""
+  remote:
+    observed_head: ""
+    freshness: pipeline_push
+    observed_at: 0
+  relation: equal
+  safety: blocked_pipeline_owned
+  pr_state: none
+  note: a validation run is active on this branch; do not make local follow-up commits until it finishes
+  next_action:
+    code: continue_active_run
+    command: no-mistakes axi status
+gate:
+  step: review
+  status: awaiting_approval
+  risk: high
+  note: "Review auto-fix is disabled by default (`auto_fix.review: 0`; a repo or global `auto_fix.review > 0` override re-enables it), so blocking and ask-user review findings park for your decision rather than being silently self-fixed."
+  findings[2]{id,severity,file,action,description}:
+    review-1,error,sum.js,auto-fix,"Off-by-one in loop: `i <= values.length` reads values[values.length] which is undefined, so total becomes NaN for every input (sum([1,2,3]) returns NaN; sum([]) returns NaN). Fix: use `i < values.length`."
+    review-2,error,sum.js,auto-fix,"SQL injection: user-supplied `name` is concatenated directly into the query string. Input like `' OR '1'='1` returns all users, and `'; DROP TABLE users; --` is injectable. Return a parameterized query (e.g. { text: 'SELECT * FROM users WHERE name = $1', values: [name] }) instead of interpolating."
+help[6]: Run `no-mistakes axi respond --action approve` to accept this step and continue,Run `no-mistakes axi respond --action fix --findings <ids>` to have the pipeline fix the selected findings (do not edit files yourself),Run `no-mistakes axi respond --action skip` to skip this step,Run `no-mistakes axi logs --step review --full` to read the full step log,"A long-running call is working, not stalled - background it if your harness needs to, but the run never advances past a gate on its own. Read every return; on a `gate:`, respond; loop until an `outcome:`.","Commit post-pipeline follow-up work on top of the existing branch so every pipeline fix commit remains present. Never abort-and-restart, reset, or replace the branch in a way that drops prior gate-fix commits."

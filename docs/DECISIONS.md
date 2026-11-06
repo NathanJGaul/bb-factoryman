@@ -212,6 +212,8 @@ The design gives no default for them, so the store invents none.
 `openSqliteStore` accepts a file path, `:memory:`, or an open `better-sqlite3` database, and closes only what it opened.
 How the plugin gets its per-plugin database from bb is unverified, so milestone 0 settles it.
 Wiring the store into the plugin factory waits for those results, as `CLAUDE.md` requires.
+**Resolved**: spike item 23 in `spike/RESULTS.md` confirmed that `bb.storage.database()` returns a `better-sqlite3` handle on the plugin's own `data.db`.
+Milestone 4 passes that handle to `openSqliteStore`.
 
 ## Captain decisions of 2026-11-06
 
@@ -234,4 +236,24 @@ The rules that carry it:
 - The worker, thread, branch, machine, and pull request URL stay, because the rework happens on the same branch.
   The worker then hands off again, and the delivery mode's review-ready check runs again.
 - The `yolo` flag is untouched. `request_changes` is legal under `yolo` too.
+
+## Milestones 4 to 6: spike
+
+### D-029: The spike ran up front, on an isolated bb server (Deviation)
+
+The task brief asks for the bb checks "before each milestone".
+The checks for milestones 4, 5, and 6 ran together before the specification, and each is limited to the assumptions that its milestone needs.
+The plan for milestone 5 depends on what milestone 4 learned about tool and thread identity, and a refutation found late would waste built work.
+The checks ran against a bb 0.48.1 server that `bb-app` started on a throwaway data directory and non-default ports, so the owner's `~/.bb` and its plugins stayed untouched.
+The results, with the bb and no-mistakes versions, are in `spike/RESULTS.md`.
+No result refuted the architecture, so no `needs-decision` was needed.
+
+### D-030: A submitted approval form is not proof of a human (Gap, owner should know)
+
+`bb.ui.requestInput` returns `submitted` with whatever JSON reached `bb thread interactions respond`.
+The interaction row does not record who submitted it.
+An agent with a shell can therefore answer the owner's merge form.
+The design already lists a worker with shell access as a known gap on the merge gate, and names branch protection and scoped tokens as the backstop.
+The plugin validates the submitted value with a strict schema, treats everything except an exact approval as no approval, and says in its tool result that the approval came from a form.
+The plugin cannot close this gap on its own.
 
