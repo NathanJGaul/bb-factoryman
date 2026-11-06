@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { context, parsedEvent } from "../../test/fixtures/machine";
 import { GUARDS } from "./guards";
+import type { TaskContext } from "./types";
 
 describe("evidenceProvided", () => {
   it.each(["", "   ", "\n\t", undefined])("refuses evidence %j", (evidence) => {
@@ -116,5 +117,60 @@ describe("approval scope guards", () => {
   it("refuse an event that is not an approval event", () => {
     expect(GUARDS.approvalScopeIsMerge(context(), parsedEvent("merge"))?.code).toBe("approval_scope_mismatch");
     expect(GUARDS.approvalScopeIsPromote(context(), parsedEvent("merge"))?.code).toBe("approval_scope_mismatch");
+  });
+});
+
+describe("mergeAuthorized", () => {
+  const merge = (yolo: boolean) => parsedEvent("merge", { yolo });
+  const withApprovals = (approvals: TaskContext["approvals"]) => context({ approvals });
+
+  it("accepts yolo with no approval", () => {
+    expect(GUARDS.mergeAuthorized(context(), merge(true))).toBeNull();
+  });
+
+  it("accepts an approved merge decision", () => {
+    expect(GUARDS.mergeAuthorized(withApprovals({ merge: "approved" }), merge(false))).toBeNull();
+  });
+
+  it("refuses without yolo when the merge decision is denied, missing, or for another scope", () => {
+    for (const approvals of [{ merge: "denied" as const }, {}, { promote: "approved" as const }]) {
+      expect(GUARDS.mergeAuthorized(withApprovals(approvals), merge(false))?.code, JSON.stringify(approvals)).toBe("approval_required");
+    }
+  });
+
+  it("refuses an event that is not a merge event, even under yolo", () => {
+    expect(GUARDS.mergeAuthorized(context({ approvals: { merge: "approved" } }), parsedEvent("promote"))?.code).toBe("approval_required");
+  });
+});
+
+describe("promotionAuthorized", () => {
+  it("accepts an approved promote decision", () => {
+    expect(GUARDS.promotionAuthorized(context({ approvals: { promote: "approved" } }), parsedEvent("promote"))).toBeNull();
+  });
+
+  it("refuses a denied, missing, or other-scope decision", () => {
+    for (const approvals of [{ promote: "denied" as const }, {}, { merge: "approved" as const }]) {
+      expect(GUARDS.promotionAuthorized(context({ approvals }), parsedEvent("promote"))?.code, JSON.stringify(approvals)).toBe("approval_required");
+    }
+  });
+});
+
+describe("worktreeLanded", () => {
+  const teardown = (worktree: { uncommittedChanges: boolean; unpushedCommits: number }) => parsedEvent("teardown", { worktree });
+
+  it("accepts a clean worktree with zero unpushed commits", () => {
+    expect(GUARDS.worktreeLanded(context(), teardown({ uncommittedChanges: false, unpushedCommits: 0 }))).toBeNull();
+  });
+
+  it("refuses uncommitted changes", () => {
+    expect(GUARDS.worktreeLanded(context(), teardown({ uncommittedChanges: true, unpushedCommits: 0 }))?.code).toBe("unlanded_work");
+  });
+
+  it("refuses a single unpushed commit", () => {
+    expect(GUARDS.worktreeLanded(context(), teardown({ uncommittedChanges: false, unpushedCommits: 1 }))?.code).toBe("unlanded_work");
+  });
+
+  it("refuses an event that is not a teardown event", () => {
+    expect(GUARDS.worktreeLanded(context(), parsedEvent("merge"))?.code).toBe("unlanded_work");
   });
 });

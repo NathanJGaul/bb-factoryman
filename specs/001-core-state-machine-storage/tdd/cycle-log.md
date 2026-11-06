@@ -112,3 +112,12 @@ Each behavior in a batch still has its own test, and each entry records the fail
 - green: `src/machine/guards.ts` implements the two mode guards, `readyModeCheck`, `pipelineFinishedWithPr`, and the two scope guards. Guards file -> 25 passed. Gate script -> 7 files, 93 passed, 0 failed.
 - refactor: none needed
 - commit: G9
+
+## Cycle G10: U23, U24, U25 merge, promotion, and worktree guards
+
+- tests: `src/machine/guards.test.ts` (extended, 10 new): `mergeAuthorized` accepts yolo, accepts an approved decision, refuses a denied, missing, or other-scope decision, and refuses a non-merge event (U23); `promotionAuthorized` accepts an approved promote decision and refuses denied, missing, or other-scope decisions (U24); `worktreeLanded` accepts clean with zero unpushed, refuses uncommitted changes, refuses a single unpushed commit, refuses a non-teardown event (U25)
+- red: `pnpm vitest run src/machine/guards.test.ts`
+  -> 10 failed, 25 passed. Decisive lines: `AssertionError: expected { code: 'internal_mismatch', …(1) } to be null` (x4), `expected 'internal_mismatch' to be 'unlanded_work'` (x3). The placeholders still refuse.
+- green: `src/machine/guards.ts` implements `mergeAuthorized`, `promotionAuthorized`, and `worktreeLanded`. Guards file -> 35 passed. Gate script -> 7 files, 103 passed, 0 failed.
+- refactor: removed the now-unused `pending` placeholder helper, and simplified the test helper type to `TaskContext["approvals"]`. Gate re-run green.
+- commit: G10

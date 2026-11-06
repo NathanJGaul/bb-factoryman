@@ -23,11 +23,6 @@ export type GuardName = (typeof GUARD_NAMES)[number];
 /** A guard returns null when the gate passes and a refusal when it does not. */
 export type Guard = (context: TaskContext, event: TaskEvent) => Refusal | null;
 
-/** A gate that is not written yet fails closed. */
-function pending(name: GuardName): Guard {
-  return () => refuse("internal_mismatch", `Guard \`${name}\` is not implemented, so it refuses.`);
-}
-
 const profileResolved: Guard = (_context, event) =>
   event.type === "start" && event.profile
     ? null
@@ -89,6 +84,35 @@ const approvalScopeIs =
       ? null
       : refuse("approval_scope_mismatch", `This state accepts only a \`${scope}\` approval.`);
 
+/** Merge needs an approved decision, unless the project's `yolo` flag is on for this merge. */
+const mergeAuthorized: Guard = (context, event) => {
+  if (event.type !== "merge") {
+    return refuse("approval_required", "The merge gate applies to `merge` events only.");
+  }
+  return event.yolo || context.approvals.merge === "approved"
+    ? null
+    : refuse("approval_required", "Merging needs a recorded approval from the owner, and this project's `yolo` flag is off.");
+};
+
+const promotionAuthorized: Guard = (context, event) =>
+  event.type === "promote" && context.approvals.promote === "approved"
+    ? null
+    : refuse("approval_required", "Promoting a scout to a ship task needs a recorded approval from the owner.");
+
+/** Teardown needs proof that no work is lost: nothing uncommitted and nothing unpushed. */
+const worktreeLanded: Guard = (_context, event) => {
+  if (event.type !== "teardown") {
+    return refuse("unlanded_work", "The landed-work check applies to `teardown` events only.");
+  }
+  const { uncommittedChanges, unpushedCommits } = event.worktree;
+  if (uncommittedChanges) {
+    return refuse("unlanded_work", "Teardown refused: the worktree has uncommitted changes.");
+  }
+  return unpushedCommits === 0
+    ? null
+    : refuse("unlanded_work", `Teardown refused: the worktree has ${unpushedCommits} unpushed commit(s).`);
+};
+
 export const GUARDS: Record<GuardName, Guard> = {
   profileResolved,
   evidenceProvided,
@@ -100,7 +124,7 @@ export const GUARDS: Record<GuardName, Guard> = {
   ownerOnly,
   approvalScopeIsMerge: approvalScopeIs("merge"),
   approvalScopeIsPromote: approvalScopeIs("promote"),
-  mergeAuthorized: pending("mergeAuthorized"),
-  promotionAuthorized: pending("promotionAuthorized"),
-  worktreeLanded: pending("worktreeLanded"),
+  mergeAuthorized,
+  promotionAuthorized,
+  worktreeLanded,
 };
