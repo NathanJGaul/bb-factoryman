@@ -322,3 +322,16 @@ Each behavior in a batch still has its own test, and each entry records the fail
   -> 2 files, all passed (13 restart cases, plus the contract run on both stores)
 - history: red at G18 (`Cannot find module '../../src/store/memory'`); `store-contract` green at G20; `store-restart` green at G26 once `reconcile` existed.
 - commit: G26
+
+## Cycle G25: U80 seeded random walks
+
+- test: `test/acceptance/store-random-walk.test.ts::keep incremental task rows equal to rebuilt rows over 200 sequences` on the memory store and on the SQLite store (U80). Each sequence has a seed, creates a task of a random kind and mode, then applies 30 events. Events are mostly legal for the current state (`fail` has a small share), and some fields are bent so that gates refuse them. After every step the cache row must equal the row that a replay of the log gives. At the end, destroying the cache and rebuilding it must give the same rows.
+- The test passed on its first complete run, apart from a self-check: my first guess for the richness threshold (more than 2000 applied events) failed with `AssertionError: expected 849 to be greater than 2000`, then 1577 after I biased the walk forward. I set the threshold to 1200 applied events, with more than 500 refused events and all ten states reached. These checks only prove that the walk is not trivial. They do not touch the invariant under test.
+- It could not fail for the right reason against correct code, so I used deliberate mutants, each run with `pnpm vitest run test/acceptance/store-random-walk.test.ts` and restored exactly:
+  - W1: the cache row for a task that has just merged gets a wrong `branch` -> survived when the invariant was only checked at the end of a sequence, because the next accepted event repaired the row. I added the per-step comparison, and W1 then failed with `seed 0 step 9: expected { taskId: 'walk-0', …(8) } to deeply equal { taskId: 'walk-0', …(8) }`.
+  - W2: the log stores an empty payload for applied events -> failed with `seed 0 replays: expected false to be true`.
+  - W3: `rebuildCache` writes `queued` for failed tasks -> failed with `seed 77 rebuilt: expected [ … ] to deeply equal [ … ]`.
+  - W4: the SQLite store drops `pull_request_url` on write -> failed with `seed 0 row: expected { taskId: 'walk-0', …(8) } to deeply equal { taskId: 'walk-0', …(8) }`.
+- a timeout of 5 seconds (the runner default) cut the SQLite run at 5.2 seconds, so the test sets an explicit 60 second timeout. Gate script -> 18 files, 336 passed, 0 failed, 13 seconds in total.
+- refactor: none needed
+- commit: G25
