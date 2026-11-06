@@ -264,3 +264,18 @@ Each behavior in a batch still has its own test, and each entry records the fail
 - green: `src/store/task-log.ts` implements `create` and `apply` as a first, deliberately minimal version: it replays the task to get the snapshot, calls `transition`, then appends the row, updates the cache, and adds an approval row for `record_approval`. It uses the wall clock, runs outside a transaction, and assumes the raw event is an object. G22 drives those three gaps. `pnpm vitest run src/store/task-log.test.ts` -> 7 passed. Gate script -> 16 files, 285 passed, 0 failed.
 - refactor: none yet. The first version has rough edges (a cast in `create`, repeated row building). The refactor runs at the end of G22, once the remaining behaviors are green.
 - commit: G21
+
+## Cycle G22: U67 to U70 TaskLog atomicity, clock, log-as-input, and unreadable input
+
+- tests: `src/store/task-log.test.ts` (extended, 15 new): `TaskLog atomicity on the %s store` x2 stores x2 cases (U67); `TaskLog clock` x3 (U68); `TaskLog uses the log, not the cache, to decide` x2 (U69); `TaskLog with unreadable input` x5 plus `keeps the readable parts of a broken event and never throws on values that cannot be stored` (U70)
+- red: `pnpm vitest run src/store/task-log.test.ts`
+  -> 8 failed, 14 passed. Decisive failures: the four atomicity cases (the log row stayed after a failing `putTask` or `addApproval`), `stamps each recorded row with one tick of the injected clock, in order`, `logs undefined as a refused row ...` and `logs null as a refused row ...` (a `TypeError` while reading the raw event), and `keeps the readable parts of a broken event ...`.
+- green: `src/store/task-log.ts` now wraps each call in `store.transaction`, takes `now` from the options (wall clock by default) and reads it once per call, and describes unreadable input safely (`<invalid>` event, `unknown` actor, a JSON-safe payload that falls back to `{}`). `pnpm vitest run src/store/task-log.test.ts` -> 22 passed. Gate script -> 16 files, 300 passed, 0 failed.
+- seven tests passed on first run (the two tamper tests, the wall-clock fallback, the approval tick, and three unreadable inputs that happened to parse). Deliberate mutants, each run with `pnpm vitest run src/store/task-log.test.ts` and restored exactly:
+  - U: decide from the cache row's state -> both tamper tests failed.
+  - V: wall-clock default removed -> `falls back to the wall clock in ISO 8601 UTC form` failed.
+  - W: approval row takes a second clock tick -> `stamps an approval row with the same tick as its log row` failed.
+  - X: `jsonSafe` without its `try`/`catch` -> `keeps the readable parts of a broken event ...` failed.
+  - Y: `create` outside a transaction -> both `rolls back the log append when writing the task row fails` cases failed.
+- refactor: on green I rewrote `src/store/task-log.ts` to drop the casts and the duplicated row building from G21. Suite re-run green after the rewrite (22 passed, gate OK).
+- commit: G22
