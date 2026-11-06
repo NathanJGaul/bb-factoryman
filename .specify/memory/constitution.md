@@ -1,50 +1,84 @@
-# [PROJECT_NAME] Constitution
-<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
+# bb-factoryman Constitution
 
-## Core Principles
+## Core principles
 
-### [PRINCIPLE_1_NAME]
-<!-- Example: I. Library-First -->
-[PRINCIPLE_1_DESCRIPTION]
-<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
+### I. Gates live in code and fail closed
 
-### [PRINCIPLE_2_NAME]
-<!-- Example: II. CLI Interface -->
-[PRINCIPLE_2_DESCRIPTION]
-<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
+Every authority gate is a refusal in the state machine.
+A gate that depends on an agent obeying a prompt does not count.
+The eight hard rules in `CLAUDE.md` are binding:
 
-### [PRINCIPLE_3_NAME]
-<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
-[PRINCIPLE_3_DESCRIPTION]
-<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
+1. Merge needs a recorded approval. Only a project's `yolo` flag skips the approval form, and only for that project.
+2. Teardown is refused while the worktree has uncommitted changes or unpushed commits.
+3. `done` and `failed` transitions need a non-empty evidence field.
+4. Promoting a scout task to a ship task needs a recorded approval event.
+5. A task pinned to an offline machine goes `blocked`. It never falls back to another machine.
+6. `local-only` work stays on the machine that holds the clone.
+7. Extensions can add checks and never remove a gate.
+8. Illegal transitions are refused and logged. Nothing fails open.
 
-### [PRINCIPLE_4_NAME]
-<!-- Example: IV. Integration Testing -->
-[PRINCIPLE_4_DESCRIPTION]
-<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
+Rationale: the plugin exists to enforce the delivery contract in code.
+A gate that fails open defeats the purpose of the plugin.
 
-### [PRINCIPLE_5_NAME]
-<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
-[PRINCIPLE_5_DESCRIPTION]
-<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
+### II. The machine core is pure
 
-## [SECTION_2_NAME]
-<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
+`src/machine/` MUST NOT import from `@get-bb/*`.
+An ESLint `no-restricted-imports` rule enforces this, and the lint run MUST fail when the rule is violated.
+Machine code takes plain data in and returns plain data out.
+Every gate MUST be testable without a running bb.
 
-[SECTION_2_CONTENT]
-<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
+### III. The event log is the source of truth
 
-## [SECTION_3_NAME]
-<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
+`task_event` is append-only.
+`task` rows are a cache that replay can rebuild exactly.
+On start, the plugin replays events for every non-terminal task and compares the result with live bb state.
+A mismatch becomes a `reconcile` event and is never fixed silently.
 
-[SECTION_3_CONTENT]
-<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
+### IV. Storage sits behind an interface
+
+The store interface has two implementations: `better-sqlite3` for production and an in-memory one for tests.
+Both implementations MUST pass the same contract test suite.
+
+### V. Test first (non-negotiable)
+
+- Every behavior change is driven by a test that failed first.
+- The failure is recorded in `specs/<feature>/tdd/cycle-log.md`.
+- Test tasks precede implementation tasks.
+- Tests are never weakened, skipped, deleted, or filtered to reach green.
+- Every acceptance criterion has a real-entry-point acceptance test.
+- Refactoring happens only on green.
+- Test strength is verified with mutation testing or deliberate mutants.
+
+### VI. Scope discipline
+
+Milestones 1 to 3 (scaffold, state machine, storage) are the only milestones in scope until `spike/RESULTS.md` confirms the bb assumptions.
+No tools, event wiring, machine placement, or validator code ships before then.
+Features from the design's non-goals list need approval first.
+Every deviation from `docs/DESIGN.md` is recorded in `docs/DECISIONS.md` with the reason.
+If a spike result contradicts the design, the conflict is recorded and the owner decides.
+
+## Engineering constraints
+
+- Stack: TypeScript, `xstate`, `vitest`, `zod`, `better-sqlite3`, and a pinned `@get-bb/plugin-sdk`.
+- Plugin-level tests use `createFakePluginHost` from `@get-bb/plugin-sdk/testing`.
+- The plugin calls no other bb plugin.
+- Do not run or port firstmate's bash scripts, its herdr backend, secondmates, relay, or away mode.
+- Docs and code comments follow the Google developer documentation style: sentence case headings, active voice, short sentences, no filler.
+- In long Markdown files, each sentence sits on its own line.
+
+## Development workflow
+
+- Commits are small and carry one concern each.
+- Commit messages carry no agent co-author line.
+- Generated files, including `CHANGELOG.md`, are never edited by hand.
+- Lint, type-check, and test failures are fixed when found, even when an earlier change caused them.
 
 ## Governance
-<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
 
-[GOVERNANCE_RULES]
-<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
+This constitution supersedes other practices for this repository.
+`docs/DESIGN.md` stays authoritative for product design.
+An amendment needs a written reason in `docs/DECISIONS.md` and a version bump here.
+Version bumps follow semantic versioning: major for removed or redefined principles, minor for added principles or materially expanded guidance, patch for wording fixes.
+Every plan includes a constitution check, and every review verifies compliance.
 
-**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
-<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->
+**Version**: 1.0.0 | **Ratified**: 2026-11-05 | **Last amended**: 2026-11-05
