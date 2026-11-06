@@ -22,7 +22,7 @@ Each behavior in a batch still has its own test, and each entry records the fail
   -> `AssertionError: expected 'tsc' to be 'bb plugin build'` (1 failed). Restored `package.json` exactly. A5 is `BASELINE`.
 - green: `package.json` gained the `bb` block (`name`, `description`, `server`), `engines`, and the `bb-plugin` keyword. Suite `pnpm test` -> 2 files, 5 passed, 0 failed. `pnpm run lint` and `pnpm run typecheck` clean.
 - refactor: none needed, one config block
-- commit: G1
+- commit: `e59a412`
 
 ## Cycle G2: A1 plugin loads in the fake host and registers nothing beyond its identity
 
@@ -32,7 +32,7 @@ Each behavior in a batch still has its own test, and each entry records the fail
 - green: `src/server.ts:8` logs `bb-factoryman loaded` through `bb.log.info`. Suite `pnpm test` -> 3 files, 6 passed, 0 failed. Lint and type-check clean.
 - refactor: none needed
 - note: "identity" is the one load log line. The design does not define it, so the choice is recorded in `docs/DECISIONS.md`.
-- commit: G2
+- commit: `17fc177`
 
 ## Cycle G3: U9 repository layout
 
@@ -41,7 +41,7 @@ Each behavior in a batch still has its own test, and each entry records the fail
   -> `AssertionError: src/machine should exist: expected false to be true` (1 failed)
 - green: created `src/machine/.gitkeep` and `src/store/.gitkeep`. Suite `pnpm test` -> 4 files, 7 passed, 0 failed. Lint and type-check clean.
 - refactor: none needed
-- commit: G3
+- commit: `649c327`
 
 ## Cycle G4: A3, A4, U1, U2, U3, U4 lint rule keeps bb imports out of src/machine
 
@@ -55,7 +55,7 @@ Each behavior in a batch still has its own test, and each entry records the fail
 - green, step 2: added `no-restricted-syntax` on `ImportExpression` for `src/machine/**`. Suite `pnpm test` -> 5 files, 13 passed, 0 failed. Lint and type-check clean.
 - refactor: none needed
 - note: the rule bans every dynamic import in `src/machine/`, not only `@get-bb` ones, so a computed specifier cannot hide a bb import. Recorded in `docs/DECISIONS.md`.
-- commit: G4
+- commit: `60a3138`
 
 ## Cycle G5: U5, U6, U7, U8 lint rule keeps storage, Node built-ins, and src/store out of src/machine
 
@@ -67,7 +67,7 @@ Each behavior in a batch still has its own test, and each entry records the fail
   -> `AssertionError: expected [ Array(1) ] to deeply equal []` (1 failed). Restored `eslint.config.js` exactly.
 - green: `eslint.config.js` gained three pattern groups: `better-sqlite3`, `node:*` plus the names in `builtinModules`, and `**/store` plus `**/store/**`. Suite `pnpm test` -> 5 files, 17 passed, 0 failed. Lint and type-check clean.
 - refactor: none needed
-- commit: G5
+- commit: `b33c387`
 
 ## Cycle G6 (opened): A6 to A17 written red first
 
@@ -83,7 +83,7 @@ Each behavior in a batch still has its own test, and each entry records the fail
   -> `Error: not implemented` (49 failed, 1 passed). The one pass is `covers all 15 event types`, a fixture sanity check.
 - green: `src/machine/events.ts` defines a strict `zod` schema per event type, a discriminated union, and `parseEvent`, which maps failures to `unknown_event` or `invalid_event`. `pnpm vitest run src/machine/events.test.ts` -> 50 passed. Suite without the two open outer files -> 6 files, 67 passed, 0 failed. Lint clean. Type-check fails only on the two open outer files, which import `transition` before it exists.
 - refactor: none needed
-- commit: G7
+- commit: `e2c1ff2`
 
 ## Cycle G5b: U8 follow-up, a Node built-in name must not block a sibling module
 
@@ -93,7 +93,7 @@ Each behavior in a batch still has its own test, and each entry records the fail
   -> `AssertionError: expected [ …(3) ] to deeply equal []` (1 failed, 10 passed)
 - green: `eslint.config.js` now restricts built-ins through exact-name `paths` entries (plus the `node:*` pattern), so `./events`, `./path`, and `../machine/util` pass. Lint-isolation file -> 11 passed. Suite without the two open outer files -> 6 files, 68 passed, 0 failed. `pnpm eslint .` clean.
 - refactor: none needed
-- commit: G5b
+- commit: `f478874`
 
 ## Cycle G8: U16, U17, U18 evidence, profile, and actor guards
 
@@ -102,7 +102,7 @@ Each behavior in a batch still has its own test, and each entry records the fail
   -> `TypeError: GUARDS.evidenceProvided is not a function` (12 failed, 0 passed)
 - green: `src/machine/guards.ts` implements `evidenceProvided` (trimmed, non-empty), `profileResolved`, `notWorker`, and `ownerOnly`. The other nine guards are placeholders that refuse with `internal_mismatch`, so an unwritten gate fails closed. `pnpm vitest run src/machine/guards.test.ts` -> 12 passed. Gate script (lint, type-check, suite without the two open outer files) -> 7 files, 80 passed, 0 failed.
 - refactor: none needed
-- commit: G8
+- commit: `914f1c9`
 
 ## Cycle G9: U19, U20, U21, U22 mode, ready, pipeline, and scope guards
 
@@ -111,7 +111,7 @@ Each behavior in a batch still has its own test, and each entry records the fail
   -> 13 failed, 12 passed. Decisive lines: `AssertionError: expected 'internal_mismatch' to be 'mode_check_failed'` (x5), `expected { code: 'internal_mismatch', …(1) } to be null` (x5), `expected 'internal_mismatch' to be 'mode_mismatch'` (x2). The placeholders from G8 refuse, so the accepting and the coded-refusal cases both fail.
 - green: `src/machine/guards.ts` implements the two mode guards, `readyModeCheck`, `pipelineFinishedWithPr`, and the two scope guards. Guards file -> 25 passed. Gate script -> 7 files, 93 passed, 0 failed.
 - refactor: none needed
-- commit: G9
+- commit: `d7553e9`
 
 ## Cycle G10: U23, U24, U25 merge, promotion, and worktree guards
 
@@ -120,7 +120,7 @@ Each behavior in a batch still has its own test, and each entry records the fail
   -> 10 failed, 25 passed. Decisive lines: `AssertionError: expected { code: 'internal_mismatch', …(1) } to be null` (x4), `expected 'internal_mismatch' to be 'unlanded_work'` (x3). The placeholders still refuse.
 - green: `src/machine/guards.ts` implements `mergeAuthorized`, `promotionAuthorized`, and `worktreeLanded`. Guards file -> 35 passed. Gate script -> 7 files, 103 passed, 0 failed.
 - refactor: removed the now-unused `pending` placeholder helper, and simplified the test helper type to `TaskContext["approvals"]`. Gate re-run green.
-- commit: G10
+- commit: `e913f1b`
 
 ## Cycle G11: U26, U27, U28, U29 transition tables and generated xstate machines
 
@@ -130,7 +130,7 @@ Each behavior in a batch still has its own test, and each entry records the fail
 - green, step 1: `src/machine/table.ts` holds the ship and scout lanes. `src/machine/machines.ts` generates both xstate machines from the table, wrapping each named guard. Run -> 6 passed, 2 failed: `ship/awaiting_approval/record_approval should be possible: expected false to be true`. xstate's `can()` is false for a targetless transition that has no action.
 - green, step 2: every generated transition now runs one `applyEffects` assign action from `src/machine/effects.ts`, which returns the context unchanged for now. Later cycles drive real effects. Run -> 8 passed. Gate script (lint, type-check, suite without the two open outer files) -> 8 files, 111 passed, 0 failed.
 - refactor: none needed
-- commit: G11
+- commit: `d958d2b`
 
 ## Cycle G12: U30 to U35 createTask and the transition facade
 
@@ -140,7 +140,7 @@ Each behavior in a batch still has its own test, and each entry records the fail
 - green: `src/machine/events.ts` gained `parseCreate`. `src/machine/transition.ts` implements `createTask` and the `transition` facade: parse, validate the snapshot, look up the table row, run its guards in order, compute the next snapshot with xstate, and cross-check the target. The whole call sits in a `try`, so it never throws. The result is a deep clone. `pnpm vitest run src/machine/transition.test.ts` -> 35 passed. Gate script -> 9 files, 146 passed, 0 failed.
 - refactor: none needed
 - note: with the facade in place the open outer files go 48 passed, 4 failed. The four failures are the effect-driven cases (profile recorded, prUrl recorded, approval recorded, promote), which G13 to G15 drive. The matrix file passes in full.
-- commit: G12
+- commit: `afc7681`
 
 ## Cycle G13: U36, U37, U38 guard order, start effects, and pull request URL effects
 
@@ -156,7 +156,7 @@ Each behavior in a batch still has its own test, and each entry records the fail
   - F: `ready` always sets `prUrl` -> `stays null when a local-only ready event carries none` failed.
 - green: `src/machine/effects.ts` now records profile, thread, branch, and machine on `start`, and the pull request URL on `ready` (when present) and `validated`. `pnpm vitest run src/machine` -> all passed. Gate script -> 9 files, 154 passed, 0 failed.
 - refactor: none needed
-- commit: G13
+- commit: `e43e501`
 
 ## Cycle G14: U39, U40, U41 approvals and the yolo merge path
 
@@ -168,7 +168,7 @@ Each behavior in a batch still has its own test, and each entry records the fail
   - H: dropped `approvalScopeIsMerge` from the `awaiting_approval` approval row -> `is refused for the wrong scope in each state` failed.
 - green: `src/machine/effects.ts` records `approvals[scope] = decision` on `record_approval`. `pnpm vitest run src/machine/transition.test.ts` -> 48 passed. Gate script -> 9 files, 159 passed, 0 failed.
 - refactor: none needed
-- commit: G14
+- commit: `fa7a0dc`
 
 ## Cycle G15: U42, U43 promotion
 
@@ -178,7 +178,7 @@ Each behavior in a batch still has its own test, and each entry records the fail
 - green: `src/machine/effects.ts` sets `kind: "ship"` and clears `profile`, `prUrl`, and `approvals` on `promote`. The facade already picks the machine from `context.kind`, so no facade change was needed. `pnpm vitest run src/machine/transition.test.ts` -> 51 passed. Gate script -> 9 files, 162 passed, 0 failed.
 - outer loop: with promotion in place the open outer files pass in full (`pnpm vitest run test/acceptance/machine-gates.test.ts test/acceptance/machine-matrix.test.ts` -> 52 passed, 0 failed). A6 to A17 are green.
 - refactor: none needed
-- commit: G15
+- commit: `09fd3e0`
 - note: this entry was appended after the G15 commit, not before it, because a failed `cd` skipped the log step of the commit command. No behavior changed between the run above and the commit.
 
 ## Cycle G16: U44, U45 fail and teardown edges
@@ -192,7 +192,7 @@ Each behavior in a batch still has its own test, and each entry records the fail
   - M: removed `worktreeLanded` from the scout `report_ready` teardown -> the scout dirty-teardown test failed.
 - green: no code change needed.
 - refactor: none needed
-- commit: G16
+- commit: `ae23412`
 
 ## Cycle G17: U46 fail-closed cross-check
 
@@ -202,7 +202,7 @@ Each behavior in a batch still has its own test, and each entry records the fail
 - green: `src/machine/transition.ts` now exports `transitionUsing(machines, snapshot, raw)`, and `transition` calls it with the real machines. The first version of the "throws" test used a throwing action, and it failed with `AssertionError: expected true to be false` because `getNextSnapshot` does not run custom actions. The test now uses a throwing guard. `pnpm vitest run src/machine/transition.test.ts` -> 65 passed. Gate script -> 9 files, 176 passed, 0 failed.
 - A first draft of the facade also checked `next.status !== "active"`. Deliberate mutant N disabled that check and every test still passed, and a probe showed that xstate throws on a failing `assign` (the `try` catches it). The check was unreachable, so it was removed. Mutant O (target cross-check disabled) failed `refuses with internal_mismatch when the xstate machine lands somewhere the table does not allow`, so that check is covered.
 - refactor: none needed
-- commit: G17
+- commit: `ae23412`
 
 ## Cycle G6 (closed): A6 to A17 green
 
@@ -210,7 +210,7 @@ Each behavior in a batch still has its own test, and each entry records the fail
   -> 2 files, 52 passed, 0 failed
 - history: red at G6 (`Cannot find module '../../src/machine/transition'`); 4 effect-driven cases still red after G12 (profile recorded, URL recorded, approval recorded, promote); green after G15.
 - note: the matrix file was refactored in the middle of the milestone to import its oracle from `test/fixtures/legal-set.ts`. That moved the hand-written legal set out of the test body and changed no assertion.
-- commit: G6
+- commit: `51eae52`
 
 ## Cycle G18 (opened): A18 to A26 written red first
 
@@ -226,7 +226,7 @@ Each behavior in a batch still has its own test, and each entry records the fail
   -> `Error: not implemented` (9 failed, 0 passed)
 - green: `src/store/memory.ts` keeps events, approvals, tasks, and configs in plain structures, hands out frozen deep copies, and implements `transaction` by saving a deep copy of its state and restoring it when `fn` throws. `pnpm vitest run src/store/memory.test.ts` -> 9 passed. Gate script (lint, type-check, suite without the open outer files) -> 12 files, 237 passed, 0 failed.
 - refactor: none needed
-- commit: G19
+- commit: `9b9ac61`
 
 ## Cycle G20: U56 to U60 the SQLite store
 
@@ -236,7 +236,7 @@ Each behavior in a batch still has its own test, and each entry records the fail
 - green: `src/store/sqlite.ts` creates the schema from the vocabulary lists in `src/machine/types.ts` (with `CHECK` constraints), adds `BEFORE UPDATE` and `BEFORE DELETE` triggers that abort on `task_event` and `approval`, records `PRAGMA user_version`, refuses a newer version, maps rows to frozen camel-case objects, and runs `transaction` through `db.transaction`. It accepts a path, `:memory:`, or an open database and closes only what it opened. `pnpm vitest run src/store/sqlite.test.ts` -> 14 passed. Gate script -> 14 files, 271 passed, 0 failed.
 - outer loop: `test/acceptance/store-contract.test.ts` (A24, A25) now passes with both stores, so it is committed with this cycle.
 - refactor: none needed
-- commit: G20
+- commit: `ef058a5`
 
 ## Cycle G23 (run before G21 and G22): U71 to U75 replay
 
@@ -254,7 +254,7 @@ Each behavior in a batch still has its own test, and each entry records the fail
   - T: dropped the "create goes from nothing to queued" check -> survived. I added a case with a `create` row that records `working`; mutant T then failed that test.
 - gate script -> 15 files, 278 passed, 0 failed.
 - refactor: none needed
-- commit: G23
+- commit: `82cb1ab`
 
 ## Cycle G21: U61 to U66 TaskLog create, apply, refusal, and approvals
 
@@ -263,7 +263,7 @@ Each behavior in a batch still has its own test, and each entry records the fail
   -> `Error: not implemented` (7 failed, 0 passed)
 - green: `src/store/task-log.ts` implements `create` and `apply` as a first, deliberately minimal version: it replays the task to get the snapshot, calls `transition`, then appends the row, updates the cache, and adds an approval row for `record_approval`. It uses the wall clock, runs outside a transaction, and assumes the raw event is an object. G22 drives those three gaps. `pnpm vitest run src/store/task-log.test.ts` -> 7 passed. Gate script -> 16 files, 285 passed, 0 failed.
 - refactor: none yet. The first version has rough edges (a cast in `create`, repeated row building). The refactor runs at the end of G22, once the remaining behaviors are green.
-- commit: G21
+- commit: `90e582f`
 
 ## Cycle G22: U67 to U70 TaskLog atomicity, clock, log-as-input, and unreadable input
 
@@ -278,7 +278,7 @@ Each behavior in a batch still has its own test, and each entry records the fail
   - X: `jsonSafe` without its `try`/`catch` -> `keeps the readable parts of a broken event ...` failed.
   - Y: `create` outside a transaction -> both `rolls back the log append when writing the task row fails` cases failed.
 - refactor: on green I rewrote `src/store/task-log.ts` to drop the casts and the duplicated row building from G21. Suite re-run green after the rewrite (22 passed, gate OK).
-- commit: G22
+- commit: `98da73e`
 
 ## Cycle G24: U76 to U79 rebuild the cache and recover at start-up
 
@@ -293,7 +293,7 @@ Each behavior in a batch still has its own test, and each entry records the fail
   - Z4: the row comparison ignores `branch` -> survived, because the diverged row in the test also had a wrong state. I added seven cases (`repairs a row that differs from its replay in only the %s field`, one per field except the task ID and state), and Z4 then failed `... only the branch field`. The suite is 19 passed.
   - Z5: `rebuildCache` writes a row for a corrupt task -> `writes no row for a corrupt task ...` failed.
 - refactor: none needed
-- commit: G24
+- commit: `de7ccbd`
 
 ## Cycle G1c: A2 follow-up, the manifest needs bb.branding for `bb plugin build`
 
@@ -304,7 +304,7 @@ Each behavior in a batch still has its own test, and each entry records the fail
 - green: `package.json` gained `bb.branding.icon` (`Factory`). `pnpm run build` -> exit 0, writing `dist/server.js`, `dist/server.js.map`, `dist/server.meta.json`. Manifest test -> 2 passed.
 - dependency change, not a behavior: the SDK pin moved from 0.6.125 to 0.6.104 (the SDK of the installed bb) and `engines.bbPluginSdk` to `>=0.6.104`. The lockfile was regenerated, because pnpm's release-age policy rejected the stale 0.6.125 entry. The pnpm release-age exception was removed, since 0.6.104 is old enough. After the change the build prints no warning, and the gate script (lint, type-check, suite without the open outer files) -> 16 files, 312 passed, 0 failed.
 - refactor: none needed
-- commit: G1c
+- commit: `6527c19`
 
 ## Cycle G26: U81 to U86 reconcile
 
@@ -314,14 +314,14 @@ Each behavior in a batch still has its own test, and each entry records the fail
 - green: `src/store/reconcile.ts` replays each observed task, writes one `reconcile` row (replayed state on both sides, the observed state in the payload, a sentence in the evidence, actor `system`) per mismatch, skips a mismatch already recorded as the last row, and reports matching, deduplicated, unknown, and corrupt tasks. It writes no task row and no approval, all in one transaction. `pnpm vitest run src/store/reconcile.test.ts` -> 8 passed. Gate script -> 17 files, 320 passed, 0 failed.
 - deliberate mutants, each run with `pnpm vitest run src/store/reconcile.test.ts` and restored exactly: R1 no dedupe, R2 dedupe ignores the observed state, R4 every observation counts as a mismatch, R5 unknown and corrupt swapped, R6 `toState` set to the observed state, and R7 no wall-clock default were all killed. R3 (treat any last row with a matching `observed` field as a duplicate) survived, so I added `does not treat a refused row that happens to carry an observed field as a reconcile row`, and R3 then failed that test. I also dropped a `last.fromState === logged` condition as redundant: after a reconcile row, any state change or refusal becomes the newer last row. Suite -> 9 passed.
 - refactor: none needed
-- commit: G26
+- commit: `2f4cc41`
 
 ## Cycle G18 (closed, part 1): A18 to A23, A26 and A24, A25 green
 
 - command: `pnpm vitest run test/acceptance/store-restart.test.ts test/acceptance/store-contract.test.ts`
   -> 2 files, all passed (13 restart cases, plus the contract run on both stores)
 - history: red at G18 (`Cannot find module '../../src/store/memory'`); `store-contract` green at G20; `store-restart` green at G26 once `reconcile` existed.
-- commit: G26
+- commit: `2f4cc41`
 
 ## Cycle G25: U80 seeded random walks
 
@@ -334,7 +334,7 @@ Each behavior in a batch still has its own test, and each entry records the fail
   - W4: the SQLite store drops `pull_request_url` on write -> failed with `seed 0 row: expected { taskId: 'walk-0', …(8) } to deeply equal { taskId: 'walk-0', …(8) }`.
 - a timeout of 5 seconds (the runner default) cut the SQLite run at 5.2 seconds, so the test sets an explicit 60 second timeout. Gate script -> 18 files, 336 passed, 0 failed, 13 seconds in total.
 - refactor: none needed
-- commit: G25
+- commit: `0ef5f71`
 
 ## Remediation R001 to R009: findings from the first `/speckit.tdd.verify` run
 
