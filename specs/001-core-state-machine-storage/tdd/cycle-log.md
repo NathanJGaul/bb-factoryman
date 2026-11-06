@@ -305,3 +305,20 @@ Each behavior in a batch still has its own test, and each entry records the fail
 - dependency change, not a behavior: the SDK pin moved from 0.6.125 to 0.6.104 (the SDK of the installed bb) and `engines.bbPluginSdk` to `>=0.6.104`. The lockfile was regenerated, because pnpm's release-age policy rejected the stale 0.6.125 entry. The pnpm release-age exception was removed, since 0.6.104 is old enough. After the change the build prints no warning, and the gate script (lint, type-check, suite without the open outer files) -> 16 files, 312 passed, 0 failed.
 - refactor: none needed
 - commit: G1c
+
+## Cycle G26: U81 to U86 reconcile
+
+- tests: `src/store/reconcile.test.ts` (new, 9 cases): `appends one reconcile row per mismatch, with the replayed state on both sides and the observed state in the payload` (U81); `appends nothing for an observation that matches the replayed state` (U82); `appends nothing for an identical repeated mismatch, and appends again when the observation changes` and `appends again for the same mismatch once another row has followed the reconcile row` (U83); `counts an observation of missing as a mismatch` (U84); `reports an observation for an unknown or corrupt task and logs nothing for it` (U85); `never changes the replayed state, the task rows, or the approvals` and `uses the wall clock when none is given` (U86)
+- red: a stub `reconcile` that throws, then `pnpm vitest run src/store/reconcile.test.ts`
+  -> `Error: not implemented` (8 failed, 0 passed)
+- green: `src/store/reconcile.ts` replays each observed task, writes one `reconcile` row (replayed state on both sides, the observed state in the payload, a sentence in the evidence, actor `system`) per mismatch, skips a mismatch already recorded as the last row, and reports matching, deduplicated, unknown, and corrupt tasks. It writes no task row and no approval, all in one transaction. `pnpm vitest run src/store/reconcile.test.ts` -> 8 passed. Gate script -> 17 files, 320 passed, 0 failed.
+- deliberate mutants, each run with `pnpm vitest run src/store/reconcile.test.ts` and restored exactly: R1 no dedupe, R2 dedupe ignores the observed state, R4 every observation counts as a mismatch, R5 unknown and corrupt swapped, R6 `toState` set to the observed state, and R7 no wall-clock default were all killed. R3 (treat any last row with a matching `observed` field as a duplicate) survived, so I added `does not treat a refused row that happens to carry an observed field as a reconcile row`, and R3 then failed that test. I also dropped a `last.fromState === logged` condition as redundant: after a reconcile row, any state change or refusal becomes the newer last row. Suite -> 9 passed.
+- refactor: none needed
+- commit: G26
+
+## Cycle G18 (closed, part 1): A18 to A23, A26 and A24, A25 green
+
+- command: `pnpm vitest run test/acceptance/store-restart.test.ts test/acceptance/store-contract.test.ts`
+  -> 2 files, all passed (13 restart cases, plus the contract run on both stores)
+- history: red at G18 (`Cannot find module '../../src/store/memory'`); `store-contract` green at G20; `store-restart` green at G26 once `reconcile` existed.
+- commit: G26
