@@ -195,6 +195,28 @@ This settles D-027: the plugin passes `bb.storage.database()` to `openSqliteStor
 
 Fallback: none needed.
 
+## 24. Bundling
+
+Result: confirmed
+
+Evidence: a probe plugin that imports `better-sqlite3`, `xstate`, and `zod` built with `bb plugin build` and loaded in bb 0.48.1.
+The build bundled `xstate` and `zod` into `dist/server.js` and left `better-sqlite3` as an external import that the server resolved.
+The plugin ran `new Database(":memory:")`, an `xstate` machine, a `zod` parse, and `bb.storage.database()` in one load.
+
+Fallback: none needed.
+
+## 25. Removing a worker's environment
+
+Result: confirmed
+
+Evidence: `bb.sdk.environments.delete({ environmentId })` on an environment with a live thread failed with `HTTP 409: Environment still has live threads`.
+After `bb.sdk.threads.archive({ threadId })`, the same call returned `{ ok: true }`, and bb removed the worktree directory and its `git worktree` entry within a few seconds.
+The branch `bb/<slug>-<thread-id>` stayed in the repository.
+
+Fallback: teardown archives the worker thread and then deletes the environment.
+If the environment still has another live thread, the removal fails after the `teardown` event is recorded, and the tool result says so.
+The landed-work check has already passed by then, so nothing is lost.
+
 ## Not checked
 
 These items belong to milestones 7 to 11, or to the owner's live install, and the task brief excludes them.

@@ -257,3 +257,92 @@ The design already lists a worker with shell access as a known gap on the merge 
 The plugin validates the submitted value with a strict schema, treats everything except an exact approval as no approval, and says in its tool result that the approval came from a form.
 The plugin cannot close this gap on its own.
 
+## Milestones 4 to 6: plan
+
+### D-031: No tool answers a pipeline finding (Open, the owner decides)
+
+The design lists five tools, and none of them answers a no-mistakes finding.
+The validator interface has an `answer` operation, and the driver exposes it, but no tool calls it.
+A task in `needs_decision` therefore waits until someone answers in no-mistakes directly, which the driver observes, and then it returns to `validating`.
+A run that finishes with an override, with skipped steps, or without a pull request also parks the task in `needs_decision` until someone starts a new run.
+Adding a sixth tool, for example `factoryman_decide`, would give the supervisor a path.
+It changes a design table, so the owner decides.
+The firstmate rule that an `ask-user` finding belongs to the owner is a reason to route the answer through a form, as the merge approval does.
+
+### D-032: The constitution's scope principle and the project scope text are amended (Deviation, resolved)
+
+Principle VI limited the work to milestones 1 to 3.
+The captain's intent for this task widens it to milestones 4 to 6 and asks for the spike checks that those milestones need.
+Constitution version 1.1.0 now names milestones 1 to 6 as in scope and keeps milestones 7 to 11 out until their own spike results exist.
+The "Current scope" text in `CLAUDE.md` and the `src/tools/` layout comment said the opposite, so they carry the same correction and nothing else.
+
+### D-033: The dispatch description is the `start` event's evidence (Gap)
+
+The machine's `create` and `start` events carry no description, and changing them edits the merged milestone 2 machine.
+Every event may carry optional `evidence`, and the log stores it.
+The plugin writes the description there, reads it back as the no-mistakes intent, and shows its first line in `factoryman_status`.
+Evidence on `start` is not a gate, so this loosens nothing.
+
+### D-034: The plugin plans the branch name (Gap)
+
+bb names a worktree branch `bb/<slug>-<thread-id>` and a plugin cannot choose it (spike item 14).
+`start` needs a branch, and D-026 left the prefix empty with no default.
+Dispatch plans `<branchPrefix>` or `fm/`, followed by the task ID, records that name, and tells the worker to create the branch first.
+If the worker uses another name, the record is wrong, and teardown still checks the worktree, which does not depend on the name.
+
+### D-035: Authority comes from the store, not from plugin metadata (Gap)
+
+Plugin metadata is writable by the thread's own agent.
+It only decides which tools bb offers.
+Each tool decides the caller from the store: a recorded worker thread is a worker, and every other thread is a supervisor, in its own project only.
+
+### D-036: Every merge call asks the owner again (Gap)
+
+A stored approval does not skip the form on a retry.
+The worker keeps running during `awaiting_approval`, so the pull request can change after an approval, and a retry should not merge commits the owner never saw.
+
+### D-037: Nothing writes a project config yet (Limit)
+
+`.bb/factoryman/` config loading is milestone 9, and the design lists no tool or command that sets a project's mode or `yolo` flag.
+Until then every project resolves to `no-mistakes` with `yolo` off, which is the safe default, and the other two modes are reachable only through tests.
+
+### D-038: `@toon-format/toon` is a runtime dependency (Gap)
+
+The no-mistakes CLI prints TOON.
+A hand parser would have to get quoting and escaping right for finding text.
+The library 4.4.0 decodes every recorded output, is MIT-licensed, and has no dependencies.
+It is pinned to an exact version, as the SDK is.
+
+### D-039: What a validator result does to a task (Gap)
+
+The design says `needs_decision` holds when the pipeline stops on a finding that needs a human call, and `validating` ends when the pipeline has opened a pull request and CI is green.
+The driver reads a gate as `needs_decision`, because a pipeline never passes a gate on its own.
+It reads `checks-passed` with a pull request as `validated`, `failed` and `cancelled` as `fail`, and every other outcome as `needs_decision`.
+Output it cannot read advances nothing, and five failures in a row park the task for a human.
+
+### D-040: A failed worker thread fails the task at once (Limit)
+
+bb's `provider-retry` plugin can retry a failed turn, so a worker thread can recover after `thread.failed`.
+The plugin fails closed: it records `failed` and tells the supervisor.
+A recovered thread's later events find a failed task and do nothing.
+The supervisor can dispatch the work again.
+
+### D-041: One command stamps the supervisor role (Gap)
+
+Nothing in the design sets the supervisor role that makes bb offer the four supervisor tools.
+`bb factoryman supervisor <thread-id>` does it, and it refuses a recorded worker thread.
+The command grants visibility only, because authority comes from the store (D-035).
+
+### D-042: The real merge and git commands are not run against a real forge (Limit)
+
+The merge executors run `gh pr merge` for the pull request modes and `git merge` in the project checkout for `local-only`.
+Tests cover the command lines with a fake runner and cover the git facts and the local merge with temporary repositories.
+No test merges a real pull request, so the owner's live check in milestone 11 covers the `gh` path.
+The merge method comes from a `mergeMethod` plugin setting (`squash`, `merge`, or `rebase`) that defaults to `squash`.
+
+### D-043: Workers spawn with bb's parent notifications off (Deviation from bb's default)
+
+Spike item 22 shows that bb wakes a parent after every child outcome unless notifications are off.
+The design says the plugin, not the agent, wakes the supervisor.
+Dispatch therefore spawns every worker with `parentNotifications: "off"` and a parent thread, and the plugin sends the only wake messages.
+

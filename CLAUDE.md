@@ -17,12 +17,11 @@ and sessions.
 
 ## Current scope
 
-Build milestones 1 to 3 only: scaffold, state machine, storage.
+Build milestones 1 to 6: scaffold, state machine, storage, tools and approval, event wiring, and the validator.
 
-Don't write bb-dependent code beyond the scaffold until `spike/RESULTS.md` confirms
-the assumptions. That means no tools, no event wiring, no machine placement, and no
-validator wiring yet. If a spike result contradicts `docs/DESIGN.md`, record the
-conflict in `docs/DECISIONS.md` and ask before changing the design.
+Don't write bb-dependent code for milestones 7 to 11 until `spike/RESULTS.md` confirms the assumptions they depend on.
+That means no dispatch resolver, no machine placement, no extension surface, no limits, and no skills yet.
+If a spike result contradicts `docs/DESIGN.md`, record the conflict in `docs/DECISIONS.md` and ask before changing the design.
 
 ## Hard rules (enforced in code, never in prompts)
 
@@ -88,7 +87,7 @@ bb-factoryman/
   src/server.ts
   src/machine/    # xstate machines, no bb imports
   src/store/      # event log, task cache, replay, reconcile
-  src/tools/      # later
+  src/tools/      # factoryman_* tools and CLI
   src/dispatch/   # later
   skills/         # later
   spike/
