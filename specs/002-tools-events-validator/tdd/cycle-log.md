@@ -43,3 +43,13 @@ Each behavior in a batch still has its own test, and each entry records the fail
   Suite `pnpm test` -> 21 files, 359 passed, 0 failed (after the layout fix). Lint and type-check clean.
 - refactor: none needed
 - commit: see git log, message `feat: add the command runner (U1-U5)`
+
+## Cycle C2: U6 to U9 runtime apply path (`src/runtime.ts`)
+
+- tests: `src/runtime.test.ts` `[U6]` to `[U9]` (new), plus the fixtures `test/fixtures/bb-port.ts` and `test/fixtures/runtime.ts` and the types-only `src/bb/port.ts` (T001 to T004, T016: no behavior)
+- red: a `Runtime` stub whose `apply` throws, then `pnpm vitest run src/runtime.test.ts`
+  -> `Error: not implemented` for U6, U7, U8, and U9 (4 failed)
+- green: `Runtime.apply` calls `TaskLog.apply`, then awaits each listener in order inside its own `try`, and logs a listener error.
+  Suite `pnpm test` -> 22 files, 363 passed, 0 failed. Lint and type-check clean.
+- refactor: none needed
+- note: the red is a stub that throws, not an assertion on values, because the behavior is a method that does not exist yet.

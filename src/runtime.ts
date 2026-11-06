@@ -1,0 +1,74 @@
+import type { BbPort } from "./bb/port";
+import type { Exec } from "./exec";
+import { TaskLog, type LogOutcome } from "./store/task-log";
+import type { Store } from "./store/store";
+import type { TaskEventRow, TaskRow } from "./store/types";
+
+export interface Logger {
+  debug(message: string): void;
+  info(message: string): void;
+  warn(message: string): void;
+  error(message: string): void;
+}
+
+export interface Settings {
+  mergeMethod: "squash" | "merge" | "rebase";
+  approvalTimeoutMs: number;
+}
+
+export interface AppliedEvent {
+  task: TaskRow;
+  event: TaskEventRow;
+}
+
+export type AppliedListener = (applied: AppliedEvent) => void | Promise<void>;
+
+export interface RuntimeDeps {
+  store: Store;
+  bb: BbPort;
+  exec: Exec;
+  log: Logger;
+  now: () => string;
+  newId: () => string;
+  settings: () => Settings;
+}
+
+/**
+ * The deps bundle and the one apply path. Tools, event handlers, and the
+ * validator driver all record events through `apply`, so every listener sees
+ * every applied event exactly once.
+ */
+export class Runtime {
+  readonly log: TaskLog;
+  private readonly listeners: AppliedListener[] = [];
+
+  constructor(readonly deps: RuntimeDeps) {
+    this.log = new TaskLog(deps.store, { now: deps.now });
+  }
+
+  /** Register a listener that runs after each applied event, in registration order. */
+  onApplied(listener: AppliedListener): void {
+    this.listeners.push(listener);
+  }
+
+  /**
+   * Record one event for a task. Listeners run after the event is stored. A
+   * listener that fails is logged and never undoes the event.
+   */
+  async apply(taskId: string, raw: unknown): Promise<LogOutcome> {
+    const outcome = this.log.apply(taskId, raw);
+    if (!outcome.ok) return outcome;
+    for (const listener of this.listeners) {
+      try {
+        await listener({ task: outcome.task, event: outcome.event });
+      } catch (error) {
+        this.deps.log.error(`A listener failed after ${outcome.event.event} on ${taskId}: ${errorText(error)}`);
+      }
+    }
+    return outcome;
+  }
+}
+
+export function errorText(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}

@@ -82,10 +82,10 @@ Boundaries have both sides, and error paths name the failure.
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| U6 | `apply` records the event through the task log and returns its outcome | FR-105 | example | PENDING | |
-| U7 | An applied event calls every listener once with the outcome | FR-208 | example | PENDING | |
-| U8 | A refused event calls no listener | FR-208 | example | PENDING | |
-| U9 | A throwing listener is logged, does not undo the event, and does not stop the other listeners | FR-211, FR-214 | example | PENDING | |
+| U6 | `apply` records the event through the task log and returns its outcome | FR-105 | example | DONE | `src/runtime.test.ts::[U6] records the event through the task log and returns its outcome` |
+| U7 | An applied event calls every listener once with the outcome | FR-208 | example | DONE | `src/runtime.test.ts::[U7] calls every listener once with the applied task and event` |
+| U8 | A refused event calls no listener | FR-208 | example | DONE | `src/runtime.test.ts::[U8] calls no listener for a refused event` |
+| U9 | A throwing listener is logged, does not undo the event, and does not stop the other listeners | FR-211, FR-214 | example | DONE | `src/runtime.test.ts::[U9] logs a throwing listener, keeps the event, and still runs the other listeners` |
 
 ### `src/bb/adapter.ts`
 
