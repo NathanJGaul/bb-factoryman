@@ -9,11 +9,11 @@ function isDirectory(path: string): boolean {
 }
 
 describe("repository layout", () => {
-  it("has the milestone 1 to 3 directories and none for later milestones", () => {
+  it("[U208] has the milestone 1 to 3 directories and none for milestones 7 to 11", () => {
     for (const dir of ["src/machine", "src/store", "spike", "docs"]) {
       expect(isDirectory(dir), `${dir} should exist`).toBe(true);
     }
-    for (const dir of ["src/tools", "src/dispatch", "skills"]) {
+    for (const dir of ["src/dispatch", "skills"]) {
       expect(isDirectory(dir), `${dir} should not exist yet`).toBe(false);
     }
   });
