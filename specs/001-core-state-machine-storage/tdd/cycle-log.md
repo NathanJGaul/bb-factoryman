@@ -23,3 +23,13 @@ Each behavior in a batch still has its own test, and each entry records the fail
 - green: `package.json` gained the `bb` block (`name`, `description`, `server`), `engines`, and the `bb-plugin` keyword. Suite `pnpm test` -> 2 files, 5 passed, 0 failed. `pnpm run lint` and `pnpm run typecheck` clean.
 - refactor: none needed, one config block
 - commit: G1
+
+## Cycle G2: A1 plugin loads in the fake host and registers nothing beyond its identity
+
+- test: `test/acceptance/plugin.test.ts::loads in the fake host, registers nothing beyond its identity, and disposes cleanly` (new, A1)
+- red: added a no-op stub `src/server.ts` so the import resolves, then `pnpm vitest run test/acceptance/plugin.test.ts`
+  -> `AssertionError: expected [] to deeply equal [ { level: 'info', …(1) } ]` (1 failed)
+- green: `src/server.ts:8` logs `bb-factoryman loaded` through `bb.log.info`. Suite `pnpm test` -> 3 files, 6 passed, 0 failed. Lint and type-check clean.
+- refactor: none needed
+- note: "identity" is the one load log line. The design does not define it, so the choice is recorded in `docs/DECISIONS.md`.
+- commit: G2
