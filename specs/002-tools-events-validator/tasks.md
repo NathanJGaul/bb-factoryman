@@ -38,7 +38,7 @@ description: "Task list for tools and approval, event wiring, and the validator"
 
 ### Tests (write first, watch fail)
 
-- [ ] T010 [P] [U1] [U2] [U3] [U4] [U5] Exec runner test in `src/exec.test.ts` (captures stdout, stderr, exit code; honors `cwd`; runs without a shell; reports a missing binary as a result and not a throw)
+- [X] T010 [P] [U1] [U2] [U3] [U4] [U5] Exec runner test in `src/exec.test.ts` (captures stdout, stderr, exit code; honors `cwd`; runs without a shell; reports a missing binary as a result and not a throw)
 - [ ] T011 [P] [U6] [U7] [U8] [U9] Runtime test in `src/runtime.test.ts` (apply records the event, calls listeners once per applied event and never for a refused one, a throwing listener does not undo the event)
 - [ ] T012 [P] [U10] [U11] [U12] [U13] [U14] [U15] [U16] [U17] [U18] Adapter test in `src/bb/adapter.test.ts` through the fake host (spawn arguments, parent notifications off, plugin metadata, thread read maps a missing thread to null, send uses mode `auto`, retire archives then deletes, input form passes through)
 - [ ] T013 [P] [U19] [U20] [U21] [U22] Access test in `src/tools/access.test.ts` (worker by recorded thread ID, other for everything else, project check)
@@ -47,7 +47,7 @@ description: "Task list for tools and approval, event wiring, and the validator"
 
 ### Implementation
 
-- [ ] T015 [P] [U1] [U2] [U3] [U4] [U5] Implement the runner and the `Exec` type in `src/exec.ts`
+- [X] T015 [P] [U1] [U2] [U3] [U4] [U5] Implement the runner and the `Exec` type in `src/exec.ts`
 - [ ] T016 [P] Define `BbPort` and its data types in `src/bb/port.ts`
 - [ ] T017 [U10] [U11] [U12] [U13] [U14] [U15] [U16] [U17] [U18] Implement `BbPort` over `BbPluginApi` in `src/bb/adapter.ts`
 - [ ] T018 [U6] [U7] [U8] [U9] Implement `Runtime` and the one apply path in `src/runtime.ts`

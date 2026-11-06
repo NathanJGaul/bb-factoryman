@@ -72,11 +72,11 @@ Boundaries have both sides, and error paths name the failure.
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| U1 | A finished command returns stdout, stderr, and exit code 0 | FR-303 | example | PENDING | |
-| U2 | A non-zero exit returns its code and output and does not throw | FR-303, FR-115 | example | PENDING | |
-| U3 | The command runs in the given `cwd` | FR-303, FR-118 | example | PENDING | |
-| U4 | A missing binary returns a failed result and does not throw | FR-301, FR-115 | example | PENDING | |
-| U5 | Arguments reach the command literally, with no shell interpretation | FR-303 | example | PENDING | |
+| U1 | A finished command returns stdout, stderr, and exit code 0 | FR-303 | example | DONE | `src/exec.test.ts::[U1] returns stdout, stderr, and exit code 0 for a finished command` |
+| U2 | A non-zero exit returns its code and output and does not throw | FR-303, FR-115 | example | DONE | `src/exec.test.ts::[U2] returns the exit code and output of a failing command without throwing` |
+| U3 | The command runs in the given `cwd` | FR-303, FR-118 | example | DONE | `src/exec.test.ts::[U3] runs the command in the given cwd` |
+| U4 | A missing binary returns a failed result and does not throw | FR-301, FR-115 | example | DONE | `src/exec.test.ts::[U4] returns a failed result for a missing binary without throwing` |
+| U5 | Arguments reach the command literally, with no shell interpretation | FR-303 | example | DONE | `src/exec.test.ts::[U5] passes arguments literally with no shell interpretation` |
 
 ### `src/runtime.ts`
 
@@ -394,6 +394,14 @@ Boundaries have both sides, and error paths name the failure.
 | U205 | The loop ends when the task leaves its two states | FR-311 | example | PENDING | |
 | U206 | A task whose environment path cannot be read counts as a validator error | FR-304 | example | PENDING | |
 | U207 | A `needs_decision` task takes its first view after a restart as the baseline | FR-307, FR-312 | example | PENDING | |
+
+### `test/acceptance/layout.test.ts`
+
+Added mid-loop: the milestone 1 layout test said `src/tools` must not exist, which the scope amendment (D-032) made wrong.
+
+| id | behavior | traces | kind | state | test |
+| --- | --- | --- | --- | --- | --- |
+| U208 | The repository keeps the milestone 1 to 3 directories and has no `src/dispatch` or `skills` directory | FR-401, D-032 | example | DONE | `test/acceptance/layout.test.ts::[U208] has the milestone 1 to 3 directories and none for milestones 7 to 11` |
 
 ## Invariants and edge cases still to place
 
