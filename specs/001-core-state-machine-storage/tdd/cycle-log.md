@@ -94,3 +94,12 @@ Each behavior in a batch still has its own test, and each entry records the fail
 - green: `eslint.config.js` now restricts built-ins through exact-name `paths` entries (plus the `node:*` pattern), so `./events`, `./path`, and `../machine/util` pass. Lint-isolation file -> 11 passed. Suite without the two open outer files -> 6 files, 68 passed, 0 failed. `pnpm eslint .` clean.
 - refactor: none needed
 - commit: G5b
+
+## Cycle G8: U16, U17, U18 evidence, profile, and actor guards
+
+- tests: `src/machine/guards.test.ts` (new): `evidenceProvided refuses evidence %j` x4 and `accepts evidence %j` x3 (U16), `profileResolved refuses a start event with profile %j` x2 and `accepts a start event with a complete profile` (U17), `notWorker refuses only the worker actor` and `ownerOnly accepts only the user actor` (U18)
+- red: declared `GUARDS` as an empty registry, then `pnpm vitest run src/machine/guards.test.ts`
+  -> `TypeError: GUARDS.evidenceProvided is not a function` (12 failed, 0 passed)
+- green: `src/machine/guards.ts` implements `evidenceProvided` (trimmed, non-empty), `profileResolved`, `notWorker`, and `ownerOnly`. The other nine guards are placeholders that refuse with `internal_mismatch`, so an unwritten gate fails closed. `pnpm vitest run src/machine/guards.test.ts` -> 12 passed. Gate script (lint, type-check, suite without the two open outer files) -> 7 files, 80 passed, 0 failed.
+- refactor: none needed
+- commit: G8

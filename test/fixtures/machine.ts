@@ -1,3 +1,4 @@
+import { parseEvent, type TaskEvent } from "../../src/machine/events";
 import type {
   DeliveryMode,
   EventType,
@@ -97,3 +98,10 @@ export function validEvent(type: EventType, overrides: Record<string, unknown> =
 
 export const KINDS: readonly TaskKind[] = ["ship", "scout"];
 export const MODES: readonly DeliveryMode[] = ["no-mistakes", "direct-PR", "local-only"];
+
+/** A valid event run through the real parser, so guard tests receive a typed event. */
+export function parsedEvent(type: EventType, overrides: Record<string, unknown> = {}): TaskEvent {
+  const result = parseEvent(validEvent(type, overrides));
+  if (!result.ok) throw new Error(`fixture event ${type} is invalid: ${result.refusal.message}`);
+  return result.event;
+}
