@@ -21,32 +21,32 @@ One per acceptance criterion in `spec.md`.
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| A1 | The plugin factory loads in the fake host, registers nothing, and disposes cleanly | AC-1.1, FR-003 | example | PENDING | |
-| A2 | The manifest names `bb-factoryman`, declares the server entry, and pins the SDK to one exact version | AC-1.2, FR-001, FR-002 | example | PENDING | |
-| A3 | Lint fails on an `@get-bb/*` import inside `src/machine/` and names the restricted import | AC-1.3, FR-005, SC-004 | example | PENDING | |
-| A4 | Lint passes on the same import outside `src/machine/` | AC-1.4, FR-005 | example | PENDING | |
-| A5 | The `build` script delegates to `bb plugin build` | AC-1.5, FR-004 | characterization | PENDING | |
-| A6 | A `merge` event without an approval and without `yolo` is refused and the task stays in `awaiting_approval` | AC-2.1, FR-016 | example | PENDING | |
-| A7 | A `merge` event under `yolo` moves the task to `merged` | AC-2.2, FR-016 | example | PENDING | |
-| A8 | A `teardown` event with uncommitted changes or unpushed commits is refused and the task stays `merged` | AC-2.3, FR-017 | example | PENDING | |
-| A9 | A completion event or `fail` event with blank evidence is refused | AC-2.4, FR-015 | example | PENDING | |
-| A10 | A `promote` event is refused without an owner approval and moves a scout to a queued ship task with one | AC-2.5, FR-018 | example | PENDING | |
-| A11 | Every state and event pair outside the legal set is refused with a reason code and an unchanged snapshot | AC-2.6, FR-011, FR-013, FR-014, SC-001 | example | PENDING | |
-| A12 | Review ready applies the delivery mode's check for each of the three modes | AC-2.7, FR-020 | example | PENDING | |
-| A13 | A `no-mistakes` task passes through `validating` and `needs_decision`, and the other modes cannot reach them | AC-2.8 | example | PENDING | |
-| A14 | A `start` event without a resolved profile is refused | AC-2.9, FR-021 | example | PENDING | |
-| A15 | A `block` event moves a working task to `blocked`, an `unblock` event returns it, and `block` elsewhere is refused | AC-2.10, FR-022 | example | PENDING | |
-| A16 | A `fail` event with evidence moves any task that is not `torn_down` or `failed` to `failed` | AC-2.11 | example | PENDING | |
-| A17 | Approval events from a non-owner actor are refused, and worker actors are refused on four events | AC-2.12, FR-019 | example | PENDING | |
-| A18 | Recording an event writes one log row, the task row, and any approval row together | AC-3.1, FR-033 | example | PENDING | |
-| A19 | A refused event leaves a refused log row with its reason and an unchanged task row | AC-3.2, FR-034 | example | PENDING | |
-| A20 | A stored log row cannot be updated or deleted | AC-3.3, FR-030 | example | PENDING | |
-| A21 | After the task cache is destroyed, a rebuild from the log equals the original rows field for field | AC-3.4, FR-036 | example | PENDING | |
-| A22 | Replay reports a task as corrupt when an applied row no longer passes the machine | AC-3.5, FR-035 | example | PENDING | |
-| A23 | Reconcile appends one `reconcile` row per mismatch, changes no task state, and skips an identical repeat | AC-3.6, FR-037 | example | PENDING | |
-| A24 | The shared contract suite passes against both the in-memory and the SQLite store | AC-3.7, FR-032, SC-006 | example | PENDING | |
-| A25 | An unregistered project reads as `no-mistakes` with `yolo` off | AC-3.8, FR-038 | example | PENDING | |
-| A26 | Start-up recovery on a reopened SQLite file replays every non-terminal task | AC-3.9, FR-039 | example | PENDING | |
+| A1 | The plugin factory loads in the fake host, registers nothing, and disposes cleanly | AC-1.1, FR-003 | example | DONE | `test/acceptance/plugin.test.ts::loads in the fake host, registers nothing beyond its identity, and disposes cleanly` |
+| A2 | The manifest names `bb-factoryman`, declares the server entry, and pins the SDK to one exact version | AC-1.2, FR-001, FR-002 | example | DONE | `test/acceptance/manifest.test.ts::names the package, declares the server entry, and pins the SDK to one exact version` |
+| A3 | Lint fails on an `@get-bb/*` import inside `src/machine/` and names the restricted import | AC-1.3, FR-005, SC-004 | example | DONE | `test/acceptance/lint-isolation.test.ts::fails lint on an @get-bb import and names the restricted module` |
+| A4 | Lint passes on the same import outside `src/machine/` | AC-1.4, FR-005 | example | DONE | `test/acceptance/lint-isolation.test.ts::passes lint on the same import outside src/machine` |
+| A5 | The `build` script delegates to `bb plugin build` | AC-1.5, FR-004 | characterization | BASELINE | `test/acceptance/manifest.test.ts::builds through bb plugin build` |
+| A6 | A `merge` event without an approval and without `yolo` is refused and the task stays in `awaiting_approval` | AC-2.1, FR-016 | example | PENDING |  |
+| A7 | A `merge` event under `yolo` moves the task to `merged` | AC-2.2, FR-016 | example | PENDING |  |
+| A8 | A `teardown` event with uncommitted changes or unpushed commits is refused and the task stays `merged` | AC-2.3, FR-017 | example | PENDING |  |
+| A9 | A completion event or `fail` event with blank evidence is refused | AC-2.4, FR-015 | example | PENDING |  |
+| A10 | A `promote` event is refused without an owner approval and moves a scout to a queued ship task with one | AC-2.5, FR-018 | example | PENDING |  |
+| A11 | Every state and event pair outside the legal set is refused with a reason code and an unchanged snapshot | AC-2.6, FR-011, FR-013, FR-014, SC-001 | example | PENDING |  |
+| A12 | Review ready applies the delivery mode's check for each of the three modes | AC-2.7, FR-020 | example | PENDING |  |
+| A13 | A `no-mistakes` task passes through `validating` and `needs_decision`, and the other modes cannot reach them | AC-2.8 | example | PENDING |  |
+| A14 | A `start` event without a resolved profile is refused | AC-2.9, FR-021 | example | PENDING |  |
+| A15 | A `block` event moves a working task to `blocked`, an `unblock` event returns it, and `block` elsewhere is refused | AC-2.10, FR-022 | example | PENDING |  |
+| A16 | A `fail` event with evidence moves any task that is not `torn_down` or `failed` to `failed` | AC-2.11 | example | PENDING |  |
+| A17 | Approval events from a non-owner actor are refused, and worker actors are refused on four events | AC-2.12, FR-019 | example | PENDING |  |
+| A18 | Recording an event writes one log row, the task row, and any approval row together | AC-3.1, FR-033 | example | PENDING |  |
+| A19 | A refused event leaves a refused log row with its reason and an unchanged task row | AC-3.2, FR-034 | example | PENDING |  |
+| A20 | A stored log row cannot be updated or deleted | AC-3.3, FR-030 | example | PENDING |  |
+| A21 | After the task cache is destroyed, a rebuild from the log equals the original rows field for field | AC-3.4, FR-036 | example | PENDING |  |
+| A22 | Replay reports a task as corrupt when an applied row no longer passes the machine | AC-3.5, FR-035 | example | PENDING |  |
+| A23 | Reconcile appends one `reconcile` row per mismatch, changes no task state, and skips an identical repeat | AC-3.6, FR-037 | example | PENDING |  |
+| A24 | The shared contract suite passes against both the in-memory and the SQLite store | AC-3.7, FR-032, SC-006 | example | PENDING |  |
+| A25 | An unregistered project reads as `no-mistakes` with `yolo` off | AC-3.8, FR-038 | example | PENDING |  |
+| A26 | Start-up recovery on a reopened SQLite file replays every non-terminal task | AC-3.9, FR-039 | example | PENDING |  |
 
 ## Inner loop: unit behaviors
 
@@ -54,137 +54,137 @@ One per acceptance criterion in `spec.md`.
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| U1 | A type-only `@get-bb/*` import under `src/machine/` fails lint | AC-1.3, FR-005 | example | PENDING | |
-| U2 | A subpath import such as `@get-bb/plugin-sdk/testing` under `src/machine/` fails lint | FR-005 | example | PENDING | |
-| U3 | A dynamic `import()` of an `@get-bb/*` module under `src/machine/` fails lint | FR-005 | example | PENDING | |
-| U4 | A re-export from an `@get-bb/*` module under `src/machine/` fails lint | FR-005 | example | PENDING | |
-| U5 | An import of `better-sqlite3` under `src/machine/` fails lint | FR-012 | example | PENDING | |
-| U6 | An import of a `node:` built-in under `src/machine/` fails lint | FR-012 | example | PENDING | |
-| U7 | An import from `src/store` under `src/machine/` fails lint | FR-012 | example | PENDING | |
-| U8 | Imports of `xstate`, `zod`, and sibling machine modules under `src/machine/` pass lint | FR-005, FR-012 | example | PENDING | |
-| U9 | The repository has `src/machine`, `src/store`, `spike`, and `docs`, and has no `src/tools`, `src/dispatch`, or `skills` | FR-006 | example | PENDING | |
+| U1 | A type-only `@get-bb/*` import under `src/machine/` fails lint | AC-1.3, FR-005 | example | DONE | `test/acceptance/lint-isolation.test.ts::fails lint on a type-only @get-bb import` |
+| U2 | A subpath import such as `@get-bb/plugin-sdk/testing` under `src/machine/` fails lint | FR-005 | example | DONE | `test/acceptance/lint-isolation.test.ts::fails lint on an @get-bb subpath import` |
+| U3 | A dynamic `import()` of an `@get-bb/*` module under `src/machine/` fails lint | FR-005 | example | DONE | `test/acceptance/lint-isolation.test.ts::fails lint on a dynamic import of an @get-bb module` |
+| U4 | A re-export from an `@get-bb/*` module under `src/machine/` fails lint | FR-005 | example | DONE | `test/acceptance/lint-isolation.test.ts::fails lint on a re-export from an @get-bb module` |
+| U5 | An import of `better-sqlite3` under `src/machine/` fails lint | FR-012 | example | DONE | `test/acceptance/lint-isolation.test.ts::fails lint on an import of better-sqlite3` |
+| U6 | An import of a `node:` built-in under `src/machine/` fails lint | FR-012 | example | DONE | `test/acceptance/lint-isolation.test.ts::fails lint on an import of a node built-in, with or without the node: prefix` |
+| U7 | An import from `src/store` under `src/machine/` fails lint | FR-012 | example | DONE | `test/acceptance/lint-isolation.test.ts::fails lint on an import from src/store` |
+| U8 | Imports of `xstate`, `zod`, and sibling machine modules under `src/machine/` pass lint | FR-005, FR-012 | example | DONE | `test/acceptance/lint-isolation.test.ts::passes lint on xstate, zod, and sibling machine imports` |
+| U9 | The repository has `src/machine`, `src/store`, `spike`, and `docs`, and has no `src/tools`, `src/dispatch`, or `skills` | FR-006 | example | DONE | `test/acceptance/layout.test.ts::has the milestone 1 to 3 directories and none for later milestones` |
 
 ### `src/machine/events.ts`
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| U10 | Each of the 15 event types parses from a valid example | FR-011, FR-023 | example | PENDING | |
-| U11 | An unknown event type is refused with `unknown_event` | FR-023, edge cases | example | PENDING | |
-| U12 | An event with an unknown extra key is refused with `invalid_event` | FR-023 | example | PENDING | |
-| U13 | An event missing a required field is refused with `invalid_event` | FR-017, FR-023 | example | PENDING | |
-| U14 | An event with a bad value is refused with `invalid_event`: negative or fractional counts, a malformed URL, or an unknown actor | FR-023 | example | PENDING | |
-| U15 | A non-object input is refused with `invalid_event` | FR-023 | example | PENDING | |
+| U10 | Each of the 15 event types parses from a valid example | FR-011, FR-023 | example | PENDING |  |
+| U11 | An unknown event type is refused with `unknown_event` | FR-023, edge cases | example | PENDING |  |
+| U12 | An event with an unknown extra key is refused with `invalid_event` | FR-023 | example | PENDING |  |
+| U13 | An event missing a required field is refused with `invalid_event` | FR-017, FR-023 | example | PENDING |  |
+| U14 | An event with a bad value is refused with `invalid_event`: negative or fractional counts, a malformed URL, or an unknown actor | FR-023 | example | PENDING |  |
+| U15 | A non-object input is refused with `invalid_event` | FR-023 | example | PENDING |  |
 
 ### `src/machine/guards.ts`
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| U16 | `evidenceProvided` refuses empty, whitespace-only, and missing evidence and accepts padded text | FR-015, edge cases | example | PENDING | |
-| U17 | `profileResolved` refuses a missing or null profile and accepts a complete one | FR-021 | example | PENDING | |
-| U18 | `notWorker` refuses only the worker actor and `ownerOnly` accepts only the user actor | FR-019 | example | PENDING | |
-| U19 | The mode guards accept `no-mistakes` for one and the other two modes for the other | FR-020 | example | PENDING | |
-| U20 | `readyModeCheck` needs a pull request URL for `direct-PR` and one or more landed commits for `local-only` | FR-020 | example | PENDING | |
-| U21 | `pipelineFinishedWithPr` refuses an unfinished pipeline and accepts a finished one | FR-020 | example | PENDING | |
-| U22 | The approval scope guards accept only their own scope | FR-016, FR-018, edge cases | example | PENDING | |
-| U23 | `mergeAuthorized` accepts `yolo` or an approved merge decision and refuses a denied, missing, or other-scope decision | FR-016, edge cases | example | PENDING | |
-| U24 | `promotionAuthorized` accepts only an approved promote decision | FR-018 | example | PENDING | |
-| U25 | `worktreeLanded` refuses uncommitted changes or one unpushed commit and accepts zero of each | FR-017 | example | PENDING | |
+| U16 | `evidenceProvided` refuses empty, whitespace-only, and missing evidence and accepts padded text | FR-015, edge cases | example | PENDING |  |
+| U17 | `profileResolved` refuses a missing or null profile and accepts a complete one | FR-021 | example | PENDING |  |
+| U18 | `notWorker` refuses only the worker actor and `ownerOnly` accepts only the user actor | FR-019 | example | PENDING |  |
+| U19 | The mode guards accept `no-mistakes` for one and the other two modes for the other | FR-020 | example | PENDING |  |
+| U20 | `readyModeCheck` needs a pull request URL for `direct-PR` and one or more landed commits for `local-only` | FR-020 | example | PENDING |  |
+| U21 | `pipelineFinishedWithPr` refuses an unfinished pipeline and accepts a finished one | FR-020 | example | PENDING |  |
+| U22 | The approval scope guards accept only their own scope | FR-016, FR-018, edge cases | example | PENDING |  |
+| U23 | `mergeAuthorized` accepts `yolo` or an approved merge decision and refuses a denied, missing, or other-scope decision | FR-016, edge cases | example | PENDING |  |
+| U24 | `promotionAuthorized` accepts only an approved promote decision | FR-018 | example | PENDING |  |
+| U25 | `worktreeLanded` refuses uncommitted changes or one unpushed commit and accepts zero of each | FR-017 | example | PENDING |  |
 
 ### `src/machine/table.ts` and `src/machine/machines.ts`
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| U26 | The table's legal pairs equal a hand-written legal set for each kind | FR-014, SC-001 | example | PENDING | |
-| U27 | Every guard name in the table exists, and each row lists its guards in the documented order | FR-013 | example | PENDING | |
-| U28 | The ship machine has exactly the ship states and the scout machine exactly the scout states | FR-010 | example | PENDING | |
-| U29 | Each xstate machine accepts exactly the transitions the table lists | FR-011 | example | PENDING | |
+| U26 | The table's legal pairs equal a hand-written legal set for each kind | FR-014, SC-001 | example | PENDING |  |
+| U27 | Every guard name in the table exists, and each row lists its guards in the documented order | FR-013 | example | PENDING |  |
+| U28 | The ship machine has exactly the ship states and the scout machine exactly the scout states | FR-010 | example | PENDING |  |
+| U29 | Each xstate machine accepts exactly the transitions the table lists | FR-011 | example | PENDING |  |
 
 ### `src/machine/transition.ts`
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| U30 | `createTask` returns a `queued` snapshot with null defaults and no approvals | FR-010 | example | PENDING | |
-| U31 | `createTask` refuses blank IDs, an unknown kind, an unknown mode, and non-object input | FR-023 | example | PENDING | |
-| U32 | `transition` never throws and returns a refusal for garbage events and an unknown snapshot state | FR-011, FR-023 | example | PENDING | |
-| U33 | `transition` returns equal results for equal inputs and leaves a frozen input unchanged | FR-011, FR-012 | example | PENDING | |
-| U34 | Every refusal carries a code from the closed list and a non-empty message | FR-013 | example | PENDING | |
-| U35 | A successful result carries the from state, the to state, and the parsed event | FR-011 | example | PENDING | |
-| U36 | The first failing guard in table order decides the refusal code | FR-013 | example | PENDING | |
-| U37 | `start` moves `queued` to `working` and records profile, thread, branch, and machine | FR-021 | example | PENDING | |
-| U38 | `ready` and `validated` record the pull request URL in the context | FR-020 | example | PENDING | |
-| U39 | `record_approval` stores the decision, a later decision replaces it, and the state stays | FR-016, edge cases | example | PENDING | |
-| U40 | `record_approval` is refused outside `awaiting_approval` and `report_ready`, and refused for the wrong scope | edge cases | example | PENDING | |
-| U41 | `merge` under `yolo` is still refused from `review_ready` | FR-016 | example | PENDING | |
-| U42 | `promote` makes a queued ship task, keeps thread, branch, and machine, and clears profile, approvals, and URL | FR-018, edge cases | example | PENDING | |
-| U43 | A promoted task accepts ship events and refuses scout events | FR-018 | example | PENDING | |
-| U44 | `fail` is refused from `failed` and from `torn_down` | edge cases | example | PENDING | |
-| U45 | `teardown` from `failed`, `merged`, and `report_ready` needs a landed worktree report | FR-017 | example | PENDING | |
-| U46 | `transition` refuses with `internal_mismatch` when xstate disagrees with the table | FR-011, plan decision 2 | example | PENDING | |
+| U30 | `createTask` returns a `queued` snapshot with null defaults and no approvals | FR-010 | example | PENDING |  |
+| U31 | `createTask` refuses blank IDs, an unknown kind, an unknown mode, and non-object input | FR-023 | example | PENDING |  |
+| U32 | `transition` never throws and returns a refusal for garbage events and an unknown snapshot state | FR-011, FR-023 | example | PENDING |  |
+| U33 | `transition` returns equal results for equal inputs and leaves a frozen input unchanged | FR-011, FR-012 | example | PENDING |  |
+| U34 | Every refusal carries a code from the closed list and a non-empty message | FR-013 | example | PENDING |  |
+| U35 | A successful result carries the from state, the to state, and the parsed event | FR-011 | example | PENDING |  |
+| U36 | The first failing guard in table order decides the refusal code | FR-013 | example | PENDING |  |
+| U37 | `start` moves `queued` to `working` and records profile, thread, branch, and machine | FR-021 | example | PENDING |  |
+| U38 | `ready` and `validated` record the pull request URL in the context | FR-020 | example | PENDING |  |
+| U39 | `record_approval` stores the decision, a later decision replaces it, and the state stays | FR-016, edge cases | example | PENDING |  |
+| U40 | `record_approval` is refused outside `awaiting_approval` and `report_ready`, and refused for the wrong scope | edge cases | example | PENDING |  |
+| U41 | `merge` under `yolo` is still refused from `review_ready` | FR-016 | example | PENDING |  |
+| U42 | `promote` makes a queued ship task, keeps thread, branch, and machine, and clears profile, approvals, and URL | FR-018, edge cases | example | PENDING |  |
+| U43 | A promoted task accepts ship events and refuses scout events | FR-018 | example | PENDING |  |
+| U44 | `fail` is refused from `failed` and from `torn_down` | edge cases | example | PENDING |  |
+| U45 | `teardown` from `failed`, `merged`, and `report_ready` needs a landed worktree report | FR-017 | example | PENDING |  |
+| U46 | `transition` refuses with `internal_mismatch` when xstate disagrees with the table | FR-011, plan decision 2 | example | PENDING |  |
 
 ### `src/store/` contract (runs against both stores)
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| U47 | `appendEvent` assigns strictly increasing `seq` values | FR-030 | example | PENDING | |
-| U48 | An appended event reads back equal, including null fields and nested payload | FR-030 | example | PENDING | |
-| U49 | Mutating a returned row does not change the store | FR-030, AC-3.3 | example | PENDING | |
-| U50 | `listEvents` filters by task and by `afterSeq` and returns `seq` order | FR-030 | example | PENDING | |
-| U51 | `transaction` commits every write when the function returns | FR-033 | example | PENDING | |
-| U52 | `transaction` rolls back every write and rethrows when the function throws | FR-033 | example | PENDING | |
-| U53 | `getProjectConfig` returns the default for an unknown project and the stored config after `putProjectConfig` | FR-031, FR-038 | example | PENDING | |
-| U54 | `putTask` replaces the row, `getTask` returns null for an unknown ID, `clearTasks` leaves events and approvals, and `listTasks` orders by ID and filters | FR-031, FR-036 | example | PENDING | |
-| U55 | `addApproval` and `listApprovals` keep insertion order per task | FR-031 | example | PENDING | |
+| U47 | `appendEvent` assigns strictly increasing `seq` values | FR-030 | example | PENDING |  |
+| U48 | An appended event reads back equal, including null fields and nested payload | FR-030 | example | PENDING |  |
+| U49 | Mutating a returned row does not change the store | FR-030, AC-3.3 | example | PENDING |  |
+| U50 | `listEvents` filters by task and by `afterSeq` and returns `seq` order | FR-030 | example | PENDING |  |
+| U51 | `transaction` commits every write when the function returns | FR-033 | example | PENDING |  |
+| U52 | `transaction` rolls back every write and rethrows when the function throws | FR-033 | example | PENDING |  |
+| U53 | `getProjectConfig` returns the default for an unknown project and the stored config after `putProjectConfig` | FR-031, FR-038 | example | PENDING |  |
+| U54 | `putTask` replaces the row, `getTask` returns null for an unknown ID, `clearTasks` leaves events and approvals, and `listTasks` orders by ID and filters | FR-031, FR-036 | example | PENDING |  |
+| U55 | `addApproval` and `listApprovals` keep insertion order per task | FR-031 | example | PENDING |  |
 
 ### `src/store/sqlite.ts`
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| U56 | A raw `UPDATE` or `DELETE` on `task_event` aborts | AC-3.3, FR-030 | example | PENDING | |
-| U57 | A raw `UPDATE` or `DELETE` on `approval` aborts | FR-031 | example | PENDING | |
-| U58 | The schema version is recorded and a newer version is refused | plan decision 9 | example | PENDING | |
-| U59 | Data survives closing and reopening the same file | AC-3.9 | example | PENDING | |
-| U60 | A raw insert with an unknown outcome or state value is rejected by a check constraint | FR-030 | example | PENDING | |
+| U56 | A raw `UPDATE` or `DELETE` on `task_event` aborts | AC-3.3, FR-030 | example | PENDING |  |
+| U57 | A raw `UPDATE` or `DELETE` on `approval` aborts | FR-031 | example | PENDING |  |
+| U58 | The schema version is recorded and a newer version is refused | plan decision 9 | example | PENDING |  |
+| U59 | Data survives closing and reopening the same file | AC-3.9 | example | PENDING |  |
+| U60 | A raw insert with an unknown outcome or state value is rejected by a check constraint | FR-030 | example | PENDING |  |
 
 ### `src/store/task-log.ts`
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| U61 | `create` appends an applied row from null to `queued` and writes the task row | AC-3.1, FR-033 | example | PENDING | |
-| U62 | A repeated `create` is refused with `task_exists` and logged | edge cases | example | PENDING | |
-| U63 | `apply` on success appends an applied row with from, to, event, actor, evidence, and payload and updates the task row | AC-3.1, FR-033 | example | PENDING | |
-| U64 | `apply` on refusal appends a refused row with code and message and leaves the task row unchanged | AC-3.2, FR-034 | example | PENDING | |
-| U65 | `apply` for an unknown task is refused with `unknown_task` and logged | FR-034 | example | PENDING | |
-| U66 | `record_approval` writes an approval row and other events write none | AC-3.1 | example | PENDING | |
-| U67 | A failure while writing the task row rolls back the log append | AC-3.1, FR-033 | example | PENDING | |
-| U68 | Rows carry the injected clock time in strictly ordered `seq` | FR-030 | example | PENDING | |
-| U69 | A decision comes from the log even when the cache row is tampered with | plan decision 5 | example | PENDING | |
-| U70 | Unreadable input is logged as a refused row with placeholder event and actor | FR-023, FR-034 | example | PENDING | |
+| U61 | `create` appends an applied row from null to `queued` and writes the task row | AC-3.1, FR-033 | example | PENDING |  |
+| U62 | A repeated `create` is refused with `task_exists` and logged | edge cases | example | PENDING |  |
+| U63 | `apply` on success appends an applied row with from, to, event, actor, evidence, and payload and updates the task row | AC-3.1, FR-033 | example | PENDING |  |
+| U64 | `apply` on refusal appends a refused row with code and message and leaves the task row unchanged | AC-3.2, FR-034 | example | PENDING |  |
+| U65 | `apply` for an unknown task is refused with `unknown_task` and logged | FR-034 | example | PENDING |  |
+| U66 | `record_approval` writes an approval row and other events write none | AC-3.1 | example | PENDING |  |
+| U67 | A failure while writing the task row rolls back the log append | AC-3.1, FR-033 | example | PENDING |  |
+| U68 | Rows carry the injected clock time in strictly ordered `seq` | FR-030 | example | PENDING |  |
+| U69 | A decision comes from the log even when the cache row is tampered with | plan decision 5 | example | PENDING |  |
+| U70 | Unreadable input is logged as a refused row with placeholder event and actor | FR-023, FR-034 | example | PENDING |  |
 
 ### `src/store/replay.ts`
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| U71 | `replayTask` returns the snapshot that incremental recording produced | FR-035 | example | PENDING | |
-| U72 | `replayTask` skips refused rows and `reconcile` rows | FR-035, FR-037 | example | PENDING | |
-| U73 | `replayTask` reports a task as corrupt when an applied row is refused by the machine | AC-3.5, FR-035 | example | PENDING | |
-| U74 | `replayTask` reports a task as corrupt when an applied row's `to_state` differs from the machine's result | AC-3.5, FR-035 | example | PENDING | |
-| U75 | `replayTask` reports a task as corrupt when its first applied row is not `create` | FR-035 | example | PENDING | |
-| U76 | `rebuildCache` produces rows equal to the incrementally written rows | AC-3.4, FR-036 | example | PENDING | |
-| U77 | `rebuildCache` writes no row for a corrupt task and lists it | FR-035, FR-036 | example | PENDING | |
-| U78 | `recover` replays non-terminal tasks and skips `torn_down` tasks | AC-3.9, FR-039 | example | PENDING | |
-| U79 | `recover` repairs a missing or diverged cache row and reports the task ID | AC-3.9, FR-039 | example | PENDING | |
-| U80 | Over 200 seeded random event sequences, incremental rows equal rebuilt rows on both stores | SC-003 | property | PENDING | |
+| U71 | `replayTask` returns the snapshot that incremental recording produced | FR-035 | example | PENDING |  |
+| U72 | `replayTask` skips refused rows and `reconcile` rows | FR-035, FR-037 | example | PENDING |  |
+| U73 | `replayTask` reports a task as corrupt when an applied row is refused by the machine | AC-3.5, FR-035 | example | PENDING |  |
+| U74 | `replayTask` reports a task as corrupt when an applied row's `to_state` differs from the machine's result | AC-3.5, FR-035 | example | PENDING |  |
+| U75 | `replayTask` reports a task as corrupt when its first applied row is not `create` | FR-035 | example | PENDING |  |
+| U76 | `rebuildCache` produces rows equal to the incrementally written rows | AC-3.4, FR-036 | example | PENDING |  |
+| U77 | `rebuildCache` writes no row for a corrupt task and lists it | FR-035, FR-036 | example | PENDING |  |
+| U78 | `recover` replays non-terminal tasks and skips `torn_down` tasks | AC-3.9, FR-039 | example | PENDING |  |
+| U79 | `recover` repairs a missing or diverged cache row and reports the task ID | AC-3.9, FR-039 | example | PENDING |  |
+| U80 | Over 200 seeded random event sequences, incremental rows equal rebuilt rows on both stores | SC-003 | property | PENDING |  |
 
 ### `src/store/reconcile.ts`
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| U81 | A mismatching observation appends one `reconcile` row with the replayed state on both sides and the observed state in the payload | AC-3.6, FR-037 | example | PENDING | |
-| U82 | A matching observation appends nothing | AC-3.6 | example | PENDING | |
-| U83 | An identical repeated mismatch appends nothing and a changed observation appends a new row | AC-3.6, edge cases | example | PENDING | |
-| U84 | An observation of `missing` counts as a mismatch | FR-037 | example | PENDING | |
-| U85 | An observation for an unknown or corrupt task is reported and not logged | FR-037 | example | PENDING | |
-| U86 | Reconcile never changes the replayed state, the task rows, or the approvals | FR-037 | example | PENDING | |
+| U81 | A mismatching observation appends one `reconcile` row with the replayed state on both sides and the observed state in the payload | AC-3.6, FR-037 | example | PENDING |  |
+| U82 | A matching observation appends nothing | AC-3.6 | example | PENDING |  |
+| U83 | An identical repeated mismatch appends nothing and a changed observation appends a new row | AC-3.6, edge cases | example | PENDING |  |
+| U84 | An observation of `missing` counts as a mismatch | FR-037 | example | PENDING |  |
+| U85 | An observation for an unknown or corrupt task is reported and not logged | FR-037 | example | PENDING |  |
+| U86 | Reconcile never changes the replayed state, the task rows, or the approvals | FR-037 | example | PENDING |  |
 
 ## Invariants and edge cases still to place
 

@@ -44,21 +44,21 @@ description: "Task list for core scaffold, task state machine, and event storage
 
 ### Tests for user story 1 (write first, watch fail)
 
-- [ ] T010 [P] [US1] [A2] [A5] Manifest test in `test/acceptance/manifest.test.ts` (package name, `bb.server`, exact SDK pin, `build` calls `bb plugin build`)
-- [ ] T011 [P] [US1] [A1] Plugin load test in `test/acceptance/plugin.test.ts` (fake host loads, registers nothing, disposes)
-- [ ] T012 [P] [US1] [U9] Layout test in `test/acceptance/layout.test.ts` (required directories exist, no later-milestone directories)
-- [ ] T013 [P] [US1] [A3] [A4] [U1] [U2] [U3] [U4] Lint isolation test for bb imports in `test/acceptance/lint-isolation.test.ts`
-- [ ] T014 [US1] [U5] [U6] [U7] [U8] Lint purity tests for non-bb imports in `test/acceptance/lint-isolation.test.ts`
+- [x] T010 [P] [US1] [A2] [A5] Manifest test in `test/acceptance/manifest.test.ts` (package name, `bb.server`, exact SDK pin, `build` calls `bb plugin build`)
+- [x] T011 [P] [US1] [A1] Plugin load test in `test/acceptance/plugin.test.ts` (fake host loads, registers nothing, disposes)
+- [x] T012 [P] [US1] [U9] Layout test in `test/acceptance/layout.test.ts` (required directories exist, no later-milestone directories)
+- [x] T013 [P] [US1] [A3] [A4] [U1] [U2] [U3] [U4] Lint isolation test for bb imports in `test/acceptance/lint-isolation.test.ts`
+- [x] T014 [US1] [U5] [U6] [U7] [U8] Lint purity tests for non-bb imports in `test/acceptance/lint-isolation.test.ts`
 
 ### Implementation for user story 1
 
-- [ ] T015 [US1] [A2] [A5] Add the `bb` manifest block, `engines`, and keywords to `package.json`
-- [ ] T016 [P] [US1] [A1] Create the empty plugin factory in `src/server.ts`
-- [ ] T017 [P] [US1] [U9] Create `src/machine/` and `src/store/` with placeholder files
-- [ ] T018 [US1] [A3] [A4] [U1] [U2] [U3] [U4] Add the `@get-bb/*` `no-restricted-imports` override for `src/machine/**` to `eslint.config.js`
-- [ ] T019 [US1] [U5] [U6] [U7] [U8] Extend the override with `better-sqlite3`, `node:*`, and `src/store` patterns
-- [ ] T020 [US1] Create `docs/DECISIONS.md` with the milestone 1 entries (bb CLI missing, manifest keys, tooling versions, TDD sequencing)
-- [ ] T021 [US1] Confirm [A1] to [A5] are green and commit milestone 1
+- [x] T015 [US1] [A2] [A5] Add the `bb` manifest block, `engines`, and keywords to `package.json`
+- [x] T016 [P] [US1] [A1] Create the empty plugin factory in `src/server.ts`
+- [x] T017 [P] [US1] [U9] Create `src/machine/` and `src/store/` with placeholder files
+- [x] T018 [US1] [A3] [A4] [U1] [U2] [U3] [U4] Add the `@get-bb/*` `no-restricted-imports` override for `src/machine/**` to `eslint.config.js`
+- [x] T019 [US1] [U5] [U6] [U7] [U8] Extend the override with `better-sqlite3`, `node:*`, and `src/store` patterns
+- [x] T020 [US1] Create `docs/DECISIONS.md` with the milestone 1 entries (bb CLI missing, manifest keys, tooling versions, TDD sequencing)
+- [x] T021 [US1] Confirm [A1] to [A5] are green and commit milestone 1
 
 **Checkpoint**: User story 1 passes on its own.
 
