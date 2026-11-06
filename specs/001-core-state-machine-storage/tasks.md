@@ -110,25 +110,25 @@ description: "Task list for core scaffold, task state machine, and event storage
 
 ### Tests for user story 3 (write first, watch fail)
 
-- [ ] T060 [US3] [A18] [A19] [A20] [A21] [A22] [A23] [A24] [A25] [A26] Write the outer-loop acceptance tests in `test/acceptance/store-restart.test.ts` and `test/acceptance/store-contract.test.ts`; they stay red until the units land
-- [ ] T061 [P] [US3] [U47] [U48] [U49] [U50] [U51] [U52] [U53] [U54] [U55] Shared store contract suite in `test/store-contract.ts` run by `src/store/memory.test.ts`
-- [ ] T062 [US3] [U47] [U48] [U49] [U50] [U51] [U52] [U53] [U54] [U55] Define row types and the `Store` interface, and implement the in-memory store, in `src/store/types.ts`, `src/store/store.ts`, and `src/store/memory.ts`
-- [ ] T063 [P] [US3] [U56] [U57] [U58] [U59] [U60] SQLite tests and the contract run in `src/store/sqlite.test.ts`
-- [ ] T064 [US3] [U56] [U57] [U58] [U59] [U60] Implement the SQLite store and schema in `src/store/sqlite.ts`
-- [ ] T065 [P] [US3] [U61] [U62] [U63] [U64] [U65] [U66] Task log tests for create, apply, refusal, and approvals in `src/store/task-log.test.ts`
-- [ ] T066 [US3] [U61] [U62] [U63] [U64] [U65] [U66] Implement `TaskLog` in `src/store/task-log.ts`
-- [ ] T067 [US3] [U67] [U68] [U69] [U70] Task log tests for atomicity, clock, log-as-input, and unreadable input in `src/store/task-log.test.ts`
-- [ ] T068 [US3] [U67] [U68] [U69] [U70] Complete `TaskLog` atomicity, clock, and input handling in `src/store/task-log.ts`
-- [ ] T069 [P] [US3] [U71] [U72] [U73] [U74] [U75] Replay tests in `src/store/replay.test.ts`
-- [ ] T070 [US3] [U71] [U72] [U73] [U74] [U75] Implement `replayTask` in `src/store/replay.ts`
-- [ ] T071 [US3] [U76] [U77] [U78] [U79] Rebuild and recovery tests in `src/store/replay.test.ts`
-- [ ] T072 [US3] [U76] [U77] [U78] [U79] Implement `rebuildCache` and `recover` in `src/store/replay.ts`
-- [ ] T073 [US3] [U80] Seeded random-walk test in `test/acceptance/store-random-walk.test.ts`
-- [ ] T074 [US3] [U80] Fix any divergence the random walk exposes in `src/store/`
-- [ ] T075 [P] [US3] [U81] [U82] [U83] [U84] [U85] [U86] Reconcile tests in `src/store/reconcile.test.ts`
-- [ ] T076 [US3] [U81] [U82] [U83] [U84] [U85] [U86] Implement `reconcile` in `src/store/reconcile.ts`
-- [ ] T077 [US3] Record storage deviations in `docs/DECISIONS.md`
-- [ ] T078 [US3] Confirm [A18] to [A26] are green and commit milestone 3
+- [x] T060 [US3] [A18] [A19] [A20] [A21] [A22] [A23] [A24] [A25] [A26] Write the outer-loop acceptance tests in `test/acceptance/store-restart.test.ts` and `test/acceptance/store-contract.test.ts`; they stay red until the units land
+- [x] T061 [P] [US3] [U47] [U48] [U49] [U50] [U51] [U52] [U53] [U54] [U55] Shared store contract suite in `test/store-contract.ts` run by `src/store/memory.test.ts`
+- [x] T062 [US3] [U47] [U48] [U49] [U50] [U51] [U52] [U53] [U54] [U55] Define row types and the `Store` interface, and implement the in-memory store, in `src/store/types.ts`, `src/store/store.ts`, and `src/store/memory.ts`
+- [x] T063 [P] [US3] [U56] [U57] [U58] [U59] [U60] SQLite tests and the contract run in `src/store/sqlite.test.ts`
+- [x] T064 [US3] [U56] [U57] [U58] [U59] [U60] Implement the SQLite store and schema in `src/store/sqlite.ts`
+- [x] T065 [P] [US3] [U61] [U62] [U63] [U64] [U65] [U66] Task log tests for create, apply, refusal, and approvals in `src/store/task-log.test.ts`
+- [x] T066 [US3] [U61] [U62] [U63] [U64] [U65] [U66] Implement `TaskLog` in `src/store/task-log.ts`
+- [x] T067 [US3] [U67] [U68] [U69] [U70] Task log tests for atomicity, clock, log-as-input, and unreadable input in `src/store/task-log.test.ts`
+- [x] T068 [US3] [U67] [U68] [U69] [U70] Complete `TaskLog` atomicity, clock, and input handling in `src/store/task-log.ts`
+- [x] T069 [P] [US3] [U71] [U72] [U73] [U74] [U75] Replay tests in `src/store/replay.test.ts`
+- [x] T070 [US3] [U71] [U72] [U73] [U74] [U75] Implement `replayTask` in `src/store/replay.ts`
+- [x] T071 [US3] [U76] [U77] [U78] [U79] Rebuild and recovery tests in `src/store/replay.test.ts`
+- [x] T072 [US3] [U76] [U77] [U78] [U79] Implement `rebuildCache` and `recover` in `src/store/replay.ts`
+- [x] T073 [US3] [U80] Seeded random-walk test in `test/acceptance/store-random-walk.test.ts`
+- [x] T074 [US3] [U80] Fix any divergence the random walk exposes in `src/store/`
+- [x] T075 [P] [US3] [U81] [U82] [U83] [U84] [U85] [U86] Reconcile tests in `src/store/reconcile.test.ts`
+- [x] T076 [US3] [U81] [U82] [U83] [U84] [U85] [U86] Implement `reconcile` in `src/store/reconcile.ts`
+- [x] T077 [US3] Record storage deviations in `docs/DECISIONS.md`
+- [x] T078 [US3] Confirm [A18] to [A26] are green and commit milestone 3
 
 **Checkpoint**: All three user stories pass.
 

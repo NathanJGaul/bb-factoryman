@@ -140,3 +140,66 @@ The machine only checks that the `start` event carries a complete profile of pro
 
 A task has no snapshot before it exists, so `createTask` builds the first snapshot from a `create` event.
 The log records `create` as the first row of every task.
+
+## Milestone 3: storage
+
+### D-019: The log and task tables gain columns (Deviation)
+
+`task_event` keeps the design's columns (task ID, time, from state, to state, event, actor, evidence) and adds five:
+
+- `seq` gives strict order across tasks.
+- `payload` holds the event fields other than type, actor, and evidence. Without it, replay could not rebuild the worker thread, branch, machine, or pull request URL, and could not re-run the gates with their original facts.
+- `outcome` is `applied` or `refused`.
+- `reason_code` and `reason_message` name why a refused event was refused.
+
+`task` gains `project_id` and `mode`. A task needs its project to find the project's `yolo` flag, and its delivery mode is fixed when the task is created, even if the project changes later.
+
+### D-020: Refusals live in the same log (Gap)
+
+The design says illegal transitions are refused and logged, and says the log is append-only.
+A refused event is a row with outcome `refused`, with its from and to state both set to the task's current state.
+Replay skips refused rows, so they never change state.
+One stream keeps a single order for audit.
+
+### D-021: The log is the only input to a decision (Gap)
+
+`TaskLog.apply` replays the task's applied rows to get the snapshot, and never reads the cache row.
+The cache is written through on every accepted event and is rebuildable at any time.
+A stale or tampered cache row therefore cannot change a gate's answer, and the next accepted event overwrites it.
+
+### D-022: Reconcile records and never repairs (Gap)
+
+Reconcile writes a `reconcile` row for each task whose replayed state differs from the caller's observation.
+It changes no task state, cache row, or approval.
+If the last row of a task is already an identical `reconcile` row, it writes nothing, so a restart does not repeat the same alert.
+The caller supplies the observations. Mapping bb thread state to task states is event wiring, which is milestone 5.
+
+### D-023: Recovery repairs only the cache (Gap)
+
+`recover` replays every task that is not `torn_down`, rewrites a cache row that is missing or differs, and reports every task it touched.
+It never writes to the log and never guesses a row for a corrupt task.
+`rebuildCache` rebuilds every task, including `torn_down` ones, and also writes no row for a corrupt task.
+
+### D-024: A corrupt task refuses further events (Gap)
+
+When an applied row no longer passes the machine, or records a state the machine does not reach, replay reports the task as corrupt.
+`TaskLog.apply` then refuses every event for that task with `corrupt_log` and logs the refusal.
+The owner has to look at the log. The plugin does not repair history.
+
+### D-025: Append-only is enforced twice (Gap)
+
+The `Store` interface has no method that updates or deletes a log row or an approval.
+The SQLite schema adds triggers that abort `UPDATE` and `DELETE` on `task_event` and on `approval`, so a raw SQL statement cannot rewrite history either.
+The design asks for an append-only event log. The approval table gets the same protection.
+
+### D-026: Project config fields are nullable, with no invented defaults (Gap)
+
+An unregistered project reads as `no-mistakes` with `yolo` off, as the design says.
+The branch prefix, base branch, and default machine are null until someone sets them.
+The design gives no default for them, so the store invents none.
+
+### D-027: The SQLite store takes a path or an open database (Limit)
+
+`openSqliteStore` accepts a file path, `:memory:`, or an open `better-sqlite3` database, and closes only what it opened.
+How the plugin gets its per-plugin database from bb is unverified, so milestone 0 settles it.
+Wiring the store into the plugin factory waits for those results, as `CLAUDE.md` requires.

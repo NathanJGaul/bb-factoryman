@@ -4,7 +4,7 @@ loop: outside-in
 profile: .specify/memory/tdd-profile.md
 spec_criteria: 26
 planned_at: d4a96f4
-updated_at: d4a96f4
+updated_at: 0ef5f71
 suite_baseline: green
 ---
 
@@ -38,15 +38,15 @@ One per acceptance criterion in `spec.md`.
 | A15 | A `block` event moves a working task to `blocked`, an `unblock` event returns it, and `block` elsewhere is refused | AC-2.10, FR-022 | example | DONE | `test/acceptance/machine-gates.test.ts::blocked loops back to working` |
 | A16 | A `fail` event with evidence moves any task that is not `torn_down` or `failed` to `failed` | AC-2.11 | example | DONE | `test/acceptance/machine-gates.test.ts::any state before torn_down can fail with evidence` |
 | A17 | Approval events from a non-owner actor are refused, and worker actors are refused on four events | AC-2.12, FR-019 | example | DONE | `test/acceptance/machine-gates.test.ts::approvals and authority` |
-| A18 | Recording an event writes one log row, the task row, and any approval row together | AC-3.1, FR-033 | example | PENDING |  |
-| A19 | A refused event leaves a refused log row with its reason and an unchanged task row | AC-3.2, FR-034 | example | PENDING |  |
-| A20 | A stored log row cannot be updated or deleted | AC-3.3, FR-030 | example | PENDING |  |
-| A21 | After the task cache is destroyed, a rebuild from the log equals the original rows field for field | AC-3.4, FR-036 | example | PENDING |  |
-| A22 | Replay reports a task as corrupt when an applied row no longer passes the machine | AC-3.5, FR-035 | example | PENDING |  |
-| A23 | Reconcile appends one `reconcile` row per mismatch, changes no task state, and skips an identical repeat | AC-3.6, FR-037 | example | PENDING |  |
-| A24 | The shared contract suite passes against both the in-memory and the SQLite store | AC-3.7, FR-032, SC-006 | example | PENDING |  |
-| A25 | An unregistered project reads as `no-mistakes` with `yolo` off | AC-3.8, FR-038 | example | PENDING |  |
-| A26 | Start-up recovery on a reopened SQLite file replays every non-terminal task | AC-3.9, FR-039 | example | PENDING |  |
+| A18 | Recording an event writes one log row, the task row, and any approval row together | AC-3.1, FR-033 | example | DONE | `test/acceptance/store-restart.test.ts::%s store: recording events writes one log row, the task row, and any approval row together` |
+| A19 | A refused event leaves a refused log row with its reason and an unchanged task row | AC-3.2, FR-034 | example | DONE | `test/acceptance/store-restart.test.ts::%s store: recording events logs a refused event with its reason ...` |
+| A20 | A stored log row cannot be updated or deleted | AC-3.3, FR-030 | example | DONE | `test/acceptance/store-restart.test.ts::log immutability` |
+| A21 | After the task cache is destroyed, a rebuild from the log equals the original rows field for field | AC-3.4, FR-036 | example | DONE | `test/acceptance/store-restart.test.ts::%s store: rebuilding the cache rebuilds task rows equal to the originals ...` |
+| A22 | Replay reports a task as corrupt when an applied row no longer passes the machine | AC-3.5, FR-035 | example | DONE | `test/acceptance/store-restart.test.ts::%s store: rebuilding the cache reports a task as corrupt ...` |
+| A23 | Reconcile appends one `reconcile` row per mismatch, changes no task state, and skips an identical repeat | AC-3.6, FR-037 | example | DONE | `test/acceptance/store-restart.test.ts::%s store: reconcile` |
+| A24 | The shared contract suite passes against both the in-memory and the SQLite store | AC-3.7, FR-032, SC-006 | example | DONE | `test/acceptance/store-contract.test.ts::memory store contract / sqlite store contract` |
+| A25 | An unregistered project reads as `no-mistakes` with `yolo` off | AC-3.8, FR-038 | example | DONE | `test/acceptance/store-contract.test.ts::project config defaults` |
+| A26 | Start-up recovery on a reopened SQLite file replays every non-terminal task | AC-3.9, FR-039 | example | DONE | `test/acceptance/store-restart.test.ts::start-up recovery` |
 
 ## Inner loop: unit behaviors
 
@@ -125,66 +125,66 @@ One per acceptance criterion in `spec.md`.
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| U47 | `appendEvent` assigns strictly increasing `seq` values | FR-030 | example | PENDING |  |
-| U48 | An appended event reads back equal, including null fields and nested payload | FR-030 | example | PENDING |  |
-| U49 | Mutating a returned row does not change the store | FR-030, AC-3.3 | example | PENDING |  |
-| U50 | `listEvents` filters by task and by `afterSeq` and returns `seq` order | FR-030 | example | PENDING |  |
-| U51 | `transaction` commits every write when the function returns | FR-033 | example | PENDING |  |
-| U52 | `transaction` rolls back every write and rethrows when the function throws | FR-033 | example | PENDING |  |
-| U53 | `getProjectConfig` returns the default for an unknown project and the stored config after `putProjectConfig` | FR-031, FR-038 | example | PENDING |  |
-| U54 | `putTask` replaces the row, `getTask` returns null for an unknown ID, `clearTasks` leaves events and approvals, and `listTasks` orders by ID and filters | FR-031, FR-036 | example | PENDING |  |
-| U55 | `addApproval` and `listApprovals` keep insertion order per task | FR-031 | example | PENDING |  |
+| U47 | `appendEvent` assigns strictly increasing `seq` values | FR-030 | example | DONE | `test/store-contract.ts::assigns strictly increasing seq values to appended events` (run by memory.test.ts, sqlite.test.ts) |
+| U48 | An appended event reads back equal, including null fields and nested payload | FR-030 | example | DONE | `test/store-contract.ts::reads back an appended event equal to what was written ...` |
+| U49 | Mutating a returned row does not change the store | FR-030, AC-3.3 | example | DONE | `test/store-contract.ts::does not let a caller change the store by mutating a returned row` |
+| U50 | `listEvents` filters by task and by `afterSeq` and returns `seq` order | FR-030 | example | DONE | `test/store-contract.ts::filters events by task and by afterSeq and returns them in seq order` |
+| U51 | `transaction` commits every write when the function returns | FR-033 | example | DONE | `test/store-contract.ts::commits every write of a transaction and returns the function's value` |
+| U52 | `transaction` rolls back every write and rethrows when the function throws | FR-033 | example | DONE | `test/store-contract.ts::rolls back every write of a transaction and rethrows when the function throws` |
+| U53 | `getProjectConfig` returns the default for an unknown project and the stored config after `putProjectConfig` | FR-031, FR-038 | example | DONE | `test/store-contract.ts::returns the default config for an unknown project and the stored config after a put` |
+| U54 | `putTask` replaces the row, `getTask` returns null for an unknown ID, `clearTasks` leaves events and approvals, and `listTasks` orders by ID and filters | FR-031, FR-036 | example | DONE | `test/store-contract.ts::puts, gets, replaces, lists, filters, and clears task rows ...` |
+| U55 | `addApproval` and `listApprovals` keep insertion order per task | FR-031 | example | DONE | `test/store-contract.ts::keeps approvals in insertion order per task` |
 
 ### `src/store/sqlite.ts`
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| U56 | A raw `UPDATE` or `DELETE` on `task_event` aborts | AC-3.3, FR-030 | example | PENDING |  |
-| U57 | A raw `UPDATE` or `DELETE` on `approval` aborts | FR-031 | example | PENDING |  |
-| U58 | The schema version is recorded and a newer version is refused | plan decision 9 | example | PENDING |  |
-| U59 | Data survives closing and reopening the same file | AC-3.9 | example | PENDING |  |
-| U60 | A raw insert with an unknown outcome or state value is rejected by a check constraint | FR-030 | example | PENDING |  |
+| U56 | A raw `UPDATE` or `DELETE` on `task_event` aborts | AC-3.3, FR-030 | example | DONE | `src/store/sqlite.test.ts::aborts a raw UPDATE or DELETE on task_event` |
+| U57 | A raw `UPDATE` or `DELETE` on `approval` aborts | FR-031 | example | DONE | `src/store/sqlite.test.ts::aborts a raw UPDATE or DELETE on approval` |
+| U58 | The schema version is recorded and a newer version is refused | plan decision 9 | example | DONE | `src/store/sqlite.test.ts::records the schema version and refuses a newer one` |
+| U59 | Data survives closing and reopening the same file | AC-3.9 | example | DONE | `src/store/sqlite.test.ts::keeps its data when the same file is closed and reopened` |
+| U60 | A raw insert with an unknown outcome or state value is rejected by a check constraint | FR-030 | example | DONE | `src/store/sqlite.test.ts::rejects raw rows whose enum values are not in the vocabulary` |
 
 ### `src/store/task-log.ts`
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| U61 | `create` appends an applied row from null to `queued` and writes the task row | AC-3.1, FR-033 | example | PENDING |  |
-| U62 | A repeated `create` is refused with `task_exists` and logged | edge cases | example | PENDING |  |
-| U63 | `apply` on success appends an applied row with from, to, event, actor, evidence, and payload and updates the task row | AC-3.1, FR-033 | example | PENDING |  |
-| U64 | `apply` on refusal appends a refused row with code and message and leaves the task row unchanged | AC-3.2, FR-034 | example | PENDING |  |
-| U65 | `apply` for an unknown task is refused with `unknown_task` and logged | FR-034 | example | PENDING |  |
-| U66 | `record_approval` writes an approval row and other events write none | AC-3.1 | example | PENDING |  |
-| U67 | A failure while writing the task row rolls back the log append | AC-3.1, FR-033 | example | PENDING |  |
-| U68 | Rows carry the injected clock time in strictly ordered `seq` | FR-030 | example | PENDING |  |
-| U69 | A decision comes from the log even when the cache row is tampered with | plan decision 5 | example | PENDING |  |
-| U70 | Unreadable input is logged as a refused row with placeholder event and actor | FR-023, FR-034 | example | PENDING |  |
+| U61 | `create` appends an applied row from null to `queued` and writes the task row | AC-3.1, FR-033 | example | DONE | `src/store/task-log.test.ts::TaskLog.create appends an applied row from nothing to queued ...` |
+| U62 | A repeated `create` is refused with `task_exists` and logged | edge cases | example | DONE | `src/store/task-log.test.ts::TaskLog.create refuses a repeated create with task_exists ...` |
+| U63 | `apply` on success appends an applied row with from, to, event, actor, evidence, and payload and updates the task row | AC-3.1, FR-033 | example | DONE | `src/store/task-log.test.ts::TaskLog.apply on success appends an applied row ...` |
+| U64 | `apply` on refusal appends a refused row with code and message and leaves the task row unchanged | AC-3.2, FR-034 | example | DONE | `src/store/task-log.test.ts::TaskLog.apply on refusal appends a refused row ...` |
+| U65 | `apply` for an unknown task is refused with `unknown_task` and logged | FR-034 | example | DONE | `src/store/task-log.test.ts::TaskLog.apply refuses an event for an unknown task ...` |
+| U66 | `record_approval` writes an approval row and other events write none | AC-3.1 | example | DONE | `src/store/task-log.test.ts::TaskLog.apply writes an approval row for record_approval ...` |
+| U67 | A failure while writing the task row rolls back the log append | AC-3.1, FR-033 | example | DONE | `src/store/task-log.test.ts::TaskLog atomicity on the %s store` |
+| U68 | Rows carry the injected clock time in strictly ordered `seq` | FR-030 | example | DONE | `src/store/task-log.test.ts::TaskLog clock` |
+| U69 | A decision comes from the log even when the cache row is tampered with | plan decision 5 | example | DONE | `src/store/task-log.test.ts::TaskLog uses the log, not the cache, to decide` |
+| U70 | Unreadable input is logged as a refused row with placeholder event and actor | FR-023, FR-034 | example | DONE | `src/store/task-log.test.ts::TaskLog with unreadable input` |
 
 ### `src/store/replay.ts`
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| U71 | `replayTask` returns the snapshot that incremental recording produced | FR-035 | example | PENDING |  |
-| U72 | `replayTask` skips refused rows and `reconcile` rows | FR-035, FR-037 | example | PENDING |  |
-| U73 | `replayTask` reports a task as corrupt when an applied row is refused by the machine | AC-3.5, FR-035 | example | PENDING |  |
-| U74 | `replayTask` reports a task as corrupt when an applied row's `to_state` differs from the machine's result | AC-3.5, FR-035 | example | PENDING |  |
-| U75 | `replayTask` reports a task as corrupt when its first applied row is not `create` | FR-035 | example | PENDING |  |
-| U76 | `rebuildCache` produces rows equal to the incrementally written rows | AC-3.4, FR-036 | example | PENDING |  |
-| U77 | `rebuildCache` writes no row for a corrupt task and lists it | FR-035, FR-036 | example | PENDING |  |
-| U78 | `recover` replays non-terminal tasks and skips `torn_down` tasks | AC-3.9, FR-039 | example | PENDING |  |
-| U79 | `recover` repairs a missing or diverged cache row and reports the task ID | AC-3.9, FR-039 | example | PENDING |  |
-| U80 | Over 200 seeded random event sequences, incremental rows equal rebuilt rows on both stores | SC-003 | property | PENDING |  |
+| U71 | `replayTask` returns the snapshot that incremental recording produced | FR-035 | example | DONE | `src/store/replay.test.ts::replayTask returns the snapshot that folding the recorded events ...` |
+| U72 | `replayTask` skips refused rows and `reconcile` rows | FR-035, FR-037 | example | DONE | `src/store/replay.test.ts::replayTask skips refused rows and reconcile rows` |
+| U73 | `replayTask` reports a task as corrupt when an applied row is refused by the machine | AC-3.5, FR-035 | example | DONE | `src/store/replay.test.ts::replayTask reports a task as corrupt when an applied row is refused by the machine` |
+| U74 | `replayTask` reports a task as corrupt when an applied row's `to_state` differs from the machine's result | AC-3.5, FR-035 | example | DONE | `src/store/replay.test.ts::replayTask reports a task as corrupt when an applied row's to_state differs ...` |
+| U75 | `replayTask` reports a task as corrupt when its first applied row is not `create` | FR-035 | example | DONE | `src/store/replay.test.ts::replayTask reports a task as corrupt when its first applied row is not create ...` |
+| U76 | `rebuildCache` produces rows equal to the incrementally written rows | AC-3.4, FR-036 | example | DONE | `src/store/replay.test.ts::rebuildCache produces rows equal to the incrementally written rows ...` |
+| U77 | `rebuildCache` writes no row for a corrupt task and lists it | FR-035, FR-036 | example | DONE | `src/store/replay.test.ts::rebuildCache writes no row for a corrupt task, lists it, ...` |
+| U78 | `recover` replays non-terminal tasks and skips `torn_down` tasks | AC-3.9, FR-039 | example | DONE | `src/store/replay.test.ts::recover replays every non-terminal task and skips torn_down tasks` |
+| U79 | `recover` repairs a missing or diverged cache row and reports the task ID | AC-3.9, FR-039 | example | DONE | `src/store/replay.test.ts::recover repairs a missing or diverged cache row ...` |
+| U80 | Over 200 seeded random event sequences, incremental rows equal rebuilt rows on both stores | SC-003 | property | DONE | `test/acceptance/store-random-walk.test.ts::seeded random walks on the %s store` |
 
 ### `src/store/reconcile.ts`
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| U81 | A mismatching observation appends one `reconcile` row with the replayed state on both sides and the observed state in the payload | AC-3.6, FR-037 | example | PENDING |  |
-| U82 | A matching observation appends nothing | AC-3.6 | example | PENDING |  |
-| U83 | An identical repeated mismatch appends nothing and a changed observation appends a new row | AC-3.6, edge cases | example | PENDING |  |
-| U84 | An observation of `missing` counts as a mismatch | FR-037 | example | PENDING |  |
-| U85 | An observation for an unknown or corrupt task is reported and not logged | FR-037 | example | PENDING |  |
-| U86 | Reconcile never changes the replayed state, the task rows, or the approvals | FR-037 | example | PENDING |  |
+| U81 | A mismatching observation appends one `reconcile` row with the replayed state on both sides and the observed state in the payload | AC-3.6, FR-037 | example | DONE | `src/store/reconcile.test.ts::appends one reconcile row per mismatch ...` |
+| U82 | A matching observation appends nothing | AC-3.6 | example | DONE | `src/store/reconcile.test.ts::appends nothing for an observation that matches the replayed state` |
+| U83 | An identical repeated mismatch appends nothing and a changed observation appends a new row | AC-3.6, edge cases | example | DONE | `src/store/reconcile.test.ts::appends nothing for an identical repeated mismatch ...` |
+| U84 | An observation of `missing` counts as a mismatch | FR-037 | example | DONE | `src/store/reconcile.test.ts::counts an observation of missing as a mismatch` |
+| U85 | An observation for an unknown or corrupt task is reported and not logged | FR-037 | example | DONE | `src/store/reconcile.test.ts::reports an observation for an unknown or corrupt task ...` |
+| U86 | Reconcile never changes the replayed state, the task rows, or the approvals | FR-037 | example | DONE | `src/store/reconcile.test.ts::never changes the replayed state, the task rows, or the approvals` |
 
 ## Invariants and edge cases still to place
 
@@ -234,6 +234,8 @@ The outer-loop tests for a milestone are written first and stay red until their 
 | G24 | U76 to U79 | 3 |
 | G25 | U80 | 3 |
 | G26 | U81 to U86 | 3 |
+
+Execution notes: replay (G23) ran before the task log (G21 and G22), because the task log decides from a replay. A follow-up cycle G5b fixed a lint rule defect, and G1c added the manifest branding that `bb plugin build` needs. The cycle log records both.
 
 ## Verification commands
 
