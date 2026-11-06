@@ -49,8 +49,12 @@ pnpm run check
 
 Expected: type-check, lint, and tests pass in under 60 seconds.
 
-## Known limit
+## 5. Build the plugin
 
-`pnpm run build` calls `bb plugin build`.
-The `bb` command-line tool is not installed in the build environment, so this step runs on the owner's machine.
-See `docs/DECISIONS.md`.
+```sh
+pnpm run build
+```
+
+Expected: `bb plugin build` writes `dist/server.js`, `dist/server.js.map`, and `dist/server.meta.json`.
+This step needs the `bb` command-line tool (bb 0.48.1 or newer).
+See `docs/DECISIONS.md` (D-001).

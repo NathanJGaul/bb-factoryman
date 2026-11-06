@@ -66,5 +66,5 @@ Adding any of these tools is the owner's decision.
 ## Constraints
 
 - `better-sqlite3` is a native module. `pnpm-workspace.yaml` must keep `allowBuilds` set for it. The smoke test in `test/toolchain.test.ts` fails if the native build is missing.
-- `bb plugin build` cannot run in this environment because the `bb` command-line tool is not installed. The profile does not cover the build.
+- `pnpm run build` calls `bb plugin build`, which needs the `bb` command-line tool (bb 0.48.1 was installed mid-task). The profile does not cover the build, and the suite does not run it.
 - Lint is `pnpm run lint`. Type-check is `pnpm run typecheck`. The combined gate is `pnpm run check`.

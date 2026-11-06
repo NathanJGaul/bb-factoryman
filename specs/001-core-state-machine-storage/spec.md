@@ -173,7 +173,7 @@ Then feed a conflicting live observation to reconcile and read the log.
 ## Assumptions
 
 - The spike results in `spike/RESULTS.md` do not exist yet. No code in this feature depends on an unconfirmed bb behavior.
-- The `bb` command-line tool is not installed in the build environment, so `bb plugin build` cannot run here. The scaffold records the build command and verifies the plugin through type-check and the fake host. `docs/DECISIONS.md` records this limit.
+- The `bb` command-line tool was not installed when the scaffold started, so the build step waited. The owner installed bb 0.48.1 during the work, and `bb plugin build` now runs. `docs/DECISIONS.md` records the outcome (D-001).
 - Hard rules 5, 6, and 7 depend on machine placement and extension code, which are later milestones. This feature gives `blocked` its state and events and leaves the placement checks to milestone 8 and the extension check to milestone 9.
 - The facts that gates need arrive in event payloads: the worktree report, the pull request URL, the landed-commit count, the pipeline result, and the `yolo` flag. Later tools gather these facts. This feature never gathers them.
 - Task, project, and thread IDs are opaque strings. Times are ISO 8601 UTC strings supplied by the caller.

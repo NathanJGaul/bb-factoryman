@@ -5,13 +5,13 @@ This file records the choices that the design left open.
 
 ## R1. Manifest and layout of a bb plugin
 
-- **Decision**: `package.json` declares `bb.server` as `./src/server.ts`, plus `bb.name`, `bb.description`, `engines`, and the `bb-plugin` keyword. Skills use the conventional `skills/` directory later. The scaffold adds no `bb.skills` key.
+- **Decision**: `package.json` declares `bb.server` as `./src/server.ts`, plus `bb.name`, `bb.description`, `bb.branding.icon`, `engines`, and the `bb-plugin` keyword. Skills use the conventional `skills/` directory later. The scaffold adds no `bb.skills` key.
 - **Rationale**: The public example plugins in `get-bb/bb` (`examples/plugins/slack-bot`, `agent-enrichment`) use exactly these keys. Their README calls `skills/` "the conventional plugin skills directory". The design's `bb.skills` key is unverified, and no skills exist before milestone 11.
 - **Alternatives**: Declare `bb.skills` now. Rejected because the key is unconfirmed and guessing it risks a manifest that bb rejects.
 
 ## R2. Pin and testing surface of the plugin SDK
 
-- **Decision**: Pin `@get-bb/plugin-sdk` to `0.6.125` (exact). Use `createFakePluginHost({ pluginId })`, `await plugin(host.bb)`, `host.harness.inspection.registrations`, and `host.harness.lifecycle.dispose()`.
+- **Decision**: Pin `@get-bb/plugin-sdk` to `0.6.104` (exact), the version the installed bb 0.48.1 reports. Use `createFakePluginHost({ pluginId })`, `await plugin(host.bb)`, `host.harness.inspection.registrations`, and `host.harness.lifecycle.dispose()`.
 - **Rationale**: The SDK README documents this shape for external plugins. The SDK's `hono` and `cron-parser` peers are optional, but the fake host needs `hono`, so we install it as a dev dependency.
 - **Alternatives**: A caret range. Rejected because the design asks for a pinned SDK and several APIs carry an `experimental_` prefix.
 

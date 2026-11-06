@@ -22,8 +22,8 @@ importers:
         specifier: ^10.0.0
         version: 10.0.1(eslint@10.14.0)
       '@get-bb/plugin-sdk':
-        specifier: 0.6.125
-        version: 0.6.125(@types/better-sqlite3@7.6.13)(better-sqlite3@12.10.0)(cron-parser@5.10.3)(hono@4.13.16)(react@19.3.1)
+        specifier: 0.6.104
+        version: 0.6.104(@types/better-sqlite3@7.6.13)(better-sqlite3@12.10.0)(cron-parser@5.10.3)(hono@4.13.16)(react@19.3.1)
       '@types/better-sqlite3':
         specifier: ^7.6.13
         version: 7.6.13
@@ -96,8 +96,8 @@ packages:
     resolution: {integrity: sha512-IkO+/KEUvwbVpiURZg+P7zF74z5Jxe0UgJxVni+RtoHQ6IZieXaO02kmadomap/q+l6bc/jdPGGqTjhuZnuz1Q==}
     engines: {node: ^20.19.0 || ^22.13.0 || >=24}
 
-  '@get-bb/plugin-sdk@0.6.125':
-    resolution: {integrity: sha512-XQ2Cjlc4pl7K389xYqo2LjCXAQY3YzbygW6vOfCdgQ9Q5DBARArJWH03ncngIBG7cDMIaL4K80ShWFPxdBi3Kg==}
+  '@get-bb/plugin-sdk@0.6.104':
+    resolution: {integrity: sha512-nUbCt+CrMjmSY5pRj66m/vx2dTh4MH/tt7oImWzRuRcmwily9Qbspdab5gWAIsDImmyDibFBTC6Rg2XtOHh8Cg==}
     peerDependencies:
       '@testing-library/react': ^16.3.2
       '@types/better-sqlite3': ^7.6.12
@@ -1071,7 +1071,7 @@ snapshots:
       '@eslint/core': 1.2.1
       levn: 0.4.1
 
-  '@get-bb/plugin-sdk@0.6.125(@types/better-sqlite3@7.6.13)(better-sqlite3@12.10.0)(cron-parser@5.10.3)(hono@4.13.16)(react@19.3.1)':
+  '@get-bb/plugin-sdk@0.6.104(@types/better-sqlite3@7.6.13)(better-sqlite3@12.10.0)(cron-parser@5.10.3)(hono@4.13.16)(react@19.3.1)':
     dependencies:
       '@tanstack/react-query': 5.106.0(react@19.3.1)
       cross-spawn: 7.0.6

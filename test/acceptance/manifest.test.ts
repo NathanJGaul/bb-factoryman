@@ -6,7 +6,7 @@ interface Manifest {
   keywords?: string[];
   scripts?: Record<string, string>;
   devDependencies?: Record<string, string>;
-  bb?: { name?: string; description?: string; server?: string };
+  bb?: { name?: string; description?: string; server?: string; branding?: { icon?: string } };
 }
 
 const manifest = JSON.parse(
@@ -19,6 +19,7 @@ describe("package manifest", () => {
     expect(manifest.bb?.server).toBe("./src/server.ts");
     expect(manifest.bb?.name).toBeTruthy();
     expect(manifest.bb?.description).toBeTruthy();
+    expect(manifest.bb?.branding?.icon).toBeTruthy();
     expect(manifest.keywords).toContain("bb-plugin");
     expect(manifest.devDependencies?.["@get-bb/plugin-sdk"]).toMatch(/^\d+\.\d+\.\d+$/);
   });

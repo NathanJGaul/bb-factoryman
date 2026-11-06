@@ -294,3 +294,14 @@ Each behavior in a batch still has its own test, and each entry records the fail
   - Z5: `rebuildCache` writes a row for a corrupt task -> `writes no row for a corrupt task ...` failed.
 - refactor: none needed
 - commit: G24
+
+## Cycle G1c: A2 follow-up, the manifest needs bb.branding for `bb plugin build`
+
+- trigger: steering message 001 from Firstmate said the bb CLI (bb 0.48.1) was now installed. `pnpm run build` (`bb plugin build`) failed with `Error: invalid plugin package.json (bb.branding) ... Invalid input: expected object, received undefined`, and warned that the pinned SDK 0.6.125 differs from this bb's SDK 0.6.104.
+- test: `test/acceptance/manifest.test.ts::names the package, declares the server entry, and pins the SDK to one exact version` (extended with `expect(manifest.bb?.branding?.icon).toBeTruthy()`, A2)
+- red: `pnpm vitest run test/acceptance/manifest.test.ts`
+  -> `AssertionError: expected undefined to be truthy` (1 failed, 1 passed)
+- green: `package.json` gained `bb.branding.icon` (`Factory`). `pnpm run build` -> exit 0, writing `dist/server.js`, `dist/server.js.map`, `dist/server.meta.json`. Manifest test -> 2 passed.
+- dependency change, not a behavior: the SDK pin moved from 0.6.125 to 0.6.104 (the SDK of the installed bb) and `engines.bbPluginSdk` to `>=0.6.104`. The lockfile was regenerated, because pnpm's release-age policy rejected the stale 0.6.125 entry. The pnpm release-age exception was removed, since 0.6.104 is old enough. After the change the build prints no warning, and the gate script (lint, type-check, suite without the open outer files) -> 16 files, 312 passed, 0 failed.
+- refactor: none needed
+- commit: G1c

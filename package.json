@@ -5,11 +5,14 @@
   "type": "module",
   "engines": {
     "bb": ">=0.0",
-    "bbPluginSdk": ">=0.6.125"
+    "bbPluginSdk": ">=0.6.104"
   },
   "bb": {
     "name": "Factory Man",
     "description": "Enforce the firstmate delivery contract in code: ship and scout tasks, delivery modes, and approval gates.",
+    "branding": {
+      "icon": "Factory"
+    },
     "server": "./src/server.ts"
   },
   "keywords": [
@@ -29,7 +32,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.0",
-    "@get-bb/plugin-sdk": "0.6.125",
+    "@get-bb/plugin-sdk": "0.6.104",
     "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^26.6.6",
     "cron-parser": "^5.10.3",

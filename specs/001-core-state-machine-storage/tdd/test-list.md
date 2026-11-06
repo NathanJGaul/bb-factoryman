@@ -196,7 +196,7 @@ a `fail` on `torn_down` (U44), a bad payload (U12 to U15), an unknown event type
 
 - Hard rules 5, 6, and 7: they need machine placement and extension code (milestones 8 and 9). Only the `blocked` state exists here.
 - Tools, event wiring, validators, dispatch rules, skills, and the read RPC: milestones 4 to 11.
-- Running `bb plugin build`: the `bb` command-line tool is not installed here. `A5` checks only that the script is wired.
+- Running `bb plugin build` inside the test suite: it needs the `bb` command-line tool, which not every checkout has. `A5` checks that the script is wired, and the owner-run build is recorded in `docs/DECISIONS.md` (D-001).
 - Coverage numbers and automated mutation runs: the tools are not installed, so `/speckit.tdd.verify` uses deliberate mutants.
 - Concurrency between processes on one SQLite file: the plugin runs one process.
 

@@ -13,12 +13,13 @@ The design stays authoritative until the owner changes it.
 
 ## Milestone 1: scaffold
 
-### D-001: `bb plugin build` cannot run here (Limit)
+### D-001: `bb plugin build` runs, and a live install is still the owner's step (Resolved)
 
-The `bb` command-line tool is not installed in the build environment, and no `@get-bb/cli` package exists on npm.
-The `build` script is `bb plugin build`, and a test pins that script.
-Type-check, lint, and the fake plugin host verify the plugin instead.
-**Open**: run `pnpm run build` on a machine with bb installed and report the result.
+The `bb` command-line tool was missing when milestone 1 was built, so the build step was unverified.
+The owner then installed bb 0.48.1, and `pnpm run build` now succeeds. It writes `dist/server.js`, `dist/server.js.map`, and `dist/server.meta.json`.
+The first run failed with `invalid plugin package.json (bb.branding)`, so the manifest now declares `bb.branding.icon`, and the manifest test asserts it.
+`dist/` is git-ignored.
+The plugin has not been installed into a running bb with `bb plugin install`, because that changes the owner's bb state. Milestone 11 covers the live check.
 
 ### D-002: Manifest has no `bb.skills` key (Gap)
 
@@ -37,9 +38,10 @@ Switch back when `typescript-eslint` supports TypeScript 7.
 
 The design names `vitest`, `zod`, `xstate`, and `better-sqlite3` and leaves the rest open.
 The scaffold uses `pnpm` 12 (the bb repository's package manager), `eslint` 10, and `vitest` 5.
-`@get-bb/plugin-sdk` is pinned to the exact version 0.6.125.
+`@get-bb/plugin-sdk` is pinned to the exact version 0.6.104, the SDK that the installed bb 0.48.1 reports. The scaffold first pinned 0.6.125, the newest npm release, and `bb plugin build` warned about the mismatch.
+`engines.bbPluginSdk` is `>=0.6.104`.
 `hono` and `cron-parser` are dev dependencies because the SDK's fake host needs them as optional peers.
-`pnpm-workspace.yaml` approves the `better-sqlite3` and `esbuild` build scripts and exempts the SDK from pnpm's release-age policy, because 0.6.125 was published on the day of the scaffold.
+`pnpm-workspace.yaml` approves the `better-sqlite3` and `esbuild` build scripts.
 
 ### D-005: The lint rule is stricter than the design (Deviation)
 

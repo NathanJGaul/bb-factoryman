@@ -17,7 +17,7 @@ Replay folds the log through the same machine, so a destroyed cache rebuilds ide
 
 **Language/Version**: TypeScript 6 through the `@typescript/typescript6` alias (the same alias the bb repository uses, because `typescript-eslint` does not support TypeScript 7.0), ESM, Node 26.
 
-**Primary dependencies**: `xstate` 5 (machines), `zod` 4 (event and config schemas), `better-sqlite3` 12.10.0 (SQLite store), `@get-bb/plugin-sdk` 0.6.125 (pinned, exact).
+**Primary dependencies**: `xstate` 5 (machines), `zod` 4 (event and config schemas), `better-sqlite3` 12.10.0 (SQLite store), `@get-bb/plugin-sdk` 0.6.104 (pinned, exact, the SDK of the installed bb 0.48.1).
 
 **Storage**: SQLite through `better-sqlite3`, plus an in-memory implementation for tests.
 
@@ -107,7 +107,7 @@ specs/001-core-state-machine-storage/
 
 ```text
 package.json              # bb manifest, scripts, pinned SDK
-pnpm-workspace.yaml       # pnpm build approvals and release-age exception
+pnpm-workspace.yaml       # pnpm build approvals
 tsconfig.json
 vitest.config.ts
 eslint.config.js          # no-restricted-imports for src/machine
@@ -158,7 +158,7 @@ Each TDD cycle also gets its own focused commit, as the workflow requires.
 
 | Risk | Mitigation |
 | --- | --- |
-| `bb plugin build` cannot run here. | Verify with type-check and the fake host. Record the limit in `docs/DECISIONS.md`. Report it. |
+| `bb plugin build` could not run at first. | The owner installed bb 0.48.1 mid-task. The build now runs and passes. See D-001. |
 | `typescript-eslint` rejects TypeScript 7.0. | Use the `@typescript/typescript6` alias, as bb does. Verified by running lint. |
 | The fake host's registration inspection API differs from the README. | Read the bundled types before writing the plugin test. |
 | `better-sqlite3` needs a native build. | `pnpm-workspace.yaml` approves its build script. Verified on Node 26. |
