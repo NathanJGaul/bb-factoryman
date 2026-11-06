@@ -91,15 +91,15 @@ Boundaries have both sides, and error paths name the failure.
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| U10 | `spawnWorker` sends project, parent thread, off parent notifications, role metadata, profile, and a managed worktree, and returns the thread ID | FR-107, FR-108 | example | PENDING | |
-| U11 | `getThread` returns ID, project, status, parent, and environment | FR-209, FR-213 | example | PENDING | |
-| U12 | `getThread` returns null when bb does not know the thread | FR-213 | example | PENDING | |
-| U13 | `sendMessage` sends one text input in `auto` mode | FR-209 | example | PENDING | |
-| U14 | `retireWorker` archives the thread and then deletes the environment, in that order | FR-120 | example | PENDING | |
-| U15 | `requestInput` forwards renderer, title, payload, timeout, and signal and returns the result unchanged | FR-112 | example | PENDING | |
-| U16 | `setThreadMetadata` writes the plugin metadata of the thread | FR-122 | example | PENDING | |
-| U17 | `getEnvironmentPath` returns the path, or null when the environment has none | FR-118 | example | PENDING | |
-| U18 | `getProjectCheckout` returns the project's default source path, or null | FR-117 | example | PENDING | |
+| U10 | `spawnWorker` sends project, parent thread, off parent notifications, role metadata, profile, and a managed worktree, and returns the thread ID | FR-107, FR-108 | example | DONE | `src/bb/adapter.test.ts::[U10] spawns a worker with the project, parent, off notifications, role metadata, profile, and a managed worktree`, `src/bb/adapter.test.ts::[U10] uses the default base branch when none is set` |
+| U11 | `getThread` returns ID, project, status, parent, and environment | FR-209, FR-213 | example | DONE | `src/bb/adapter.test.ts::[U11] reads a thread as id, project, status, parent, and environment` |
+| U12 | `getThread` returns null when bb does not know the thread | FR-213 | example | DONE | `src/bb/adapter.test.ts::[U12] reads an unknown thread as null, and rethrows other failures` |
+| U13 | `sendMessage` sends one text input in `auto` mode | FR-209 | example | DONE | `src/bb/adapter.test.ts::[U13] sends one text input in auto mode` |
+| U14 | `retireWorker` archives the thread and then deletes the environment, in that order | FR-120 | example | DONE | `src/bb/adapter.test.ts::[U14] retires a worker by archiving the thread and then deleting the environment` |
+| U15 | `requestInput` forwards renderer, title, payload, timeout, and signal and returns the result unchanged | FR-112 | example | DONE | `src/bb/adapter.test.ts::[U15] forwards a form request and returns the owner`, `src/bb/adapter.test.ts::[U15] returns a cancelled form as a cancelled result` |
+| U16 | `setThreadMetadata` writes the plugin metadata of the thread | FR-122 | example | DONE | `src/bb/adapter.test.ts::[U16] stamps plugin metadata on the thread under the plugin` |
+| U17 | `getEnvironmentPath` returns the path, or null when the environment has none | FR-118 | example | DONE | `src/bb/adapter.test.ts::[U17] reads an environment path, or null when the environment has none` |
+| U18 | `getProjectCheckout` returns the project's default source path, or null | FR-117 | example | DONE | `src/bb/adapter.test.ts::[U18] reads the project` |
 
 ### `src/tools/access.ts`
 

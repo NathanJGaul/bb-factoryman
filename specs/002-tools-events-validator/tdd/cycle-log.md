@@ -53,3 +53,17 @@ Each behavior in a batch still has its own test, and each entry records the fail
   Suite `pnpm test` -> 22 files, 363 passed, 0 failed. Lint and type-check clean.
 - refactor: none needed
 - note: the red is a stub that throws, not an assertion on values, because the behavior is a method that does not exist yet.
+
+## Cycle C3: U10 to U18 bb adapter (`src/bb/adapter.ts`)
+
+- tests: `src/bb/adapter.test.ts` `[U10]` to `[U18]` (new), through `createFakePluginHost` with `sdk` stubs and the fake host's form controls
+- red: an adapter stub whose methods throw, then `pnpm vitest run src/bb/adapter.test.ts`
+  -> `Error: not implemented` for the SDK-call behaviors, `AssertionError: expected undefined to match object { threadId: 'thr-sup', …(4) }` for the form request,
+  and `TypeError: Cannot read properties of undefined (reading 'id')` for the cancelled form (11 failed)
+- green: `createBbPort` maps each port method to its SDK call.
+  First green run: 10 passed, 1 failed. U10 expected 10 keys and the fake host's plugin-bound normalization sent 12 (`origin: "plugin"` and `originPluginId`).
+  The test was corrected to the real normalization, which `spike/RESULTS.md` item 22 mentions for `threads.spawn`. No assertion was loosened.
+  Suite `pnpm test` -> 23 files, 374 passed, 0 failed. Lint and type-check clean.
+- refactor: none needed
+- note: `getThread` reads either a thread or `{ thread }` and maps a `status: 404` error or an `HTTP 404` message to null.
+  The real bb 404 shape is not recorded, so U12 covers both forms. The live smoke test in the close-out checks the real one.
