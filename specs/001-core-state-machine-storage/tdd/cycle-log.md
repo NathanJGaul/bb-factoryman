@@ -255,3 +255,12 @@ Each behavior in a batch still has its own test, and each entry records the fail
 - gate script -> 15 files, 278 passed, 0 failed.
 - refactor: none needed
 - commit: G23
+
+## Cycle G21: U61 to U66 TaskLog create, apply, refusal, and approvals
+
+- tests: `src/store/task-log.test.ts` (new, 7 cases): `create appends an applied row from nothing to queued and writes the task row` (U61); `refuses a repeated create with task_exists, logs it, and leaves the task alone` and `logs a create that fails validation as a refused row` (U62); `apply on success appends an applied row ... and updates the task row` (U63); `on refusal appends a refused row ... and leaves the task row unchanged` (U64); `refuses an event for an unknown task with unknown_task and logs it` (U65); `writes an approval row for record_approval and for no other event` (U66)
+- red: a stub `TaskLog` that throws, then `pnpm vitest run src/store/task-log.test.ts`
+  -> `Error: not implemented` (7 failed, 0 passed)
+- green: `src/store/task-log.ts` implements `create` and `apply` as a first, deliberately minimal version: it replays the task to get the snapshot, calls `transition`, then appends the row, updates the cache, and adds an approval row for `record_approval`. It uses the wall clock, runs outside a transaction, and assumes the raw event is an object. G22 drives those three gaps. `pnpm vitest run src/store/task-log.test.ts` -> 7 passed. Gate script -> 16 files, 285 passed, 0 failed.
+- refactor: none yet. The first version has rough edges (a cast in `create`, repeated row building). The refactor runs at the end of G22, once the remaining behaviors are green.
+- commit: G21
