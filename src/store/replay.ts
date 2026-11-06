@@ -1,9 +1,9 @@
 import { refuse, type Refusal } from "../machine/refusal";
 import { createTask, transition } from "../machine/transition";
 import type { TaskSnapshot } from "../machine/types";
-import { rawCreateOf, rawEventOf } from "./rows";
+import { rawCreateOf, rawEventOf, taskRowOf } from "./rows";
 import type { Store } from "./store";
-import type { TaskEventRow } from "./types";
+import type { TaskEventRow, TaskRow } from "./types";
 
 export type ReplayResult =
   | { ok: true; snapshot: TaskSnapshot; lastSeq: number }
@@ -44,4 +44,99 @@ export function replayTask(store: Store, taskId: string): ReplayResult {
     snapshot = result.snapshot;
   }
   return { ok: true, snapshot, lastSeq: rows[rows.length - 1]?.seq ?? first.seq };
+}
+
+export interface CorruptTask {
+  taskId: string;
+  /** The log row where replay stopped. */
+  seq: number;
+  message: string;
+}
+
+export interface RebuildReport {
+  /** Tasks whose rows were written, by task ID. */
+  rebuilt: string[];
+  corrupt: CorruptTask[];
+}
+
+export interface RecoveryReport {
+  /** Every non-terminal task with the snapshot its log produces. */
+  replayed: Array<{ taskId: string; snapshot: TaskSnapshot }>;
+  /** Tasks whose cache row was missing or differed from the replay, and now matches. */
+  repaired: string[];
+  corrupt: CorruptTask[];
+  /** Terminal tasks, which recovery does not replay. */
+  skipped: string[];
+}
+
+/** Every task that has an applied `create` row, by task ID. */
+function createdTaskIds(store: Store): string[] {
+  const ids = new Set<string>();
+  for (const row of store.listEvents()) {
+    if (row.outcome === "applied" && row.event === "create") ids.add(row.taskId);
+  }
+  return [...ids].sort();
+}
+
+function sameRow(a: TaskRow | null, b: TaskRow): boolean {
+  return a !== null && (Object.keys(b) as Array<keyof TaskRow>).every((key) => a[key] === b[key]);
+}
+
+function corruptTask(taskId: string, result: Extract<ReplayResult, { reason: "corrupt" }>): CorruptTask {
+  return { taskId, seq: result.seq, message: result.refusal.message };
+}
+
+/**
+ * Throw away the task cache and write it again from the log. A corrupt task
+ * gets no row, so a bad log can never look healthy.
+ */
+export function rebuildCache(store: Store): RebuildReport {
+  return store.transaction(() => {
+    store.clearTasks();
+    const report: RebuildReport = { rebuilt: [], corrupt: [] };
+    for (const taskId of createdTaskIds(store)) {
+      const result = replayTask(store, taskId);
+      if (result.ok) {
+        store.putTask(taskRowOf(result.snapshot));
+        report.rebuilt.push(taskId);
+      } else if (result.reason === "corrupt") {
+        report.corrupt.push(corruptTask(taskId, result));
+      }
+    }
+    return report;
+  });
+}
+
+/** True when the last state-changing row of a task leaves it `torn_down`. */
+function isTerminal(store: Store, taskId: string): boolean {
+  return stateRows(store, taskId).at(-1)?.toState === "torn_down";
+}
+
+/**
+ * Start-up recovery. Replay every task that is not torn down, repair any cache
+ * row that is missing or differs, and report everything it did. It changes
+ * only the cache, never the log.
+ */
+export function recover(store: Store): RecoveryReport {
+  return store.transaction(() => {
+    const report: RecoveryReport = { replayed: [], repaired: [], corrupt: [], skipped: [] };
+    for (const taskId of createdTaskIds(store)) {
+      if (isTerminal(store, taskId)) {
+        report.skipped.push(taskId);
+        continue;
+      }
+      const result = replayTask(store, taskId);
+      if (!result.ok) {
+        if (result.reason === "corrupt") report.corrupt.push(corruptTask(taskId, result));
+        continue;
+      }
+      report.replayed.push({ taskId, snapshot: result.snapshot });
+      const expected = taskRowOf(result.snapshot);
+      if (!sameRow(store.getTask(taskId), expected)) {
+        store.putTask(expected);
+        report.repaired.push(taskId);
+      }
+    }
+    return report;
+  });
 }

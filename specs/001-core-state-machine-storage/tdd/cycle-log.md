@@ -279,3 +279,18 @@ Each behavior in a batch still has its own test, and each entry records the fail
   - Y: `create` outside a transaction -> both `rolls back the log append when writing the task row fails` cases failed.
 - refactor: on green I rewrote `src/store/task-log.ts` to drop the casts and the duplicated row building from G21. Suite re-run green after the rewrite (22 passed, gate OK).
 - commit: G22
+
+## Cycle G24: U76 to U79 rebuild the cache and recover at start-up
+
+- tests: `src/store/replay.test.ts` (extended, 5 first-pass cases plus 7 added after mutants): `rebuildCache produces rows equal to the incrementally written rows after the cache is cleared` (U76); `writes no row for a corrupt task, lists it, and still rebuilds the healthy tasks` (U77); `recover replays every non-terminal task and skips torn_down tasks` (U78); `repairs a missing or diverged cache row, reports it, and leaves matching rows alone`, `reports a corrupt non-terminal task and does not guess its row` (U79)
+- red: stubbed `rebuildCache` and `recover` to throw, then `pnpm vitest run src/store/replay.test.ts`
+  -> `Error: not implemented` (5 failed, 7 passed)
+- green: `src/store/replay.ts` gained `rebuildCache` (clear, replay every created task, write rows for the healthy ones, list the corrupt ones, all in one transaction) and `recover` (skip tasks whose last state row is `torn_down`, replay the rest, repair a missing or differing cache row, report repaired, corrupt, replayed, and skipped tasks). `pnpm vitest run src/store/replay.test.ts` -> 12 passed. Gate script -> 16 files, 305 passed, 0 failed.
+- deliberate mutants, each run with `pnpm vitest run src/store/replay.test.ts` and restored exactly:
+  - Z1: `rebuildCache` keeps old rows -> `writes no row for a corrupt task ...` failed.
+  - Z2: `recover` replays terminal tasks -> `replays every non-terminal task and skips torn_down tasks` failed.
+  - Z3: `recover` reports repairs but never writes them -> `repairs a missing or diverged cache row ...` failed.
+  - Z4: the row comparison ignores `branch` -> survived, because the diverged row in the test also had a wrong state. I added seven cases (`repairs a row that differs from its replay in only the %s field`, one per field except the task ID and state), and Z4 then failed `... only the branch field`. The suite is 19 passed.
+  - Z5: `rebuildCache` writes a row for a corrupt task -> `writes no row for a corrupt task ...` failed.
+- refactor: none needed
+- commit: G24
