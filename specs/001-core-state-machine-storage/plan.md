@@ -78,7 +78,10 @@ The decisions that shape the code:
 6. **Refusals are log rows.**
    A refused event becomes a row with outcome `refused` and a reason.
    Replay skips refused rows.
-7. **Reconcile records and never repairs.**
+7. **A denied or reviewed task can be sent back to rework.**
+   `request_changes` moves a ship task from `review_ready` or `awaiting_approval` to `working`, and clears the task's merge decision.
+   The denial stays in the log, so a later merge needs a new recorded approval (the captain's decision D-010, recorded as D-028).
+8. **Reconcile records and never repairs.**
    `reconcile` compares replayed state with caller-supplied observations and appends `reconcile` rows.
    It changes no task state.
 

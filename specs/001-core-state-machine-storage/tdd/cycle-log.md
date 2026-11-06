@@ -532,7 +532,7 @@ They show that the test can fail for the right reason, and they do not show that
   -> `Tests  20 failed | 330 passed (350)`. Decisive lines: `parses a valid request_changes event` (the event type is unknown), `accepts every legal pair, with its gates satisfied, and lands on the expected state`, `refuses every illegal pair with illegal_transition ...`, `lists exactly the legal pairs and targets for ship tasks`, `accepts exactly the table's transitions in the ship machine` and the scout machine, and the three `request_changes` cases in the gates, restart, and unit files.
 - green: `src/machine/types.ts` lists `request_changes`. `src/machine/events.ts` has a strict `request_changes` schema. `src/machine/table.ts` adds `request_changes: go("working", "notWorker")` to the `review_ready` and `awaiting_approval` rows of the ship lane. `pnpm vitest run` -> `Tests  2 failed | 348 passed (350)`. The two failures are the effect tests of G28.
 - refactor: none needed
-- commit: G27
+- commit: `9912596`
 
 ## Cycle G28: U90 `request_changes` clears the merge decision
 
@@ -548,4 +548,4 @@ They show that the test can fail for the right reason, and they do not show that
   - Q5: the effect clears only a denial -> `approved: expected { merge: 'approved' } to deeply equal {}` (2 failed).
   - Q6: scout tasks may request changes -> `is refused outside review_ready and awaiting_approval, and for scout tasks`: `expected a refusal but the task moved to working`.
 - refactor: none needed
-- commit: G27 and G28 share one commit, because G27 alone was not green.
+- commit: `9912596` (G27 and G28 share one commit, because G27 alone was not green)

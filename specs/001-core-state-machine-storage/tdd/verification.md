@@ -2,24 +2,24 @@
 feature: 001-core-state-machine-storage
 verdict: PASS_WITH_GAPS
 standard: .specify/extensions/tdd/templates/tdd-test-quality-rubric.md
-verified_at: 6535cc5
-behaviors: 112
-proven: 103
+verified_at: 9912596
+behaviors: 118
+proven: 109
 likely: 8
 test_after: 0
 no_test: 0
 not_applicable: 1
 high_smells: 0
-criteria_total: 26
-criteria_covered: 26
+criteria_total: 27
+criteria_covered: 27
 mutation_score: 95 # scope: the 22 mutants in the first run, hand-applied, 21 non-control; the survivor was an equivalent mutant and its code is removed
 mutants_survived: 1 # plus 1 control that must survive; see the mutation table
-suite: 336 passed, 0 failed, 21s
+suite: 350 passed, 0 failed, 21s
 ---
 
 # TDD verification: core scaffold, task state machine, and event storage
 
-**This is the second run.** The first run (commit `101e9ea`, in git history) returned `FAIL` with two `HIGH` smells and eight `TEST_AFTER` behaviors.
+**This is the third run.** The first run (commit `101e9ea`, in git history) returned `FAIL` with two `HIGH` smells and eight `TEST_AFTER` behaviors.
 The remediation tasks R001 to R011 cleared them, and this run re-checks the result.
 Findings 1 to 7 and 12 are fixed, and finding 13 now has retro-red records.
 Findings 8 to 11 are accepted for the reasons given.
@@ -35,9 +35,9 @@ The mutation sample, the history check, and the traceability check are mine.
 
 | Source | Result |
 | --- | --- |
-| Cycle log | 30 cycle headings (some cycles have an opening and a closing entry), each with the red command and output, or with a deliberate-mutant record where the test passed first. |
-| Git history | One commit per cycle, 34 commits since the base. Each cycle commit adds the test and the code together, as the loop prescribes. History therefore shows no ordering by itself, and the cycle log carries the red. |
-| Files as they stand | 19 test files, 336 tests, 21 seconds. |
+| Cycle log | 32 cycle headings (some cycles have an opening and a closing entry), each with the red command and output, or with a deliberate-mutant record where the test passed first. |
+| Git history | One commit per cycle, about 40 commits since the base. Each cycle commit adds the test and the code together, as the loop prescribes. History therefore shows no ordering by itself, and the cycle log carries the red. |
+| Files as they stand | 19 test files, 350 tests, 21 seconds. |
 
 No discrepancy exists between the cycle log and the history.
 Two entries were written after their commit (G15) or after a slip in the commit step (G7 committed with a lint error, repaired by G5b).
@@ -77,8 +77,9 @@ Cycle IDs are in `cycle-log.md`.
 | G24 | U76 to U79 | PROVEN | `Error: not implemented` |
 | G25 | U80 | LIKELY (retro-red) | An invariant test written over finished code; mutants W1 to W4 killed |
 | G26 | U81 to U86 | PROVEN | `Error: not implemented` |
+| G27, G28 | A27, U87 to U91 | PROVEN | 20 failed and 330 passed, then 2 failed for the effect |
 
-Counts: 103 `PROVEN`, 8 `LIKELY` (A4, U36, U40, U41, U44, U45, U69, U80), 1 `NOT_APPLICABLE` (A5), 0 `TEST_AFTER`, 0 `NO_TEST`.
+Counts: 109 `PROVEN`, 8 `LIKELY` (A4, U36, U40, U41, U44, U45, U69, U80), 1 `NOT_APPLICABLE` (A5), 0 `TEST_AFTER`, 0 `NO_TEST`.
 
 The eight `LIKELY` behaviors are regression pins on behavior that an earlier red-first test already drove.
 For example, U40, U41, U44, and U45 sit under the matrix test A11, which was written red at G6 before the table existed.
@@ -153,7 +154,7 @@ the random walk takes about 15 of the 21 seconds, so the suite stays under the 6
 No mutation tool is installed, so I used deliberate mutants.
 I applied each one alone, ran the **full** suite, and restored the file from the committed copy.
 After the run, `git status` showed a clean tree and the suite was green.
-Sample: 22 mutants across 12 behaviors, covering every hard rule this feature enforces (1, 2, 3, 4, 8), the mode checks, the append-only log, atomicity, replay, and promotion.
+Sample: 22 mutants across 12 behaviors (plus the six Q mutants for A27 in the third run), covering every hard rule this feature enforces (1, 2, 3, 4, 8), the mode checks, the append-only log, atomicity, replay, and promotion.
 The cycle log records about 30 further mutants run during the loop.
 
 | Mutant | File | Behavior | Result |
@@ -180,6 +181,12 @@ The cycle log records about 30 further mutants run during the loop.
 | M20 refused events not logged | `task-log.ts` | A19 | Killed (15) |
 | M21 no-op change (control) | `reconcile.ts` | none | Survived, as a control must |
 | M22 replay ignores a machine refusal | `replay.ts` | A22, U73 | Killed (1) |
+| Q1 `notWorker` removed from `request_changes` | `table.ts` | U89 | Killed (1) |
+| Q2 `request_changes` from `awaiting_approval` goes to `review_ready` | `table.ts` | A27, U88 | Killed (1) |
+| Q3 `request_changes` keeps the approvals | `effects.ts` | U90 | Killed (2) |
+| Q4 `request_changes` also clears `prUrl` | `effects.ts` | U90 | Killed (2) |
+| Q5 `request_changes` clears only a denial | `effects.ts` | U90 | Killed (2) |
+| Q6 scout tasks may request changes | `table.ts` | U89 | Killed (1) |
 
 Score: 20 of 21 non-control mutants killed (95%).
 The survivor is equivalent, so every behavior-changing mutant was caught.
@@ -209,11 +216,12 @@ No process-level or UI runner exists, so the acceptance layer is an in-process i
 | AC-2.3 | A8, U25 | Yes |
 | AC-2.4 | A9, U16 | Yes |
 | AC-2.5 | A10, U24, U42, U43 | Yes |
-| AC-2.6 | A11 `machine-matrix.test.ts`, U26 to U29 | Yes (330 pairs) |
+| AC-2.6 | A11 `machine-matrix.test.ts`, U26 to U29 | Yes (352 pairs) |
 | AC-2.7, AC-2.8 | A12, A13, U19 to U21, U38 | Yes |
 | AC-2.9 | A14, U17, U37 | Yes |
 | AC-2.10, AC-2.11 | A15, A16, U44 | Yes |
 | AC-2.12 | A17, U18, U22, U39, U40 | Yes |
+| AC-2.13 | A27, U87 to U91 `machine-gates.test.ts`, `store-restart.test.ts` | Yes (both stores) |
 | AC-3.1, AC-3.2 | A18, A19, U61 to U67 | Yes (both stores) |
 | AC-3.3 | A20, U49, U56, U57 | Yes |
 | AC-3.4 | A21, U76, U80 | Yes (both stores) |
@@ -224,7 +232,7 @@ No process-level or UI runner exists, so the acceptance layer is an in-process i
 | AC-3.9 | A26, U78, U79 | Yes (reopened SQLite file) |
 
 Untested criteria: none.
-Tests that trace to nothing: `test/toolchain.test.ts` (a dependency smoke test that guards the native `better-sqlite3` build) and the fixture sanity checks `covers every kind, state, and event type once` and `covers all 15 event types`.
+Tests that trace to nothing: `test/toolchain.test.ts` (a dependency smoke test that guards the native `better-sqlite3` build) and the fixture sanity checks `covers every kind, state, and event type once` and `covers all 16 event types`.
 They guard the toolchain and the oracles and trace to no criterion on purpose.
 Success criteria: SC-001 (matrix), SC-002 (A6 to A10 and A11), SC-003 (U80), SC-004 (A3), SC-005 (21 seconds), and SC-006 (A24) each have a check.
 
@@ -239,4 +247,5 @@ Success criteria: SC-001 (matrix), SC-002 (A6 to A10 and A11), SC-003 (U80), SC-
   Replay cost is linear in a task's events.
 - Performance was assessed only as total suite time.
 - The audit is not independent of the author, apart from the cold smell pass, which I vetted line by line.
-- The spec, plan, and task list were approved by the captain's stated intent and not by a separate review (D-007).
+- The spec, plan, and task list were approved by the captain's stated intent and not by a separate review. The captain resolved D-007 on 2026-11-06 by keeping principle V as written.
+- The cold smell pass ran before the `request_changes` tests existed. Those tests follow the existing patterns and were checked by mutants Q1 to Q6, but no fresh-context agent read them.
