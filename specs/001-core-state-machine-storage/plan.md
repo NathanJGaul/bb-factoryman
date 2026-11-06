@@ -29,13 +29,17 @@ Replay folds the log through the same machine, so a destroyed cache rebuilds ide
 
 **Performance goals**: The full suite finishes in under 60 seconds (SC-005).
 
-**Constraints**: `src/machine/` has no bb, Node built-in, SQLite, or store imports. Gates fail closed. No dependency beyond the stack in `CLAUDE.md` plus its direct tooling (`typescript`, `eslint`, `typescript-eslint`, `@types/*`, and the SDK's optional peers `hono` and `cron-parser` that the fake host needs).
+**Constraints**: `src/machine/` has no bb, Node built-in, SQLite, or store imports.
+Gates fail closed.
+No dependency beyond the stack in `CLAUDE.md` plus its direct tooling (`typescript`, `eslint`, `typescript-eslint`, `@types/*`, and the SDK's optional peers `hono` and `cron-parser` that the fake host needs).
 
-**Scale/Scope**: Hundreds of tasks per project and thousands of events. Replay cost per task is linear in its events.
+**Scale/Scope**: Hundreds of tasks per project and thousands of events.
+Replay cost per task is linear in its events.
 
 ## Constitution check
 
-*Gate: must pass before research. Re-checked after design.*
+*Gate: must pass before research.
+Re-checked after design.*
 
 | Principle | Status | Evidence |
 | --- | --- | --- |
@@ -120,6 +124,7 @@ src/
 │   ├── refusal.ts        # reason codes and the Refusal type
 │   ├── guards.ts         # named guard functions, one per gate
 │   ├── table.ts          # declarative ship and scout transition tables
+│   ├── effects.ts        # pure context updates for each accepted event
 │   ├── machines.ts       # xstate machines generated from the tables
 │   └── transition.ts     # createTask and transition facade
 └── store/
@@ -127,13 +132,15 @@ src/
     ├── store.ts          # the Store interface
     ├── memory.ts         # in-memory implementation
     ├── sqlite.ts         # better-sqlite3 implementation and schema
+    ├── rows.ts           # snapshot to task row, log row to raw event
     ├── task-log.ts       # apply, create, approval handling
     ├── replay.ts         # replay, rebuild cache, recovery
     └── reconcile.ts      # reconcile against live observations
 test/
 ├── acceptance/           # real-entry-point tests per acceptance scenario
-├── fixtures/             # builders for events and snapshots
-└── store-contract.ts     # shared suite for both stores
+├── fixtures/             # event, snapshot, legal-set, history, and store builders
+├── store-contract.ts     # shared suite for both stores
+└── toolchain.test.ts     # dependency smoke test
 docs/
 ├── DESIGN.md
 └── DECISIONS.md

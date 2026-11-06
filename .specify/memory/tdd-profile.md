@@ -1,5 +1,5 @@
 ---
-detected_at: 6c2856c
+detected_at: 22e6032
 ecosystems: [typescript]
 default: typescript
 stacks:
@@ -18,12 +18,17 @@ stacks:
     contract: null
     test_glob: "{src,test}/**/*.test.ts"
     exemplar:
-      unit: test/toolchain.test.ts
-      acceptance: null
-    helpers: []
+      unit: src/machine/guards.test.ts
+      acceptance: test/acceptance/machine-gates.test.ts
+    helpers:
+      - test/fixtures/machine.ts
+      - test/fixtures/legal-set.ts
+      - test/fixtures/store.ts
+      - test/fixtures/history.ts
+      - test/store-contract.ts
 verified: [single, file, suite]
 suite_baseline: green
-suite_seconds: 1
+suite_seconds: 21
 ---
 
 # TDD stack profile
@@ -39,8 +44,9 @@ suite_seconds: 1
 - The clock is injected as a `now: () => string` option. Never call `Date.now()` or `new Date()` inside `src/`.
 - `src/machine/` must not import `@get-bb/*`, `better-sqlite3`, `node:*`, or `src/store`. Its tests may import `vitest` and test fixtures.
 - Use named exports. Use `import type` for type-only imports (`verbatimModuleSyntax` is on).
-- The exemplar for a unit test is `test/toolchain.test.ts`. No acceptance exemplar exists yet. The first one is `test/acceptance/manifest.test.ts`, and this profile should be refreshed after it lands.
-- No shared test helpers exist yet. Milestone 2 adds `test/fixtures/` builders. Reuse them from then on.
+- The exemplar for a unit test is `src/machine/guards.test.ts`, and for an acceptance test it is `test/acceptance/machine-gates.test.ts`.
+- Reuse the builders in `test/fixtures/` (`machine.ts` for events and snapshots, `legal-set.ts` for the hand-written legal set, `store.ts` for the fake clock and event paths, `history.ts` for hand-written log rows) and the shared store suite in `test/store-contract.ts`.
+- Refreshed by hand after milestone 3 (the commands are unchanged and were all re-run): the suite took about 21 seconds, 336 tests.
 
 ## Verification notes
 

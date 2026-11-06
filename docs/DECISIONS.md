@@ -16,10 +16,12 @@ The design stays authoritative until the owner changes it.
 ### D-001: `bb plugin build` runs, and a live install is still the owner's step (Resolved)
 
 The `bb` command-line tool was missing when milestone 1 was built, so the build step was unverified.
-The owner then installed bb 0.48.1, and `pnpm run build` now succeeds. It writes `dist/server.js`, `dist/server.js.map`, and `dist/server.meta.json`.
+The owner then installed bb 0.48.1, and `pnpm run build` now succeeds.
+It writes `dist/server.js`, `dist/server.js.map`, and `dist/server.meta.json`.
 The first run failed with `invalid plugin package.json (bb.branding)`, so the manifest now declares `bb.branding.icon`, and the manifest test asserts it.
 `dist/` is git-ignored.
-The plugin has not been installed into a running bb with `bb plugin install`, because that changes the owner's bb state. Milestone 11 covers the live check.
+The plugin has not been installed into a running bb with `bb plugin install`, because that changes the owner's bb state.
+Milestone 11 covers the live check.
 
 ### D-002: Manifest has no `bb.skills` key (Gap)
 
@@ -38,7 +40,8 @@ Switch back when `typescript-eslint` supports TypeScript 7.
 
 The design names `vitest`, `zod`, `xstate`, and `better-sqlite3` and leaves the rest open.
 The scaffold uses `pnpm` 12 (the bb repository's package manager), `eslint` 10, and `vitest` 5.
-`@get-bb/plugin-sdk` is pinned to the exact version 0.6.104, the SDK that the installed bb 0.48.1 reports. The scaffold first pinned 0.6.125, the newest npm release, and `bb plugin build` warned about the mismatch.
+`@get-bb/plugin-sdk` is pinned to the exact version 0.6.104, the SDK that the installed bb 0.48.1 reports.
+The scaffold first pinned 0.6.125, the newest npm release, and `bb plugin build` warned about the mismatch.
 `engines.bbPluginSdk` is `>=0.6.104`.
 `hono` and `cron-parser` are dev dependencies because the SDK's fake host needs them as optional peers.
 `pnpm-workspace.yaml` approves the `better-sqlite3` and `esbuild` build scripts.
@@ -73,7 +76,8 @@ The design draws `blocked` in the ship lane and says "a task pinned to an offlin
 The machine lets both kinds block, because the rule says "a task".
 `block` is legal only from `working`, and `unblock` returns only to `working`.
 A task that is offline at dispatch has no path from `queued` to `blocked`.
-Milestone 8 decides how to represent that case. The likely answer is `start`, which binds the machine, followed by `block`.
+Milestone 8 decides how to represent that case.
+The likely answer is `start`, which binds the machine, followed by `block`.
 
 ### D-009: Hard rules 5, 6, and 7 are not enforced yet (Limit)
 
@@ -148,11 +152,13 @@ The log records `create` as the first row of every task.
 `task_event` keeps the design's columns (task ID, time, from state, to state, event, actor, evidence) and adds five:
 
 - `seq` gives strict order across tasks.
-- `payload` holds the event fields other than type, actor, and evidence. Without it, replay could not rebuild the worker thread, branch, machine, or pull request URL, and could not re-run the gates with their original facts.
+- `payload` holds the event fields other than type, actor, and evidence.
+  Without it, replay could not rebuild the worker thread, branch, machine, or pull request URL, and could not re-run the gates with their original facts.
 - `outcome` is `applied` or `refused`.
 - `reason_code` and `reason_message` name why a refused event was refused.
 
-`task` gains `project_id` and `mode`. A task needs its project to find the project's `yolo` flag, and its delivery mode is fixed when the task is created, even if the project changes later.
+`task` gains `project_id` and `mode`.
+A task needs its project to find the project's `yolo` flag, and its delivery mode is fixed when the task is created, even if the project changes later.
 
 ### D-020: Refusals live in the same log (Gap)
 
@@ -172,7 +178,8 @@ A stale or tampered cache row therefore cannot change a gate's answer, and the n
 Reconcile writes a `reconcile` row for each task whose replayed state differs from the caller's observation.
 It changes no task state, cache row, or approval.
 If the last row of a task is already an identical `reconcile` row, it writes nothing, so a restart does not repeat the same alert.
-The caller supplies the observations. Mapping bb thread state to task states is event wiring, which is milestone 5.
+The caller supplies the observations.
+Mapping bb thread state to task states is event wiring, which is milestone 5.
 
 ### D-023: Recovery repairs only the cache (Gap)
 
@@ -184,13 +191,15 @@ It never writes to the log and never guesses a row for a corrupt task.
 
 When an applied row no longer passes the machine, or records a state the machine does not reach, replay reports the task as corrupt.
 `TaskLog.apply` then refuses every event for that task with `corrupt_log` and logs the refusal.
-The owner has to look at the log. The plugin does not repair history.
+The owner has to look at the log.
+The plugin does not repair history.
 
 ### D-025: Append-only is enforced twice (Gap)
 
 The `Store` interface has no method that updates or deletes a log row or an approval.
 The SQLite schema adds triggers that abort `UPDATE` and `DELETE` on `task_event` and on `approval`, so a raw SQL statement cannot rewrite history either.
-The design asks for an append-only event log. The approval table gets the same protection.
+The design asks for an append-only event log.
+The approval table gets the same protection.
 
 ### D-026: Project config fields are nullable, with no invented defaults (Gap)
 

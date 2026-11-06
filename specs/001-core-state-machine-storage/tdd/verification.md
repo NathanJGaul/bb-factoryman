@@ -19,11 +19,17 @@ suite: 336 passed, 0 failed, 21s
 
 # TDD verification: core scaffold, task state machine, and event storage
 
-**This is the second run.** The first run (commit `101e9ea`, in git history) returned `FAIL` with two `HIGH` smells and eight `TEST_AFTER` behaviors. The remediation tasks R001 to R011 cleared them, and this run re-checks the result. Findings 1 to 7 and 12 are fixed, and finding 13 now has retro-red records. Findings 8 to 11 are accepted for the reasons given.
+**This is the second run.** The first run (commit `101e9ea`, in git history) returned `FAIL` with two `HIGH` smells and eight `TEST_AFTER` behaviors.
+The remediation tasks R001 to R011 cleared them, and this run re-checks the result.
+Findings 1 to 7 and 12 are fixed, and finding 13 now has retro-red records.
+Findings 8 to 11 are accepted for the reasons given.
 
 **Verdict: PASS_WITH_GAPS.** No `HIGH` smell remains and every criterion has an end-to-end test, but eight behaviors have only retro-red evidence: their tests landed after the code that already satisfied them.
 
-**Independence.** The same session wrote the code and the tests, so this audit is not independent. To limit that, a fresh-context agent ran the smell pass over every test file, and I opened every line it cited before accepting a finding. I also re-read the files rather than rely on memory. The mutation sample, the history check, and the traceability check are mine.
+**Independence.** The same session wrote the code and the tests, so this audit is not independent.
+To limit that, a fresh-context agent ran the smell pass over every test file, and I opened every line it cited before accepting a finding.
+I also re-read the files rather than rely on memory.
+The mutation sample, the history check, and the traceability check are mine.
 
 ## Evidence base
 
@@ -33,11 +39,14 @@ suite: 336 passed, 0 failed, 21s
 | Git history | One commit per cycle, 34 commits since the base. Each cycle commit adds the test and the code together, as the loop prescribes. History therefore shows no ordering by itself, and the cycle log carries the red. |
 | Files as they stand | 19 test files, 336 tests, 21 seconds. |
 
-No discrepancy exists between the cycle log and the history. Two entries were written after their commit (G15) or after a slip in the commit step (G7 committed with a lint error, repaired by G5b). Both entries say so.
+No discrepancy exists between the cycle log and the history.
+Two entries were written after their commit (G15) or after a slip in the commit step (G7 committed with a lint error, repaired by G5b).
+Both entries say so.
 
 ## Test-first evidence
 
-`PROVEN` means the cycle log records the failing command and output, and the test and code share a commit. Cycle IDs are in `cycle-log.md`.
+`PROVEN` means the cycle log records the failing command and output, and the test and code share a commit.
+Cycle IDs are in `cycle-log.md`.
 
 | Cycle | Behaviors | Class | Evidence |
 | --- | --- | --- | --- |
@@ -74,24 +83,31 @@ Counts: 103 `PROVEN`, 8 `LIKELY` (A4, U36, U40, U41, U44, U45, U69, U80), 1 `NOT
 The eight `LIKELY` behaviors are regression pins on behavior that an earlier red-first test already drove.
 For example, U40, U41, U44, and U45 sit under the matrix test A11, which was written red at G6 before the table existed.
 The first run classed them `TEST_AFTER`, because no red was recorded for the pin itself, and that alone made the verdict `FAIL`.
-Remediation R010 added a retro-red record for each one to the cycle log: the covering code was broken once, the test failed for the right reason, and the code was restored. That makes them `LIKELY`. They do not become `PROVEN`, because the history shows the tests arriving with or after the code, and a retro-red proves strength and not order.
+Remediation R010 added a retro-red record for each one to the cycle log: the covering code was broken once, the test failed for the right reason, and the code was restored.
+That makes them `LIKELY`.
+They do not become `PROVEN`, because the history shows the tests arriving with or after the code, and a retro-red proves strength and not order.
 
 ### Changes to tests that already existed
 
-I diffed every modified test file across the history. The only removed lines are four import lines and one type annotation (`manifest.test.ts`, widened for `branding`).
+I diffed every modified test file across the history.
+The only removed lines are four import lines and one type annotation (`manifest.test.ts`, widened for `branding`).
 No assertion was removed, loosened, skipped, or filtered, and no coverage or mutation threshold exists to lower.
-Two edits of a test before its first commit are worth knowing: the slice fix in `replay.test.ts` (G23, a mistake in my expected value) and the refactor of the matrix oracle into `test/fixtures/legal-set.ts` (G6). Neither is in the history as a change to an existing test, and both are in the cycle log.
-The G25 richness threshold was set from my first guess of 2000 to 1200 after I measured the walk. It guards the walk's richness and not the invariant.
+Two edits of a test before its first commit are worth knowing: the slice fix in `replay.test.ts` (G23, a mistake in my expected value) and the refactor of the matrix oracle into `test/fixtures/legal-set.ts` (G6).
+Neither is in the history as a change to an existing test, and both are in the cycle log.
+The G25 richness threshold was set from my first guess of 2000 to 1200 after I measured the walk.
+It guards the walk's richness and not the invariant.
 
 ### Task checkboxes against the list
 
 Every ticked behavioral task has its behavior `DONE` or `BASELINE`.
-The `Confirm ...` tasks (T021, T050, T054, T078) carry no behavior of their own and were ticked by hand. No behavioral task is unticked while its behavior is `DONE`.
+The `Confirm ...` tasks (T021, T050, T054, T078) carry no behavior of their own and were ticked by hand.
+No behavioral task is unticked while its behavior is `DONE`.
 Open at the time of the audit: T090 to T093, which are this lifecycle.
 
 ## Findings
 
-Severity follows the rubric. Line numbers are from `HEAD` (`9ab26df`) and were checked by opening each line.
+Severity follows the rubric.
+Line numbers are from `HEAD` (`9ab26df`) and were checked by opening each line.
 
 | # | Severity | Smell | Finding | Evidence |
 | --- | --- | --- | --- | --- |
@@ -134,9 +150,11 @@ the random walk takes about 15 of the 21 seconds, so the suite stays under the 6
 
 ## Mutation results
 
-No mutation tool is installed, so I used deliberate mutants. I applied each one alone, ran the **full** suite, and restored the file from the committed copy.
+No mutation tool is installed, so I used deliberate mutants.
+I applied each one alone, ran the **full** suite, and restored the file from the committed copy.
 After the run, `git status` showed a clean tree and the suite was green.
-Sample: 22 mutants across 12 behaviors, covering every hard rule this feature enforces (1, 2, 3, 4, 8), the mode checks, the append-only log, atomicity, replay, and promotion. The cycle log records about 30 further mutants run during the loop.
+Sample: 22 mutants across 12 behaviors, covering every hard rule this feature enforces (1, 2, 3, 4, 8), the mode checks, the append-only log, atomicity, replay, and promotion.
+The cycle log records about 30 further mutants run during the loop.
 
 | Mutant | File | Behavior | Result |
 | --- | --- | --- | --- |
@@ -163,16 +181,23 @@ Sample: 22 mutants across 12 behaviors, covering every hard rule this feature en
 | M21 no-op change (control) | `reconcile.ts` | none | Survived, as a control must |
 | M22 replay ignores a machine refusal | `replay.ts` | A22, U73 | Killed (1) |
 
-Score: 20 of 21 non-control mutants killed (95%). The survivor is equivalent, so every behavior-changing mutant was caught. Remediation removed the redundant line that M15 mutated, so M15 no longer exists.
-Scope: the 22 hand-applied mutants above, run against commit `9ab26df`, not the whole repository. The score is comparable only to a later run of the same list.
-After remediation I re-ran 14 retro-red mutants for R010 and 9 strength mutants for R001 to R007 against the strengthened tests. All were killed (see the cycle log). I did not re-run the full list of 22.
+Score: 20 of 21 non-control mutants killed (95%).
+The survivor is equivalent, so every behavior-changing mutant was caught.
+Remediation removed the redundant line that M15 mutated, so M15 no longer exists.
+Scope: the 22 hand-applied mutants above, run against commit `9ab26df`, not the whole repository.
+The score is comparable only to a later run of the same list.
+After remediation I re-ran 14 retro-red mutants for R010 and 9 strength mutants for R001 to R007 against the strengthened tests.
+All were killed (see the cycle log).
+I did not re-run the full list of 22.
 
-The cold smell pass also named two weaknesses that the sample did not test: a lint-positive test that runs no rules (finding 5) and a constant timestamp (finding 4). Remediation tasks cover both.
+The cold smell pass also named two weaknesses that the sample did not test: a lint-positive test that runs no rules (finding 5) and a constant timestamp (finding 4).
+Remediation tasks cover both.
 
 ## Traceability
 
 Every scenario has at least one acceptance test through a real entry point.
-The real entry point is the public function of the module (`transition`, `createTask`, `TaskLog`, the store factories, `replayTask`, `rebuildCache`, `recover`, `reconcile`, the plugin factory, and the ESLint API). No process-level or UI runner exists, so the acceptance layer is an in-process integration test.
+The real entry point is the public function of the module (`transition`, `createTask`, `TaskLog`, the store factories, `replayTask`, `rebuildCache`, `recover`, `reconcile`, the plugin factory, and the ESLint API).
+No process-level or UI runner exists, so the acceptance layer is an in-process integration test.
 
 | Criterion | Tests | End to end |
 | --- | --- | --- |
@@ -199,15 +224,19 @@ The real entry point is the public function of the module (`transition`, `create
 | AC-3.9 | A26, U78, U79 | Yes (reopened SQLite file) |
 
 Untested criteria: none.
-Tests that trace to nothing: `test/toolchain.test.ts` (a dependency smoke test that guards the native `better-sqlite3` build) and the fixture sanity checks `covers every kind, state, and event type once` and `covers all 15 event types`. They guard the toolchain and the oracles and trace to no criterion on purpose.
+Tests that trace to nothing: `test/toolchain.test.ts` (a dependency smoke test that guards the native `better-sqlite3` build) and the fixture sanity checks `covers every kind, state, and event type once` and `covers all 15 event types`.
+They guard the toolchain and the oracles and trace to no criterion on purpose.
 Success criteria: SC-001 (matrix), SC-002 (A6 to A10 and A11), SC-003 (U80), SC-004 (A3), SC-005 (21 seconds), and SC-006 (A24) each have a check.
 
 ## What was not audited
 
 - Coverage was not measured: `@vitest/coverage-v8` is not installed and setup may not add it.
-- Mutation testing ran by hand on 22 mutants. No tool measured the whole repository.
-- `bb plugin install` and a live bb load were not run. `bb plugin build` ran once, outside the suite, and passed (D-001).
-- Concurrency between processes on one SQLite file, crash behavior mid-write beyond transaction rollback, and large logs (thousands of events per task) were not assessed. Replay cost is linear in a task's events.
+- Mutation testing ran by hand on 22 mutants.
+  No tool measured the whole repository.
+- `bb plugin install` and a live bb load were not run.
+  `bb plugin build` ran once, outside the suite, and passed (D-001).
+- Concurrency between processes on one SQLite file, crash behavior mid-write beyond transaction rollback, and large logs (thousands of events per task) were not assessed.
+  Replay cost is linear in a task's events.
 - Performance was assessed only as total suite time.
 - The audit is not independent of the author, apart from the cold smell pass, which I vetted line by line.
 - The spec, plan, and task list were approved by the captain's stated intent and not by a separate review (D-007).

@@ -18,12 +18,16 @@ type TransitionResult =
 
 ## Guarantees
 
-1. **Pure.** The same snapshot and event always return a deeply equal result. The function reads no clock, file, network, or global.
-2. **No throw.** Any input, including `undefined` and non-objects, returns a result. Errors become refusals.
-3. **No mutation.** The input snapshot is never changed. A returned snapshot is a new object.
+1. **Pure.** The same snapshot and event always return a deeply equal result.
+   The function reads no clock, file, network, or global.
+2. **No throw.** Any input, including `undefined` and non-objects, returns a result.
+   Errors become refusals.
+3. **No mutation.** The input snapshot is never changed.
+   A returned snapshot is a new object.
 4. **Fail closed.** A refusal returns no snapshot, so the caller cannot continue from a half-applied state.
 5. **Complete.** Each state and event pair outside the table in `data-model.md` returns `illegal_transition`.
-6. **Stable reasons.** `refusal.code` comes from the closed list in `data-model.md`. `refusal.message` is for people and may change.
+6. **Stable reasons.** `refusal.code` comes from the closed list in `data-model.md`.
+   `refusal.message` is for people and may change.
 7. **Order.** Validation runs first (`invalid_event`, `unknown_event`), then table lookup (`illegal_transition`), then guards in table order.
 
 ## Examples

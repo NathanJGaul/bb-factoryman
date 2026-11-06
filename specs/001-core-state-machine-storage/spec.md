@@ -6,7 +6,14 @@
 
 **Status**: Approved (scope fixed by the captain's intent for this task)
 
-**Input**: User description: "Read CLAUDE.md, then docs/DESIGN.md. Build milestones 1 to 3 only: scaffold, state machine, storage. Write tests first. Keep src/machine/ free of bb imports and enforce that with a lint rule. Commit after each milestone. Don't write tools, event wiring, machine placement, or validator code yet. Record any deviation from the design in docs/DECISIONS.md. When milestone 3 is done, stop and summarize."
+**Input**: User description: "Read CLAUDE.md, then docs/DESIGN.md.
+Build milestones 1 to 3 only: scaffold, state machine, storage.
+Write tests first.
+Keep src/machine/ free of bb imports and enforce that with a lint rule.
+Commit after each milestone.
+Don't write tools, event wiring, machine placement, or validator code yet.
+Record any deviation from the design in docs/DECISIONS.md.
+When milestone 3 is done, stop and summarize."
 
 ## User scenarios and testing *(mandatory)*
 
@@ -29,11 +36,16 @@ Then add a file under `src/machine/` that imports from `@get-bb/plugin-sdk` and 
 
 **Acceptance scenarios**:
 
-1. **Given** a fresh checkout with dependencies installed, **When** the maintainer loads the plugin factory in the fake host, **Then** the load succeeds, registers nothing beyond the plugin's identity, and disposes cleanly. (AC-1.1)
-2. **Given** the package manifest, **When** the maintainer reads it, **Then** it names the package `bb-factoryman`, declares the server entry point, and pins the plugin SDK to one exact version. (AC-1.2)
-3. **Given** a source file under `src/machine/` that imports a `@get-bb/*` module, **When** lint runs, **Then** lint fails and names the restricted import. (AC-1.3)
-4. **Given** the same import in a file outside `src/machine/`, **When** lint runs, **Then** lint passes. (AC-1.4)
-5. **Given** the repository, **When** the maintainer runs the build command, **Then** it delegates to `bb plugin build`. (AC-1.5)
+1. **Given** a fresh checkout with dependencies installed, **When** the maintainer loads the plugin factory in the fake host, **Then** the load succeeds, registers nothing beyond the plugin's identity, and disposes cleanly.
+   (AC-1.1)
+2. **Given** the package manifest, **When** the maintainer reads it, **Then** it names the package `bb-factoryman`, declares the server entry point, and pins the plugin SDK to one exact version.
+   (AC-1.2)
+3. **Given** a source file under `src/machine/` that imports a `@get-bb/*` module, **When** lint runs, **Then** lint fails and names the restricted import.
+   (AC-1.3)
+4. **Given** the same import in a file outside `src/machine/`, **When** lint runs, **Then** lint passes.
+   (AC-1.4)
+5. **Given** the repository, **When** the maintainer runs the build command, **Then** it delegates to `bb plugin build`.
+   (AC-1.5)
 
 ---
 
@@ -53,18 +65,34 @@ Each gate has a test for both the refusal and the permitted case.
 
 **Acceptance scenarios**:
 
-1. **Given** a ship task in `awaiting_approval` with no recorded merge approval and a project without `yolo`, **When** a `merge` event arrives, **Then** the machine refuses and the task stays in `awaiting_approval`. (AC-2.1, hard rule 1)
-2. **Given** the same task in a project with `yolo` on, **When** a `merge` event arrives, **Then** the task moves to `merged`. (AC-2.2, hard rule 1)
-3. **Given** a merged task whose worktree has uncommitted changes or unpushed commits, **When** a `teardown` event arrives, **Then** the machine refuses and the task stays `merged`. (AC-2.3, hard rule 2)
-4. **Given** a task in `working`, **When** a completion or `fail` event arrives with empty or whitespace-only evidence, **Then** the machine refuses. (AC-2.4, hard rule 3)
-5. **Given** a scout task in `report_ready` with no recorded promotion approval, **When** a `promote` event arrives, **Then** the machine refuses. With a promotion approval recorded by the owner, the task becomes a queued ship task. (AC-2.5, hard rule 4)
-6. **Given** any task and any event that is not legal in the task's current state, **When** the event arrives, **Then** the machine refuses with a machine-readable reason and leaves the snapshot unchanged. (AC-2.6, hard rule 8)
-7. **Given** a project in each delivery mode, **When** the worker reaches review ready, **Then** the machine applies that mode's check: a finished pipeline plus an open pull request for `no-mistakes`, an open pull request for `direct-PR`, and landed commits on the branch for `local-only`. (AC-2.7)
-8. **Given** a `no-mistakes` project, **When** the worker hands off, **Then** the task passes through `validating` and may pause in `needs_decision`. For the other two modes `validating` and `needs_decision` are unreachable. (AC-2.8)
-9. **Given** a queued task with no resolved profile, **When** a `start` event arrives, **Then** the machine refuses. (AC-2.9)
-10. **Given** a task in `working`, **When** a `block` event arrives, **Then** the task becomes `blocked`, and an `unblock` event returns it to `working`. A `block` event in any other state is refused. (AC-2.10)
-11. **Given** any task that is not `torn_down` or already `failed`, **When** a `fail` event arrives with evidence, **Then** the task becomes `failed`. (AC-2.11)
-12. **Given** an approval event, **When** its actor is not the owner, **Then** the machine refuses. A worker actor is also refused on `request_approval`, `merge`, `promote`, and `teardown`. (AC-2.12)
+1. **Given** a ship task in `awaiting_approval` with no recorded merge approval and a project without `yolo`, **When** a `merge` event arrives, **Then** the machine refuses and the task stays in `awaiting_approval`.
+   (AC-2.1, hard rule 1)
+2. **Given** the same task in a project with `yolo` on, **When** a `merge` event arrives, **Then** the task moves to `merged`.
+   (AC-2.2, hard rule 1)
+3. **Given** a merged task whose worktree has uncommitted changes or unpushed commits, **When** a `teardown` event arrives, **Then** the machine refuses and the task stays `merged`.
+   (AC-2.3, hard rule 2)
+4. **Given** a task in `working`, **When** a completion or `fail` event arrives with empty or whitespace-only evidence, **Then** the machine refuses.
+   (AC-2.4, hard rule 3)
+5. **Given** a scout task in `report_ready` with no recorded promotion approval, **When** a `promote` event arrives, **Then** the machine refuses.
+   With a promotion approval recorded by the owner, the task becomes a queued ship task.
+   (AC-2.5, hard rule 4)
+6. **Given** any task and any event that is not legal in the task's current state, **When** the event arrives, **Then** the machine refuses with a machine-readable reason and leaves the snapshot unchanged.
+   (AC-2.6, hard rule 8)
+7. **Given** a project in each delivery mode, **When** the worker reaches review ready, **Then** the machine applies that mode's check: a finished pipeline plus an open pull request for `no-mistakes`, an open pull request for `direct-PR`, and landed commits on the branch for `local-only`.
+   (AC-2.7)
+8. **Given** a `no-mistakes` project, **When** the worker hands off, **Then** the task passes through `validating` and may pause in `needs_decision`.
+   For the other two modes `validating` and `needs_decision` are unreachable.
+   (AC-2.8)
+9. **Given** a queued task with no resolved profile, **When** a `start` event arrives, **Then** the machine refuses.
+   (AC-2.9)
+10. **Given** a task in `working`, **When** a `block` event arrives, **Then** the task becomes `blocked`, and an `unblock` event returns it to `working`.
+    A `block` event in any other state is refused.
+    (AC-2.10)
+11. **Given** any task that is not `torn_down` or already `failed`, **When** a `fail` event arrives with evidence, **Then** the task becomes `failed`.
+    (AC-2.11)
+12. **Given** an approval event, **When** its actor is not the owner, **Then** the machine refuses.
+    A worker actor is also refused on `request_approval`, `merge`, `promote`, and `teardown`.
+    (AC-2.12)
 
 ---
 
@@ -83,15 +111,24 @@ Then feed a conflicting live observation to reconcile and read the log.
 
 **Acceptance scenarios**:
 
-1. **Given** a store, **When** the caller records an event through the task log, **Then** one log row, the updated task row, and any approval row are written together or not at all. (AC-3.1)
-2. **Given** a refused event, **When** the caller records it, **Then** a log row marks it refused with the reason, and the task row is unchanged. (AC-3.2, hard rule 8)
-3. **Given** log rows already written, **When** any caller tries to update or delete one, **Then** the store refuses. (AC-3.3)
-4. **Given** a populated store, **When** the task cache is destroyed and rebuilt from the log, **Then** the rebuilt task rows equal the originals field for field. (AC-3.4)
-5. **Given** a log that holds an applied event the machine now refuses, **When** replay runs, **Then** replay reports the task as corrupt instead of guessing a state. (AC-3.5)
-6. **Given** live observations that differ from replayed state, **When** reconcile runs, **Then** it appends one `reconcile` event per mismatching task, leaves task state unchanged, and appends nothing when the same mismatch is already the last log entry. (AC-3.6)
-7. **Given** the same contract suite, **When** it runs against the in-memory store and the SQLite store, **Then** both pass with identical results. (AC-3.7)
-8. **Given** a project ID with no stored config, **When** the caller reads its config, **Then** the store returns `no-mistakes` with `yolo` off. (AC-3.8)
-9. **Given** a store reopened on the same SQLite file, **When** start-up recovery runs, **Then** it replays every non-terminal task and returns the rebuilt state. (AC-3.9)
+1. **Given** a store, **When** the caller records an event through the task log, **Then** one log row, the updated task row, and any approval row are written together or not at all.
+   (AC-3.1)
+2. **Given** a refused event, **When** the caller records it, **Then** a log row marks it refused with the reason, and the task row is unchanged.
+   (AC-3.2, hard rule 8)
+3. **Given** log rows already written, **When** any caller tries to update or delete one, **Then** the store refuses.
+   (AC-3.3)
+4. **Given** a populated store, **When** the task cache is destroyed and rebuilt from the log, **Then** the rebuilt task rows equal the originals field for field.
+   (AC-3.4)
+5. **Given** a log that holds an applied event the machine now refuses, **When** replay runs, **Then** replay reports the task as corrupt instead of guessing a state.
+   (AC-3.5)
+6. **Given** live observations that differ from replayed state, **When** reconcile runs, **Then** it appends one `reconcile` event per mismatching task, leaves task state unchanged, and appends nothing when the same mismatch is already the last log entry.
+   (AC-3.6)
+7. **Given** the same contract suite, **When** it runs against the in-memory store and the SQLite store, **Then** both pass with identical results.
+   (AC-3.7)
+8. **Given** a project ID with no stored config, **When** the caller reads its config, **Then** the store returns `no-mistakes` with `yolo` off.
+   (AC-3.8)
+9. **Given** a store reopened on the same SQLite file, **When** start-up recovery runs, **Then** it replays every non-terminal task and returns the rebuilt state.
+   (AC-3.9)
 
 ---
 
@@ -154,7 +191,8 @@ Then feed a conflicting live observation to reconcile and read the log.
 ### Key entities
 
 - **Project config**: A bb project ID, delivery mode, `yolo` flag, branch prefix, base branch, and default machine.
-- **Task**: A task ID, kind, state, worker thread ID, branch, machine, and pull request URL. It is a cache of the log.
+- **Task**: A task ID, kind, state, worker thread ID, branch, machine, and pull request URL.
+  It is a cache of the log.
 - **Task event**: An append-only record of task ID, time, from state, to state, event, actor, and evidence, plus the event payload and outcome that replay needs.
 - **Approval**: A task ID, the scope that the owner approved, the decision, and the time.
 - **Refusal**: A reason code and message that the machine returns when it declines an event.
@@ -172,10 +210,18 @@ Then feed a conflicting live observation to reconcile and read the log.
 
 ## Assumptions
 
-- The spike results in `spike/RESULTS.md` do not exist yet. No code in this feature depends on an unconfirmed bb behavior.
-- The `bb` command-line tool was not installed when the scaffold started, so the build step waited. The owner installed bb 0.48.1 during the work, and `bb plugin build` now runs. `docs/DECISIONS.md` records the outcome (D-001).
-- Hard rules 5, 6, and 7 depend on machine placement and extension code, which are later milestones. This feature gives `blocked` its state and events and leaves the placement checks to milestone 8 and the extension check to milestone 9.
-- The facts that gates need arrive in event payloads: the worktree report, the pull request URL, the landed-commit count, the pipeline result, and the `yolo` flag. Later tools gather these facts. This feature never gathers them.
-- Task, project, and thread IDs are opaque strings. Times are ISO 8601 UTC strings supplied by the caller.
-- A denied approval keeps the task in `awaiting_approval`. The design has no rework arrow, so `docs/DECISIONS.md` records this as an open question.
+- The spike results in `spike/RESULTS.md` do not exist yet.
+  No code in this feature depends on an unconfirmed bb behavior.
+- The `bb` command-line tool was not installed when the scaffold started, so the build step waited.
+  The owner installed bb 0.48.1 during the work, and `bb plugin build` now runs.
+  `docs/DECISIONS.md` records the outcome (D-001).
+- Hard rules 5, 6, and 7 depend on machine placement and extension code, which are later milestones.
+  This feature gives `blocked` its state and events and leaves the placement checks to milestone 8 and the extension check to milestone 9.
+- The facts that gates need arrive in event payloads: the worktree report, the pull request URL, the landed-commit count, the pipeline result, and the `yolo` flag.
+  Later tools gather these facts.
+  This feature never gathers them.
+- Task, project, and thread IDs are opaque strings.
+  Times are ISO 8601 UTC strings supplied by the caller.
+- A denied approval keeps the task in `awaiting_approval`.
+  The design has no rework arrow, so `docs/DECISIONS.md` records this as an open question.
 - Scout reports, dispatch rules, tools, event wiring, validators, machine placement, extension surface, caps, spend, notifications, and the firstmate import are out of scope.

@@ -26,7 +26,7 @@ Delete the file afterwards.
 ## 2. Exercise the state machine (user story 2)
 
 ```sh
-pnpm test -- src/machine test/acceptance/machine
+pnpm vitest run src/machine test/acceptance/machine
 ```
 
 Expected: the table-driven suite passes.
@@ -35,7 +35,7 @@ Every refusal case names its reason code.
 ## 3. Exercise storage and replay (user story 3)
 
 ```sh
-pnpm test -- src/store test/acceptance/store
+pnpm vitest run src/store test/acceptance/store
 ```
 
 Expected: the shared contract suite passes for both stores.

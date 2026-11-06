@@ -31,6 +31,9 @@
 
 ## Notes
 
-- The spec names `better-sqlite3`, `xstate`, and the fake plugin host only through `CLAUDE.md` constraints. The plan carries the rest of the technical detail.
-- Hard rules 5, 6, and 7 are out of scope here by the scope guard in `CLAUDE.md`. The assumptions section says so.
-- The captain's intent fixes scope, so no clarification round was needed. Two design gaps (denied approval, `blocked` for scouts) are logged for `docs/DECISIONS.md`.
+- The spec names `better-sqlite3`, `xstate`, and the fake plugin host only through `CLAUDE.md` constraints.
+  The plan carries the rest of the technical detail.
+- Hard rules 5, 6, and 7 are out of scope here by the scope guard in `CLAUDE.md`.
+  The assumptions section says so.
+- The captain's intent fixes scope, so no clarification round was needed.
+  Two design gaps (denied approval, `blocked` for scouts) are logged for `docs/DECISIONS.md`.
