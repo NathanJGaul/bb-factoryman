@@ -29,7 +29,7 @@ description: "Task list for core scaffold, task state machine, and event storage
 - [x] T004 [P] Create `.gitignore` at the repository root
 - [x] T005 Run `pnpm install` and commit `pnpm-lock.yaml`
 - [x] T006 Write the dependency smoke test in `test/toolchain.test.ts` (xstate and zod import; `better-sqlite3` opens an in-memory database)
-- [ ] T007 Run `/speckit.tdd.setup` to write `.specify/memory/tdd-profile.md`
+- [x] T007 Run `/speckit.tdd.setup` to write `.specify/memory/tdd-profile.md`
 
 **Checkpoint**: The suite runs green with the smoke test, and the profile exists.
 
