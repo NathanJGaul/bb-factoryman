@@ -26,11 +26,11 @@ One per acceptance criterion in `spec.md`.
 | A3 | Lint fails on an `@get-bb/*` import inside `src/machine/` and names the restricted import | AC-1.3, FR-005, SC-004 | example | DONE | `test/acceptance/lint-isolation.test.ts::fails lint on an @get-bb import and names the restricted module` |
 | A4 | Lint passes on the same import outside `src/machine/` | AC-1.4, FR-005 | example | DONE | `test/acceptance/lint-isolation.test.ts::passes lint on the same import outside src/machine` |
 | A5 | The `build` script delegates to `bb plugin build` | AC-1.5, FR-004 | characterization | BASELINE | `test/acceptance/manifest.test.ts::builds through bb plugin build` |
-| A6 | A `merge` event without an approval and without `yolo` is refused and the task stays in `awaiting_approval` | AC-2.1, FR-016 | example | DONE | `test/acceptance/machine-gates.test.ts::hard rule 1: merge needs a recorded approval` |
-| A7 | A `merge` event under `yolo` moves the task to `merged` | AC-2.2, FR-016 | example | DONE | `test/acceptance/machine-gates.test.ts::hard rule 1: merges under yolo without an approval` |
-| A8 | A `teardown` event with uncommitted changes or unpushed commits is refused and the task stays `merged` | AC-2.3, FR-017 | example | DONE | `test/acceptance/machine-gates.test.ts::hard rule 2: teardown needs landed work` |
-| A9 | A completion event or `fail` event with blank evidence is refused | AC-2.4, FR-015 | example | DONE | `test/acceptance/machine-gates.test.ts::hard rule 3: completion and failure need evidence` |
-| A10 | A `promote` event is refused without an owner approval and moves a scout to a queued ship task with one | AC-2.5, FR-018 | example | DONE | `test/acceptance/machine-gates.test.ts::hard rule 4: promotion needs a recorded approval` |
+| A6 | A `merge` event without an approval and without `yolo` is refused and the task stays in `awaiting_approval` | AC-2.1, FR-016, SC-002 | example | DONE | `test/acceptance/machine-gates.test.ts::hard rule 1: merge needs a recorded approval` |
+| A7 | A `merge` event under `yolo` moves the task to `merged` | AC-2.2, FR-016, SC-002 | example | DONE | `test/acceptance/machine-gates.test.ts::hard rule 1: merges under yolo without an approval` |
+| A8 | A `teardown` event with uncommitted changes or unpushed commits is refused and the task stays `merged` | AC-2.3, FR-017, SC-002 | example | DONE | `test/acceptance/machine-gates.test.ts::hard rule 2: teardown needs landed work` |
+| A9 | A completion event or `fail` event with blank evidence is refused | AC-2.4, FR-015, SC-002 | example | DONE | `test/acceptance/machine-gates.test.ts::hard rule 3: completion and failure need evidence` |
+| A10 | A `promote` event is refused without an owner approval and moves a scout to a queued ship task with one | AC-2.5, FR-018, SC-002 | example | DONE | `test/acceptance/machine-gates.test.ts::hard rule 4: promotion needs a recorded approval` |
 | A11 | Every state and event pair outside the legal set is refused with a reason code and an unchanged snapshot | AC-2.6, FR-011, FR-013, FR-014, SC-001 | example | DONE | `test/acceptance/machine-matrix.test.ts::state and event matrix` |
 | A12 | Review ready applies the delivery mode's check for each of the three modes | AC-2.7, FR-020 | example | DONE | `test/acceptance/machine-gates.test.ts::delivery modes decide what review ready means` |
 | A13 | A `no-mistakes` task passes through `validating` and `needs_decision`, and the other modes cannot reach them | AC-2.8 | example | DONE | `test/acceptance/machine-gates.test.ts::validating and needs_decision belong to no-mistakes projects` |
@@ -188,7 +188,7 @@ One per acceptance criterion in `spec.md`.
 
 ## Invariants and edge cases still to place
 
-None.
+SC-005 (the suite finishes in under 60 seconds) is a measured property of the whole suite and not a behavior, so no line traces to it. `pnpm run check` timing is its check.
 Every spec edge case maps to a line above:
 a `fail` on `torn_down` (U44), a bad payload (U12 to U15), an unknown event type (U11), whitespace evidence (U16), a wrong-scope approval (U22, U23, U40), a denied approval (U23, U39), approval out of state (U40), strict sequence order (U47, U68), a matching reconcile (U82), and a promoted task's fresh profile (U42).
 

@@ -138,8 +138,8 @@ description: "Task list for core scaffold, task state machine, and event storage
 
 - [x] T090 Run `/speckit.tdd.verify` and fix its findings
 - [x] T091 Run `/speckit.implement` for any remaining non-behavior tasks
-- [ ] T092 Run `/speckit.checklist`, `/speckit.analyze`, and `/speckit.converge`
-- [ ] T093 Run the full gate (`pnpm run check`) and leave the worktree clean
+- [x] T092 Run `/speckit.checklist`, `/speckit.analyze`, and `/speckit.converge`
+- [x] T093 Run the full gate (`pnpm run check`) and leave the worktree clean
 
 ---
 
