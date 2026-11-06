@@ -143,6 +143,25 @@ description: "Task list for core scaffold, task state machine, and event storage
 
 ---
 
+## Phase 6: TDD remediation
+
+The first `/speckit.tdd.verify` run returned `FAIL`. The feature is not done until tasks R001, R002, and R010 are cleared.
+Fix each finding by changing the test first where a test is at fault, and record any retro-red run in the cycle log.
+
+- [ ] R001 [US2] Finding 1: replace the tautological `agrees with the real machines on the same input` in `src/machine/transition.test.ts:371-373` with a literal expected result (`block` from `working` lands on `blocked`). Done when `pnpm vitest run src/machine/transition.test.ts` passes and a mutant that makes `transitionUsing` ignore its machines argument fails it.
+- [ ] R002 [US1] Finding 2: assert the exact `bb.name`, `bb.branding.icon`, and a descriptive `bb.description` in `test/acceptance/manifest.test.ts:20-22`. Done when `pnpm vitest run test/acceptance/manifest.test.ts` passes and changing the icon to `x` fails it.
+- [ ] R003 [US2] Finding 3: in `src/machine/table.test.ts:65`, compare each xstate state's configured event names with the hand-written legal set, so an extra table row fails even when a guard would refuse it. Done when a mutant that adds `review_ready: merge` to the table fails `table.test.ts`.
+- [ ] R004 [US3] Finding 4: assert that the wall-clock `at` falls between a time read before and a time read after the call, in `src/store/task-log.test.ts:225-230` and `src/store/reconcile.test.ts:124-129`. Done when a mutant with a constant `1970-01-01T00:00:00.000Z` default fails both.
+- [ ] R005 [US1] Finding 5: make the lint helper in `test/acceptance/lint-isolation.test.ts:10-15` fail on a fatal ESLint message and on an ignored file. Done when a fixture that contains a syntax error makes a `passes lint` test fail.
+- [ ] R006 [US3] Finding 6: assert `corrupt_log` for the apply on the corrupt task in `test/acceptance/store-restart.test.ts:152`. Done when a mutant that returns `unknown_task` for a corrupt task fails it.
+- [ ] R007 [US3] Finding 7: hard-code the non-terminal task IDs in `test/acceptance/store-restart.test.ts:210,214`, and add a literal context assertion to the `replayTask` test in `src/store/replay.test.ts`. Done when `pnpm vitest run src/store test/acceptance` passes and a mutant that drops `prUrl` from the snapshot fails the replay test.
+- [ ] R008 [US3] Finding 12: remove the redundant output `structuredClone` in `src/machine/transition.ts`, keeping the input clone. Done when the full suite stays green and mutant M15 is gone from the file.
+- [ ] R009 [US3] Add the missing `toState` check for the second appended row in `src/store/reconcile.test.ts:40`. Done when `pnpm vitest run src/store/reconcile.test.ts` passes.
+- [ ] R010 Finding 13: for each `TEST_AFTER` behavior (A4, U36, U40, U41, U44, U45, U69, U80), break the covering code once, run the behavior's test, record the failure as a retro-red entry in `tdd/cycle-log.md`, restore the code, and re-run the suite. Done when every one of the eight has a retro-red entry that names the command and the failing line.
+- [ ] R011 Findings 8, 9, 10, and 11 are accepted without a change, because the cost is low or the cause is intended: the triple contract run costs about 20 ms, the layout test follows FR-006 until milestone 4, the error-text matches pin documented store errors, and the helper duplication is cosmetic. Each reason is in `tdd/verification.md`.
+
+---
+
 ## Dependencies and order
 
 - Phase 1 blocks everything.
