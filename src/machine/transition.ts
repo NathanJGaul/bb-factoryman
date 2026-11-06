@@ -80,7 +80,7 @@ function run(machines: MachineSet, snapshot: TaskSnapshot, raw: unknown): Transi
   }
   return {
     ok: true,
-    snapshot: { state: row.target, context: structuredClone(next.context) },
+    snapshot: { state: row.target, context: next.context },
     from: state,
     to: row.target,
     event,

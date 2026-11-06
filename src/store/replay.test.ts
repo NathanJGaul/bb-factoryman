@@ -14,6 +14,16 @@ describe("replayTask", () => {
     const result = replayTask(store, "task-1");
     expect(result).toEqual({ ok: true, snapshot: expected, lastSeq: store.listEvents().at(-1)?.seq });
     expect(result.ok && result.snapshot.state).toBe("review_ready");
+    // Pin the projection with literals, so the test does not only compare the fold with itself.
+    expect(result.ok && result.snapshot.context).toMatchObject({
+      taskId: "task-1",
+      kind: "ship",
+      mode: "no-mistakes",
+      workerThreadId: "thread-1",
+      branch: "fm/task-1",
+      prUrl: "https://github.com/acme/widgets/pull/7",
+      approvals: {},
+    });
   });
 
   it("replays only the asked-for task", () => {

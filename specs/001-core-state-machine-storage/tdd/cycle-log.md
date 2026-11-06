@@ -335,3 +335,34 @@ Each behavior in a batch still has its own test, and each entry records the fail
 - a timeout of 5 seconds (the runner default) cut the SQLite run at 5.2 seconds, so the test sets an explicit 60 second timeout. Gate script -> 18 files, 336 passed, 0 failed, 13 seconds in total.
 - refactor: none needed
 - commit: G25
+
+## Remediation R001 to R009: findings from the first `/speckit.tdd.verify` run
+
+- source: `tdd/verification.md` (verdict `FAIL`, commit `101e9ea`). Each remediation changes a test first. The mutant that proves the new strength was run with `pnpm vitest run <file>` and the file was restored exactly afterwards (`git status` showed only the intended test edits).
+- R001 (finding 1): `agrees with the real machines on the same input` became `lands the real machines on the table's target for a legal move`, which asserts `ok`, `from`, `to`, and the state as literals. Mutants: `transitionUsing` ignoring its machines argument -> `AssertionError: expected true to be false` (2 failed); `block` targeting `failed` in the table -> `expected { ok: true, snapshot: { …(2) }, …(3) } to match object { ok: true, from: 'working', …(2) }` (3 failed).
+- R002 (finding 2): `manifest.test.ts` asserts `bb.name` is `Factory Man`, `bb.branding.icon` is `Factory`, and the description matches `/delivery contract.*approval gates/`. Mutant: icon `x` -> `AssertionError: expected 'x' to be 'Factory'`.
+- R003 (finding 3): the negative branch of `table.test.ts` also asserts that the xstate machine's configured events for that state do not include the event. Mutant: a `merge` row added to `review_ready` -> 3 failed (`lists exactly the legal pairs and targets for ship tasks`, `lists each ship row's guards ...`, and the machine test).
+- R004 (finding 4): the wall-clock tests in `task-log.test.ts` and `reconcile.test.ts` assert that `at` lies between the time read before and after the call. Mutants: a constant `1970-01-01T00:00:00.000Z` default -> `AssertionError: expected 0 to be greater than or equal to 1793936379286` in each.
+- R005 (finding 5): the lint helper fails on a fatal ESLint message and on an ignored file. Mutant: a syntax error in the `passes lint on xstate, zod, and sibling machine imports` fixture -> `AssertionError: parse error in fixture for src/machine/probe.ts: expected [ { ruleId: null, fatal: true, …(4) } ] to deeply equal []`.
+- R006 (finding 6): `store-restart.test.ts` asserts the `corrupt_log` code for an apply on a corrupt task. Mutant: `unknown_task` for every replay failure -> `AssertionError: expected 'unknown_task' to be 'corrupt_log'` (2 failed).
+- R007 (finding 7): the recovery test uses literal task IDs, and the `replayTask` test pins the context with literals. Mutant: `validated` stops recording `prUrl` -> `AssertionError: expected { taskId: 'task-1', …(9) } to match object { Object (taskId, kind, ...) }`.
+- R008 (finding 12): removed the redundant output `structuredClone` in `src/machine/transition.ts`. Gate script -> 19 files, 336 passed, 0 failed.
+- R009: `reconcile.test.ts` asserts `toState` of the second appended row.
+
+## Remediation R010: retro-red for the eight TEST_AFTER behaviors
+
+Each behavior below was pinned by a test that passed on its first run. Here I break the covering code once, run the behavior's test file, and restore. These are retro-red records and not original reds. They show that the test can fail for the right reason, and they do not show that it came first.
+
+- A4: `eslint.config.js` override widened to `src/**/*.ts`; `pnpm vitest run test/acceptance/lint-isolation.test.ts` -> `passes lint on the same import outside src/machine`: `AssertionError: expected [ Array(1) ] to deeply equal []`.
+- U36: `pnpm vitest run src/machine/transition.test.ts` after each of four table edits:
+  - merge guards swapped -> `names the actor before the missing approval on a worker merge`: `expected 'approval_required' to be 'actor_forbidden'`.
+  - ready evidence before mode -> `names the mode before the missing evidence ...`: `expected 'evidence_required' to be 'mode_mismatch'`.
+  - ready mode check before evidence -> `names the missing evidence before the missing pull request ...`: `expected 'mode_check_failed' to be 'evidence_required'`.
+  - merged teardown guards swapped -> `names the actor before the unlanded work on a worker teardown`: `expected 'unlanded_work' to be 'actor_forbidden'`.
+- U40: `approvalScopeIsMerge` dropped from `awaiting_approval` -> `is refused for the wrong scope in each state`: `expected a refusal but the task moved to awaiting_approval`.
+- U41: `merge` row added to `review_ready` -> `is still refused from review_ready, because every merge passes through awaiting_approval`: `expected a refusal but the task moved to merged`.
+- U44: `fail` row added to the failed lane -> `is refused from failed and from torn_down`: `expected a refusal but the task moved to failed`.
+- U45: `worktreeLanded` dropped from the failed-lane teardown (2 failed), `unpushedCommits === 0` changed to `>= 0` (4 failed), and `worktreeLanded` dropped from the scout `report_ready` teardown (1 failed) -> each: `expected a refusal but the task moved to torn_down`.
+- U69: `apply` decided from the cache row's state -> `pnpm vitest run src/store/task-log.test.ts`: `refuses an event that only a tampered cache row would allow` and `repairs a tampered cache row ...` failed (`expected true to be false`).
+- U80: the cache row for a freshly merged task gets a wrong `branch` -> `pnpm vitest run test/acceptance/store-random-walk.test.ts`: `AssertionError: seed 0 step 9: expected { taskId: 'walk-0', …(8) } to deeply equal { taskId: 'walk-0', …(8) }`; and `rebuildCache` writing `queued` for failed tasks -> `AssertionError: seed 77 rebuilt: expected [ { taskId: 'walk-77', …(8) } ] to deeply equal [ { taskId: 'walk-77', …(8) } ]`.
+- after all of the above: `git status` showed only the intended test edits and `src/machine/transition.ts`; the gate script was green (19 files, 336 passed, 0 failed).

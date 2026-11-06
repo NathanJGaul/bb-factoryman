@@ -37,7 +37,7 @@ describe("reconcile", () => {
     });
     expect(report.appended[0]?.evidence).toContain("blocked");
     expect(report.appended[0]?.evidence).toContain("failed");
-    expect(report.appended[1]).toMatchObject({ taskId: "review", fromState: "review_ready", payload: { observed: "merged" } });
+    expect(report.appended[1]).toMatchObject({ taskId: "review", fromState: "review_ready", toState: "review_ready", payload: { observed: "merged" } });
     expect(store.listEvents().at(-1)).toEqual(report.appended[1]);
     expect(report.appended[0]?.at).toBe("2026-11-05T12:00:00.000Z");
   });
@@ -123,8 +123,12 @@ describe("reconcile", () => {
 
   it("uses the wall clock when none is given", () => {
     const { store } = setup();
+    const before = Date.now();
     const report = reconcile(store, [{ taskId: "running", state: "failed" }]);
+    const after = Date.now();
     const at = report.appended[0]?.at ?? "";
     expect(new Date(at).toISOString()).toBe(at);
+    expect(Date.parse(at)).toBeGreaterThanOrEqual(before);
+    expect(Date.parse(at)).toBeLessThanOrEqual(after);
   });
 });

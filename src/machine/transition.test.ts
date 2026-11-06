@@ -368,7 +368,12 @@ describe("fail-closed cross-check", () => {
     }
   });
 
-  it("agrees with the real machines on the same input", () => {
-    expect(transitionUsing(goodMachines, snapshot("working"), validEvent("block"))).toEqual(transition(snapshot("working"), validEvent("block")));
+  it("lands the real machines on the table's target for a legal move", () => {
+    expect(transitionUsing(goodMachines, snapshot("working"), validEvent("block"))).toMatchObject({
+      ok: true,
+      from: "working",
+      to: "blocked",
+      snapshot: { state: "blocked" },
+    });
   });
 });

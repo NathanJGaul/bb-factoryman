@@ -60,6 +60,10 @@ describe("xstate machines", () => {
           expect(from.can(parsed), `${kind}/${state}/${type} should be possible`).toBe(true);
           expect(getNextSnapshot(machine, from, parsed).value, `${kind}/${state}/${type}`).toBe(target);
         } else {
+          // A guard could also make `can()` false, so check the machine's configured events too:
+          // an extra row must fail here even when a guard would have refused it.
+          const configured = Object.keys((machine.config.states?.[state] as { on?: object } | undefined)?.on ?? {});
+          expect(configured, `${kind}/${state} must not configure ${type}`).not.toContain(type);
           const before = snapshot(state, { kind, mode: modeFor(type) });
           const from = machine.resolveState({ value: state, context: before.context });
           expect(from.can(parsedEvent(type, validEvent(type))), `${kind}/${state}/${type} should be impossible`).toBe(false);

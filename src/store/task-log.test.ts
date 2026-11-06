@@ -224,9 +224,13 @@ describe("TaskLog clock", () => {
 
   it("falls back to the wall clock in ISO 8601 UTC form", () => {
     const store = createMemoryStore();
+    const before = Date.now();
     new TaskLog(store).create(createEvent());
+    const after = Date.now();
     const at = store.listEvents()[0]?.at ?? "";
     expect(new Date(at).toISOString()).toBe(at);
+    expect(Date.parse(at)).toBeGreaterThanOrEqual(before);
+    expect(Date.parse(at)).toBeLessThanOrEqual(after);
   });
 });
 

@@ -149,7 +149,9 @@ describe.each(STORES)("%s store: rebuilding the cache", (_name, make) => {
     expect(report.corrupt).toMatchObject([{ taskId: "forged", seq: forged.seq }]);
     expect(store.getTask("forged")).toBeNull();
     expect(store.listTasks()).toEqual(healthyBefore);
-    expect(log.apply("forged", validEvent("teardown")).ok).toBe(false);
+    const refused = log.apply("forged", validEvent("teardown"));
+    expect(refused.ok).toBe(false);
+    if (!refused.ok) expect(refused.refusal.code).toBe("corrupt_log");
   });
 });
 
@@ -207,7 +209,7 @@ describe("start-up recovery", () => {
 
     const report = recover(reopened);
 
-    const nonTerminal = expected.filter((t) => t.state !== "torn_down").map((t) => t.taskId).sort();
+    const nonTerminal = ["scout-promoted", "scout-reported", "ship-blocked", "ship-failed", "ship-queued"];
     expect(report.replayed.map((r) => r.taskId).sort()).toEqual(nonTerminal);
     expect(report.skipped).toEqual(["ship-done"]);
     expect(report.corrupt).toEqual([]);

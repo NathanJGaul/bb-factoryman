@@ -17,9 +17,9 @@ describe("package manifest", () => {
   it("names the package, declares the server entry, and pins the SDK to one exact version", () => {
     expect(manifest.name).toBe("bb-factoryman");
     expect(manifest.bb?.server).toBe("./src/server.ts");
-    expect(manifest.bb?.name).toBeTruthy();
-    expect(manifest.bb?.description).toBeTruthy();
-    expect(manifest.bb?.branding?.icon).toBeTruthy();
+    expect(manifest.bb?.name).toBe("Factory Man");
+    expect(manifest.bb?.description).toMatch(/delivery contract.*approval gates/);
+    expect(manifest.bb?.branding?.icon).toBe("Factory");
     expect(manifest.keywords).toContain("bb-plugin");
     expect(manifest.devDependencies?.["@get-bb/plugin-sdk"]).toMatch(/^\d+\.\d+\.\d+$/);
   });

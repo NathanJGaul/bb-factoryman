@@ -9,7 +9,11 @@ const eslint = new ESLint({ cwd: rootDir });
 /** Lint a code string as if it lived at `filePath`, and return the import restriction messages. */
 async function importRestrictions(filePath: string, code: string): Promise<string[]> {
   const [result] = await eslint.lintText(code, { filePath: join(rootDir, filePath) });
-  return (result?.messages ?? [])
+  // A "passes lint" answer is only worth something if ESLint really linted the file.
+  const messages = result?.messages ?? [];
+  expect(messages.filter((m) => m.fatal), `parse error in fixture for ${filePath}`).toEqual([]);
+  expect(messages.filter((m) => /ignored/i.test(m.message)), `${filePath} was ignored by ESLint`).toEqual([]);
+  return messages
     .filter((m) => m.ruleId === "no-restricted-imports" || m.ruleId === "no-restricted-syntax")
     .map((m) => m.message);
 }
