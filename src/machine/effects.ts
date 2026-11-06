@@ -21,6 +21,9 @@ export function applyEffects(context: TaskContext, event: TaskEvent): TaskContex
       return event.prUrl === undefined ? context : { ...context, prUrl: event.prUrl };
     case "validated":
       return { ...context, prUrl: event.prUrl };
+    case "record_approval":
+      // The latest decision per scope wins, so a later "approved" replaces an earlier "denied".
+      return { ...context, approvals: { ...context.approvals, [event.scope]: event.decision } };
     default:
       return context;
   }

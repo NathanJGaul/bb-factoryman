@@ -199,3 +199,41 @@ describe("pull request URL", () => {
     expect(next.context.prUrl).toBeNull();
   });
 });
+
+describe("record_approval", () => {
+  it("stores the decision, keeps the state, and lets a later decision replace an earlier one", () => {
+    let task = snapshot("awaiting_approval");
+    task = nextSnapshot(task, validEvent("record_approval", { decision: "denied" }));
+    expect(task.state).toBe("awaiting_approval");
+    expect(task.context.approvals).toEqual({ merge: "denied" });
+    task = nextSnapshot(task, validEvent("record_approval", { decision: "approved" }));
+    expect(task.state).toBe("awaiting_approval");
+    expect(task.context.approvals).toEqual({ merge: "approved" });
+  });
+
+  it("stores a promote decision for a scout in report_ready", () => {
+    const task = nextSnapshot(
+      snapshot("report_ready", { kind: "scout", approvals: { merge: "approved" } }),
+      validEvent("record_approval", { scope: "promote", decision: "approved" }),
+    );
+    expect(task.state).toBe("report_ready");
+    expect(task.context.approvals).toEqual({ merge: "approved", promote: "approved" });
+  });
+
+  it("is refused outside awaiting_approval and report_ready, so approval cannot be banked in advance", () => {
+    for (const state of ["queued", "working", "blocked", "validating", "needs_decision", "review_ready", "merged", "failed", "torn_down"] as const) {
+      expect(refusedCode(snapshot(state), validEvent("record_approval")), state).toBe("illegal_transition");
+    }
+  });
+
+  it("is refused for the wrong scope in each state", () => {
+    expect(refusedCode(snapshot("awaiting_approval"), validEvent("record_approval", { scope: "promote" }))).toBe("approval_scope_mismatch");
+    expect(refusedCode(snapshot("report_ready", { kind: "scout" }), validEvent("record_approval", { scope: "merge" }))).toBe("approval_scope_mismatch");
+  });
+});
+
+describe("merge under yolo", () => {
+  it("is still refused from review_ready, because every merge passes through awaiting_approval", () => {
+    expect(refusedCode(snapshot("review_ready"), validEvent("merge", { yolo: true }))).toBe("illegal_transition");
+  });
+});

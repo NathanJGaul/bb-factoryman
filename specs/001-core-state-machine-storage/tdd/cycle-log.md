@@ -157,3 +157,15 @@ Each behavior in a batch still has its own test, and each entry records the fail
 - green: `src/machine/effects.ts` now records profile, thread, branch, and machine on `start`, and the pull request URL on `ready` (when present) and `validated`. `pnpm vitest run src/machine` -> all passed. Gate script -> 9 files, 154 passed, 0 failed.
 - refactor: none needed
 - commit: G13
+
+## Cycle G14: U39, U40, U41 approvals and the yolo merge path
+
+- tests: `src/machine/transition.test.ts` (extended, 5 new): `record_approval stores the decision, keeps the state, and lets a later decision replace an earlier one` and `stores a promote decision for a scout in report_ready` (U39); `is refused outside awaiting_approval and report_ready, so approval cannot be banked in advance` and `is refused for the wrong scope in each state` (U40); `merge under yolo is still refused from review_ready, because every merge passes through awaiting_approval` (U41)
+- red: `pnpm vitest run src/machine/transition.test.ts`
+  -> 2 failed, 46 passed. `AssertionError: expected {} to deeply equal { merge: 'denied' }` and `AssertionError: expected { merge: 'approved' } to deeply equal { merge: 'approved', …(1) }`.
+- Three tests (U40 x2, U41) passed on first run because the table already encodes them. Deliberate mutants, each run with `pnpm vitest run src/machine/transition.test.ts` and restored exactly:
+  - G: added a `merge` row to `review_ready` -> `is still refused from review_ready ...` failed.
+  - H: dropped `approvalScopeIsMerge` from the `awaiting_approval` approval row -> `is refused for the wrong scope in each state` failed.
+- green: `src/machine/effects.ts` records `approvals[scope] = decision` on `record_approval`. `pnpm vitest run src/machine/transition.test.ts` -> 48 passed. Gate script -> 9 files, 159 passed, 0 failed.
+- refactor: none needed
+- commit: G14
