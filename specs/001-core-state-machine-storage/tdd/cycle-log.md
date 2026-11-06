@@ -203,3 +203,11 @@ Each behavior in a batch still has its own test, and each entry records the fail
 - A first draft of the facade also checked `next.status !== "active"`. Deliberate mutant N disabled that check and every test still passed, and a probe showed that xstate throws on a failing `assign` (the `try` catches it). The check was unreachable, so it was removed. Mutant O (target cross-check disabled) failed `refuses with internal_mismatch when the xstate machine lands somewhere the table does not allow`, so that check is covered.
 - refactor: none needed
 - commit: G17
+
+## Cycle G6 (closed): A6 to A17 green
+
+- command: `pnpm vitest run test/acceptance/machine-gates.test.ts test/acceptance/machine-matrix.test.ts`
+  -> 2 files, 52 passed, 0 failed
+- history: red at G6 (`Cannot find module '../../src/machine/transition'`); 4 effect-driven cases still red after G12 (profile recorded, URL recorded, approval recorded, promote); green after G15.
+- note: the matrix file was refactored in the middle of the milestone to import its oracle from `test/fixtures/legal-set.ts`. That moved the hand-written legal set out of the test body and changed no assertion.
+- commit: G6

@@ -26,18 +26,18 @@ One per acceptance criterion in `spec.md`.
 | A3 | Lint fails on an `@get-bb/*` import inside `src/machine/` and names the restricted import | AC-1.3, FR-005, SC-004 | example | DONE | `test/acceptance/lint-isolation.test.ts::fails lint on an @get-bb import and names the restricted module` |
 | A4 | Lint passes on the same import outside `src/machine/` | AC-1.4, FR-005 | example | DONE | `test/acceptance/lint-isolation.test.ts::passes lint on the same import outside src/machine` |
 | A5 | The `build` script delegates to `bb plugin build` | AC-1.5, FR-004 | characterization | BASELINE | `test/acceptance/manifest.test.ts::builds through bb plugin build` |
-| A6 | A `merge` event without an approval and without `yolo` is refused and the task stays in `awaiting_approval` | AC-2.1, FR-016 | example | PENDING |  |
-| A7 | A `merge` event under `yolo` moves the task to `merged` | AC-2.2, FR-016 | example | PENDING |  |
-| A8 | A `teardown` event with uncommitted changes or unpushed commits is refused and the task stays `merged` | AC-2.3, FR-017 | example | PENDING |  |
-| A9 | A completion event or `fail` event with blank evidence is refused | AC-2.4, FR-015 | example | PENDING |  |
-| A10 | A `promote` event is refused without an owner approval and moves a scout to a queued ship task with one | AC-2.5, FR-018 | example | PENDING |  |
-| A11 | Every state and event pair outside the legal set is refused with a reason code and an unchanged snapshot | AC-2.6, FR-011, FR-013, FR-014, SC-001 | example | PENDING |  |
-| A12 | Review ready applies the delivery mode's check for each of the three modes | AC-2.7, FR-020 | example | PENDING |  |
-| A13 | A `no-mistakes` task passes through `validating` and `needs_decision`, and the other modes cannot reach them | AC-2.8 | example | PENDING |  |
-| A14 | A `start` event without a resolved profile is refused | AC-2.9, FR-021 | example | PENDING |  |
-| A15 | A `block` event moves a working task to `blocked`, an `unblock` event returns it, and `block` elsewhere is refused | AC-2.10, FR-022 | example | PENDING |  |
-| A16 | A `fail` event with evidence moves any task that is not `torn_down` or `failed` to `failed` | AC-2.11 | example | PENDING |  |
-| A17 | Approval events from a non-owner actor are refused, and worker actors are refused on four events | AC-2.12, FR-019 | example | PENDING |  |
+| A6 | A `merge` event without an approval and without `yolo` is refused and the task stays in `awaiting_approval` | AC-2.1, FR-016 | example | DONE | `test/acceptance/machine-gates.test.ts::hard rule 1: merge needs a recorded approval` |
+| A7 | A `merge` event under `yolo` moves the task to `merged` | AC-2.2, FR-016 | example | DONE | `test/acceptance/machine-gates.test.ts::hard rule 1: merges under yolo without an approval` |
+| A8 | A `teardown` event with uncommitted changes or unpushed commits is refused and the task stays `merged` | AC-2.3, FR-017 | example | DONE | `test/acceptance/machine-gates.test.ts::hard rule 2: teardown needs landed work` |
+| A9 | A completion event or `fail` event with blank evidence is refused | AC-2.4, FR-015 | example | DONE | `test/acceptance/machine-gates.test.ts::hard rule 3: completion and failure need evidence` |
+| A10 | A `promote` event is refused without an owner approval and moves a scout to a queued ship task with one | AC-2.5, FR-018 | example | DONE | `test/acceptance/machine-gates.test.ts::hard rule 4: promotion needs a recorded approval` |
+| A11 | Every state and event pair outside the legal set is refused with a reason code and an unchanged snapshot | AC-2.6, FR-011, FR-013, FR-014, SC-001 | example | DONE | `test/acceptance/machine-matrix.test.ts::state and event matrix` |
+| A12 | Review ready applies the delivery mode's check for each of the three modes | AC-2.7, FR-020 | example | DONE | `test/acceptance/machine-gates.test.ts::delivery modes decide what review ready means` |
+| A13 | A `no-mistakes` task passes through `validating` and `needs_decision`, and the other modes cannot reach them | AC-2.8 | example | DONE | `test/acceptance/machine-gates.test.ts::validating and needs_decision belong to no-mistakes projects` |
+| A14 | A `start` event without a resolved profile is refused | AC-2.9, FR-021 | example | DONE | `test/acceptance/machine-gates.test.ts::start needs a resolved profile` |
+| A15 | A `block` event moves a working task to `blocked`, an `unblock` event returns it, and `block` elsewhere is refused | AC-2.10, FR-022 | example | DONE | `test/acceptance/machine-gates.test.ts::blocked loops back to working` |
+| A16 | A `fail` event with evidence moves any task that is not `torn_down` or `failed` to `failed` | AC-2.11 | example | DONE | `test/acceptance/machine-gates.test.ts::any state before torn_down can fail with evidence` |
+| A17 | Approval events from a non-owner actor are refused, and worker actors are refused on four events | AC-2.12, FR-019 | example | DONE | `test/acceptance/machine-gates.test.ts::approvals and authority` |
 | A18 | Recording an event writes one log row, the task row, and any approval row together | AC-3.1, FR-033 | example | PENDING |  |
 | A19 | A refused event leaves a refused log row with its reason and an unchanged task row | AC-3.2, FR-034 | example | PENDING |  |
 | A20 | A stored log row cannot be updated or deleted | AC-3.3, FR-030 | example | PENDING |  |
@@ -68,58 +68,58 @@ One per acceptance criterion in `spec.md`.
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| U10 | Each of the 15 event types parses from a valid example | FR-011, FR-023 | example | PENDING |  |
-| U11 | An unknown event type is refused with `unknown_event` | FR-023, edge cases | example | PENDING |  |
-| U12 | An event with an unknown extra key is refused with `invalid_event` | FR-023 | example | PENDING |  |
-| U13 | An event missing a required field is refused with `invalid_event` | FR-017, FR-023 | example | PENDING |  |
-| U14 | An event with a bad value is refused with `invalid_event`: negative or fractional counts, a malformed URL, or an unknown actor | FR-023 | example | PENDING |  |
-| U15 | A non-object input is refused with `invalid_event` | FR-023 | example | PENDING |  |
+| U10 | Each of the 15 event types parses from a valid example | FR-011, FR-023 | example | DONE | `src/machine/events.test.ts::parseEvent parses a valid %s event` |
+| U11 | An unknown event type is refused with `unknown_event` | FR-023, edge cases | example | DONE | `src/machine/events.test.ts::refuses an unknown event type as unknown_event` |
+| U12 | An event with an unknown extra key is refused with `invalid_event` | FR-023 | example | DONE | `src/machine/events.test.ts::refuses an event with an unknown extra key` |
+| U13 | An event missing a required field is refused with `invalid_event` | FR-017, FR-023 | example | DONE | `src/machine/events.test.ts::refuses %s without %s as invalid_event` |
+| U14 | An event with a bad value is refused with `invalid_event`: negative or fractional counts, a malformed URL, or an unknown actor | FR-023 | example | DONE | `src/machine/events.test.ts::refuses %s with a bad value %j as invalid_event` |
+| U15 | A non-object input is refused with `invalid_event` | FR-023 | example | DONE | `src/machine/events.test.ts::refuses non-object input %j as invalid_event` |
 
 ### `src/machine/guards.ts`
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| U16 | `evidenceProvided` refuses empty, whitespace-only, and missing evidence and accepts padded text | FR-015, edge cases | example | PENDING |  |
-| U17 | `profileResolved` refuses a missing or null profile and accepts a complete one | FR-021 | example | PENDING |  |
-| U18 | `notWorker` refuses only the worker actor and `ownerOnly` accepts only the user actor | FR-019 | example | PENDING |  |
-| U19 | The mode guards accept `no-mistakes` for one and the other two modes for the other | FR-020 | example | PENDING |  |
-| U20 | `readyModeCheck` needs a pull request URL for `direct-PR` and one or more landed commits for `local-only` | FR-020 | example | PENDING |  |
-| U21 | `pipelineFinishedWithPr` refuses an unfinished pipeline and accepts a finished one | FR-020 | example | PENDING |  |
-| U22 | The approval scope guards accept only their own scope | FR-016, FR-018, edge cases | example | PENDING |  |
-| U23 | `mergeAuthorized` accepts `yolo` or an approved merge decision and refuses a denied, missing, or other-scope decision | FR-016, edge cases | example | PENDING |  |
-| U24 | `promotionAuthorized` accepts only an approved promote decision | FR-018 | example | PENDING |  |
-| U25 | `worktreeLanded` refuses uncommitted changes or one unpushed commit and accepts zero of each | FR-017 | example | PENDING |  |
+| U16 | `evidenceProvided` refuses empty, whitespace-only, and missing evidence and accepts padded text | FR-015, edge cases | example | DONE | `src/machine/guards.test.ts::evidenceProvided` |
+| U17 | `profileResolved` refuses a missing or null profile and accepts a complete one | FR-021 | example | DONE | `src/machine/guards.test.ts::profileResolved` |
+| U18 | `notWorker` refuses only the worker actor and `ownerOnly` accepts only the user actor | FR-019 | example | DONE | `src/machine/guards.test.ts::notWorker and ownerOnly` |
+| U19 | The mode guards accept `no-mistakes` for one and the other two modes for the other | FR-020 | example | DONE | `src/machine/guards.test.ts::mode guards` |
+| U20 | `readyModeCheck` needs a pull request URL for `direct-PR` and one or more landed commits for `local-only` | FR-020 | example | DONE | `src/machine/guards.test.ts::readyModeCheck` |
+| U21 | `pipelineFinishedWithPr` refuses an unfinished pipeline and accepts a finished one | FR-020 | example | DONE | `src/machine/guards.test.ts::pipelineFinishedWithPr` |
+| U22 | The approval scope guards accept only their own scope | FR-016, FR-018, edge cases | example | DONE | `src/machine/guards.test.ts::approval scope guards` |
+| U23 | `mergeAuthorized` accepts `yolo` or an approved merge decision and refuses a denied, missing, or other-scope decision | FR-016, edge cases | example | DONE | `src/machine/guards.test.ts::mergeAuthorized` |
+| U24 | `promotionAuthorized` accepts only an approved promote decision | FR-018 | example | DONE | `src/machine/guards.test.ts::promotionAuthorized` |
+| U25 | `worktreeLanded` refuses uncommitted changes or one unpushed commit and accepts zero of each | FR-017 | example | DONE | `src/machine/guards.test.ts::worktreeLanded` |
 
 ### `src/machine/table.ts` and `src/machine/machines.ts`
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| U26 | The table's legal pairs equal a hand-written legal set for each kind | FR-014, SC-001 | example | PENDING |  |
-| U27 | Every guard name in the table exists, and each row lists its guards in the documented order | FR-013 | example | PENDING |  |
-| U28 | The ship machine has exactly the ship states and the scout machine exactly the scout states | FR-010 | example | PENDING |  |
-| U29 | Each xstate machine accepts exactly the transitions the table lists | FR-011 | example | PENDING |  |
+| U26 | The table's legal pairs equal a hand-written legal set for each kind | FR-014, SC-001 | example | DONE | `src/machine/table.test.ts::lists exactly the legal pairs and targets for %s tasks` |
+| U27 | Every guard name in the table exists, and each row lists its guards in the documented order | FR-013 | example | DONE | `src/machine/table.test.ts::lists each %s row's guards in the documented order, and every guard exists` |
+| U28 | The ship machine has exactly the ship states and the scout machine exactly the scout states | FR-010 | example | DONE | `src/machine/table.test.ts::xstate machines gives the ship machine / scout machine exactly its states` |
+| U29 | Each xstate machine accepts exactly the transitions the table lists | FR-011 | example | DONE | `src/machine/table.test.ts::accepts exactly the table's transitions in the %s machine` |
 
 ### `src/machine/transition.ts`
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| U30 | `createTask` returns a `queued` snapshot with null defaults and no approvals | FR-010 | example | PENDING |  |
-| U31 | `createTask` refuses blank IDs, an unknown kind, an unknown mode, and non-object input | FR-023 | example | PENDING |  |
-| U32 | `transition` never throws and returns a refusal for garbage events and an unknown snapshot state | FR-011, FR-023 | example | PENDING |  |
-| U33 | `transition` returns equal results for equal inputs and leaves a frozen input unchanged | FR-011, FR-012 | example | PENDING |  |
-| U34 | Every refusal carries a code from the closed list and a non-empty message | FR-013 | example | PENDING |  |
-| U35 | A successful result carries the from state, the to state, and the parsed event | FR-011 | example | PENDING |  |
-| U36 | The first failing guard in table order decides the refusal code | FR-013 | example | PENDING |  |
-| U37 | `start` moves `queued` to `working` and records profile, thread, branch, and machine | FR-021 | example | PENDING |  |
-| U38 | `ready` and `validated` record the pull request URL in the context | FR-020 | example | PENDING |  |
-| U39 | `record_approval` stores the decision, a later decision replaces it, and the state stays | FR-016, edge cases | example | PENDING |  |
-| U40 | `record_approval` is refused outside `awaiting_approval` and `report_ready`, and refused for the wrong scope | edge cases | example | PENDING |  |
-| U41 | `merge` under `yolo` is still refused from `review_ready` | FR-016 | example | PENDING |  |
-| U42 | `promote` makes a queued ship task, keeps thread, branch, and machine, and clears profile, approvals, and URL | FR-018, edge cases | example | PENDING |  |
-| U43 | A promoted task accepts ship events and refuses scout events | FR-018 | example | PENDING |  |
-| U44 | `fail` is refused from `failed` and from `torn_down` | edge cases | example | PENDING |  |
-| U45 | `teardown` from `failed`, `merged`, and `report_ready` needs a landed worktree report | FR-017 | example | PENDING |  |
-| U46 | `transition` refuses with `internal_mismatch` when xstate disagrees with the table | FR-011, plan decision 2 | example | PENDING |  |
+| U30 | `createTask` returns a `queued` snapshot with null defaults and no approvals | FR-010 | example | DONE | `src/machine/transition.test.ts::createTask returns a queued snapshot with null defaults and no approvals` |
+| U31 | `createTask` refuses blank IDs, an unknown kind, an unknown mode, and non-object input | FR-023 | example | DONE | `src/machine/transition.test.ts::createTask refuses %s` |
+| U32 | `transition` never throws and returns a refusal for garbage events and an unknown snapshot state | FR-011, FR-023 | example | DONE | `src/machine/transition.test.ts::transition never throws` |
+| U33 | `transition` returns equal results for equal inputs and leaves a frozen input unchanged | FR-011, FR-012 | example | DONE | `src/machine/transition.test.ts::transition is pure` |
+| U34 | Every refusal carries a code from the closed list and a non-empty message | FR-013 | example | DONE | `src/machine/transition.test.ts::gives every refusal a code from the closed list and a message` |
+| U35 | A successful result carries the from state, the to state, and the parsed event | FR-011 | example | DONE | `src/machine/transition.test.ts::carries the from state, the to state, and the parsed event on success` |
+| U36 | The first failing guard in table order decides the refusal code | FR-013 | example | DONE | `src/machine/transition.test.ts::guard order` |
+| U37 | `start` moves `queued` to `working` and records profile, thread, branch, and machine | FR-021 | example | DONE | `src/machine/transition.test.ts::start` |
+| U38 | `ready` and `validated` record the pull request URL in the context | FR-020 | example | DONE | `src/machine/transition.test.ts::pull request URL` |
+| U39 | `record_approval` stores the decision, a later decision replaces it, and the state stays | FR-016, edge cases | example | DONE | `src/machine/transition.test.ts::record_approval stores the decision ...` |
+| U40 | `record_approval` is refused outside `awaiting_approval` and `report_ready`, and refused for the wrong scope | edge cases | example | DONE | `src/machine/transition.test.ts::record_approval is refused outside awaiting_approval and report_ready ...` |
+| U41 | `merge` under `yolo` is still refused from `review_ready` | FR-016 | example | DONE | `src/machine/transition.test.ts::merge under yolo` |
+| U42 | `promote` makes a queued ship task, keeps thread, branch, and machine, and clears profile, approvals, and URL | FR-018, edge cases | example | DONE | `src/machine/transition.test.ts::promote makes a queued ship task ...` |
+| U43 | A promoted task accepts ship events and refuses scout events | FR-018 | example | DONE | `src/machine/transition.test.ts::promote accepts ship events afterwards and refuses scout events` |
+| U44 | `fail` is refused from `failed` and from `torn_down` | edge cases | example | DONE | `src/machine/transition.test.ts::fail` |
+| U45 | `teardown` from `failed`, `merged`, and `report_ready` needs a landed worktree report | FR-017 | example | DONE | `src/machine/transition.test.ts::teardown` |
+| U46 | `transition` refuses with `internal_mismatch` when xstate disagrees with the table | FR-011, plan decision 2 | example | DONE | `src/machine/transition.test.ts::fail-closed cross-check` |
 
 ### `src/store/` contract (runs against both stores)
 

@@ -62,3 +62,79 @@ The toolchain files hold configuration and one smoke test, and no feature code.
 The captain's intent fixed the scope, so the specification, plan, and task list were approved by that intent and not by a separate review.
 The constitution's test-first principle uses the exact wording of the Spec-Kit workflow.
 **Open**: the owner may confirm or reword principle V in `.specify/memory/constitution.md`.
+
+## Milestone 2: state machine
+
+### D-008: `blocked` applies to scouts, and only from `working` (Gap)
+
+The design draws `blocked` in the ship lane and says "a task pinned to an offline machine goes blocked".
+The machine lets both kinds block, because the rule says "a task".
+`block` is legal only from `working`, and `unblock` returns only to `working`.
+A task that is offline at dispatch has no path from `queued` to `blocked`.
+Milestone 8 decides how to represent that case. The likely answer is `start`, which binds the machine, followed by `block`.
+
+### D-009: Hard rules 5, 6, and 7 are not enforced yet (Limit)
+
+Rule 5 (an offline machine blocks, with no fallback) and rule 6 (`local-only` stays on the clone's machine) need machine data, which is milestone 8.
+Rule 7 (extensions never remove a gate) needs the extension loader, which is milestone 9.
+The machine provides the `blocked` state and events.
+Its gate list is a closed constant, so no extension point exists to remove a gate today.
+`CLAUDE.md` forbids placement code before the spike results confirm the assumptions.
+
+### D-010: A denied approval has no rework path (Open)
+
+The design has no arrow back from `awaiting_approval` or `review_ready` to `working`.
+A denied approval is recorded and the task stays in `awaiting_approval`.
+A later approved decision replaces the denial.
+The only other exits are `fail` and, after that, `teardown`.
+**Open**: the owner should decide whether a denial needs a `request_changes` arrow back to `working`.
+
+### D-011: `failed` can still be torn down (Gap)
+
+The design says any state before `torn_down` can move to `failed`, and it does not say how a failed worker's environment is removed.
+`failed` is therefore not terminal: `teardown` leaves it, through the same landed-work check as every other teardown.
+`torn_down` is the only terminal state.
+
+### D-012: Every merge passes through `awaiting_approval` (Gap)
+
+The `yolo` flag skips the approval form, not the state.
+A `yolo` merge still goes `review_ready`, `request_approval`, `awaiting_approval`, `merge`.
+The merge event carries the `yolo` flag that the caller read from the project config, so the log records which merges ran under `yolo`.
+
+### D-013: Actor rules tighten the gates (Deviation)
+
+The hard rules name approvals, evidence, and landed work.
+The machine adds two actor rules, both of which only tighten:
+
+- `record_approval` accepts only the `user` actor, so an agent cannot record the owner's approval.
+- A `worker` actor is refused on `request_approval`, `merge`, `promote`, and `teardown`, because the design says workers cannot merge or tear down.
+
+### D-014: Which transitions count as `done` (Gap)
+
+Hard rule 3 says `done` and `failed` transitions need evidence.
+The design does not list the `done` transitions.
+The machine requires evidence on `handoff`, `ready`, `validated`, `report`, and `fail`: every transition into `validating`, `review_ready`, `report_ready`, or `failed`.
+
+### D-015: Gate facts arrive in the event payload (Gap)
+
+The machine cannot read git, GitHub, or project config.
+The caller gathers the worktree report, the pull request URL, the landed-commit count, the pipeline result, and the `yolo` flag, and passes them in the event.
+A missing fact fails schema validation and is a refusal.
+The log stores the payload, so replay re-checks each gate with the original facts.
+
+### D-016: Promotion resets the task's authority (Gap)
+
+`promote` turns a scout into a queued ship task.
+It keeps the task ID, project, mode, thread, branch, and machine.
+It clears the profile, the approvals, and the pull request URL, so the new ship task needs its own profile and its own merge approval.
+
+### D-017: The `start` gate takes a profile and not a resolver (Gap)
+
+Hard rule: "profile resolved" gates `queued` to `working`.
+The dispatch resolver is milestone 7.
+The machine only checks that the `start` event carries a complete profile of provider, model, reasoning level, and permission mode.
+
+### D-018: The `create` event is separate from `transition` (Gap)
+
+A task has no snapshot before it exists, so `createTask` builds the first snapshot from a `create` event.
+The log records `create` as the first row of every task.

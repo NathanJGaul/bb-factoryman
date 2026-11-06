@@ -72,31 +72,31 @@ description: "Task list for core scaffold, task state machine, and event storage
 
 ### Tests for user story 2 (write first, watch fail)
 
-- [ ] T030 [US2] [A6] [A7] [A8] [A9] [A10] [A11] [A12] [A13] [A14] [A15] [A16] [A17] Write the outer-loop acceptance tests in `test/acceptance/machine-gates.test.ts` and `test/acceptance/machine-matrix.test.ts` with fixtures in `test/fixtures/machine.ts`; they stay red until the units land
-- [ ] T031 [P] [US2] [U10] [U11] [U12] [U13] [U14] [U15] Event schema tests in `src/machine/events.test.ts`
-- [ ] T032 [US2] [U10] [U11] [U12] [U13] [U14] [U15] Define vocabulary, reason codes, and event schemas in `src/machine/types.ts`, `src/machine/refusal.ts`, and `src/machine/events.ts`
-- [ ] T033 [P] [US2] [U16] [U17] [U18] Guard tests for evidence, profile, and actor in `src/machine/guards.test.ts`
-- [ ] T034 [US2] [U16] [U17] [U18] Implement the evidence, profile, and actor guards in `src/machine/guards.ts`
-- [ ] T035 [US2] [U19] [U20] [U21] [U22] Guard tests for mode, ready check, pipeline, and scope in `src/machine/guards.test.ts`
-- [ ] T036 [US2] [U19] [U20] [U21] [U22] Implement the mode, ready, pipeline, and scope guards in `src/machine/guards.ts`
-- [ ] T037 [US2] [U23] [U24] [U25] Guard tests for merge, promotion, and worktree in `src/machine/guards.test.ts`
-- [ ] T038 [US2] [U23] [U24] [U25] Implement the merge, promotion, and worktree guards in `src/machine/guards.ts`
-- [ ] T039 [P] [US2] [U26] [U27] [U28] [U29] Table and machine tests in `src/machine/table.test.ts`
-- [ ] T040 [US2] [U26] [U27] [U28] [U29] Define the transition tables in `src/machine/table.ts` and generate the xstate machines in `src/machine/machines.ts`
-- [ ] T041 [P] [US2] [U30] [U31] [U32] [U33] [U34] [U35] Facade tests for `createTask` and `transition` basics in `src/machine/transition.test.ts`
-- [ ] T042 [US2] [U30] [U31] [U32] [U33] [U34] [U35] Implement `createTask` and the `transition` facade in `src/machine/transition.ts`
-- [ ] T043 [US2] [U36] [U37] [U38] Facade tests for guard order, `start`, and completion events in `src/machine/transition.test.ts`
-- [ ] T044 [US2] [U36] [U37] [U38] Implement the guard order and context assignments in `src/machine/transition.ts` and `src/machine/machines.ts`
-- [ ] T045 [US2] [U39] [U40] [U41] Facade tests for approvals and yolo merge in `src/machine/transition.test.ts`
-- [ ] T046 [US2] [U39] [U40] [U41] Implement approval recording in `src/machine/machines.ts`
-- [ ] T047 [US2] [U42] [U43] Facade tests for promotion in `src/machine/transition.test.ts`
-- [ ] T048 [US2] [U42] [U43] Implement promotion in `src/machine/machines.ts` and `src/machine/transition.ts`
-- [ ] T049 [US2] [U44] [U45] Facade tests for `fail` and `teardown` in `src/machine/transition.test.ts`
-- [ ] T050 [US2] [U44] [U45] Confirm `fail` and `teardown` behavior in `src/machine/machines.ts`
-- [ ] T051 [US2] [U46] Facade test for the fail-closed cross-check in `src/machine/transition.test.ts`
-- [ ] T052 [US2] [U46] Add the cross-check and its test seam in `src/machine/transition.ts`
-- [ ] T053 [US2] Record machine deviations and open questions in `docs/DECISIONS.md`
-- [ ] T054 [US2] Confirm [A6] to [A17] are green and commit milestone 2
+- [x] T030 [US2] [A6] [A7] [A8] [A9] [A10] [A11] [A12] [A13] [A14] [A15] [A16] [A17] Write the outer-loop acceptance tests in `test/acceptance/machine-gates.test.ts` and `test/acceptance/machine-matrix.test.ts` with fixtures in `test/fixtures/machine.ts`; they stay red until the units land
+- [x] T031 [P] [US2] [U10] [U11] [U12] [U13] [U14] [U15] Event schema tests in `src/machine/events.test.ts`
+- [x] T032 [US2] [U10] [U11] [U12] [U13] [U14] [U15] Define vocabulary, reason codes, and event schemas in `src/machine/types.ts`, `src/machine/refusal.ts`, and `src/machine/events.ts`
+- [x] T033 [P] [US2] [U16] [U17] [U18] Guard tests for evidence, profile, and actor in `src/machine/guards.test.ts`
+- [x] T034 [US2] [U16] [U17] [U18] Implement the evidence, profile, and actor guards in `src/machine/guards.ts`
+- [x] T035 [US2] [U19] [U20] [U21] [U22] Guard tests for mode, ready check, pipeline, and scope in `src/machine/guards.test.ts`
+- [x] T036 [US2] [U19] [U20] [U21] [U22] Implement the mode, ready, pipeline, and scope guards in `src/machine/guards.ts`
+- [x] T037 [US2] [U23] [U24] [U25] Guard tests for merge, promotion, and worktree in `src/machine/guards.test.ts`
+- [x] T038 [US2] [U23] [U24] [U25] Implement the merge, promotion, and worktree guards in `src/machine/guards.ts`
+- [x] T039 [P] [US2] [U26] [U27] [U28] [U29] Table and machine tests in `src/machine/table.test.ts`
+- [x] T040 [US2] [U26] [U27] [U28] [U29] Define the transition tables in `src/machine/table.ts` and generate the xstate machines in `src/machine/machines.ts`
+- [x] T041 [P] [US2] [U30] [U31] [U32] [U33] [U34] [U35] Facade tests for `createTask` and `transition` basics in `src/machine/transition.test.ts`
+- [x] T042 [US2] [U30] [U31] [U32] [U33] [U34] [U35] Implement `createTask` and the `transition` facade in `src/machine/transition.ts`
+- [x] T043 [US2] [U36] [U37] [U38] Facade tests for guard order, `start`, and completion events in `src/machine/transition.test.ts`
+- [x] T044 [US2] [U36] [U37] [U38] Implement the guard order and context assignments in `src/machine/transition.ts` and `src/machine/machines.ts`
+- [x] T045 [US2] [U39] [U40] [U41] Facade tests for approvals and yolo merge in `src/machine/transition.test.ts`
+- [x] T046 [US2] [U39] [U40] [U41] Implement approval recording in `src/machine/machines.ts`
+- [x] T047 [US2] [U42] [U43] Facade tests for promotion in `src/machine/transition.test.ts`
+- [x] T048 [US2] [U42] [U43] Implement promotion in `src/machine/machines.ts` and `src/machine/transition.ts`
+- [x] T049 [US2] [U44] [U45] Facade tests for `fail` and `teardown` in `src/machine/transition.test.ts`
+- [x] T050 [US2] [U44] [U45] Confirm `fail` and `teardown` behavior in `src/machine/machines.ts`
+- [x] T051 [US2] [U46] Facade test for the fail-closed cross-check in `src/machine/transition.test.ts`
+- [x] T052 [US2] [U46] Add the cross-check and its test seam in `src/machine/transition.ts`
+- [x] T053 [US2] Record machine deviations and open questions in `docs/DECISIONS.md`
+- [x] T054 [US2] Confirm [A6] to [A17] are green and commit milestone 2
 
 **Checkpoint**: User stories 1 and 2 pass on their own.
 
