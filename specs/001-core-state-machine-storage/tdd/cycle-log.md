@@ -121,3 +121,13 @@ Each behavior in a batch still has its own test, and each entry records the fail
 - green: `src/machine/guards.ts` implements `mergeAuthorized`, `promotionAuthorized`, and `worktreeLanded`. Guards file -> 35 passed. Gate script -> 7 files, 103 passed, 0 failed.
 - refactor: removed the now-unused `pending` placeholder helper, and simplified the test helper type to `TaskContext["approvals"]`. Gate re-run green.
 - commit: G10
+
+## Cycle G11: U26, U27, U28, U29 transition tables and generated xstate machines
+
+- tests: `src/machine/table.test.ts` (new): `lists exactly the legal pairs and targets for %s tasks` x2 (U26), `lists each %s row's guards in the documented order, and every guard exists` x2 (U27), `gives the ship machine exactly the ship states` and `gives the scout machine exactly the scout states` (U28), `accepts exactly the table's transitions in the %s machine` x2 (U29). The oracles live in `test/fixtures/legal-set.ts`, written by hand from the design and not read from `src/machine`.
+- red: stubbed `TABLES` as empty lanes and `MACHINES` as one-state machines, then `pnpm vitest run src/machine/table.test.ts`
+  -> 8 failed. Decisive lines: `AssertionError: ship/queued/start should be possible: expected false to be true`, and the table and state-set comparisons failing against the empty stubs.
+- green, step 1: `src/machine/table.ts` holds the ship and scout lanes. `src/machine/machines.ts` generates both xstate machines from the table, wrapping each named guard. Run -> 6 passed, 2 failed: `ship/awaiting_approval/record_approval should be possible: expected false to be true`. xstate's `can()` is false for a targetless transition that has no action.
+- green, step 2: every generated transition now runs one `applyEffects` assign action from `src/machine/effects.ts`, which returns the context unchanged for now. Later cycles drive real effects. Run -> 8 passed. Gate script (lint, type-check, suite without the two open outer files) -> 8 files, 111 passed, 0 failed.
+- refactor: none needed
+- commit: G11
