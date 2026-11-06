@@ -42,3 +42,17 @@ Each behavior in a batch still has its own test, and each entry records the fail
 - green: created `src/machine/.gitkeep` and `src/store/.gitkeep`. Suite `pnpm test` -> 4 files, 7 passed, 0 failed. Lint and type-check clean.
 - refactor: none needed
 - commit: G3
+
+## Cycle G4: A3, A4, U1, U2, U3, U4 lint rule keeps bb imports out of src/machine
+
+- tests: `test/acceptance/lint-isolation.test.ts` (new): `fails lint on an @get-bb import and names the restricted module` (A3), `passes lint on the same import outside src/machine` (A4), `fails lint on a type-only @get-bb import` (U1), `fails lint on an @get-bb subpath import` (U2), `fails lint on a dynamic import of an @get-bb module` (U3), `fails lint on a re-export from an @get-bb module` (U4)
+- red: `pnpm vitest run test/acceptance/lint-isolation.test.ts`
+  -> 5 failed, 1 passed. A3, U1, U2, U3, U4 each: `AssertionError: expected [] to have a length of 1 but got +0`
+- A4 passed on first run (negative test). Deliberate mutant: widened the override from `src/machine/**/*.ts` to `src/**/*.ts`, ran
+  `pnpm vitest run test/acceptance/lint-isolation.test.ts -t "passes lint on the same import outside"`
+  -> `AssertionError: expected [ Array(1) ] to deeply equal []` (1 failed). Restored `eslint.config.js` exactly.
+- green, step 1: added the `no-restricted-imports` override with the `@get-bb/*` pattern. Run -> only U3 still failed (`expected [] to have a length of 1 but got +0`), because ESLint 10's `no-restricted-imports` does not see `import()`.
+- green, step 2: added `no-restricted-syntax` on `ImportExpression` for `src/machine/**`. Suite `pnpm test` -> 5 files, 13 passed, 0 failed. Lint and type-check clean.
+- refactor: none needed
+- note: the rule bans every dynamic import in `src/machine/`, not only `@get-bb` ones, so a computed specifier cannot hide a bb import. Recorded in `docs/DECISIONS.md`.
+- commit: G4
