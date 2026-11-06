@@ -131,3 +131,13 @@ Each behavior in a batch still has its own test, and each entry records the fail
 - green, step 2: every generated transition now runs one `applyEffects` assign action from `src/machine/effects.ts`, which returns the context unchanged for now. Later cycles drive real effects. Run -> 8 passed. Gate script (lint, type-check, suite without the two open outer files) -> 8 files, 111 passed, 0 failed.
 - refactor: none needed
 - commit: G11
+
+## Cycle G12: U30 to U35 createTask and the transition facade
+
+- tests: `src/machine/transition.test.ts` (new, 35 cases): `createTask returns a queued snapshot with null defaults and no approvals` (U30); `createTask refuses %s` x8 and `refuses non-object input %j` x5 (U31); `transition never throws` for 9 garbage events and 8 bad snapshots (U32); `transition is pure` x2 (U33); `gives every refusal a code from the closed list and a message` (U34); `carries the from state, the to state, and the parsed event on success` (U35)
+- red: stubbed `createTask` and `transition` to throw, then `pnpm vitest run src/machine/transition.test.ts`
+  -> `Error: not implemented` (35 failed, 0 passed)
+- green: `src/machine/events.ts` gained `parseCreate`. `src/machine/transition.ts` implements `createTask` and the `transition` facade: parse, validate the snapshot, look up the table row, run its guards in order, compute the next snapshot with xstate, and cross-check the target. The whole call sits in a `try`, so it never throws. The result is a deep clone. `pnpm vitest run src/machine/transition.test.ts` -> 35 passed. Gate script -> 9 files, 146 passed, 0 failed.
+- refactor: none needed
+- note: with the facade in place the open outer files go 48 passed, 4 failed. The four failures are the effect-driven cases (profile recorded, prUrl recorded, approval recorded, promote), which G13 to G15 drive. The matrix file passes in full.
+- commit: G12

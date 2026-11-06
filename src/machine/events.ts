@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { refuse, type Refusal } from "./refusal";
-import { ACTORS, APPROVAL_DECISIONS, APPROVAL_SCOPES, EVENT_TYPES, type EventType } from "./types";
+import { ACTORS, APPROVAL_DECISIONS, APPROVAL_SCOPES, DELIVERY_MODES, EVENT_TYPES, TASK_KINDS, type EventType } from "./types";
 
 const nonEmpty = z.string().min(1);
 const count = z.number().int().min(0);
@@ -73,6 +73,33 @@ export function parseEvent(raw: unknown): ParseResult {
     const issue = parsed.error.issues[0];
     const where = issue && issue.path.length > 0 ? ` at \`${issue.path.join(".")}\`` : "";
     return { ok: false, refusal: refuse("invalid_event", `Invalid \`${type}\` event${where}: ${issue?.message ?? "unreadable"}.`) };
+  }
+  return { ok: true, event: parsed.data };
+}
+
+/** An ID that is not empty or whitespace. */
+const id = z.string().refine((value) => value.trim() !== "", "must not be blank");
+
+const createSchema = z.strictObject({
+  type: z.literal("create"),
+  actor: z.enum(ACTORS),
+  taskId: id,
+  projectId: id,
+  kind: z.enum(TASK_KINDS),
+  mode: z.enum(DELIVERY_MODES),
+});
+
+export type CreateEvent = z.infer<typeof createSchema>;
+
+export type ParseCreateResult = { ok: true; event: CreateEvent } | { ok: false; refusal: Refusal };
+
+/** Validate the event that creates a task. Never throws. */
+export function parseCreate(raw: unknown): ParseCreateResult {
+  const parsed = createSchema.safeParse(raw);
+  if (!parsed.success) {
+    const issue = parsed.error.issues[0];
+    const where = issue && issue.path.length > 0 ? ` at \`${issue.path.join(".")}\`` : "";
+    return { ok: false, refusal: refuse("invalid_event", `Invalid \`create\` event${where}: ${issue?.message ?? "unreadable"}.`) };
   }
   return { ok: true, event: parsed.data };
 }
