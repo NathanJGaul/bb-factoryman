@@ -237,3 +237,21 @@ Each behavior in a batch still has its own test, and each entry records the fail
 - outer loop: `test/acceptance/store-contract.test.ts` (A24, A25) now passes with both stores, so it is committed with this cycle.
 - refactor: none needed
 - commit: G20
+
+## Cycle G23 (run before G21 and G22): U71 to U75 replay
+
+- order change: `TaskLog.apply` decides from a replay, so replay is built first. The tests write history by folding the machine (`test/fixtures/history.ts`), not through `TaskLog`, so they do not depend on it.
+- tests: `src/store/replay.test.ts` (new): `returns the snapshot that folding the recorded events through the machine produces` and `replays only the asked-for task` (U71); `skips refused rows and reconcile rows` (U72); `reports not_found for a task with no applied rows`; `reports a task as corrupt when an applied row is refused by the machine` (U73); `reports a task as corrupt when an applied row's to_state differs from the machine's result` (U74); `reports a task as corrupt when its first applied row is not create, or it has a second create` (U75)
+- red: a stub `replayTask` that throws, then `pnpm vitest run src/store/replay.test.ts`
+  -> `Error: not implemented` (7 failed, 0 passed)
+- green: `src/store/rows.ts` maps snapshots to task rows and rows back to raw events. `src/store/replay.ts` folds applied non-`reconcile` rows through `createTask` and `transition`, and returns `corrupt` with the failing `seq` when the machine refuses a row, when a row's recorded from or to state differs from the machine's, or when the first row is not a well-formed `create`.
+- test correction (a mistake in my test, not in the code): the first run failed with `AssertionError: expected 'awaiting_approval' to be 'review_ready'` and `expected 'Log row 8 ...' to contain 'illegal_transition'`. I had sliced `shipPath()` at 6 events, which ends after `request_approval`, where the tests assumed `review_ready`. I changed the slice to 5 events. The assertions are unchanged.
+- deliberate mutants, each run with `pnpm vitest run src/store/replay.test.ts` and restored exactly:
+  - P: dropped the from/to cross-check -> `reports a task as corrupt when an applied row's to_state differs ...` failed.
+  - Q: folded `reconcile` rows into the replay -> `skips refused rows and reconcile rows` failed.
+  - R: folded refused rows into the replay -> `skips refused rows and reconcile rows` and `reports not_found ...` failed.
+  - S: dropped the "first row must be create" check -> survived at first, because a non-create row fails the later parse anyway. I added a case where a `start` row carries create-shaped fields; mutant S then failed that test.
+  - T: dropped the "create goes from nothing to queued" check -> survived. I added a case with a `create` row that records `working`; mutant T then failed that test.
+- gate script -> 15 files, 278 passed, 0 failed.
+- refactor: none needed
+- commit: G23
