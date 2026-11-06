@@ -211,3 +211,19 @@ Each behavior in a batch still has its own test, and each entry records the fail
 - history: red at G6 (`Cannot find module '../../src/machine/transition'`); 4 effect-driven cases still red after G12 (profile recorded, URL recorded, approval recorded, promote); green after G15.
 - note: the matrix file was refactored in the middle of the milestone to import its oracle from `test/fixtures/legal-set.ts`. That moved the hand-written legal set out of the test body and changed no assertion.
 - commit: G6
+
+## Cycle G18 (opened): A18 to A26 written red first
+
+- tests: `test/acceptance/store-contract.test.ts` (A24, A25), `test/acceptance/store-restart.test.ts` (A18 to A23, A26), `test/store-contract.ts` (the shared contract suite), and `test/fixtures/store.ts` (a fake clock, create events, and event paths). They enter through `TaskLog`, `replayTask`, `rebuildCache`, `recover`, `reconcile`, `createMemoryStore`, and `openSqliteStore`.
+- red: `pnpm vitest run test/acceptance/store-contract.test.ts test/acceptance/store-restart.test.ts`
+  -> `Error: Cannot find module '../../src/store/memory'` (2 files failed, no tests ran). This is the expected outer-loop red.
+- The three outer files stay uncommitted and red while the inner loop (G19 to G26) builds the units. During those cycles the gate run excludes them with `--exclude`.
+
+## Cycle G19: U47 to U55 the in-memory store and the shared contract
+
+- tests: `test/store-contract.ts` (new, run by `src/store/memory.test.ts`): `assigns strictly increasing seq values to appended events` (U47), `reads back an appended event equal to what was written ...` (U48), `does not let a caller change the store by mutating a returned row` (U49), `filters events by task and by afterSeq and returns them in seq order` (U50), `commits every write of a transaction and returns the function's value` (U51), `rolls back every write of a transaction and rethrows when the function throws` (U52), `returns the default config for an unknown project and the stored config after a put` (U53), `puts, gets, replaces, lists, filters, and clears task rows without touching events or approvals` (U54), `keeps approvals in insertion order per task` (U55)
+- red: declared `src/store/types.ts` and `src/store/store.ts` (types and the default config) and a stub `createMemoryStore` that throws, then `pnpm vitest run src/store/memory.test.ts`
+  -> `Error: not implemented` (9 failed, 0 passed)
+- green: `src/store/memory.ts` keeps events, approvals, tasks, and configs in plain structures, hands out frozen deep copies, and implements `transaction` by saving a deep copy of its state and restoring it when `fn` throws. `pnpm vitest run src/store/memory.test.ts` -> 9 passed. Gate script (lint, type-check, suite without the open outer files) -> 12 files, 237 passed, 0 failed.
+- refactor: none needed
+- commit: G19
