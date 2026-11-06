@@ -17,6 +17,11 @@ export default tseslint.config(
       "no-restricted-imports": [
         "error",
         {
+          // Exact names only: a pattern like "events" would also match the sibling module "./events".
+          paths: nodeBuiltins.map((name) => ({
+            name,
+            message: "src/machine/ must not use Node built-ins, because the machine performs no input or output.",
+          })),
           patterns: [
             {
               group: ["@get-bb/*"],
@@ -27,7 +32,7 @@ export default tseslint.config(
               message: "src/machine/ must not touch storage. Storage depends on the machine, not the reverse.",
             },
             {
-              group: ["node:*", ...nodeBuiltins],
+              group: ["node:*"],
               message: "src/machine/ must not use Node built-ins, because the machine performs no input or output.",
             },
             {

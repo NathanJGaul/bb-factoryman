@@ -84,3 +84,13 @@ Each behavior in a batch still has its own test, and each entry records the fail
 - green: `src/machine/events.ts` defines a strict `zod` schema per event type, a discriminated union, and `parseEvent`, which maps failures to `unknown_event` or `invalid_event`. `pnpm vitest run src/machine/events.test.ts` -> 50 passed. Suite without the two open outer files -> 6 files, 67 passed, 0 failed. Lint clean. Type-check fails only on the two open outer files, which import `transition` before it exists.
 - refactor: none needed
 - commit: G7
+
+## Cycle G5b: U8 follow-up, a Node built-in name must not block a sibling module
+
+- found by: linting `src/machine/events.test.ts` in G7 reported `'./events' import is restricted ... Node built-ins`. The G7 commit (`feat: parse and validate machine events [G7]`) was made with that lint error present, because the lint output and the commit ran in one command. This cycle fixes it.
+- test: `test/acceptance/lint-isolation.test.ts::passes lint on a sibling module whose name matches a Node built-in` (new, extends U8)
+- red: `pnpm vitest run test/acceptance/lint-isolation.test.ts`
+  -> `AssertionError: expected [ …(3) ] to deeply equal []` (1 failed, 10 passed)
+- green: `eslint.config.js` now restricts built-ins through exact-name `paths` entries (plus the `node:*` pattern), so `./events`, `./path`, and `../machine/util` pass. Lint-isolation file -> 11 passed. Suite without the two open outer files -> 6 files, 68 passed, 0 failed. `pnpm eslint .` clean.
+- refactor: none needed
+- commit: G5b

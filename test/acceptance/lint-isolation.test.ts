@@ -79,4 +79,15 @@ describe("src/machine purity", () => {
     ].join("\n");
     expect(await importRestrictions("src/machine/probe.ts", code)).toEqual([]);
   });
+
+  it("passes lint on a sibling module whose name matches a Node built-in", async () => {
+    const code = [
+      'import { parseEvent } from "./events";',
+      'import { join } from "./path";',
+      'import { format } from "../machine/util";',
+      "export const parts = [parseEvent, join, format];",
+      "",
+    ].join("\n");
+    expect(await importRestrictions("src/machine/probe.ts", code)).toEqual([]);
+  });
 });
