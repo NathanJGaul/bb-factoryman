@@ -6,7 +6,7 @@ const nodeBuiltins = builtinModules.filter((name) => !name.startsWith("_"));
 
 export default tseslint.config(
   {
-    ignores: ["node_modules/**", "dist/**", ".specify/**", ".claude/**", "specs/**", "spike/**", "docs/**"],
+    ignores: ["node_modules/**", "dist/**", "coverage/**", ".specify/**", ".claude/**", "specs/**", "spike/**", "docs/**"],
   },
   js.configs.recommended,
   ...tseslint.configs.recommended,

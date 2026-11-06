@@ -136,8 +136,8 @@ description: "Task list for core scaffold, task state machine, and event storage
 
 ## Phase 5: Polish and lifecycle
 
-- [ ] T090 Run `/speckit.tdd.verify` and fix its findings
-- [ ] T091 Run `/speckit.implement` for any remaining non-behavior tasks
+- [x] T090 Run `/speckit.tdd.verify` and fix its findings
+- [x] T091 Run `/speckit.implement` for any remaining non-behavior tasks
 - [ ] T092 Run `/speckit.checklist`, `/speckit.analyze`, and `/speckit.converge`
 - [ ] T093 Run the full gate (`pnpm run check`) and leave the worktree clean
 

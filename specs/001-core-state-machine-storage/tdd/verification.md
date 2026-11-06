@@ -1,25 +1,27 @@
 ---
 feature: 001-core-state-machine-storage
-verdict: FAIL
+verdict: PASS_WITH_GAPS
 standard: .specify/extensions/tdd/templates/tdd-test-quality-rubric.md
-verified_at: 9ab26df
+verified_at: 6535cc5
 behaviors: 112
 proven: 103
-likely: 0
-test_after: 8
+likely: 8
+test_after: 0
 no_test: 0
 not_applicable: 1
-high_smells: 2
+high_smells: 0
 criteria_total: 26
 criteria_covered: 26
-mutation_score: 95 # scope: the 22 mutants in this audit, hand-applied, 21 non-control; the survivor is an equivalent mutant
+mutation_score: 95 # scope: the 22 mutants in the first run, hand-applied, 21 non-control; the survivor was an equivalent mutant and its code is removed
 mutants_survived: 1 # plus 1 control that must survive; see the mutation table
 suite: 336 passed, 0 failed, 21s
 ---
 
 # TDD verification: core scaffold, task state machine, and event storage
 
-**Verdict: FAIL.** Two `HIGH` test smells exist (one tautological assertion and one vacuous assertion), and eight behaviors have tests that landed after the code that already satisfied them.
+**This is the second run.** The first run (commit `101e9ea`, in git history) returned `FAIL` with two `HIGH` smells and eight `TEST_AFTER` behaviors. The remediation tasks R001 to R011 cleared them, and this run re-checks the result. Findings 1 to 7 and 12 are fixed, and finding 13 now has retro-red records. Findings 8 to 11 are accepted for the reasons given.
+
+**Verdict: PASS_WITH_GAPS.** No `HIGH` smell remains and every criterion has an end-to-end test, but eight behaviors have only retro-red evidence: their tests landed after the code that already satisfied them.
 
 **Independence.** The same session wrote the code and the tests, so this audit is not independent. To limit that, a fresh-context agent ran the smell pass over every test file, and I opened every line it cited before accepting a finding. I also re-read the files rather than rely on memory. The mutation sample, the history check, and the traceability check are mine.
 
@@ -44,7 +46,7 @@ No discrepancy exists between the cycle log and the history. Two entries were wr
 | G2 | A1 | PROVEN | `expected [] to deeply equal [ { level: 'info' ...` |
 | G3 | U9 | PROVEN | `src/machine should exist` |
 | G4 | A3, U1, U2, U3, U4 | PROVEN | `expected [] to have a length of 1` |
-| G4 | A4 | TEST_AFTER | Negative test, passed first; mutant killed |
+| G4 | A4 | LIKELY (retro-red) | Negative test, passed first; mutant killed |
 | G5, G5b | U5, U6, U7, U8 | PROVEN | `expected [] to have a length of 1`; U8 red at G5b |
 | G6 and G12 to G17 | A6 to A17 | PROVEN | Outer files red at G6, green at G15 |
 | G7 | U10 to U15 | PROVEN | `Error: not implemented` (49 failed) |
@@ -52,27 +54,27 @@ No discrepancy exists between the cycle log and the history. Two entries were wr
 | G11 | U26 to U29 | PROVEN | Table and state-set mismatches |
 | G12 | U30 to U35 | PROVEN | `Error: not implemented` (35 failed) |
 | G13 | U37, U38 | PROVEN | Profile and URL not recorded |
-| G13 | U36 | TEST_AFTER | Four order tests passed first; six mutants killed |
+| G13 | U36 | LIKELY (retro-red) | Four order tests passed first; six mutants killed |
 | G14 | U39 | PROVEN | `expected {} to deeply equal { merge: 'denied' }` |
-| G14 | U40, U41 | TEST_AFTER | Passed first; mutants G and H killed |
+| G14 | U40, U41 | LIKELY (retro-red) | Passed first; mutants G and H killed |
 | G15 | U42, U43 | PROVEN | Kind and approvals not reset |
-| G16 | U44, U45 | TEST_AFTER | All 14 passed first; mutants I to M killed |
+| G16 | U44, U45 | LIKELY (retro-red) | All 14 passed first; mutants I to M killed |
 | G17 | U46 | PROVEN | `transitionUsing is not a function` |
 | G18 to G26 | A18 to A26 | PROVEN | Outer files red at G18, green at G26 |
 | G19, G20 | U47 to U60 | PROVEN | `Error: not implemented` |
 | G21, G22 | U61 to U68, U70 | PROVEN | Stub and atomicity reds |
-| G22 | U69 | TEST_AFTER | Both tests passed first (the G21 code already replayed from the log); mutant U killed |
+| G22 | U69 | LIKELY (retro-red) | Both tests passed first (the G21 code already replayed from the log); mutant U killed |
 | G23 | U71 to U75 | PROVEN | `Error: not implemented`; extra cases added after mutants S and T |
 | G24 | U76 to U79 | PROVEN | `Error: not implemented` |
-| G25 | U80 | TEST_AFTER | An invariant test written over finished code; mutants W1 to W4 killed |
+| G25 | U80 | LIKELY (retro-red) | An invariant test written over finished code; mutants W1 to W4 killed |
 | G26 | U81 to U86 | PROVEN | `Error: not implemented` |
 
-Counts: 103 `PROVEN`, 8 `TEST_AFTER` (A4, U36, U40, U41, U44, U45, U69, U80), 1 `NOT_APPLICABLE` (A5), 0 `NO_TEST`.
+Counts: 103 `PROVEN`, 8 `LIKELY` (A4, U36, U40, U41, U44, U45, U69, U80), 1 `NOT_APPLICABLE` (A5), 0 `TEST_AFTER`, 0 `NO_TEST`.
 
-The eight `TEST_AFTER` behaviors are regression pins on behavior that an earlier red-first test already drove.
+The eight `LIKELY` behaviors are regression pins on behavior that an earlier red-first test already drove.
 For example, U40, U41, U44, and U45 sit under the matrix test A11, which was written red at G6 before the table existed.
-The rubric still classes them `TEST_AFTER`: no red was recorded for the pin itself.
-Their only evidence is a deliberate mutant, and mutants are strength evidence and not ordering evidence.
+The first run classed them `TEST_AFTER`, because no red was recorded for the pin itself, and that alone made the verdict `FAIL`.
+Remediation R010 added a retro-red record for each one to the cycle log: the covering code was broken once, the test failed for the right reason, and the code was restored. That makes them `LIKELY`. They do not become `PROVEN`, because the history shows the tests arriving with or after the code, and a retro-red proves strength and not order.
 
 ### Changes to tests that already existed
 
@@ -93,8 +95,8 @@ Severity follows the rubric. Line numbers are from `HEAD` (`9ab26df`) and were c
 
 | # | Severity | Smell | Finding | Evidence |
 | --- | --- | --- | --- | --- |
-| 1 | HIGH | Tautological assertion | `agrees with the real machines on the same input` compares `transitionUsing(MACHINES, ...)` with `transition(...)`, and `transition` is defined as that call. It cannot fail. | `src/machine/transition.test.ts:371-373`, `src/machine/transition.ts` (`transition`) |
-| 2 | HIGH | Vacuous assertion | The manifest test accepts any truthy `bb.name`, `bb.description`, and `bb.branding.icon`. An icon of `"x"` passes. | `test/acceptance/manifest.test.ts:20-22` |
+| 1 | HIGH (fixed) | Tautological assertion | `agrees with the real machines on the same input` compares `transitionUsing(MACHINES, ...)` with `transition(...)`, and `transition` is defined as that call. It cannot fail. | `src/machine/transition.test.ts:371-373`, `src/machine/transition.ts` (`transition`) |
+| 2 | HIGH (fixed) | Vacuous assertion | The manifest test accepts any truthy `bb.name`, `bb.description`, and `bb.branding.icon`. An icon of `"x"` passes. | `test/acceptance/manifest.test.ts:20-22` |
 | 3 | MED | Passes for a wrong implementation | The negative branch of `accepts exactly the table's transitions` builds a snapshot with no satisfied gates, so `can()` is false when a guard refuses, even if an extra table row exists. The matrix test catches it, so the pin is unit-level only. | `src/machine/table.test.ts:65` |
 | 4 | MED | Passes for a wrong implementation | The wall-clock tests assert only that `at` parses as an ISO time, so a constant `1970-01-01T00:00:00.000Z` passes. | `src/store/task-log.test.ts:225-230`, `src/store/reconcile.test.ts:124-129` |
 | 5 | MED | Passes for a wrong implementation | The lint helper keeps only `no-restricted-*` messages. The `passes lint` tests would also pass if ESLint ignored the file or hit a parse error. | `test/acceptance/lint-isolation.test.ts:10-15` |
@@ -105,7 +107,25 @@ Severity follows the rubric. Line numbers are from `HEAD` (`9ab26df`) and were c
 | 10 | MED | Implementation coupled | Several tests match error text (`/append-only/`, `/newer/`, `/CHECK/`, `"Log row"`) and the walk's richness thresholds. | `src/store/sqlite.test.ts`, `src/store/replay.test.ts`, `test/acceptance/store-random-walk.test.ts:112-113` |
 | 11 | LOW | Several | `if (result.ok)` narrowing after an `expect`, duplicated `populate` and `STORES` helpers, a second event builder (`row` and `newEvent`), `KINDS` redefined in `table.test.ts`, and an unlabelled multi-assertion in `manifest.test.ts` and `store-contract.ts`. No assertion can be skipped by the narrowing. | `src/store/replay.test.ts`, `test/acceptance/store-restart.test.ts`, `test/fixtures/history.ts:10`, `test/store-contract.ts:7` |
 | 12 | LOW | Redundant code | Mutant M15 shows that the final `structuredClone(next.context)` in `transition` is redundant, because the restored context is already a clone. It is an equivalent mutant. | `src/machine/transition.ts` (`run`) |
-| 13 | HIGH (rubric: `TEST_AFTER`) | Test-first | Eight behaviors are `TEST_AFTER`: A4, U36, U40, U41, U44, U45, U69, U80. | Test-first table above |
+| 13 | HIGH in run 1 (rubric: `TEST_AFTER`) | Test-first | Eight behaviors were `TEST_AFTER`: A4, U36, U40, U41, U44, U45, U69, U80. | Test-first table above |
+
+### Status after remediation
+
+| # | Status |
+| --- | --- |
+| 1 | Fixed (R001). The test asserts literals, and two mutants fail the file. |
+| 2 | Fixed (R002). Exact name, icon, and description pattern. |
+| 3 | Fixed (R003). The negative branch also checks the configured events. |
+| 4 | Fixed (R004). The time must fall between a read before and a read after. |
+| 5 | Fixed (R005). The helper fails on a fatal message or an ignored file. |
+| 6 | Fixed (R006). The `corrupt_log` code is asserted. |
+| 7 | Fixed (R007). Task IDs and the replayed context are literal. |
+| 8 | Accepted (R011). The triple contract run costs about 20 ms, and deleting a test to dedupe is not worth the audit risk. |
+| 9 | Accepted (R011). FR-006 requires the test until milestone 4 replaces it. |
+| 10 | Accepted (R011). The matched strings are documented store errors. |
+| 11 | Accepted (R011). Cosmetic. |
+| 12 | Fixed (R008). The redundant clone is gone. |
+| 13 | Downgraded to `LIKELY` by the retro-red records (R010). It stays listed as a gap. |
 
 The remaining points from the cold pass are accepted as they stand:
 literal timing thresholds in the random walk are tripwires on richness and not on the invariant;
@@ -143,8 +163,9 @@ Sample: 22 mutants across 12 behaviors, covering every hard rule this feature en
 | M21 no-op change (control) | `reconcile.ts` | none | Survived, as a control must |
 | M22 replay ignores a machine refusal | `replay.ts` | A22, U73 | Killed (1) |
 
-Score: 20 of 21 non-control mutants killed (95%). The survivor is equivalent, so every behavior-changing mutant was caught.
-Scope: the 22 hand-applied mutants above, not the whole repository. The score is comparable only to a later run of the same list.
+Score: 20 of 21 non-control mutants killed (95%). The survivor is equivalent, so every behavior-changing mutant was caught. Remediation removed the redundant line that M15 mutated, so M15 no longer exists.
+Scope: the 22 hand-applied mutants above, run against commit `9ab26df`, not the whole repository. The score is comparable only to a later run of the same list.
+After remediation I re-ran 14 retro-red mutants for R010 and 9 strength mutants for R001 to R007 against the strengthened tests. All were killed (see the cycle log). I did not re-run the full list of 22.
 
 The cold smell pass also named two weaknesses that the sample did not test: a lint-positive test that runs no rules (finding 5) and a constant timestamp (finding 4). Remediation tasks cover both.
 
