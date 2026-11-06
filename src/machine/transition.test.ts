@@ -237,3 +237,48 @@ describe("merge under yolo", () => {
     expect(refusedCode(snapshot("review_ready"), validEvent("merge", { yolo: true }))).toBe("illegal_transition");
   });
 });
+
+describe("promote", () => {
+  const scoutReady = () =>
+    snapshot("report_ready", {
+      kind: "scout",
+      mode: "direct-PR",
+      machine: "builder-2",
+      prUrl: "https://github.com/acme/widgets/pull/3",
+      approvals: { promote: "approved", merge: "denied" },
+    });
+
+  it("makes a queued ship task, keeps the identity and placement, and clears profile, approvals, and URL", () => {
+    const before = scoutReady();
+    const next = nextSnapshot(before, validEvent("promote"));
+    expect(next.state).toBe("queued");
+    expect(next.context).toEqual({
+      ...before.context,
+      kind: "ship",
+      profile: null,
+      prUrl: null,
+      approvals: {},
+    });
+    expect(next.context.taskId).toBe(before.context.taskId);
+    expect(next.context.workerThreadId).toBe(before.context.workerThreadId);
+    expect(next.context.branch).toBe(before.context.branch);
+    expect(next.context.machine).toBe("builder-2");
+  });
+
+  it("accepts ship events afterwards and refuses scout events", () => {
+    const promoted = nextSnapshot(scoutReady(), validEvent("promote"));
+    expect(refusedCode(promoted, validEvent("start", { profile: null }))).toBe("profile_required");
+    const working = nextSnapshot(promoted, validEvent("start"));
+    expect(working.state).toBe("working");
+    expect(refusedCode(working, validEvent("report"))).toBe("illegal_transition");
+    expect(nextSnapshot(working, validEvent("ready")).state).toBe("review_ready");
+  });
+
+  it("needs a fresh merge approval after promotion", () => {
+    let task = nextSnapshot(scoutReady(), validEvent("promote"));
+    task = nextSnapshot(task, validEvent("start"));
+    task = nextSnapshot(task, validEvent("ready"));
+    task = nextSnapshot(task, validEvent("request_approval"));
+    expect(refusedCode(task, validEvent("merge", { yolo: false }))).toBe("approval_required");
+  });
+});
