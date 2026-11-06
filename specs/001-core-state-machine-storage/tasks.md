@@ -23,12 +23,12 @@ description: "Task list for core scaffold, task state machine, and event storage
 
 **Purpose**: Give the repository a test stack so `/speckit.tdd.setup` can verify it. These tasks add configuration and no feature behavior.
 
-- [ ] T001 Create `package.json` (name, scripts, exact SDK pin, dev dependencies) and `pnpm-workspace.yaml` at the repository root
-- [ ] T002 [P] Create `tsconfig.json` and `vitest.config.ts` at the repository root
-- [ ] T003 [P] Create baseline `eslint.config.js` without the isolation rule at the repository root
-- [ ] T004 [P] Create `.gitignore` at the repository root
-- [ ] T005 Run `pnpm install` and commit `pnpm-lock.yaml`
-- [ ] T006 Write the dependency smoke test in `test/toolchain.test.ts` (xstate and zod import; `better-sqlite3` opens an in-memory database)
+- [x] T001 Create `package.json` (name, scripts, exact SDK pin, dev dependencies) and `pnpm-workspace.yaml` at the repository root
+- [x] T002 [P] Create `tsconfig.json` and `vitest.config.ts` at the repository root
+- [x] T003 [P] Create baseline `eslint.config.js` without the isolation rule at the repository root
+- [x] T004 [P] Create `.gitignore` at the repository root
+- [x] T005 Run `pnpm install` and commit `pnpm-lock.yaml`
+- [x] T006 Write the dependency smoke test in `test/toolchain.test.ts` (xstate and zod import; `better-sqlite3` opens an in-memory database)
 - [ ] T007 Run `/speckit.tdd.setup` to write `.specify/memory/tdd-profile.md`
 
 **Checkpoint**: The suite runs green with the smoke test, and the profile exists.

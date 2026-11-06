@@ -15,7 +15,7 @@ Replay folds the log through the same machine, so a destroyed cache rebuilds ide
 
 ## Technical context
 
-**Language/Version**: TypeScript 7 (`typescript` 7.0.x, `tsc --noEmit`), ESM, Node 26.
+**Language/Version**: TypeScript 6 through the `@typescript/typescript6` alias (the same alias the bb repository uses, because `typescript-eslint` does not support TypeScript 7.0), ESM, Node 26.
 
 **Primary dependencies**: `xstate` 5 (machines), `zod` 4 (event and config schemas), `better-sqlite3` 12.10.0 (SQLite store), `@get-bb/plugin-sdk` 0.6.125 (pinned, exact).
 
@@ -159,6 +159,6 @@ Each TDD cycle also gets its own focused commit, as the workflow requires.
 | Risk | Mitigation |
 | --- | --- |
 | `bb plugin build` cannot run here. | Verify with type-check and the fake host. Record the limit in `docs/DECISIONS.md`. Report it. |
-| TypeScript 7 or ESLint 10 tooling differs from older guidance. | Pin versions in `package.json` and verify every command by running it. |
+| `typescript-eslint` rejects TypeScript 7.0. | Use the `@typescript/typescript6` alias, as bb does. Verified by running lint. |
 | The fake host's registration inspection API differs from the README. | Read the bundled types before writing the plugin test. |
 | `better-sqlite3` needs a native build. | `pnpm-workspace.yaml` approves its build script. Verified on Node 26. |
