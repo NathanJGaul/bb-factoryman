@@ -130,3 +130,72 @@ describe("transition results", () => {
     if (result.ok) expect(result.event).toEqual(parsedEvent("block"));
   });
 });
+
+function refusedCode(task: TaskSnapshot, raw: unknown): string {
+  const result = transition(task, raw);
+  if (result.ok) throw new Error(`expected a refusal but the task moved to ${result.snapshot.state}`);
+  return result.refusal.code;
+}
+
+function nextSnapshot(task: TaskSnapshot, raw: unknown): TaskSnapshot {
+  const result = transition(task, raw);
+  if (!result.ok) throw new Error(`expected success but got ${result.refusal.code}: ${result.refusal.message}`);
+  return result.snapshot;
+}
+
+describe("guard order", () => {
+  it("names the actor before the missing approval on a worker merge", () => {
+    const task = snapshot("awaiting_approval");
+    expect(refusedCode(task, validEvent("merge", { actor: "worker", yolo: false }))).toBe("actor_forbidden");
+  });
+
+  it("names the mode before the missing evidence on a ready event in a no-mistakes project", () => {
+    const task = snapshot("working", { mode: "no-mistakes" });
+    expect(refusedCode(task, validEvent("ready", { evidence: "" }))).toBe("mode_mismatch");
+  });
+
+  it("names the missing evidence before the missing pull request on a direct-PR ready event", () => {
+    const task = snapshot("working", { mode: "direct-PR" });
+    const event = validEvent("ready", { evidence: "  ", prUrl: undefined });
+    expect(refusedCode(task, event)).toBe("evidence_required");
+  });
+
+  it("names the actor before the unlanded work on a worker teardown", () => {
+    const task = snapshot("merged");
+    const worktree = { uncommittedChanges: true, unpushedCommits: 2 };
+    expect(refusedCode(task, validEvent("teardown", { actor: "worker", worktree }))).toBe("actor_forbidden");
+  });
+});
+
+describe("start", () => {
+  it("moves queued to working and records the profile, thread, branch, and machine", () => {
+    const task = snapshot("queued", { profile: null, workerThreadId: null, branch: null });
+    const next = nextSnapshot(task, validEvent("start", { threadId: "thread-7", branch: "fm/task-7", machine: "builder-2" }));
+    expect(next.state).toBe("working");
+    expect(next.context).toMatchObject({
+      profile: { provider: "claude", model: "opus", reasoningLevel: "high", permissionMode: "acceptEdits" },
+      workerThreadId: "thread-7",
+      branch: "fm/task-7",
+      machine: "builder-2",
+    });
+  });
+
+  it("records a null machine when none is pinned", () => {
+    const next = nextSnapshot(snapshot("queued", { profile: null }), validEvent("start", { machine: undefined }));
+    expect(next.context.machine).toBeNull();
+  });
+});
+
+describe("pull request URL", () => {
+  it("is recorded by ready and by validated", () => {
+    const direct = nextSnapshot(snapshot("working", { mode: "direct-PR" }), validEvent("ready", { prUrl: "https://github.com/acme/widgets/pull/9" }));
+    expect(direct.context.prUrl).toBe("https://github.com/acme/widgets/pull/9");
+    const validated = nextSnapshot(snapshot("validating"), validEvent("validated", { prUrl: "https://github.com/acme/widgets/pull/11" }));
+    expect(validated.context.prUrl).toBe("https://github.com/acme/widgets/pull/11");
+  });
+
+  it("stays null when a local-only ready event carries none", () => {
+    const next = nextSnapshot(snapshot("working", { mode: "local-only" }), validEvent("ready", { prUrl: undefined, landedCommits: 2 }));
+    expect(next.context.prUrl).toBeNull();
+  });
+});

@@ -141,3 +141,19 @@ Each behavior in a batch still has its own test, and each entry records the fail
 - refactor: none needed
 - note: with the facade in place the open outer files go 48 passed, 4 failed. The four failures are the effect-driven cases (profile recorded, prUrl recorded, approval recorded, promote), which G13 to G15 drive. The matrix file passes in full.
 - commit: G12
+
+## Cycle G13: U36, U37, U38 guard order, start effects, and pull request URL effects
+
+- tests: `src/machine/transition.test.ts` (extended, 8 new): `guard order` x4 (U36: names the actor before the missing approval on a worker merge; the mode before the missing evidence on a no-mistakes ready; the missing evidence before the missing pull request on a direct-PR ready; the actor before the unlanded work on a worker teardown), `start` x2 (U37), `pull request URL` x2 (U38)
+- red: `pnpm vitest run src/machine/transition.test.ts`
+  -> 2 failed, 41 passed. `AssertionError: expected { taskId: 'task-1', …(9) } to match object { profile: { …(4) }, …(3) }` (start records) and `AssertionError: expected null to be 'https://github.com/acme/widgets/pull/9'` (URL recorded).
+- Six of the eight new tests passed on first run: the four order tests (the table already lists guards in order), `records a null machine when none is pinned`, and `stays null when a local-only ready event carries none` (the default context already holds null). Deliberate mutants, each run with `pnpm vitest run src/machine/transition.test.ts` and restored exactly afterwards:
+  - A: swapped `notWorker` and `mergeAuthorized` on the merge row -> `names the actor before the missing approval on a worker merge` failed.
+  - B: moved `evidenceProvided` before `modeIsNotNoMistakes` on the ready row -> `names the mode before the missing evidence ...` failed.
+  - C: moved `readyModeCheck` before `evidenceProvided` -> `names the missing evidence before the missing pull request ...` failed.
+  - D: swapped `notWorker` and `worktreeLanded` on the merged teardown row -> `names the actor before the unlanded work ...` failed.
+  - E: `machine: event.machine ?? "default"` -> `records a null machine when none is pinned` failed.
+  - F: `ready` always sets `prUrl` -> `stays null when a local-only ready event carries none` failed.
+- green: `src/machine/effects.ts` now records profile, thread, branch, and machine on `start`, and the pull request URL on `ready` (when present) and `validated`. `pnpm vitest run src/machine` -> all passed. Gate script -> 9 files, 154 passed, 0 failed.
+- refactor: none needed
+- commit: G13
