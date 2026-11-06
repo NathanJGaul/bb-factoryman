@@ -68,3 +68,19 @@ Each behavior in a batch still has its own test, and each entry records the fail
 - green: `eslint.config.js` gained three pattern groups: `better-sqlite3`, `node:*` plus the names in `builtinModules`, and `**/store` plus `**/store/**`. Suite `pnpm test` -> 5 files, 17 passed, 0 failed. Lint and type-check clean.
 - refactor: none needed
 - commit: G5
+
+## Cycle G6 (opened): A6 to A17 written red first
+
+- tests: `test/acceptance/machine-gates.test.ts` and `test/acceptance/machine-matrix.test.ts`, with `test/fixtures/machine.ts` (new). They enter through `transition` from `src/machine/transition`.
+- red: `pnpm vitest run test/acceptance/machine-gates.test.ts test/acceptance/machine-matrix.test.ts`
+  -> `Error: Cannot find module '../../src/machine/transition'` (2 files failed, no tests ran). This is the expected outer-loop red: the entry point does not exist yet.
+- The two files stay uncommitted and red while the inner loop (G7 to G17) builds the units. During those cycles the suite run excludes them with `--exclude`, which narrows nothing for the unit under test. Entry closes when they go green.
+
+## Cycle G7: U10 to U15 event parsing
+
+- tests: `src/machine/events.test.ts` (new): `parses a valid %s event` x15 (U10), `refuses an unknown event type as unknown_event` (U11), `refuses an event with an unknown extra key` (U12), `refuses %s without %s as invalid_event` x9 (U13), `refuses %s with a bad value %j as invalid_event` x16 (U14), `refuses non-object input %j as invalid_event` x6 (U15)
+- red: declared `src/machine/types.ts` and `src/machine/refusal.ts` (data only) and a stub `parseEvent` that throws, then `pnpm vitest run src/machine/events.test.ts`
+  -> `Error: not implemented` (49 failed, 1 passed). The one pass is `covers all 15 event types`, a fixture sanity check.
+- green: `src/machine/events.ts` defines a strict `zod` schema per event type, a discriminated union, and `parseEvent`, which maps failures to `unknown_event` or `invalid_event`. `pnpm vitest run src/machine/events.test.ts` -> 50 passed. Suite without the two open outer files -> 6 files, 67 passed, 0 failed. Lint clean. Type-check fails only on the two open outer files, which import `transition` before it exists.
+- refactor: none needed
+- commit: G7
