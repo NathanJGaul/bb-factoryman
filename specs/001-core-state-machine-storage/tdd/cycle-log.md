@@ -227,3 +227,13 @@ Each behavior in a batch still has its own test, and each entry records the fail
 - green: `src/store/memory.ts` keeps events, approvals, tasks, and configs in plain structures, hands out frozen deep copies, and implements `transaction` by saving a deep copy of its state and restoring it when `fn` throws. `pnpm vitest run src/store/memory.test.ts` -> 9 passed. Gate script (lint, type-check, suite without the open outer files) -> 12 files, 237 passed, 0 failed.
 - refactor: none needed
 - commit: G19
+
+## Cycle G20: U56 to U60 the SQLite store
+
+- tests: `src/store/sqlite.test.ts` (new): the shared contract run against `openSqliteStore(":memory:")` (U47 to U55 on SQLite, 9 cases), `aborts a raw UPDATE or DELETE on task_event` (U56), `aborts a raw UPDATE or DELETE on approval` (U57), `records the schema version and refuses a newer one` (U58), `keeps its data when the same file is closed and reopened` (U59), `rejects raw rows whose enum values are not in the vocabulary` (U60)
+- red: a stub `openSqliteStore` that throws, then `pnpm vitest run src/store/sqlite.test.ts`
+  -> `Error: not implemented` (14 failed, 0 passed)
+- green: `src/store/sqlite.ts` creates the schema from the vocabulary lists in `src/machine/types.ts` (with `CHECK` constraints), adds `BEFORE UPDATE` and `BEFORE DELETE` triggers that abort on `task_event` and `approval`, records `PRAGMA user_version`, refuses a newer version, maps rows to frozen camel-case objects, and runs `transaction` through `db.transaction`. It accepts a path, `:memory:`, or an open database and closes only what it opened. `pnpm vitest run src/store/sqlite.test.ts` -> 14 passed. Gate script -> 14 files, 271 passed, 0 failed.
+- outer loop: `test/acceptance/store-contract.test.ts` (A24, A25) now passes with both stores, so it is committed with this cycle.
+- refactor: none needed
+- commit: G20
