@@ -1,7 +1,9 @@
+import { createMachine } from "xstate";
 import { describe, expect, it } from "vitest";
 import { context, parsedEvent, snapshot, validEvent } from "../../test/fixtures/machine";
+import { MACHINES } from "./machines";
 import { REASON_CODES } from "./refusal";
-import { createTask, transition } from "./transition";
+import { createTask, transition, transitionUsing } from "./transition";
 import type { TaskSnapshot } from "./types";
 
 const CREATE = { type: "create", actor: "supervisor", taskId: "task-9", projectId: "proj-9", kind: "scout", mode: "direct-PR" };
@@ -280,5 +282,93 @@ describe("promote", () => {
     task = nextSnapshot(task, validEvent("ready"));
     task = nextSnapshot(task, validEvent("request_approval"));
     expect(refusedCode(task, validEvent("merge", { yolo: false }))).toBe("approval_required");
+  });
+});
+
+describe("fail", () => {
+  it("is refused from failed and from torn_down", () => {
+    expect(refusedCode(snapshot("failed"), validEvent("fail"))).toBe("illegal_transition");
+    expect(refusedCode(snapshot("torn_down"), validEvent("fail"))).toBe("illegal_transition");
+  });
+
+  it("records the failing state's evidence in the result and leaves the context as it was", () => {
+    const before = snapshot("working");
+    const result = transition(before, validEvent("fail", { evidence: "worker crashed twice" }));
+    expect(result).toMatchObject({ ok: true, from: "working", to: "failed" });
+    if (result.ok) {
+      expect(result.snapshot.context).toEqual(before.context);
+      expect(result.event.evidence).toBe("worker crashed twice");
+    }
+  });
+});
+
+describe("teardown", () => {
+  const dirty = { uncommittedChanges: true, unpushedCommits: 0 };
+  const unpushed = { uncommittedChanges: false, unpushedCommits: 1 };
+  const sources = [
+    ["a merged ship task", snapshot("merged")],
+    ["a scout task with a ready report", snapshot("report_ready", { kind: "scout" })],
+    ["a failed ship task", snapshot("failed")],
+    ["a failed scout task", snapshot("failed", { kind: "scout" })],
+  ] as const;
+
+  it.each(sources)("tears down %s when the worktree is clean", (_name, task) => {
+    expect(nextSnapshot(task, validEvent("teardown")).state).toBe("torn_down");
+  });
+
+  it.each(sources)("refuses to tear down %s with uncommitted changes or an unpushed commit", (_name, task) => {
+    expect(refusedCode(task, validEvent("teardown", { worktree: dirty }))).toBe("unlanded_work");
+    expect(refusedCode(task, validEvent("teardown", { worktree: unpushed }))).toBe("unlanded_work");
+  });
+
+  it("refuses teardown from the states that still hold work", () => {
+    for (const state of ["queued", "working", "blocked", "validating", "needs_decision", "review_ready", "awaiting_approval"] as const) {
+      expect(refusedCode(snapshot(state), validEvent("teardown")), state).toBe("illegal_transition");
+    }
+  });
+});
+
+describe("fail-closed cross-check", () => {
+  const goodMachines = MACHINES;
+
+  it("refuses with internal_mismatch when the xstate machine lands somewhere the table does not allow", () => {
+    const wrong = createMachine({
+      id: "ship",
+      initial: "working",
+      states: { working: { on: { block: { target: "failed" } } }, blocked: {}, failed: {} },
+    });
+    const result = transitionUsing({ ...goodMachines, ship: wrong as never }, snapshot("working"), validEvent("block"));
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.refusal.code).toBe("internal_mismatch");
+  });
+
+  it("refuses with internal_mismatch when the xstate machine throws", () => {
+    const throwing = createMachine({
+      id: "ship",
+      initial: "working",
+      states: {
+        working: {
+          on: {
+            block: {
+              target: "blocked",
+              guard: () => {
+                throw new Error("boom");
+              },
+            },
+          },
+        },
+        blocked: {},
+      },
+    });
+    const result = transitionUsing({ ...goodMachines, ship: throwing as never }, snapshot("working"), validEvent("block"));
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.refusal.code).toBe("internal_mismatch");
+      expect(result.refusal.message).toContain("boom");
+    }
+  });
+
+  it("agrees with the real machines on the same input", () => {
+    expect(transitionUsing(goodMachines, snapshot("working"), validEvent("block"))).toEqual(transition(snapshot("working"), validEvent("block")));
   });
 });

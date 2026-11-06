@@ -50,7 +50,9 @@ function isReadableSnapshot(value: unknown): value is TaskSnapshot {
   return typeof kind === "string" && (TASK_KINDS as readonly string[]).includes(kind);
 }
 
-function run(snapshot: TaskSnapshot, raw: unknown): TransitionResult {
+type MachineSet = typeof MACHINES;
+
+function run(machines: MachineSet, snapshot: TaskSnapshot, raw: unknown): TransitionResult {
   const parsed = parseEvent(raw);
   if (!parsed.ok) return refusedWith(parsed.refusal);
   const event = parsed.event;
@@ -70,7 +72,7 @@ function run(snapshot: TaskSnapshot, raw: unknown): TransitionResult {
     if (refusal !== null) return refusedWith(refusal);
   }
 
-  const machine = MACHINES[kind];
+  const machine = machines[kind];
   const restored = machine.resolveState({ value: state, context: structuredClone(context) as TaskContext });
   const next = getNextSnapshot(machine, restored, event);
   if (next.value !== row.target) {
@@ -86,14 +88,23 @@ function run(snapshot: TaskSnapshot, raw: unknown): TransitionResult {
 }
 
 /**
- * Apply one event to a task snapshot. Pure and total: it returns the next
- * snapshot or a refusal, and it never throws.
+ * Apply one event with a given set of machines. Production code calls
+ * `transition`. Tests call this to prove that a machine which disagrees with
+ * the table, or throws, makes the facade refuse.
  */
-export function transition(snapshot: TaskSnapshot, raw: unknown): TransitionResult {
+export function transitionUsing(machines: MachineSet, snapshot: TaskSnapshot, raw: unknown): TransitionResult {
   try {
-    return run(snapshot, raw);
+    return run(machines, snapshot, raw);
   } catch (error) {
     const reason = error instanceof Error ? error.message : "unknown error";
     return refusedWith(refuse("internal_mismatch", `The machine failed closed: ${reason}.`));
   }
+}
+
+/**
+ * Apply one event to a task snapshot. Pure and total: it returns the next
+ * snapshot or a refusal, and it never throws.
+ */
+export function transition(snapshot: TaskSnapshot, raw: unknown): TransitionResult {
+  return transitionUsing(MACHINES, snapshot, raw);
 }

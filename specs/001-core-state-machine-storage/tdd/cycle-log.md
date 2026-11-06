@@ -169,3 +169,37 @@ Each behavior in a batch still has its own test, and each entry records the fail
 - green: `src/machine/effects.ts` records `approvals[scope] = decision` on `record_approval`. `pnpm vitest run src/machine/transition.test.ts` -> 48 passed. Gate script -> 9 files, 159 passed, 0 failed.
 - refactor: none needed
 - commit: G14
+
+## Cycle G15: U42, U43 promotion
+
+- tests: `src/machine/transition.test.ts` (extended, 3 new): `promote makes a queued ship task, keeps the identity and placement, and clears profile, approvals, and URL` (U42); `accepts ship events afterwards and refuses scout events` (U43); `needs a fresh merge approval after promotion` (U43)
+- red: `pnpm vitest run src/machine/transition.test.ts`
+  -> 3 failed, 48 passed. `AssertionError: expected { taskId: 'task-1', …(9) } to deeply equal { taskId: 'task-1', …(9) }` (the kind stayed `scout` and the profile, URL, and approvals were not cleared). The other two failed because the promoted task still behaved as a scout.
+- green: `src/machine/effects.ts` sets `kind: "ship"` and clears `profile`, `prUrl`, and `approvals` on `promote`. The facade already picks the machine from `context.kind`, so no facade change was needed. `pnpm vitest run src/machine/transition.test.ts` -> 51 passed. Gate script -> 9 files, 162 passed, 0 failed.
+- outer loop: with promotion in place the open outer files pass in full (`pnpm vitest run test/acceptance/machine-gates.test.ts test/acceptance/machine-matrix.test.ts` -> 52 passed, 0 failed). A6 to A17 are green.
+- refactor: none needed
+- commit: G15
+- note: this entry was appended after the G15 commit, not before it, because a failed `cd` skipped the log step of the commit command. No behavior changed between the run above and the commit.
+
+## Cycle G16: U44, U45 fail and teardown edges
+
+- tests: `src/machine/transition.test.ts` (extended, 14 cases): `fail is refused from failed and from torn_down` and `records the failing state's evidence in the result and leaves the context as it was` (U44); `teardown tears down %s when the worktree is clean` x4, `refuses to tear down %s with uncommitted changes or an unpushed commit` x4, and `refuses teardown from the states that still hold work` (U45)
+- All 14 passed on first run, because the table and the `worktreeLanded` guard already encode them. Deliberate mutants, each run with `pnpm vitest run src/machine/transition.test.ts` and restored exactly:
+  - I: allowed `fail` from `failed` -> `is refused from failed and from torn_down` failed.
+  - J: allowed `teardown` from a working ship task -> `refuses teardown from the states that still hold work` failed.
+  - K: removed `worktreeLanded` from the failed-lane teardown -> the failed ship and failed scout dirty-teardown tests failed.
+  - L: changed `unpushedCommits === 0` to `>= 0` -> four dirty-teardown tests failed.
+  - M: removed `worktreeLanded` from the scout `report_ready` teardown -> the scout dirty-teardown test failed.
+- green: no code change needed.
+- refactor: none needed
+- commit: G16
+
+## Cycle G17: U46 fail-closed cross-check
+
+- tests: `src/machine/transition.test.ts` (extended, 3 new): `refuses with internal_mismatch when the xstate machine lands somewhere the table does not allow`, `refuses with internal_mismatch when the xstate machine throws`, `agrees with the real machines on the same input` (U46)
+- red: `pnpm vitest run src/machine/transition.test.ts`
+  -> `TypeError: transitionUsing is not a function` (3 failed, 62 passed). The seam did not exist yet.
+- green: `src/machine/transition.ts` now exports `transitionUsing(machines, snapshot, raw)`, and `transition` calls it with the real machines. The first version of the "throws" test used a throwing action, and it failed with `AssertionError: expected true to be false` because `getNextSnapshot` does not run custom actions. The test now uses a throwing guard. `pnpm vitest run src/machine/transition.test.ts` -> 65 passed. Gate script -> 9 files, 176 passed, 0 failed.
+- A first draft of the facade also checked `next.status !== "active"`. Deliberate mutant N disabled that check and every test still passed, and a probe showed that xstate throws on a failing `assign` (the `try` catches it). The check was unreachable, so it was removed. Mutant O (target cross-check disabled) failed `refuses with internal_mismatch when the xstate machine lands somewhere the table does not allow`, so that check is covered.
+- refactor: none needed
+- commit: G17
