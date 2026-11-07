@@ -32,6 +32,8 @@ export interface PluginOptions {
   resolver?: DispatchResolver;
   /** Polling for commands on remote machines. */
   remote?: { pollMs?: number; timeoutMs?: number };
+  /** How often the machine monitor reads the machines, in milliseconds. The default comes from the `machinePollSeconds` setting. */
+  machinePollMs?: number;
 }
 
 const MERGE_METHODS = ["squash", "merge", "rebase"] as const;

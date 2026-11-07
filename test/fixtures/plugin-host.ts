@@ -89,6 +89,8 @@ export interface World {
   restart(): Promise<void>;
   /** Run the start-up service until its work is done, then stop it. */
   runStartup(): Promise<void>;
+  /** Start the machine monitor service. Call `stop` when the test is done. */
+  startMonitor(): { stop(): Promise<void> };
   /** Emit a thread event with a complete thread DTO built from `thread`. */
   emit(name: "thread.failed" | "thread.idle" | "thread.deleted" | "thread.archived", threadId: string, extra?: Record<string, unknown>): Promise<void>;
 }
@@ -250,6 +252,15 @@ export async function loadWorld(options: WorldOptions = {}): Promise<World> {
       run.controller.abort();
       await run.done;
     },
+    startMonitor() {
+      const run = world.host.harness.behavior.runService("factoryman-machines");
+      return {
+        stop: async () => {
+          run.controller.abort();
+          await run.done;
+        },
+      };
+    },
     async emit(name, threadId, extra = {}) {
       const thread = world.threads.get(threadId);
       const dto = makeThreadResponse({ id: threadId, ...(thread ? { projectId: thread.projectId, parentThreadId: thread.parentThreadId, status: thread.status as never } : {}) });
@@ -270,6 +281,7 @@ export async function loadWorld(options: WorldOptions = {}): Promise<World> {
     resolver: options.resolver,
     pollMs: 1,
     remote: { pollMs: 1, timeoutMs: 30 },
+    machinePollMs: 1,
   });
   await factory(host.bb);
   world.store = openSqliteStore(host.bb.storage.database());
