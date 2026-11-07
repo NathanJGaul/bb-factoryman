@@ -99,4 +99,56 @@ describe("bb factoryman supervisor", () => {
       expect(offline.stderr).toContain("machine_offline");
     });
   });
+
+  describe("protection and import-registry", () => {
+    const registry = ["- gadgets [direct-PR +yolo branch=wip/] - Direct (added 2026-01-02)", "- mystery [wibble] - Unknown (added 2026-01-03)"].join("\n");
+
+    it("[U1030] prints the protection checklist, with the defaults, and prints usage for a bad call", async () => {
+      const t = testRuntime();
+      const ok = await runFactorymanCommand(t.runtime, ["protection", "acme/widgets"]);
+      expect(ok.exitCode).toBe(0);
+      expect(ok.stdout).toContain("branches/main/protection");
+      expect(ok.stdout).toContain('"contexts": ["no-mistakes"]');
+      expect(t.execCalls).toEqual([]);
+      for (const argv of [["protection"], ["protection", "acme"], ["protection", "acme/widgets", "--branch"], ["protection", "acme/widgets", "--bogus", "x"], ["protection", "acme/widgets", "--branch", "a b"]]) {
+        const bad = await runFactorymanCommand(t.runtime, argv);
+        expect(bad.exitCode, argv.join(" ")).toBe(2);
+        expect(bad.stderr).toContain("Usage: bb factoryman protection <owner/repo>");
+      }
+    });
+
+    it("[U1030] reports the registry, matching projects by name, and reads nothing else", async () => {
+      const t = testRuntime();
+      t.files.files.set("/reg/projects.md", registry);
+      t.bb.projectList = [{ id: "proj-9", name: "Gadgets" }];
+      const result = await runFactorymanCommand(t.runtime, ["import-registry", "--file", "/reg/projects.md"]);
+      expect(result.exitCode).toBe(0);
+      expect(result.stdout).toContain("gadgets | direct-PR | direct-PR | on | wip/ | none | proj-9");
+      expect(result.stdout).toContain("mystery | wibble | unknown |");
+      expect(result.stdout).toContain("Dry run: nothing was written.");
+      expect(t.files.reads).toEqual(["/reg/projects.md"]);
+      expect(t.runtime.deps.store.getProjectConfig("proj-9").yolo).toBe(false);
+    });
+
+    it("[U1030] refuses --apply, prints usage without a file, and reports a file that cannot be read", async () => {
+      const t = testRuntime();
+      t.files.files.set("/reg/projects.md", registry);
+      const apply = await runFactorymanCommand(t.runtime, ["import-registry", "--file", "/reg/projects.md", "--apply"]);
+      expect(apply.exitCode).toBe(2);
+      expect(apply.stderr).toMatch(/dry run/);
+      expect(t.files.reads).toEqual([]);
+      for (const argv of [["import-registry"], ["import-registry", "--file"], ["import-registry", "--bogus", "x"]]) {
+        const bad = await runFactorymanCommand(t.runtime, argv);
+        expect(bad.exitCode, argv.join(" ")).toBe(2);
+        expect(bad.stderr).toContain("Usage: bb factoryman import-registry --file <path>");
+      }
+      const missing = await runFactorymanCommand(t.runtime, ["import-registry", "--file", "/nope.md"]);
+      expect(missing.exitCode).toBe(1);
+      expect(missing.stderr).toMatch(/could not read/);
+      t.files.errors.set("/err.md", new Error("EACCES: permission denied"));
+      const denied = await runFactorymanCommand(t.runtime, ["import-registry", "--file", "/err.md"]);
+      expect(denied.exitCode).toBe(1);
+      expect(denied.stderr).toContain("EACCES");
+    });
+  });
 });
