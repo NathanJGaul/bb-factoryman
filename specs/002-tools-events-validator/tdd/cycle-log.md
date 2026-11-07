@@ -331,3 +331,18 @@ Each behavior in a batch still has its own test, and each entry records the fail
   Suite `pnpm test` -> 52 files, 549 passed, 0 failed. Lint and type-check clean.
 - refactor: none needed
 - note: the interface in `types.ts` has no behavior of its own; U161 checks that the fake and the adapter offer the five operations.
+
+## Cycle C21: U164 to U175 TOON decoder (`src/validator/toon.ts`)
+
+- tests: `src/validator/toon.test.ts` `[U164]` to `[U175]` (new), over the six recorded no-mistakes files in `test/fixtures/recorded/no-mistakes-1.84.0/` and synthetic inputs for the shapes the CLI documents but I could not record
+- red: stub `parseRun` and `parseAbort` that always return an `unreadable` error, then `pnpm vitest run src/validator/toon.test.ts`
+  -> `U164`, `U165`, `U166`, `U167`, `U168`, `U169`, `U171`, `U172`, `U173`, `U174`, and `U175` failed on the decoded phase, gate, findings, outcome, pull request, or error (11 failed, 1 passed)
+- U170 passed on the first run because the stub is unreadable for everything.
+  Deliberate mutant: empty output decodes as a running run -> U170 failed (1 failed, 11 passed). Restored exactly.
+- green: `parseRun` decodes stdout with `@toon-format/toon`, reads `run` or `other_branch_run`, reads the gate as an object or as a bare step name with top-level findings, checks the outcome against the six known values, and maps a top-level `error` with no run to a command failure.
+  `parseAbort` reads `aborted: true`.
+  First run: 12 passed. Suite `pnpm test` -> 53 files, 561 passed, 0 failed. Lint and type-check clean.
+- deliberate mutants, each restored exactly:
+  - an unknown outcome is accepted -> U171 failed (1 failed, 11 passed)
+  - a gate is reported as phase running -> U164, U165, and U173 failed (3 failed, 9 passed)
+- refactor: none needed

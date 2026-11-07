@@ -340,18 +340,18 @@ Boundaries have both sides, and error paths name the failure.
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| U164 | The recorded review gate decodes to step, status, and two findings with ID, severity, file, action, and description | FR-304 | example | PENDING | |
-| U165 | The recorded fix-review gate decodes to one finding in phase `gate` | FR-304 | example | PENDING | |
-| U166 | The recorded cancelled status decodes to phase `finished`, outcome `cancelled`, the error, and the run ID | FR-304 | example | PENDING | |
-| U167 | The recorded pull-request status under `other_branch_run` decodes to the pull request URL and outcome | FR-304 | example | PENDING | |
-| U168 | The recorded abort output decodes as an abort result | FR-304 | example | PENDING | |
-| U169 | The recorded error output decodes as a command failure with its message | FR-304 | example | PENDING | |
-| U170 | Empty output and undecodable output are `unreadable` | FR-304, hard rule 8 | example | PENDING | |
-| U171 | An outcome outside the six known values is `unreadable` | FR-304, hard rule 8 | example | PENDING | |
-| U172 | Finding columns come from the header, so a missing `line` column and an extra column both decode | FR-304 | example | PENDING | |
-| U173 | A gate written as a bare step name decodes | FR-304 | example | PENDING | |
-| U174 | A status with neither gate nor outcome decodes as phase `running` | FR-304 | example | PENDING | |
-| U175 | Finding text with commas, quotes, and backticks decodes unchanged | FR-306 | example | PENDING | |
+| U164 | The recorded review gate decodes to step, status, and two findings with ID, severity, file, action, and description | FR-304 | example | DONE | `src/validator/toon.test.ts::[U164] decodes the review gate into step, status, and two findings with their five fields` |
+| U165 | The recorded fix-review gate decodes to one finding in phase `gate` | FR-304 | example | DONE | `src/validator/toon.test.ts::[U165] decodes the fix-review gate as one finding in phase gate` |
+| U166 | The recorded cancelled status decodes to phase `finished`, outcome `cancelled`, the error, and the run ID | FR-304 | example | DONE | `src/validator/toon.test.ts::[U166] decodes the cancelled status as finished with the outcome, the error, and the run ID` |
+| U167 | The recorded pull-request status under `other_branch_run` decodes to the pull request URL and outcome | FR-304 | example | DONE | `src/validator/toon.test.ts::[U167] decodes a run under other_branch_run with its pull request URL and outcome` |
+| U168 | The recorded abort output decodes as an abort result | FR-304 | example | DONE | `src/validator/toon.test.ts::[U168] decodes the abort output as an abort result and refuses it as a run` |
+| U169 | The recorded error output decodes as a command failure with its message | FR-304 | example | DONE | `src/validator/toon.test.ts::[U169] decodes the error output as a command failure with its message` |
+| U170 | Empty output and undecodable output are `unreadable` | FR-304, hard rule 8 | example | DONE | `src/validator/toon.test.ts::[U170] reads empty output and undecodable output as unreadable` |
+| U171 | An outcome outside the six known values is `unreadable` | FR-304, hard rule 8 | example | DONE | `src/validator/toon.test.ts::[U171] reads an outcome outside the six known values as unreadable` |
+| U172 | Finding columns come from the header, so a missing `line` column and an extra column both decode | FR-304 | example | DONE | `src/validator/toon.test.ts::[U172] takes finding columns from the header, so an extra line column and a reordered header both decode` |
+| U173 | A gate written as a bare step name decodes | FR-304 | example | DONE | `src/validator/toon.test.ts::[U173] decodes a gate written as a bare step name with top-level findings` |
+| U174 | A status with neither gate nor outcome decodes as phase `running` | FR-304 | example | DONE | `src/validator/toon.test.ts::[U174] decodes a status with neither a gate nor an outcome as phase running` |
+| U175 | Finding text with commas, quotes, and backticks decodes unchanged | FR-306 | example | DONE | `src/validator/toon.test.ts::[U175] keeps finding text with commas, quotes, and backticks unchanged` |
 
 ### `src/validator/no-mistakes.ts`
 
