@@ -29,6 +29,7 @@ The design lists `bb.server` and `bb.skills` in the manifest.
 The public example plugins in `get-bb/bb` declare `bb.server` only and call `skills/` "the conventional plugin skills directory".
 Skills arrive in milestone 11, so the scaffold declares no skills key and no `skills/` directory.
 Revisit when milestone 0 settles how bb finds skills.
+Resolved by D-090: no manifest key is needed.
 
 ### D-003: TypeScript 6 through an alias (Gap)
 
@@ -758,3 +759,41 @@ It cannot run anything: the function takes no runtime.
 The steps name the required `no-mistakes` check, `enforce_admins`, scoped tokens, and a verification.
 `docs/BRANCH-PROTECTION.md` and `docs/CUTOVER.md` hold the same steps as prose.
 No GitHub setting changed, and no forge was reached.
+
+### D-090: Plugin skills sit in `skills/` and are selected by name, per thread role (Resolves D-002)
+
+The plugin ships `skills/factoryman-supervisor/SKILL.md` and `skills/factoryman-worker/SKILL.md`.
+The manifest needs no key.
+A throwaway bb 0.48.1 listed both with scope `plugin` after a path install (spike item 11).
+`bb.agents.configure` returns the skill name that matches the thread's `role` metadata, and no skill for any other thread, like `toolsForMetadata`.
+The selection is a hint and not a gate, because the metadata is writable (spike item 2).
+A wrong or unknown name rejects the plugin's whole selection, tools included.
+The tests read the names from the skill files, so a rename that misses one place fails (`[A1102]`).
+The worker's first message names the `factoryman-worker` skill.
+
+### D-091: The skills are advice, and a project may add skills of its own (Gap)
+
+Both skills say that the plugin enforces every gate in code, and a test pins the sentence.
+The supervisor skill tells the supervisor never to retry with a weaker setting to get past a block, to leave findings to the owner, and to report refusals.
+The worker skill carries the rules that the prompt also states, so a worker that never reads the skill still gets the rules that matter.
+A project skill with the same name appears beside the plugin skill in the listing, and which one a session loads is not known (spike item 11).
+The live check records it.
+
+### D-092: The live check runs in the throwaway bb, and the captain funds tier 2 from their own account (Decided by the captain)
+
+`docs/LIVE-CHECK.md` follows the live-isolation report: the `bblab` sandbox, the tiers, and the undisturbed checklist.
+The runbook says not to install into the owner's bb and never to touch the shared no-mistakes daemon.
+The captain decided that tier 2 uses the captain's own Claude account (option B of the report), and accepted that this competes with firstmate for quota.
+The runbook carries the report's caps: the cheapest model, a low reasoning level, one worker at a time, a tiny repository, a 30 minute watchdog, and `bblab down` as the hard stop.
+It adds the plugin's own limits (`maxWorkers` 1 and `maxTasksPerDay` 2 in the project's `workflow.json`).
+The captain runs `claude setup-token` and passes the token through `BBLAB_PASS_ENV` into a second bring-up of the lab.
+No agent creates, reads, or handles the token, and the runbook writes it nowhere.
+Tiers 0 and 1 run first and tier 2 waits for them.
+
+### D-093: Tier 1 has no stub agent yet, so the runbook says what the gate is (Gap)
+
+The report suggests a stub ACP agent so that the scout and ship flows run with no credential.
+No such agent exists, and the shape of `customAgents` is undocumented.
+This release does not build it (milestone 11 is skills and a runbook).
+Until it exists, the tier 2 gate is every tier 0 check plus the captain's recorded decision to go on without tier 1, and the runbook says what that skip costs.
+

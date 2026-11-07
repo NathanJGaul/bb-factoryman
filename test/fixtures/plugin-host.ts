@@ -6,6 +6,7 @@ import { defaultProjectConfig } from "../../src/store/store";
 import { openSqliteStore } from "../../src/store/sqlite";
 import type { ProjectConfig } from "../../src/store/types";
 import { frame } from "./frame";
+import { skillNamesOnDisk } from "./skills";
 import type { DispatchResolver } from "../../src/dispatch/types";
 
 /** A provider as `bb.sdk.providers.list` returns it, cut to the fields the plugin reads. */
@@ -159,6 +160,7 @@ export async function loadWorld(options: WorldOptions = {}): Promise<World> {
 
   const host = createFakePluginHost({
     pluginId: "factoryman",
+    agentSkillIds: skillNamesOnDisk(),
     settings: options.settings,
     sdk: {
       threads: {

@@ -20,3 +20,8 @@ Red commit: `test: add skill and live-check tests with a selection stub (red)`. 
   - `[A1106]`: `expected 'You are the worker for ship task k1. ...' to match /factoryman-worker skill/`
   - `[A1107]` to `[A1109]`, `[A1111]` to `[A1114]`: `ENOENT` on `docs/LIVE-CHECK.md`
 - Passed against the stub: the 14 other tests in the five files.
+- green: the two skills, `skillsForMetadata` and its use in `configure`, the worker prompt line, `docs/LIVE-CHECK.md`, and `test/fixtures/skills.ts`.
+  - One surprise: the fake host rejects a selected skill that it does not know, and then returns no tools and no skills. Seven existing tests (`[U33]` to `[U39]`) failed until the fake host got the skill names. `test/fixtures/skills.ts` reads them from the skill files, so a rename that misses one place fails. D-090 and spike item 11 record it.
+  - `[A1113]` first checked that the first `bblab down` came before the first `BBLAB_PASS_ENV`, which the "Read this first" block satisfies by itself. It now checks the order inside section 7: `bblab down`, then `read -rs`, then `bblab up`.
+  - `pnpm run build` passes with `skills/` in the tree. A path install into a throwaway bb 0.48.1 listed both skills with scope `plugin` and ran the plugin's `protection` and `import-registry` commands.
+  - `pnpm run check` -> 92 files, 1121 passed, 0 failed. Type check and lint clean.

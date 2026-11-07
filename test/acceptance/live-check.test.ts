@@ -19,7 +19,7 @@ describe("the live-check runbook", () => {
 
   it("[A1108] holds the tiers, the bring-up, the tier 0 checks, a scout task, a ship task, the hard-rule checks, the teardown checklist, and what stays unverified", () => {
     const text = runbook();
-    for (const heading of ["## 2. Tiers", "## 4. Bring-up and install", "## 6. Tier 0 checks", "## 7. Tier 2", "## 8. Hard-rule checks", "## 9. What this check does not cover", "## 10. Teardown"]) {
+    for (const heading of ["## 2. Tiers", "## 4. Bring-up and install", "## 6. Tier 0 and tier 1", "## 7. Tier 2", "## 8. Hard-rule checks", "## 9. What this check does not cover", "## 10. Teardown"]) {
       expect(text, heading).toContain(heading);
     }
     expect(text).toMatch(/\*\*Scout task\.\*\*/);
@@ -66,9 +66,16 @@ describe("the live-check runbook", () => {
     expect(text).toMatch(/stub agent/i);
     expect(text).toMatch(/does not exist yet/i);
     expect(text).toMatch(/Do not start tier 2 until/);
-    // The credential enters the lab only for tier 2, after tiers 0 and 1 passed without it.
-    expect(text.indexOf("## 6. Tier 0 checks")).toBeLessThan(text.indexOf("## 7. Tier 2"));
-    expect(text.indexOf("bblab down")).toBeLessThan(text.indexOf("BBLAB_PASS_ENV"));
+    // The credential enters the lab only for tier 2, after tiers 0 and 1 passed without it, and in a lab that was stopped and started again.
+    const tier0 = text.indexOf("## 6. Tier 0 and tier 1");
+    const tier2 = text.indexOf("## 7. Tier 2");
+    expect(tier0).toBeGreaterThan(-1);
+    expect(tier0).toBeLessThan(tier2);
+    expect(text.indexOf("BBLAB_PASS_ENV", 0)).toBeGreaterThan(tier2);
+    const section = text.slice(tier2);
+    expect(section.indexOf("bblab down")).toBeGreaterThan(-1);
+    expect(section.indexOf("bblab down")).toBeLessThan(section.indexOf("read -rs CLAUDE_CODE_OAUTH_TOKEN"));
+    expect(section.indexOf("read -rs CLAUDE_CODE_OAUTH_TOKEN")).toBeLessThan(section.indexOf("bblab up"));
   });
 
   it("[A1114] holds no token, never asks an agent to create, read, or handle the token, and never puts it in a file or on a command line", () => {

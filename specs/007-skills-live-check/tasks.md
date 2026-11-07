@@ -13,14 +13,14 @@ description: "Task list for skills and the live check"
 
 ## Phase 2: Tests and stubs
 
-- [ ] T1110 `test/acceptance/skills.test.ts` (A1101 to A1105), `test/acceptance/live-check.test.ts` (A1107 to A1109, A1111 to A1114), the prompt test (A1106), `[U1101]`, and the layout rule
+- [X] T1110 `test/acceptance/skills.test.ts` (A1101 to A1105), `test/acceptance/live-check.test.ts` (A1107 to A1109, A1111 to A1114), the prompt test (A1106), `[U1101]`, and the layout rule
 
 ## Phase 3: Implementation
 
-- [ ] T1120 Write the two skills, select them in `configure`, point the worker prompt at the skill, and write `docs/LIVE-CHECK.md`
-- [ ] T1121 `pnpm run build` passes with the skills in the tree
+- [X] T1120 Write the two skills, select them in `configure`, point the worker prompt at the skill, and write `docs/LIVE-CHECK.md`
+- [X] T1121 `pnpm run build` passes with the skills in the tree
 
 ## Phase 4: Close-out
 
-- [ ] T1130 Record D-090 to D-093 in `docs/DECISIONS.md` and finish `spike/RESULTS.md`
+- [X] T1130 Record D-090 to D-093 in `docs/DECISIONS.md` and finish `spike/RESULTS.md`
 - [ ] T1131 `/speckit.tdd.verify`, remediation, `/speckit.checklist`, `/speckit.analyze`, `/speckit.converge`

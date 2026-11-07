@@ -1,5 +1,6 @@
 import { createFakePluginHost, makePluginAgentConfigurationContext } from "@get-bb/plugin-sdk/testing";
 import { describe, expect, it } from "vitest";
+import { skillNamesOnDisk } from "../../test/fixtures/skills";
 import { testRuntime } from "../../test/fixtures/runtime";
 import type { MergeExecutor } from "../git/merge";
 import { registerTools, skillsForMetadata } from "./register";
@@ -7,7 +8,7 @@ import { registerTools, skillsForMetadata } from "./register";
 const executor: MergeExecutor = { preflight: async () => null, merge: async () => ({ ok: true }) };
 
 function setup() {
-  const host = createFakePluginHost({ pluginId: "factoryman" });
+  const host = createFakePluginHost({ pluginId: "factoryman", agentSkillIds: skillNamesOnDisk() });
   const t = testRuntime();
   registerTools(host.bb, t.runtime, executor);
   return { host, t };

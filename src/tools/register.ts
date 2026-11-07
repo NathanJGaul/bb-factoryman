@@ -12,6 +12,8 @@ import { teardown, teardownSchema } from "./teardown";
 const SUPERVISOR_TOOLS = ["factoryman_dispatch", "factoryman_status", "factoryman_merge", "factoryman_teardown"] as const;
 const WORKER_TOOLS = ["factoryman_report"] as const;
 export const TOOL_NAMES: readonly string[] = [...SUPERVISOR_TOOLS, ...WORKER_TOOLS];
+const SUPERVISOR_SKILL = "factoryman-supervisor";
+const WORKER_SKILL = "factoryman-worker";
 
 /**
  * Which tools bb offers a thread, from its plugin metadata. This is a hint and
@@ -27,7 +29,9 @@ export function toolsForMetadata(metadata: Record<string, unknown>): string[] {
 
 /** Which skills bb loads for a thread, by role. Like the tools, this is a hint and not a gate. */
 export function skillsForMetadata(metadata: Record<string, unknown>): string[] {
-  void metadata;
+  const role = metadata["role"];
+  if (role === "supervisor") return [SUPERVISOR_SKILL];
+  if (role === "worker") return [WORKER_SKILL];
   return [];
 }
 

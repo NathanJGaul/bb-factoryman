@@ -465,6 +465,11 @@ A project skill with the same name, `.claude/skills/example-todos/SKILL.md` in a
 `bb skill list --project <id> --json` returned both rows, and a project skill does not replace or hide the plugin skill in the listing.
 No agent thread ran, so which one a session loads is not known.
 The scaffold's `bb.agents.configure({ skills: [...] })` takes skill names, and the fake host returns them (`[A1102]`).
+The SDK says that a duplicate or unknown skill name rejects the plugin's whole selection, and the fake host does the same: with one wrong name, `resolveAgentConfiguration` returned no tools and no skills.
+A wrong skill name would therefore take the supervisor's tools away (`[A1102]`, and `test/fixtures/skills.ts` reads the names from the files).
+I also built this plugin and installed it by path into the throwaway bb.
+`bb plugin list` showed it running with both services and the `bb factoryman` command, and `bb skill list --json` showed `factoryman-supervisor` and `factoryman-worker` with scope `plugin`.
+`bb factoryman protection acme/widgets` and `bb factoryman import-registry --apply` ran there and printed their texts.
 
 Fallback: the skills are advice and no gate depends on them (D-091).
 A project can add a skill of its own with a different name.
