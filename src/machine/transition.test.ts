@@ -196,6 +196,22 @@ describe("start", () => {
   });
 });
 
+describe("custom checks", () => {
+  it("[U918] refuses handoff and ready with check_failed, and still runs the earlier guards first", () => {
+    const failing = [{ name: "lint", passed: false }];
+    const noMistakes = snapshot("working", { mode: "no-mistakes" });
+    expect(transition(noMistakes, validEvent("handoff", { checks: failing }))).toMatchObject({ ok: false, refusal: { code: "check_failed" } });
+    expect(transition(noMistakes, validEvent("handoff", { checks: [{ name: "lint", passed: true }] })).ok).toBe(true);
+    const direct = snapshot("working", { mode: "direct-PR" });
+    expect(transition(direct, validEvent("ready", { checks: failing }))).toMatchObject({ ok: false, refusal: { code: "check_failed" } });
+    expect(transition(direct, validEvent("ready", { checks: [] })).ok).toBe(true);
+    // The evidence gate comes first, so passing checks cannot stand in for evidence.
+    expect(transition(noMistakes, validEvent("handoff", { evidence: "", checks: [{ name: "lint", passed: true }] }))).toMatchObject({ ok: false, refusal: { code: "evidence_required" } });
+    // A mode mismatch comes first too.
+    expect(transition(direct, validEvent("handoff", { checks: failing }))).toMatchObject({ ok: false, refusal: { code: "mode_mismatch" } });
+  });
+});
+
 describe("pull request URL", () => {
   it("is recorded by ready and by validated", () => {
     const direct = nextSnapshot(snapshot("working", { mode: "direct-PR" }), validEvent("ready", { prUrl: "https://github.com/acme/widgets/pull/9" }));

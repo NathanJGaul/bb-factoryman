@@ -81,4 +81,16 @@ describe("parseEvent", () => {
     expect(parseEvent(validEvent("start", { cloneMachine: "" })).ok).toBe(false);
     expect(parseEvent(validEvent("merge", { cloneMachine: "host_a" })).ok).toBe(false);
   });
+
+  it("[U914] accepts checks of name and passed on handoff and ready, and on no other event", () => {
+    const checks = [{ name: "lint", passed: true }, { name: "test", passed: false }];
+    expect(parseEvent(validEvent("handoff", { checks })).ok).toBe(true);
+    expect(parseEvent(validEvent("ready", { checks })).ok).toBe(true);
+    expect(parseEvent(validEvent("handoff", { checks: [] })).ok).toBe(true);
+    expect(parseEvent(validEvent("handoff", { checks: [{ name: "", passed: true }] })).ok).toBe(false);
+    expect(parseEvent(validEvent("handoff", { checks: [{ name: "x" }] })).ok).toBe(false);
+    expect(parseEvent(validEvent("handoff", { checks: [{ name: "x", passed: true, extra: 1 }] })).ok).toBe(false);
+    expect(parseEvent(validEvent("fail", { checks })).ok).toBe(false);
+    expect(parseEvent(validEvent("merge", { checks })).ok).toBe(false);
+  });
 });

@@ -8,13 +8,13 @@ const made: string[] = [];
  * Make a temporary project checkout. A string `dispatch` is written as the raw
  * file text, any other value is written as JSON, and `undefined` writes no file.
  */
-export function makeCheckout(files: { dispatch?: unknown } = {}): string {
+export function makeCheckout(files: { dispatch?: unknown; workflow?: unknown } = {}): string {
   const dir = mkdtempSync(join(tmpdir(), "factoryman-checkout-"));
   made.push(dir);
-  if (files.dispatch !== undefined) {
+  for (const [name, value] of [["dispatch.json", files.dispatch], ["workflow.json", files.workflow]] as const) {
+    if (value === undefined) continue;
     mkdirSync(join(dir, ".bb", "factoryman"), { recursive: true });
-    const text = typeof files.dispatch === "string" ? files.dispatch : JSON.stringify(files.dispatch);
-    writeFileSync(join(dir, ".bb", "factoryman", "dispatch.json"), text);
+    writeFileSync(join(dir, ".bb", "factoryman", name), typeof value === "string" ? value : JSON.stringify(value));
   }
   return dir;
 }

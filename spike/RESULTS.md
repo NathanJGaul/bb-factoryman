@@ -363,6 +363,44 @@ Not driven: a real remote machine, so the sign-in state of an agent CLI and the 
 
 Fallback: a failed, timed-out, or truncated terminal command is a failed command, so every caller fails closed.
 
+## Milestone 9: extension surface
+
+These checks ran on 2026-11-07 against the throwaway bb 0.48.1 server, with two probe plugins built in a scratch directory.
+`probe-a` registered one discoverable RPC method (`ping`), one method that was not marked discoverable (`secret`), and a command that wrote plugin metadata on a thread.
+`probe-b` called `bb.sdk.plugins.callRpc` on both methods and read the metadata.
+
+## 9. Cross-plugin metadata
+
+Result: confirmed
+
+Evidence: `probe-b` called `bb.sdk.threads.getPluginMetadata({ threadId, pluginId: "probe-a" })` and got `{ taskId: "t-probe", state: "working" }`, the values that `probe-a` had written.
+The SDK takes an explicit `pluginId`, so any plugin can read another plugin's thread metadata.
+It can write it too (`updatePluginMetadata` takes the same argument), which matches item 2: metadata is a hint and not an authority.
+
+Fallback: none needed.
+The plugin stamps task facts as metadata for others to read, and it decides every caller from its own store (D-035).
+
+## 10. `callRpc` discoverability
+
+Result: confirmed
+
+Evidence: `probe-b` called both `ping` (registered with `experimental_discoverable: true`) and `secret` (registered without it), and both answered: `{"ping":{"pong":2},"secret":{"ok":true}}`.
+The flag affects discovery listings, and it does not gate a call.
+Any method that a plugin registers is therefore callable by every other plugin and by any local client.
+
+Fallback: the plugin registers read methods only, so a call can read and cannot change anything.
+It marks them discoverable so that a sibling plugin can find them.
+
+## `.bb/factoryman/` loading
+
+Result: confirmed
+
+Evidence: the plugin reads files from the project's default `local_path` source with the Node file system.
+`bb.sdk.projects.get` returns the source's path and host.
+The plugin cannot tell from that data whether the path is on the server's own machine (D-062).
+
+Fallback: an absent file reads as empty config, and an unreadable or invalid file blocks the call that needs it.
+
 ## Not checked
 
 These items belong to milestones 7 to 11, or to the owner's live install, and the task brief excludes them.
@@ -372,7 +410,6 @@ These items belong to milestones 7 to 11, or to the owner's live install, and th
 | 3. Read-only supervisor | Not needed for milestones 4 to 6. |
 | 4. Worktree removal veto | Not needed for milestones 4 to 6. |
 | 5. Dispatch hook ordering | Capacity is milestone 10. |
-| 9 to 11. Extension surface | Milestone 9. |
 | 12 to 13. Cost and notifications | Milestone 10. |
 | 18. Branch protection | Needs a forge. It is the owner's setup step. |
 | 19. firstmate registry | Cutover is milestone 10. |

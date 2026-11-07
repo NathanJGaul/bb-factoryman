@@ -71,4 +71,16 @@ describe("xstate machines", () => {
       }
     }
   });
+
+  it("[U917] lists customChecksPassed last on handoff and ready in the ship lane, and nowhere else", () => {
+    expect(TABLES.ship.working?.handoff?.guards.at(-1)).toBe("customChecksPassed");
+    expect(TABLES.ship.working?.ready?.guards.at(-1)).toBe("customChecksPassed");
+    for (const kind of ["ship", "scout"] as const) {
+      for (const [state, row] of Object.entries(TABLES[kind])) {
+        for (const [type, move] of Object.entries(row ?? {})) {
+          if (move.guards.includes("customChecksPassed")) expect(["handoff", "ready"], `${kind} ${state} ${type}`).toContain(type);
+        }
+      }
+    }
+  });
 });

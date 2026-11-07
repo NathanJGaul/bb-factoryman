@@ -49,8 +49,8 @@ export const GUARDS_OF: Record<TaskKind, Lane<readonly GuardName[]>> = {
     queued: { start: ["profileResolved", "localOnlyStaysOnClone"], fail: ["evidenceProvided"] },
     working: {
       block: [],
-      handoff: ["modeIsNoMistakes", "evidenceProvided"],
-      ready: ["modeIsNotNoMistakes", "evidenceProvided", "readyModeCheck"],
+      handoff: ["modeIsNoMistakes", "evidenceProvided", "customChecksPassed"],
+      ready: ["modeIsNotNoMistakes", "evidenceProvided", "readyModeCheck", "customChecksPassed"],
       fail: ["evidenceProvided"],
     },
     blocked: { unblock: [], fail: ["evidenceProvided"] },

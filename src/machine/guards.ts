@@ -17,6 +17,7 @@ export const GUARD_NAMES = [
   "promotionAuthorized",
   "worktreeLanded",
   "localOnlyStaysOnClone",
+  "customChecksPassed",
 ] as const;
 
 export type GuardName = (typeof GUARD_NAMES)[number];
@@ -126,6 +127,8 @@ const localOnlyStaysOnClone: Guard = (context, event) => {
       );
 };
 
+const customChecksPassed: Guard = () => null;
+
 export const GUARDS: Record<GuardName, Guard> = {
   profileResolved,
   evidenceProvided,
@@ -141,4 +144,5 @@ export const GUARDS: Record<GuardName, Guard> = {
   promotionAuthorized,
   worktreeLanded,
   localOnlyStaysOnClone,
+  customChecksPassed,
 };

@@ -200,3 +200,25 @@ describe("localOnlyStaysOnClone", () => {
     expect(check(mode, { machine: "host_b", cloneMachine: "host_a" })).toBeNull();
   });
 });
+
+describe("customChecksPassed", () => {
+  const check = (type: "handoff" | "ready", checks: unknown) => GUARDS.customChecksPassed(context(), parsedEvent(type, { checks }));
+
+  it("[U915] refuses any check with passed false and names every failure", () => {
+    for (const type of ["handoff", "ready"] as const) {
+      const refusal = check(type, [{ name: "lint", passed: true }, { name: "test", passed: false }, { name: "docs", passed: false }]);
+      expect(refusal?.code, type).toBe("check_failed");
+      expect(refusal?.message).toContain("test");
+      expect(refusal?.message).toContain("docs");
+      expect(refusal?.message).not.toContain("lint");
+    }
+  });
+
+  it("[U916] passes with no checks, an empty list, or all checks passed", () => {
+    for (const type of ["handoff", "ready"] as const) {
+      expect(check(type, undefined), type).toBeNull();
+      expect(check(type, []), type).toBeNull();
+      expect(check(type, [{ name: "lint", passed: true }]), type).toBeNull();
+    }
+  });
+});
