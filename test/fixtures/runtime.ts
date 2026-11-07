@@ -64,3 +64,27 @@ export function testRuntime(overrides: Partial<RuntimeDeps> = {}): TestRuntime {
     clock,
   };
 }
+
+export const SUPERVISOR = { threadId: "thr-sup", projectId: "proj-1" } as const;
+export const WORKER = { threadId: "thr-w1", projectId: "proj-1" } as const;
+export const DISPATCH_ARGS = {
+  kind: "ship",
+  description: "Add a --json flag to the status command.\nKeep the change small.",
+  profile: { provider: "claude", model: "opus", reasoningLevel: "high", permissionMode: "accept-edits" },
+} as const;
+
+/** A runtime with a supervisor thread and one dispatched task `t1` whose worker is `thr-w1`. */
+export async function withDispatchedTask(options: { kind?: "ship" | "scout"; mode?: "no-mistakes" | "direct-PR" | "local-only"; baseBranch?: string | null } = {}) {
+  const { dispatch } = await import("../../src/tools/dispatch");
+  const { defaultProjectConfig } = await import("../../src/store/store");
+  const t = testRuntime();
+  t.bb.addThread({ id: SUPERVISOR.threadId });
+  t.runtime.deps.store.putProjectConfig({
+    ...defaultProjectConfig("proj-1"),
+    deliveryMode: options.mode ?? "no-mistakes",
+    baseBranch: options.baseBranch ?? null,
+  });
+  const outcome = await dispatch(t.runtime, SUPERVISOR, { ...DISPATCH_ARGS, kind: options.kind ?? "ship" });
+  if (!outcome.ok) throw new Error(`fixture dispatch failed: ${outcome.text}`);
+  return t;
+}

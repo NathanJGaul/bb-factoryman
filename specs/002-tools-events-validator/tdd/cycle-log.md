@@ -160,3 +160,18 @@ Each behavior in a batch still has its own test, and each entry records the fail
   A spawn error records `fail` with the error.
   Suite `pnpm test` -> 30 files, 419 passed, 0 failed. Lint and type-check clean.
 - refactor: none needed
+
+## Cycle C10: U52 to U68 report and status (`src/tools/report.ts`, `src/tools/status.ts`)
+
+- tests: `src/tools/report.test.ts` `[U52]` to `[U61]` and `src/tools/status.test.ts` `[U62]` to `[U68]` (new), plus the `withDispatchedTask` fixture in `test/fixtures/runtime.ts`
+- red: stubs that return `{ ok: false, text: "not implemented" }`, then `pnpm vitest run src/tools/report.test.ts src/tools/status.test.ts`
+  -> `U52` to `U66` and `U68` failed on the recorded events, the task states, the refusal codes, or the result text (16 failed, 1 passed)
+- U67 passed on the first run because the stub writes nothing.
+  Deliberate mutant: `status` appends one log row
+  -> `U67` failed (1 failed, 6 passed).
+  Restored the code exactly, then 17 passed.
+- green: `report` reads the worker from the store, maps outcome, kind, and mode to one machine event, and applies it as actor `worker`.
+  `status` reads the store and formats one block per task, scoped to the caller's project.
+  Suite `pnpm test` -> 32 files, 436 passed, 0 failed. Lint and type-check clean.
+- refactor: none needed
+- note: the report tool leaves blank evidence to the machine, so the refusal is logged as a refused row (U58).

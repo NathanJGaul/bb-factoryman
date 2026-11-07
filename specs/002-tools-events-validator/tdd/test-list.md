@@ -168,28 +168,28 @@ Boundaries have both sides, and error paths name the failure.
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| U52 | A scout `done` records `report` and the task becomes `report_ready` | FR-110 | example | PENDING | |
-| U53 | A `no-mistakes` ship `done` records `handoff` and the task becomes `validating` | FR-110 | example | PENDING | |
-| U54 | A `direct-PR` ship `done` with a pull request URL records `ready` | FR-110 | example | PENDING | |
-| U55 | A `direct-PR` ship `done` without a pull request URL is refused by the machine | FR-110 | example | PENDING | |
-| U56 | A `local-only` ship `done` with one landed commit records `ready`, and with zero landed commits is refused | FR-110 | example | PENDING | |
-| U57 | `blocked` records `block` and `failed` records `fail` | FR-110 | example | PENDING | |
-| U58 | Blank or whitespace evidence is refused and leaves a refused log row | FR-105, FR-110 | example | PENDING | |
-| U59 | The recorded actor is `worker` | FR-110 | example | PENDING | |
-| U60 | A caller that is not a recorded worker is refused | FR-103 | example | PENDING | |
-| U61 | The result names the new state | FR-123 | example | PENDING | |
+| U52 | A scout `done` records `report` and the task becomes `report_ready` | FR-110 | example | DONE | `src/tools/report.test.ts::[U52] records report for a scout done and the task becomes report_ready` |
+| U53 | A `no-mistakes` ship `done` records `handoff` and the task becomes `validating` | FR-110 | example | DONE | `src/tools/report.test.ts::[U53] records handoff for a no-mistakes ship done and the task becomes validating` |
+| U54 | A `direct-PR` ship `done` with a pull request URL records `ready` | FR-110 | example | DONE | `src/tools/report.test.ts::[U54] records ready for a direct-PR ship done with a pull request URL` |
+| U55 | A `direct-PR` ship `done` without a pull request URL is refused by the machine | FR-110 | example | DONE | `src/tools/report.test.ts::[U55] refuses a direct-PR ship done without a pull request URL` |
+| U56 | A `local-only` ship `done` with one landed commit records `ready`, and with zero landed commits is refused | FR-110 | example | DONE | `src/tools/report.test.ts::[U56] records ready for a local-only ship done with one landed commit, and refuses zero` |
+| U57 | `blocked` records `block` and `failed` records `fail` | FR-110 | example | DONE | `src/tools/report.test.ts::[U57] records block for blocked and fail for failed` |
+| U58 | Blank or whitespace evidence is refused and leaves a refused log row | FR-105, FR-110 | example | DONE | `src/tools/report.test.ts::[U58] refuses blank or whitespace evidence and leaves a refused log row` |
+| U59 | The recorded actor is `worker` | FR-110 | example | DONE | `src/tools/report.test.ts::[U59] records the worker as the actor` |
+| U60 | A caller that is not a recorded worker is refused | FR-103 | example | DONE | `src/tools/report.test.ts::[U60] refuses a caller that is not a recorded worker` |
+| U61 | The result names the new state | FR-123 | example | DONE | `src/tools/report.test.ts::[U61] names the new state in the result` |
 
 ### `src/tools/status.ts`
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| U62 | A task ID returns one block with ID, kind, mode, state, thread, branch, pull request URL, and description | FR-111 | example | PENDING | |
-| U63 | Without a task ID the project's tasks are listed in task ID order | FR-111 | example | PENDING | |
-| U64 | A state filter keeps only the listed states | FR-111 | example | PENDING | |
-| U65 | An unknown task ID is reported as an error | FR-111 | example | PENDING | |
-| U66 | A task in another project is not shown | FR-103, edge cases | example | PENDING | |
-| U67 | The log has the same number of rows after any status call | FR-111 | example | PENDING | |
-| U68 | The description is the first line of the `start` evidence, and a task before `start` shows none | D-033 | example | PENDING | |
+| U62 | A task ID returns one block with ID, kind, mode, state, thread, branch, pull request URL, and description | FR-111 | example | DONE | `src/tools/status.test.ts::[U62] returns one block with the ID, kind, mode, state, thread, branch, pull request, and description` |
+| U63 | Without a task ID the project's tasks are listed in task ID order | FR-111 | example | DONE | `src/tools/status.test.ts::[U63] lists the project` |
+| U64 | A state filter keeps only the listed states | FR-111 | example | DONE | `src/tools/status.test.ts::[U64] keeps only the listed states when a state filter is given` |
+| U65 | An unknown task ID is reported as an error | FR-111 | example | DONE | `src/tools/status.test.ts::[U65] reports an unknown task ID as an error` |
+| U66 | A task in another project is not shown | FR-103, edge cases | example | DONE | `src/tools/status.test.ts::[U66] does not show a task from another project` |
+| U67 | The log has the same number of rows after any status call | FR-111 | example | DONE | `src/tools/status.test.ts::[U67] leaves the log with the same number of rows` |
+| U68 | The description is the first line of the `start` evidence, and a task before `start` shows none | D-033 | example | DONE | `src/tools/status.test.ts::[U68] shows the first line of the start evidence as the description, and none before start` |
 
 ### `src/git/report.ts`
 
