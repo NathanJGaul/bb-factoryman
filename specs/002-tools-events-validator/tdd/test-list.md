@@ -209,17 +209,17 @@ Boundaries have both sides, and error paths name the failure.
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| U78 | The pull request executor runs `gh pr merge <url> --squash` by default | FR-117, D-042 | example | PENDING | |
-| U79 | The `mergeMethod` setting maps `merge` and `rebase` to their flags | FR-117, D-042 | example | PENDING | |
-| U80 | An unknown merge method falls back to `--squash` | FR-117, hard rule 8 | example | PENDING | |
-| U81 | A non-zero `gh` exit is a failed merge with the error output | FR-115 | example | PENDING | |
-| U82 | Preflight refuses a pull request task that has no pull request URL | FR-117 | example | PENDING | |
-| U83 | Local preflight refuses a project without a base branch | FR-117, edge cases | example | PENDING | |
-| U84 | Local preflight refuses a dirty checkout | FR-117 | example | PENDING | |
-| U85 | Local preflight refuses a checkout that is not on the base branch | FR-117 | example | PENDING | |
-| U86 | The local executor merges the branch with a merge commit and the base branch then holds its commits | FR-117 | example | PENDING | |
-| U87 | A local merge conflict is aborted, fails, and leaves the checkout clean | FR-117 | example | PENDING | |
-| U88 | The executor is chosen by delivery mode | FR-117 | example | PENDING | |
+| U78 | The pull request executor runs `gh pr merge <url> --squash` by default | FR-117, D-042 | example | DONE | `src/git/merge.test.ts::[U78] runs` |
+| U79 | The `mergeMethod` setting maps `merge` and `rebase` to their flags | FR-117, D-042 | example | DONE | `src/git/merge.test.ts::[U79] maps the merge and rebase methods to their flags` |
+| U80 | An unknown merge method falls back to `--squash` | FR-117, hard rule 8 | example | DONE | `src/git/merge.test.ts::[U80] falls back to --squash for an unknown merge method` |
+| U81 | A non-zero `gh` exit is a failed merge with the error output | FR-115 | example | DONE | `src/git/merge.test.ts::[U81] turns a non-zero gh exit into a failed merge with the error output` |
+| U82 | Preflight refuses a pull request task that has no pull request URL | FR-117 | example | DONE | `src/git/merge.test.ts::[U82] refuses at preflight a pull request task that has no pull request URL` |
+| U83 | Local preflight refuses a project without a base branch | FR-117, edge cases | example | DONE | `src/git/merge.test.ts::[U83] refuses at preflight a project without a base branch` |
+| U84 | Local preflight refuses a dirty checkout | FR-117 | example | DONE | `src/git/merge.test.ts::[U84] refuses at preflight a dirty checkout` |
+| U85 | Local preflight refuses a checkout that is not on the base branch | FR-117 | example | DONE | `src/git/merge.test.ts::[U85] refuses at preflight a checkout that is not on the base branch` |
+| U86 | The local executor merges the branch with a merge commit and the base branch then holds its commits | FR-117 | example | DONE | `src/git/merge.test.ts::[U86] merges the branch with a merge commit so the base branch holds its commits` |
+| U87 | A local merge conflict is aborted, fails, and leaves the checkout clean | FR-117 | example | DONE | `src/git/merge.test.ts::[U87] aborts a conflicting local merge, fails, and leaves the checkout clean` |
+| U88 | The executor is chosen by delivery mode | FR-117 | example | DONE | `src/git/merge.test.ts::[U88] runs gh for the pull request modes and git for local-only` |
 
 ### `src/tools/merge.ts`
 

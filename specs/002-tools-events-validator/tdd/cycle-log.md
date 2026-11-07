@@ -130,3 +130,19 @@ Each behavior in a batch still has its own test, and each entry records the fail
   A failed command, a missing base branch, or an unreadable count is an error result.
   Suite `pnpm test` -> 28 files, 397 passed, 0 failed. Lint and type-check clean.
 - refactor: none needed
+
+## Cycle C8: U78 to U88 merge executors (`src/git/merge.ts`)
+
+- tests: `src/git/merge.test.ts` `[U78]` to `[U88]` (new): the `gh` command lines with a recording fake runner, and the local executor against temporary git repositories
+- red: a stub executor whose preflight returns `not implemented` and whose merge returns a failure, then `pnpm vitest run src/git/merge.test.ts`
+  -> 10 failed, 1 passed: the `gh` tests saw no `gh` call, the preflight tests saw `not implemented` where they expected `null` or a specific refusal, and the local merge test saw `{ ok: false }`.
+- U87 passed on the first run because the stub already fails the merge and leaves the checkout clean.
+  Deliberate mutant: remove the `git merge --abort` call
+  -> `U87` failed (1 failed, 10 passed): the conflicted checkout was not clean.
+  Restored the code exactly, then 11 passed.
+- green: `createMergeExecutor` picks the `gh` executor or the `git` executor by mode.
+  The local preflight checks the base branch, the checkout path, a clean tree, the current branch, and the task branch.
+  An unknown merge method falls back to `--squash`.
+  Suite `pnpm test` -> 29 files, 408 passed, 0 failed. Lint and type-check clean.
+- refactor: none needed
+- note: no test merges a real pull request (D-042).
