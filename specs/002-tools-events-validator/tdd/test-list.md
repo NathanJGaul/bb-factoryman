@@ -23,24 +23,24 @@ The `test` column is filled in when the test is written.
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| A1 | Thread roles decide which tools bb offers: supervisor gets four, worker gets `factoryman_report`, any other thread gets none | AC-1.1, FR-101, FR-102 | example | PENDING | `test/acceptance/tools-visibility.test.ts` |
-| A2 | A recorded worker thread is refused on every supervisor tool, and a thread that is not a recorded worker is refused on `factoryman_report` | AC-1.2, FR-103, FR-104 | example | PENDING | `test/acceptance/tools-authority.test.ts` |
-| A3 | `factoryman_dispatch` creates a task in the project's mode, spawns one child worker with notifications off and role metadata, and records `start` with thread and planned branch | AC-1.3, FR-106, FR-107, FR-108, FR-109 | example | PENDING | `test/acceptance/tools-dispatch.test.ts` |
-| A4 | `factoryman_dispatch` with an incomplete profile, empty description, or unknown kind is refused before any task or thread exists | AC-1.4, FR-106 | example | PENDING | `test/acceptance/tools-dispatch.test.ts` |
-| A5 | `factoryman_dispatch` whose spawn fails records the task as `failed` with the spawn error as evidence | AC-1.5, FR-105 | example | PENDING | `test/acceptance/tools-dispatch.test.ts` |
-| A6 | `factoryman_report` records handoff, ready, or report as kind and mode require, block or fail for those outcomes, and logs a refusal for empty evidence | AC-1.6, FR-110, FR-105 | example | PENDING | `test/acceptance/tools-report.test.ts` |
-| A7 | `factoryman_status` reads one task or a filtered project list and writes nothing to the log | AC-1.7, FR-111 | example | PENDING | `test/acceptance/tools-status.test.ts` |
-| A8 | A submitted approval records the request and the owner's approval, runs the merge once, and ends the task `merged` | AC-1.8, FR-112, FR-113, FR-115, SC-002 | example | PENDING | `test/acceptance/tools-merge.test.ts` |
-| A9 | A submitted denial is recorded, nothing merges, and the task stays `awaiting_approval` | AC-1.9, FR-114, SC-002 | example | PENDING | `test/acceptance/tools-merge.test.ts` |
-| A10 | A cancelled or timed-out form records no approval, merges nothing, leaves `awaiting_approval`, and a later call opens a new form | AC-1.10, FR-114, SC-002 | example | PENDING | `test/acceptance/tools-merge.test.ts` |
-| A11 | A form value that is not exactly an approval or a denial records nothing and is reported as unreadable | AC-1.11, FR-113 | example | PENDING | `test/acceptance/tools-merge.test.ts` |
-| A12 | Under `yolo` no form opens, the merge runs, and the merge event carries the `yolo` flag | AC-1.12, FR-116 | example | PENDING | `test/acceptance/tools-merge.test.ts` |
-| A13 | An approved merge whose command fails records no `merge` event and leaves `awaiting_approval` | AC-1.13, FR-115 | example | PENDING | `test/acceptance/tools-merge.test.ts` |
-| A14 | `factoryman_merge` on a wrong state, a scout, or a worker caller is refused and opens no form | AC-1.14, FR-105, FR-112 | example | PENDING | `test/acceptance/tools-merge.test.ts` |
-| A15 | Teardown with uncommitted changes or unpushed commits is refused, logged, and removes no environment | AC-1.15, FR-118, FR-119 | example | PENDING | `test/acceptance/tools-teardown.test.ts` |
-| A16 | Teardown of a landed worktree records `torn_down` and then retires the worker environment | AC-1.16, FR-120 | example | PENDING | `test/acceptance/tools-teardown.test.ts` |
-| A17 | The plugin factory opens the store on the host database, recovers, and registers exactly five tools | AC-1.17, FR-101, FR-121 | example | PENDING | `test/acceptance/plugin.test.ts` |
-| A18 | The supervisor command stamps the role on a non-worker thread and refuses a recorded worker | AC-1.18, FR-122 | example | PENDING | `test/acceptance/tools-supervisor-command.test.ts` |
+| A1 | Thread roles decide which tools bb offers: supervisor gets four, worker gets `factoryman_report`, any other thread gets none | AC-1.1, FR-101, FR-102 | example | DONE | `test/acceptance/tools-visibility.test.ts::[A1] offers four tools to a supervisor thread, only the report tool to a worker thread, and none to any other thread` |
+| A2 | A recorded worker thread is refused on every supervisor tool, and a thread that is not a recorded worker is refused on `factoryman_report` | AC-1.2, FR-103, FR-104 | example | DONE | `test/acceptance/tools-authority.test.ts::[A2] refuses a recorded worker on supervisor tools and a non-worker on the report tool` |
+| A3 | `factoryman_dispatch` creates a task in the project's mode, spawns one child worker with notifications off and role metadata, and records `start` with thread and planned branch | AC-1.3, FR-106, FR-107, FR-108, FR-109 | example | DONE | `test/acceptance/tools-dispatch.test.ts::[A3] creates a task in the project` |
+| A4 | `factoryman_dispatch` with an incomplete profile, empty description, or unknown kind is refused before any task or thread exists | AC-1.4, FR-106 | example | DONE | `test/acceptance/tools-dispatch.test.ts::[A4] refuses an incomplete profile, an empty description, or an unknown kind before any task or thread exists` |
+| A5 | `factoryman_dispatch` whose spawn fails records the task as `failed` with the spawn error as evidence | AC-1.5, FR-105 | example | DONE | `test/acceptance/tools-dispatch.test.ts::[A5] records the task as failed with the spawn error as evidence when the spawn fails` |
+| A6 | `factoryman_report` records handoff, ready, or report as kind and mode require, block or fail for those outcomes, and logs a refusal for empty evidence | AC-1.6, FR-110, FR-105 | example | DONE | `test/acceptance/tools-report.test.ts::[A6] records handoff, ready, or report as the kind and mode require, block or fail for those outcomes, and a refusal for empty evidence` |
+| A7 | `factoryman_status` reads one task or a filtered project list and writes nothing to the log | AC-1.7, FR-111 | example | DONE | `test/acceptance/tools-status.test.ts::[A7] reads one task or a filtered project list and writes nothing to the log` |
+| A8 | A submitted approval records the request and the owner's approval, runs the merge once, and ends the task `merged` | AC-1.8, FR-112, FR-113, FR-115, SC-002 | example | DONE | `test/acceptance/tools-merge.test.ts::[A8] records the request and the owner` |
+| A9 | A submitted denial is recorded, nothing merges, and the task stays `awaiting_approval` | AC-1.9, FR-114, SC-002 | example | DONE | `test/acceptance/tools-merge.test.ts::[A9] records a denial, merges nothing, and leaves the task awaiting approval` |
+| A10 | A cancelled or timed-out form records no approval, merges nothing, leaves `awaiting_approval`, and a later call opens a new form | AC-1.10, FR-114, SC-002 | example | DONE | `test/acceptance/tools-merge.test.ts::[A10] records nothing for a cancelled form or a timed-out form, and a later call opens a new form` |
+| A11 | A form value that is not exactly an approval or a denial records nothing and is reported as unreadable | AC-1.11, FR-113 | example | DONE | `test/acceptance/tools-merge.test.ts::[A11] records nothing and reports an unreadable answer when the form value is not exactly an approval or a denial` |
+| A12 | Under `yolo` no form opens, the merge runs, and the merge event carries the `yolo` flag | AC-1.12, FR-116 | example | DONE | `test/acceptance/tools-merge.test.ts::[A12] opens no form under yolo, runs the merge, and records the yolo flag` |
+| A13 | An approved merge whose command fails records no `merge` event and leaves `awaiting_approval` | AC-1.13, FR-115 | example | DONE | `test/acceptance/tools-merge.test.ts::[A13] records no merge event and stays awaiting approval when the merge command fails` |
+| A14 | `factoryman_merge` on a wrong state, a scout, or a worker caller is refused and opens no form | AC-1.14, FR-105, FR-112 | example | DONE | `test/acceptance/tools-merge.test.ts::[A14] refuses a wrong state, a scout, and a worker caller, and opens no form` |
+| A15 | Teardown with uncommitted changes or unpushed commits is refused, logged, and removes no environment | AC-1.15, FR-118, FR-119 | example | DONE | `test/acceptance/tools-teardown.test.ts::[A15] refuses uncommitted changes and unpushed commits, logs the refusal, and removes no environment` |
+| A16 | Teardown of a landed worktree records `torn_down` and then retires the worker environment | AC-1.16, FR-120 | example | DONE | `test/acceptance/tools-teardown.test.ts::[A16] records torn_down for a landed worktree and then retires the worker environment` |
+| A17 | The plugin factory opens the store on the host database, recovers, and registers exactly five tools | AC-1.17, FR-101, FR-121 | example | DONE | `test/acceptance/plugin.test.ts::[A17] opens the store on the host database, recovers, registers exactly five tools and the command, and disposes cleanly` |
+| A18 | The supervisor command stamps the role on a non-worker thread and refuses a recorded worker | AC-1.18, FR-122 | example | DONE | `test/acceptance/tools-supervisor-command.test.ts::[A18] stamps the role on a non-worker thread and refuses a recorded worker` |
 | A19 | A worker thread failure on a `working` task fails the task with evidence and wakes the supervisor once | AC-2.1, FR-203 | example | PENDING | `test/acceptance/wiring-events.test.ts` |
 | A20 | An idle worker thread on a `working` task wakes the supervisor and leaves the state unchanged | AC-2.2, FR-205 | example | PENDING | `test/acceptance/wiring-events.test.ts` |
 | A21 | A deleted worker thread fails the task, and an archived worker thread only warns the supervisor | AC-2.3, FR-204, FR-206 | example | PENDING | `test/acceptance/wiring-events.test.ts` |
@@ -146,7 +146,7 @@ Boundaries have both sides, and error paths name the failure.
 | U37 | The dispatch schema rejects an extra field | FR-106 | example | DONE | `src/tools/register.test.ts::[U37] advertises a dispatch schema that forbids extra fields and lists the three permission modes` |
 | U38 | The dispatch schema rejects a blank profile field and a permission mode outside the three modes | FR-106 | example | DONE | `src/tools/register.test.ts::[U38] refuses a call with a bad argument through the tool` |
 | U39 | A tool outcome that is not ok reaches bb as an error result | FR-105 | example | DONE | `src/tools/register.test.ts::[U39] returns an ok outcome as plain text and a failed outcome as an error result` |
-| U40 | A full dispatch, report, merge, and teardown flow makes no `bb.sdk.plugins` call | FR-402 | example | PENDING | |
+| U40 | A full dispatch, report, merge, and teardown flow makes no `bb.sdk.plugins` call | FR-402 | example | DONE | `src/server.test.ts::[U40] makes no bb.sdk.plugins call in a full dispatch, report, merge, and teardown flow` |
 
 ### `src/tools/dispatch.ts`
 
@@ -271,9 +271,9 @@ Boundaries have both sides, and error paths name the failure.
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| U120 | The factory opens the store on the host's database and runs recovery | FR-121 | example | PENDING | |
-| U121 | The factory logs a corrupt task from recovery and still loads | FR-121, constitution III | example | PENDING | |
-| U122 | The factory defines the `mergeMethod` and approval timeout settings | FR-117, FR-112 | example | PENDING | |
+| U120 | The factory opens the store on the host's database and runs recovery | FR-121 | example | DONE | `src/server.test.ts::[U120] opens the store on the host` |
+| U121 | The factory logs a corrupt task from recovery and still loads | FR-121, constitution III | example | DONE | `src/server.test.ts::[U121] logs a corrupt task from recovery as an error and still loads` |
+| U122 | The factory defines the `mergeMethod` and approval timeout settings | FR-117, FR-112 | example | DONE | `src/server.test.ts::[U122] defines the merge method and approval timeout settings with their defaults` |
 | U123 | The factory registers the command, the five tools, the event handlers, and one service | FR-101, FR-122, FR-201 | example | PENDING | |
 | U124 | A seeded random walk of tool calls and thread events leaves the replayed task rows equal to the cached rows | FR-105, constitution III | example | PENDING | |
 

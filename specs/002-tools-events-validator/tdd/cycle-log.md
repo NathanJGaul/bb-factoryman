@@ -227,3 +227,21 @@ Each behavior in a batch still has its own test, and each entry records the fail
   Suite `pnpm test` -> 36 files, 475 passed, 0 failed. Lint and type-check clean.
 - refactor: none needed
 - note: U40 (no `bb.sdk.plugins` call in a full flow) needs the factory and moves to the server cycle.
+
+## Cycle H0: A1 to A18 acceptance through the plugin factory, with the factory and server unit tests (milestone 4)
+
+- tests: `test/acceptance/tools-visibility.test.ts` (A1), `tools-authority.test.ts` (A2), `tools-dispatch.test.ts` (A3 to A5), `tools-report.test.ts` (A6), `tools-status.test.ts` (A7), `tools-merge.test.ts` (A8 to A14), `tools-teardown.test.ts` (A15, A16), `plugin.test.ts` (A17, replacing the milestone 1 load test), `tools-supervisor-command.test.ts` (A18),
+  and `src/server.test.ts` (U40, U120 to U122), over `loadWorld` in `test/fixtures/plugin-host.ts` (the real factory, the real adapter, `bb.sdk` stubs, and the real SQLite store on the fake host's database)
+- red (acceptance, written before the factory): with `createPlugin` as a stub that only logs, `pnpm vitest run test/acceptance/<each file>`
+  -> `Error: no agent tool "factoryman_dispatch" is registered` for A1 to A7 and A8 to A16 (the tool calls), and assertion failures for A17 and A18 (18 failed)
+- green: `createPlugin` defines the settings, opens the store on `bb.storage.database()`, runs `recover`, logs a corrupt task, builds the runtime, registers the five tools and the `factoryman` command.
+  `pnpm vitest run test/acceptance` -> 128 passed. Suite `pnpm test` -> 45 files, 496 passed, 0 failed. Lint and type-check clean.
+- test-after admission: the server unit tests U120, U121, U122, and U40 were written after the factory, because the acceptance tests drove it.
+  Deliberate mutants prove they bite:
+  - no `recover` call -> U120, U121, and U40 failed (3 failed, 1 passed)
+  - corrupt tasks not logged -> U121 and U40 failed (2 failed, 2 passed)
+  U40 first failed for the right reason: with an empty `git rev-list` output the teardown refused (D-046).
+  The test then scripted the count as `0`. Restored the code exactly after each mutant.
+- note: A10 covers the timed-out form with `approvalTimeoutMinutes: 0.0005` (30 ms), and the fake host returns `cancelled` with reason `timeout` as the real bb did in the spike.
+- note: the milestone 1 test `A1` (plugin load registers nothing) is replaced by the new A17 (D-045).
+- refactor: none needed

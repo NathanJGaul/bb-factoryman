@@ -67,19 +67,19 @@ description: "Task list for tools and approval, event wiring, and the validator"
 
 ### Tests for user story 1 (write first, watch fail)
 
-- [ ] T030 [P] [US1] [A1] Visibility test in `test/acceptance/tools-visibility.test.ts` (supervisor, worker, and no-role threads; AC-1.1)
-- [ ] T031 [P] [US1] [A2] Authority test in `test/acceptance/tools-authority.test.ts` (a recorded worker refused on supervisor tools, a non-worker refused on report, a task in another project refused; AC-1.2)
-- [ ] T032 [P] [US1] [A3] [A4] [A5] [U41] [U42] [U43] [U44] [U45] [U46] [U47] [U48] [U49] [U50] [U51] Dispatch tests in `test/acceptance/tools-dispatch.test.ts` and `src/tools/dispatch.test.ts` (success, incomplete profile, empty description, unknown kind, spawn failure, thread already failed after start; AC-1.3 to AC-1.5)
-- [ ] T033 [P] [US1] [A6] [U52] [U53] [U54] [U55] [U56] [U57] [U58] [U59] [U60] [U61] Report tests in `test/acceptance/tools-report.test.ts` and `src/tools/report.test.ts` (scout, `no-mistakes`, `direct-PR`, `local-only`, blocked, failed, empty evidence; AC-1.6)
-- [ ] T034 [P] [US1] [A7] [U62] [U63] [U64] [U65] [U66] [U67] [U68] Status tests in `test/acceptance/tools-status.test.ts` and `src/tools/status.test.ts` (one task, project list, state filter, writes nothing; AC-1.7)
-- [ ] T035 [P] [US1] [A8] [A9] [A10] [A11] [A12] [A13] [A14] [U89] [U90] [U91] [U92] [U93] [U94] [U95] [U96] [U97] [U98] [U99] [U100] [U101] [U102] [U103] [U104] [U105] [U106] Merge approval tests in `test/acceptance/tools-merge.test.ts` and `src/tools/merge.test.ts` (submitted approval, denial, cancelled form, timed-out form, unreadable answer, `yolo`, executor failure, wrong state, scout, worker caller, second call while a form is open; AC-1.8 to AC-1.14)
-- [ ] T036 [P] [US1] [A15] [A16] [U107] [U108] [U109] [U110] [U111] [U112] [U113] [U114] [U115] [U116] Teardown tests in `test/acceptance/tools-teardown.test.ts` and `src/tools/teardown.test.ts` (dirty tree, unpushed commits, clean and landed, failed task, retire failure after the event; AC-1.15, AC-1.16)
+- [X] T030 [P] [US1] [A1] Visibility test in `test/acceptance/tools-visibility.test.ts` (supervisor, worker, and no-role threads; AC-1.1)
+- [X] T031 [P] [US1] [A2] Authority test in `test/acceptance/tools-authority.test.ts` (a recorded worker refused on supervisor tools, a non-worker refused on report, a task in another project refused; AC-1.2)
+- [X] T032 [P] [US1] [A3] [A4] [A5] [U41] [U42] [U43] [U44] [U45] [U46] [U47] [U48] [U49] [U50] [U51] Dispatch tests in `test/acceptance/tools-dispatch.test.ts` and `src/tools/dispatch.test.ts` (success, incomplete profile, empty description, unknown kind, spawn failure, thread already failed after start; AC-1.3 to AC-1.5)
+- [X] T033 [P] [US1] [A6] [U52] [U53] [U54] [U55] [U56] [U57] [U58] [U59] [U60] [U61] Report tests in `test/acceptance/tools-report.test.ts` and `src/tools/report.test.ts` (scout, `no-mistakes`, `direct-PR`, `local-only`, blocked, failed, empty evidence; AC-1.6)
+- [X] T034 [P] [US1] [A7] [U62] [U63] [U64] [U65] [U66] [U67] [U68] Status tests in `test/acceptance/tools-status.test.ts` and `src/tools/status.test.ts` (one task, project list, state filter, writes nothing; AC-1.7)
+- [X] T035 [P] [US1] [A8] [A9] [A10] [A11] [A12] [A13] [A14] [U89] [U90] [U91] [U92] [U93] [U94] [U95] [U96] [U97] [U98] [U99] [U100] [U101] [U102] [U103] [U104] [U105] [U106] Merge approval tests in `test/acceptance/tools-merge.test.ts` and `src/tools/merge.test.ts` (submitted approval, denial, cancelled form, timed-out form, unreadable answer, `yolo`, executor failure, wrong state, scout, worker caller, second call while a form is open; AC-1.8 to AC-1.14)
+- [X] T036 [P] [US1] [A15] [A16] [U107] [U108] [U109] [U110] [U111] [U112] [U113] [U114] [U115] [U116] Teardown tests in `test/acceptance/tools-teardown.test.ts` and `src/tools/teardown.test.ts` (dirty tree, unpushed commits, clean and landed, failed task, retire failure after the event; AC-1.15, AC-1.16)
 - [X] T037 [P] [US1] [U69] [U70] [U71] [U72] [U73] [U74] [U75] [U76] [U77] Worktree report tests in `src/git/report.test.ts` against temporary repositories (clean, dirty, untracked file, unpushed commit, pushed commit, `local-only` base rule, command failure)
 - [X] T038 [P] [US1] [U78] [U79] [U80] [U81] [U82] [U83] [U84] [U85] [U86] [U87] [U88] Merge executor tests in `src/git/merge.test.ts` (the `gh` command line for each method with a fake runner, local merge in a temporary repository, dirty checkout, wrong branch, missing base branch, conflict then abort)
-- [ ] T039 [P] [US1] [A18] [U117] [U118] [U119] Supervisor command tests in `test/acceptance/tools-supervisor-command.test.ts` and `src/tools/supervisor-command.test.ts` (stamps a non-worker, refuses a worker; AC-1.18)
+- [X] T039 [P] [US1] [A18] [U117] [U118] [U119] Supervisor command tests in `test/acceptance/tools-supervisor-command.test.ts` and `src/tools/supervisor-command.test.ts` (stamps a non-worker, refuses a worker; AC-1.18)
 - [ ] T040 [P] [US1] [A17] [U120] [U121] [U123] [U124] Factory tests in `test/acceptance/plugin.test.ts` and `src/server.test.ts` (opens the store on the host database, recovers, registers five tools; AC-1.17)
 - [X] T041 [P] [US1] [U29] [U30] [U31] [U32] Worker prompt test in `src/tools/prompt.test.ts` (names task ID, branch, mode, and the report tool; says never push for `no-mistakes`)
-- [ ] T055 [P] [US1] [U33] [U34] [U35] [U36] [U37] [U38] [U39] [U40] Registration tests in `src/tools/register.test.ts` (configure by role, the closed tool list, dispatch schema, error mapping, no cross-plugin call)
+- [X] T055 [P] [US1] [U33] [U34] [U35] [U36] [U37] [U38] [U39] [U40] Registration tests in `src/tools/register.test.ts` (configure by role, the closed tool list, dispatch schema, error mapping, no cross-plugin call)
 
 ### Implementation for user story 1
 
@@ -91,12 +91,12 @@ description: "Task list for tools and approval, event wiring, and the validator"
 - [X] T047 [P] [US1] [U62] [U63] [U64] [U65] [U66] [U67] [U68] Implement `factoryman_status` in `src/tools/status.ts`
 - [X] T048 [US1] [U89] [U90] [U91] [U92] [U93] [U94] [U95] [U96] [U97] [U98] [U99] [U100] [U101] [U102] [U103] [U104] [U105] [U106] Implement `factoryman_merge` and the approval form schema in `src/tools/merge.ts`
 - [X] T049 [US1] [U107] [U108] [U109] [U110] [U111] [U112] [U113] [U114] [U115] [U116] Implement `factoryman_teardown` in `src/tools/teardown.ts`
-- [ ] T050 [US1] [U33] [U34] [U35] [U36] [U37] [U38] [U39] [U40] Implement tool registration, schemas, and `configure` in `src/tools/register.ts`
+- [X] T050 [US1] [U33] [U34] [U35] [U36] [U37] [U38] [U39] [U40] Implement tool registration, schemas, and `configure` in `src/tools/register.ts`
 - [X] T051 [US1] [U117] [U118] [U119] Implement the supervisor command in `src/tools/supervisor-command.ts`
 - [ ] T052 [US1] [U120] [U121] [U123] [U124] Build the runtime, open the store, run recovery, and register everything in `src/server.ts`
-- [ ] T053 [US1] [U122] Add the `mergeMethod` and approval timeout settings in `src/server.ts` and read them in `src/git/merge.ts` and `src/tools/merge.ts`
+- [X] T053 [US1] [U122] Add the `mergeMethod` and approval timeout settings in `src/server.ts` and read them in `src/git/merge.ts` and `src/tools/merge.ts`
 - [ ] T054 [US1] Update `docs/DECISIONS.md` with the milestone 4 findings and commit milestone 4
-- [ ] T056 [US1] [A1] [A2] [A3] [A4] [A5] [A6] [A7] [A8] [A9] [A10] [A11] [A12] [A13] [A14] [A15] [A16] [A17] [A18] Outer-loop gate: A1 to A18 are green through the plugin factory before milestone 4 is committed
+- [X] T056 [US1] [A1] [A2] [A3] [A4] [A5] [A6] [A7] [A8] [A9] [A10] [A11] [A12] [A13] [A14] [A15] [A16] [A17] [A18] Outer-loop gate: A1 to A18 are green through the plugin factory before milestone 4 is committed
 
 **Checkpoint**: User story 1 passes on its own. The tools run through the fake host with no wake messages and no validator.
 

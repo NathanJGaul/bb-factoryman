@@ -346,3 +346,25 @@ Spike item 22 shows that bb wakes a parent after every child outcome unless noti
 The design says the plugin, not the agent, wakes the supervisor.
 Dispatch therefore spawns every worker with `parentNotifications: "off"` and a parent thread, and the plugin sends the only wake messages.
 
+## Milestone 4: tools and approval
+
+### D-044: Tool arguments are checked by the tool, not by bb (Gap)
+
+`bb.agents.registerTool` can take a `zod` schema, and bb then rejects a bad call with its own error before the tool runs.
+The plugin registers each tool with the JSON schema that `z.toJSONSchema` makes from the same schema, so bb advertises the shape to the model and the tool checks the arguments itself.
+A bad call then gets the tool's refusal text, with a reason code, as a normal error result, and the tool's tests cover it.
+
+### D-045: Two milestone 1 tests changed with the scope amendment (Deviation)
+
+The layout test asserted that `src/tools` must not exist, and the plugin load test asserted that the factory registers nothing.
+Both rules ended with the captain's widening of scope (D-032).
+The layout test now forbids only `src/dispatch` and `skills`, and it still requires the milestone 1 to 3 directories.
+The plugin test now asserts the five tools, the command, the store on the host database, and a clean dispose.
+Neither change hides a failure: each follows a changed requirement, and the cycle log records both as their own steps.
+
+### D-046: A default empty `git` output fails teardown closed (Gap)
+
+The worktree report refuses an unreadable commit count.
+A fake runner that returns an empty string for `git rev-list --count` therefore blocks teardown, which is the intended behavior.
+Tests that want a landed worktree script the count as `0`.
+
