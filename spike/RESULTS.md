@@ -247,6 +247,44 @@ Those paths are covered by the fake host and the recorded output (D-049).
 
 Fallback: none needed.
 
+## 28. Live validation of the review fixes
+
+Result: partial
+
+Evidence: a second throwaway bb 0.48.1 server ran the plugin built from commit bb5dae3, with haiku supervisor and worker threads and a recording stand-in for the `gh` command on its PATH.
+Project A used the reserved remote `git@git.invalid:acme/widgets.git`, so nothing could reach a forge.
+Project B used a throwaway repo with a local bare origin.
+
+- Concurrent merge calls for one task: confirmed for the guard, inconclusive for the exact race window.
+  With `yolo` off, two supervisors called `factoryman_merge` at once. One approval form opened. The other call was refused with "A merge approval for task t-3b76e1f5 is already waiting for the owner." The log has one `request_approval` row and no `merge` row.
+  With `yolo` on, the stub recorded exactly one `gh pr merge https://git.invalid/acme/widgets/pull/8 --squash`. The other call was refused. The log has one `merge` row.
+  The race window is a few milliseconds wide between the check and the claim. Two model-driven threads cannot land in it on demand. The unit tests written first for review-1 cover it.
+- Pull request URL outside the project's repository: confirmed live with `yolo` off.
+  The reported URL was `https://github.com/other-owner/other-repo/pull/9`. The tool refused with "is not a pull request in this project's repository (git.invalid/acme/widgets)".
+  No form opened, the stub saw no `pr merge`, and the log has no `request_approval` row.
+  The in-repo URL on the sibling task passed the same check.
+  The `yolo` on refusal for an out-of-repo URL is covered by unit tests only, because the live `yolo` task used an in-repo URL.
+- A merged task survives thread deletion: confirmed live.
+  After the worker thread was archived and then deleted, the task stayed `merged`. The log gained no `fail` row (5 rows before and after). The supervisor received only the archive warning.
+- Wiring: confirmed live.
+  A worker with a model that does not exist produced `thread.failed` and then `turn.failed`. The task became `failed` with the evidence "worker thread failed: provider error (category bad-request, HTTP 404)", and the supervisor woke.
+  An idle worker that had not reported woke the supervisor with "the worker finished a turn without reporting".
+- Start-up reconcile: partial.
+  With the plugin disabled, the worker thread of a working task was deleted, and the plugin was enabled again.
+  It wrote one `reconcile` row ("The log says the task is working, but bb reports missing.") and changed no state.
+  It sent no message, because bb answers HTTP 404 for a deleted thread, so the parent is unknown. The plugin logged "No parent thread ...".
+  This is the limit that D-047 and FR-213 record. It was not changed.
+- Validator: confirmed live on the fixed build.
+  A ship task in `no-mistakes` mode ran the real `no-mistakes axi run` in the worker's worktree.
+  The review gate had two `ask-user` findings, the task became `needs_decision`, and the supervisor received both findings verbatim.
+  The throwaway run was then aborted.
+
+Not driven live: the exact race window of the concurrent merge guard, the reconcile message for a deleted worker thread, and the `yolo` on refusal of an out-of-repo URL.
+Also not driven live: `gh pr merge` against a real forge, a person answering the merge form, and a real `checks-passed` outcome.
+
+Fallback: the unit and acceptance tests cover the paths that could not be driven live.
+No production code was added to make them drivable.
+
 ## Not checked
 
 These items belong to milestones 7 to 11, or to the owner's live install, and the task brief excludes them.

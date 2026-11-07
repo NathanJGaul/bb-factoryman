@@ -472,3 +472,13 @@ The check runs before the approval form and before `request_approval`, and it ru
 
 `thread.deleted` fails a task in any state before `merged`.
 A task that is `merged`, `torn_down`, or `failed` gets no `fail` event and no wake message, so the merged record stays true until teardown.
+
+### D-061: Live validation of the review fixes: two scenarios stay inconclusive in part (Decided)
+
+The captain chose Fix for finding test-1, and the fix is to record live evidence only (spike item 28).
+Three scenarios were confirmed live: a pull request URL outside the project's repository, a merged task that survives thread deletion, and the wiring and validator parts of the fourth.
+Two could not be driven live.
+The first is the exact race window of the concurrent merge guard, which two model-driven threads cannot hit on demand.
+The second is the reconcile message for a deleted worker thread, because bb answers 404, so the parent is unknown.
+No production code was added to make them drivable.
+Unit and acceptance tests cover both.
