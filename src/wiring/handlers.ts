@@ -62,7 +62,7 @@ export class EventHandlers {
   async threadDeleted(payload: ThreadRef): Promise<void> {
     await this.guarded("thread.deleted", async () => {
       const task = this.workerTask(payload.thread.id);
-      if (!task || task.state === "failed") return;
+      if (!task || task.state === "failed" || task.state === "merged") return;
       await this.rt.apply(task.taskId, { type: "fail", actor: "system", evidence: "worker thread was deleted" });
     });
   }

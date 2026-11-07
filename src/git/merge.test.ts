@@ -6,6 +6,7 @@ import type { ProjectConfig, TaskRow } from "../store/types";
 import { createMergeExecutor, type MergeInput } from "./merge";
 
 const PR = "https://github.com/acme/widgets/pull/7";
+const REMOTE = "git@github.com:acme/widgets.git";
 
 function task(overrides: Partial<TaskRow> = {}): TaskRow {
   return {
@@ -24,7 +25,7 @@ function task(overrides: Partial<TaskRow> = {}): TaskRow {
 
 function input(overrides: Omit<Partial<MergeInput>, "config"> & { config?: Partial<ProjectConfig> } = {}): MergeInput {
   const { config, ...rest } = overrides;
-  return { task: task(), config: { ...defaultProjectConfig("proj-1"), ...config }, checkoutPath: null, method: "squash", ...rest };
+  return { task: task(), config: { ...defaultProjectConfig("proj-1"), ...config }, checkoutPath: null, remoteUrl: REMOTE, method: "squash", ...rest };
 }
 
 function recordingExec(result: Partial<ExecResult> = {}) {
@@ -87,6 +88,39 @@ describe("pull request executor", () => {
     expect(message).toMatch(/pull request/i);
     expect(await createMergeExecutor(exec).preflight(input())).toBeNull();
     expect(calls).toEqual([]);
+  });
+
+  it("[U219] accepts a pull request URL in the project's own repository whatever the remote form or letter case", async () => {
+    const { exec, calls } = recordingExec();
+    for (const remote of [REMOTE, "git@github.com:acme/widgets", "https://github.com/acme/widgets.git", "https://github.com/acme/widgets", "git@GitHub.com:Acme/Widgets.git"]) {
+      expect(await createMergeExecutor(exec).preflight(input({ remoteUrl: remote })), remote).toBeNull();
+    }
+    expect(await createMergeExecutor(exec).preflight(input({ task: task({ pullRequestUrl: "https://GitHub.com/ACME/Widgets/pull/12" }) }))).toBeNull();
+    expect(calls).toEqual([]);
+  });
+
+  it("[U220] refuses a pull request URL on another host, owner, or repository", async () => {
+    const { exec } = recordingExec();
+    for (const url of ["https://gitlab.com/acme/widgets/pull/7", "https://github.com/evil/widgets/pull/7", "https://github.com/acme/other/pull/7", "http://github.com/acme/widgets/pull/7"]) {
+      const message = await createMergeExecutor(exec).preflight(input({ task: task({ pullRequestUrl: url }) }));
+      expect(message, url).toMatch(/not a pull request in/i);
+    }
+  });
+
+  it("[U221] refuses a URL that is not a pull request path", async () => {
+    const { exec } = recordingExec();
+    for (const url of ["https://github.com/acme/widgets/issues/7", "https://github.com/acme/widgets/pull/abc", "https://github.com/acme/widgets/pull/7/files", "https://github.com/acme/widgets", "https://github.com/acme/widgets/pull/7?x=1", "not a url"]) {
+      const message = await createMergeExecutor(exec).preflight(input({ task: task({ pullRequestUrl: url }) }));
+      expect(message, url).toMatch(/not a pull request in/i);
+    }
+  });
+
+  it("[U222] refuses when the project's remote is missing or unreadable", async () => {
+    const { exec } = recordingExec();
+    for (const remote of [null, "", "not a remote", "file:///tmp/repo.git"]) {
+      const message = await createMergeExecutor(exec).preflight(input({ remoteUrl: remote }));
+      expect(message, String(remote)).toMatch(/remote/i);
+    }
   });
 });
 

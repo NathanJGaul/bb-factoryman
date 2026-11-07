@@ -11,6 +11,8 @@ export class FakeBbPort implements BbPort {
   threads = new Map<string, ThreadInfo>();
   envPaths = new Map<string, string>();
   checkouts = new Map<string, string>();
+  /** A project missing from this map has the default remote. Set null for an unreadable remote. */
+  remotes = new Map<string, string | null>();
   metadata = new Map<string, Record<string, unknown>>();
   spawnError: Error | null = null;
   sendError: Error | null = null;
@@ -76,6 +78,11 @@ export class FakeBbPort implements BbPort {
   async getProjectCheckout(projectId: string): Promise<string | null> {
     this.calls.push({ method: "getProjectCheckout", args: [projectId] });
     return this.checkouts.get(projectId) ?? null;
+  }
+
+  async getProjectRemote(projectId: string): Promise<string | null> {
+    this.calls.push({ method: "getProjectRemote", args: [projectId] });
+    return this.remotes.has(projectId) ? (this.remotes.get(projectId) ?? null) : "git@github.com:acme/widgets.git";
   }
 
   async requestInput(request: InputRequest): Promise<InputResult> {

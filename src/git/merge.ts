@@ -8,6 +8,8 @@ export interface MergeInput {
   config: ProjectConfig;
   /** The project checkout, needed for `local-only`. */
   checkoutPath: string | null;
+  /** The project's git remote URL, needed for the pull request modes. */
+  remoteUrl: string | null;
   method: MergeMethod;
 }
 
@@ -30,10 +32,34 @@ function describe(result: ExecResult): string {
   return result.error ?? (result.stderr.trim() || result.stdout.trim() || `exit code ${String(result.code)}`);
 }
 
+interface Repository {
+  host: string;
+  path: string;
+}
+
+/** Read `git@host:owner/repo(.git)` or `https://host/owner/repo(.git)`. Anything else is null. */
+function parseRemote(remote: string | null): Repository | null {
+  if (remote === null) return null;
+  const match = /^(?:git@([^:/\s]+):|https:\/\/([^/\s]+)\/)([^/\s]+\/[^/\s]+?)(?:\.git)?$/i.exec(remote.trim());
+  const host = match?.[1] ?? match?.[2];
+  return match?.[3] === undefined || host === undefined ? null : { host: host.toLowerCase(), path: match[3].toLowerCase() };
+}
+
+/** True only for `https://<host>/<owner>/<repo>/pull/<number>` in the given repository. */
+function isPullRequestIn(url: string, repository: Repository): boolean {
+  const match = /^https:\/\/([^/\s?#]+)\/([^/\s?#]+\/[^/\s?#]+)\/pull\/\d+$/i.exec(url);
+  return match?.[1]?.toLowerCase() === repository.host && match[2]?.toLowerCase() === repository.path;
+}
+
 function pullRequestExecutor(exec: Exec): MergeExecutor {
   return {
-    async preflight({ task }) {
-      return task.pullRequestUrl === null ? "The task has no pull request URL, so there is nothing to merge." : null;
+    async preflight({ task, remoteUrl }) {
+      if (task.pullRequestUrl === null) return "The task has no pull request URL, so there is nothing to merge.";
+      const repository = parseRemote(remoteUrl);
+      if (repository === null) return "The project's git remote is missing or unreadable, so the pull request cannot be checked against it.";
+      return isPullRequestIn(task.pullRequestUrl, repository)
+        ? null
+        : `${task.pullRequestUrl} is not a pull request in this project's repository (${repository.host}/${repository.path}).`;
     },
     async merge({ task, method }) {
       if (task.pullRequestUrl === null) return { ok: false, message: "The task has no pull request URL." };

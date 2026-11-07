@@ -447,3 +447,13 @@ Each behavior in a batch still has its own test, and each entry records the fail
   The mutant that removes the wiring survives (10 passed). D-054 records it as an equivalent mutant under the fake host.
 - suite `pnpm test` -> 57 files, 615 passed, 0 failed. Lint and type-check clean.
 - refactor: none needed
+
+## Cycle R2: the review round (U141, U142, U218 to U226)
+
+- source: review-1 (merge race), review-2 (worker-supplied pull request URL), review-3 (deleted thread after merge); decisions D-059 and D-060.
+- tests added or changed: `[U141]` and `[U142]` (merged is now ignored), `[U218]`, `[U219]` to `[U222]`, `[U223]` to `[U226]`.
+- red: U142 failed on the extra `fail` row for a merged task; U220, U221, and U222 failed because the preflight accepted any URL; U223 and U224 failed because the second call got past the guard; U226 failed because the form or the command ran (7 failed).
+  U218, U219, and U225 passed on the first run, because the port method is a new fixture surface and the old code accepted matching URLs.
+- green: the merge tool claims the task in `openMergeForms` before its first await and releases it in a `finally`; the pull request preflight checks the URL against the project's remote; `threadDeleted` skips `merged`.
+- suite `pnpm run check` -> 57 files, 624 passed, 0 failed. Lint and type-check clean.
+- refactor: the merge body moved into `mergeClaimed` so one `finally` covers every path.

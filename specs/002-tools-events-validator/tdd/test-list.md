@@ -302,8 +302,8 @@ Boundaries have both sides, and error paths name the failure.
 | U138 | `thread.failed` on a `blocked` task fails it | FR-203 | example | DONE | `src/wiring/handlers.test.ts::[U138] fails a blocked task` |
 | U139 | `thread.failed` on `validating`, `needs_decision`, `review_ready`, `awaiting_approval`, `merged`, or `report_ready` is ignored | FR-202, FR-203 | example | DONE | `src/wiring/handlers.test.ts::[U139] ignores a failure in validating, needs_decision, review_ready, awaiting_approval, merged, and report_ready` |
 | U140 | A second `thread.failed` for the same task sends no second message and adds no second `fail` | AC-2.7 | example | DONE | `src/wiring/handlers.test.ts::[U140] sends no second message and records no second fail for a duplicate failure` |
-| U141 | `thread.deleted` fails a task in any state before `torn_down` | FR-204 | example | DONE | `src/wiring/handlers.test.ts::[U141] fails a task in any state before torn_down when its thread is deleted` |
-| U142 | `thread.deleted` on a `torn_down` task is ignored | FR-202, FR-204 | example | DONE | `src/wiring/handlers.test.ts::[U142] ignores a deletion for a torn_down or an already failed task` |
+| U141 | `thread.deleted` fails a task in any state before `merged` | FR-204 | example | DONE | `src/wiring/handlers.test.ts::[U141] fails a task in any state before merged when its thread is deleted` |
+| U142 | `thread.deleted` on a `merged`, `torn_down`, or `failed` task is ignored | FR-202, FR-204 | example | DONE | `src/wiring/handlers.test.ts::[U142] ignores a deletion for a merged, torn_down, or already failed task` |
 | U143 | `thread.idle` on a `working` task wakes and changes nothing | FR-205 | example | DONE | `src/wiring/handlers.test.ts::[U143] wakes the supervisor for an idle worker on a working task and changes nothing` |
 | U144 | `thread.idle` on any other state is ignored | FR-205 | example | DONE | `src/wiring/handlers.test.ts::[U144] ignores an idle worker in every other state` |
 | U145 | `thread.archived` wakes with the worktree warning and changes nothing, and is ignored on a `torn_down` task | FR-206 | example | DONE | `src/wiring/handlers.test.ts::[U145] warns the supervisor about an archived worker without changing state, and ignores a torn_down task` |
@@ -486,3 +486,12 @@ Copied verbatim from `.specify/memory/tdd-profile.md` at planning time:
 - Lint: `pnpm run lint`
 - Coverage: none (tool not installed)
 - Mutation: none (tool not installed; deliberate mutants instead)
+| U218 | `BbPort.getProjectRemote` returns the project's git remote URL, or null | D-059 | example | DONE | `src/bb/adapter.test.ts::[U218] reads the project's git remote URL, or null` |
+| U219 | The pull request preflight accepts a pull request in the project's repository, in every remote form and letter case | D-059 | example | DONE | `src/git/merge.test.ts::[U219] accepts a pull request URL in the project's own repository whatever the remote form or letter case` |
+| U220 | The pull request preflight refuses another host, owner, or repository | D-059 | example | DONE | `src/git/merge.test.ts::[U220] refuses a pull request URL on another host, owner, or repository` |
+| U221 | The pull request preflight refuses a URL that is not a pull request path | D-059 | example | DONE | `src/git/merge.test.ts::[U221] refuses a URL that is not a pull request path` |
+| U222 | The pull request preflight refuses a missing or unreadable remote | D-059 | example | DONE | `src/git/merge.test.ts::[U222] refuses when the project's remote is missing or unreadable` |
+| U223 | Two simultaneous merge calls open one approval form | review-1 | example | DONE | `src/tools/merge.test.ts::[U223] opens one form when two calls for the same task start together` |
+| U224 | Two simultaneous yolo merge calls run one merge, and the claim is released | review-1 | example | DONE | `src/tools/merge.test.ts::[U224] runs one merge when two yolo calls for the same task start together, and frees the task afterwards` |
+| U225 | A pull request in the project's repository merges with the form and with yolo | D-059 | example | DONE | `src/tools/merge.test.ts::[U225] merges a pull request in the project's own repository, with the form or with yolo` |
+| U226 | A foreign pull request or unreadable remote refuses before the form and before any command, with and without yolo | D-059 | example | DONE | `src/tools/merge.test.ts::[U226] refuses before the form and before any command when the pull request is outside the project's repository or the remote is unreadable` |

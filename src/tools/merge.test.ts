@@ -3,6 +3,8 @@ import type { InputRequest, InputResult } from "../bb/port";
 import type { MergeExecutor, MergeInput, MergeResult } from "../git/merge";
 import { defaultProjectConfig } from "../store/store";
 import { SUPERVISOR, WORKER, toReviewReady, withDispatchedTask, type TestRuntime } from "../../test/fixtures/runtime";
+import { createMergeExecutor } from "../git/merge";
+import type { Exec } from "../exec";
 import { merge } from "./merge";
 
 function fakeExecutor(options: { preflight?: string | null; result?: MergeResult; onMerge?: () => Promise<void> } = {}) {
@@ -227,6 +229,67 @@ describe("factoryman_merge", () => {
     t.bb.inputHandler = async () => ({ outcome: "cancelled", reason: "user" });
     await merge(t.runtime, executor, SUPERVISOR, { taskId: "t1" });
     expect(t.bb.callsTo("requestInput")).toHaveLength(2);
+  });
+
+  it("[U223] opens one form when two calls for the same task start together", async () => {
+    const t = await ready();
+    let release!: (result: InputResult) => void;
+    t.bb.inputHandler = () => new Promise<InputResult>((resolve) => (release = resolve));
+    const { executor } = fakeExecutor();
+    const first = merge(t.runtime, executor, SUPERVISOR, { taskId: "t1" });
+    const second = await merge(t.runtime, executor, SUPERVISOR, { taskId: "t1" });
+    expect(second.ok).toBe(false);
+    expect(second.text).toMatch(/already waiting/i);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    release({ outcome: "cancelled", reason: "user" });
+    await first;
+    expect(t.bb.callsTo("requestInput")).toHaveLength(1);
+    expect(events(t).filter((e) => e.startsWith("request_approval"))).toEqual(["request_approval:applied"]);
+  });
+
+  it("[U224] runs one merge when two yolo calls for the same task start together, and frees the task afterwards", async () => {
+    const t = await ready({ yolo: true });
+    let release!: () => void;
+    const { executor, merges } = fakeExecutor({ onMerge: () => new Promise<void>((resolve) => (release = resolve)) });
+    const first = merge(t.runtime, executor, SUPERVISOR, { taskId: "t1" });
+    const second = await merge(t.runtime, executor, SUPERVISOR, { taskId: "t1" });
+    expect(second.ok).toBe(false);
+    expect(second.text).toMatch(/already waiting/i);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    release();
+    expect((await first).ok).toBe(true);
+    expect(merges).toHaveLength(1);
+    expect(t.runtime.openMergeForms.has("t1")).toBe(false);
+  });
+
+  it("[U225] merges a pull request in the project's own repository, with the form or with yolo", async () => {
+    for (const yolo of [false, true]) {
+      const t = await ready({ yolo });
+      answer(t, { decision: "approved" });
+      const calls: string[][] = [];
+      const exec: Exec = async (_command, args) => (calls.push([...args]), { code: 0, stdout: "", stderr: "" });
+      const outcome = await merge(t.runtime, createMergeExecutor(exec), SUPERVISOR, { taskId: "t1" });
+      expect(outcome.ok, String(yolo)).toBe(true);
+      expect(calls, String(yolo)).toEqual([["pr", "merge", "https://github.com/acme/widgets/pull/7", "--squash"]]);
+    }
+  });
+
+  it("[U226] refuses before the form and before any command when the pull request is outside the project's repository or the remote is unreadable", async () => {
+    for (const yolo of [false, true]) {
+      for (const remote of ["git@github.com:other/widgets.git", "git@gitlab.com:acme/widgets.git", "git@github.com:acme/other.git", null]) {
+        const t = await ready({ yolo });
+        t.bb.remotes.set("proj-1", remote);
+        const calls: string[][] = [];
+        const exec: Exec = async (_command, args) => (calls.push([...args]), { code: 0, stdout: "", stderr: "" });
+        const outcome = await merge(t.runtime, createMergeExecutor(exec), SUPERVISOR, { taskId: "t1" });
+        const label = `${String(yolo)} ${String(remote)}`;
+        expect(outcome.ok, label).toBe(false);
+        expect(outcome.text, label).toMatch(/refused/i);
+        expect(calls, label).toEqual([]);
+        expect(t.bb.callsTo("requestInput"), label).toEqual([]);
+        expect(state(t), label).toBe("review_ready");
+      }
+    }
   });
 
   it("[U104] merges nothing when the approval arrives after the task left awaiting approval", async () => {

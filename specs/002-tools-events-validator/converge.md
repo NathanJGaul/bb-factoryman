@@ -59,6 +59,12 @@ These items stay open on purpose:
 | --- | --- | --- |
 | Waive or redo the six test-after behaviors (C1) | The owner | `analyze.md` F1, `tdd/verification.md` |
 | A second audit of the remediation | The owner or a later `/speckit.tdd.verify` | `checklist.md` CHK046 |
+
+### Captain decisions of 2026-11-07
+
+- The waiver for the six test-after behaviors is accepted (D-056).
+- D-031 and D-030 are accepted for this PR (D-057, D-058).
+- A pull request must belong to the project's repository (D-059), and a deleted thread leaves a merged task alone (D-060).
 | A tool or another path to answer a pipeline finding, and what an override means (F9) | The owner | D-031 |
 | An approval form is not proof of a human (F8) | The owner, with branch protection and scoped tokens | D-030 |
 | The real `gh pr merge` path, teardown, and the merge form in a live bb, and a recorded `checks-passed` output | Milestone 11 | D-042, D-049, `spike/RESULTS.md` item 27 |

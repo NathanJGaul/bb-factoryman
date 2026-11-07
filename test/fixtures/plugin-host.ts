@@ -100,7 +100,7 @@ export async function loadWorld(options: WorldOptions = {}): Promise<World> {
         delete: async () => ({ ok: true }),
       },
       projects: {
-        get: async ({ projectId }: { projectId: string }) => ({ id: projectId, sources: [{ type: "local_path", isDefault: true, hostId: "host_local", path: "/work/repo" }] }),
+        get: async ({ projectId }: { projectId: string }) => ({ id: projectId, gitRemoteUrl: "git@github.com:acme/widgets.git", sources: [{ type: "local_path", isDefault: true, hostId: "host_local", path: "/work/repo" }] }),
       },
     },
   });

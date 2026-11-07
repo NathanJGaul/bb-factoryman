@@ -49,6 +49,8 @@ export interface BbPort {
   /** Archive the worker thread, then delete its environment. */
   retireWorker(threadId: string, environmentId: string): Promise<void>;
   getProjectCheckout(projectId: string): Promise<string | null>;
+  /** The project's git remote URL, or null when bb has none. */
+  getProjectRemote(projectId: string): Promise<string | null>;
   requestInput(request: InputRequest): Promise<InputResult>;
   setThreadMetadata(threadId: string, metadata: Record<string, Json>): Promise<void>;
 }

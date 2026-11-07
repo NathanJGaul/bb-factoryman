@@ -168,4 +168,11 @@ describe("createBbPort", () => {
     const none = setup({ projects: { get: async () => ({ id: "proj-1", sources: [] }) } });
     expect(await none.port.getProjectCheckout("proj-1")).toBeNull();
   });
+
+  it("[U218] reads the project's git remote URL, or null", async () => {
+    const some = setup({ projects: { get: async () => ({ id: "proj-1", gitRemoteUrl: "git@github.com:acme/widgets.git", sources: [] }) } });
+    expect(await some.port.getProjectRemote("proj-1")).toBe("git@github.com:acme/widgets.git");
+    const none = setup({ projects: { get: async () => ({ id: "proj-1", gitRemoteUrl: null, sources: [] }) } });
+    expect(await none.port.getProjectRemote("proj-1")).toBeNull();
+  });
 });

@@ -89,6 +89,11 @@ export function createBbPort(bb: BbPluginApi): BbPort {
       return source?.path ?? null;
     },
 
+    async getProjectRemote(projectId) {
+      const project = await bb.sdk.projects.get({ projectId });
+      return project.gitRemoteUrl ?? null;
+    },
+
     async requestInput(request) {
       const result = await bb.ui.requestInput(
         { threadId: request.threadId, rendererId: request.rendererId, title: request.title, payload: request.payload, timeoutMs: request.timeoutMs },

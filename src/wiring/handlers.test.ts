@@ -87,8 +87,8 @@ describe("thread.failed", () => {
 });
 
 describe("thread.deleted, thread.idle, and thread.archived", () => {
-  it("[U141] fails a task in any state before torn_down when its thread is deleted", async () => {
-    for (const s of ["working", "validating", "review_ready", "merged"] as const) {
+  it("[U141] fails a task in any state before merged when its thread is deleted", async () => {
+    for (const s of ["working", "validating", "review_ready"] as const) {
       const { t, handlers } = await inState(s);
       await handlers.threadDeleted(thread);
       expect(state(t), s).toBe("failed");
@@ -96,8 +96,8 @@ describe("thread.deleted, thread.idle, and thread.archived", () => {
     }
   });
 
-  it("[U142] ignores a deletion for a torn_down or an already failed task", async () => {
-    for (const s of ["torn_down", "failed"] as const) {
+  it("[U142] ignores a deletion for a merged, torn_down, or already failed task", async () => {
+    for (const s of ["merged", "torn_down", "failed"] as const) {
       const { t, handlers } = await inState(s);
       const before = rows(t).length;
       await handlers.threadDeleted(thread);

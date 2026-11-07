@@ -29,7 +29,7 @@ function reviewEvidence(rt: Runtime, task: TaskRow): string {
  * after the command succeeds, so a failure never leaves the log claiming a merge.
  */
 export async function merge(rt: Runtime, executor: MergeExecutor, caller: Caller, raw: unknown): Promise<ToolOutcome> {
-  const { store, bb } = rt.deps;
+  const { store } = rt.deps;
   if (identify(store, caller.threadId).role === "worker") {
     return refusalOutcome(refuse("actor_forbidden", "A worker cannot merge."));
   }
@@ -45,12 +45,23 @@ export async function merge(rt: Runtime, executor: MergeExecutor, caller: Caller
     return refusalOutcome(refuse("illegal_transition", `Task ${taskId} is ${task.state}. A merge needs review_ready or awaiting_approval.`));
   }
   if (rt.openMergeForms.has(taskId)) return failure(`A merge approval for task ${taskId} is already waiting for the owner.`);
+  rt.openMergeForms.add(taskId);
+  try {
+    return await mergeClaimed(rt, executor, caller, task);
+  } finally {
+    rt.openMergeForms.delete(taskId);
+  }
+}
 
+async function mergeClaimed(rt: Runtime, executor: MergeExecutor, caller: Caller, task: TaskRow): Promise<ToolOutcome> {
+  const { store, bb } = rt.deps;
+  const taskId = task.taskId;
   const config = store.getProjectConfig(task.projectId);
   const input: MergeInput = {
     task,
     config,
     checkoutPath: task.mode === "local-only" ? await bb.getProjectCheckout(task.projectId) : null,
+    remoteUrl: task.mode === "local-only" ? null : await bb.getProjectRemote(task.projectId),
     method: rt.deps.settings().mergeMethod,
   };
   const blocked = await executor.preflight(input);
@@ -62,20 +73,14 @@ export async function merge(rt: Runtime, executor: MergeExecutor, caller: Caller
   }
 
   if (!config.yolo) {
-    rt.openMergeForms.add(taskId);
-    let result;
-    try {
-      result = await bb.requestInput({
-        threadId: caller.threadId,
-        rendererId: MERGE_RENDERER_ID,
-        title: `Approve merge of task ${taskId}`,
-        payload: { taskId, branch: task.branch ?? "", prUrl: task.pullRequestUrl ?? "", evidence: reviewEvidence(rt, task) },
-        timeoutMs: rt.deps.settings().approvalTimeoutMs,
-        ...(caller.signal === undefined ? {} : { signal: caller.signal }),
-      });
-    } finally {
-      rt.openMergeForms.delete(taskId);
-    }
+    const result = await bb.requestInput({
+      threadId: caller.threadId,
+      rendererId: MERGE_RENDERER_ID,
+      title: `Approve merge of task ${taskId}`,
+      payload: { taskId, branch: task.branch ?? "", prUrl: task.pullRequestUrl ?? "", evidence: reviewEvidence(rt, task) },
+      timeoutMs: rt.deps.settings().approvalTimeoutMs,
+      ...(caller.signal === undefined ? {} : { signal: caller.signal }),
+    });
     if (result.outcome === "cancelled") {
       return failure(`The owner did not answer the merge form (${result.reason}). Task ${taskId} stays awaiting_approval. Call factoryman_merge again to ask again.`);
     }

@@ -441,3 +441,34 @@ The loops also stop when the task leaves its two states, and a stopped loop neve
 The first walk stayed in `working` and `blocked`, so it could not catch a cache that skips `fail` or `teardown` events.
 The walk now picks a mostly legal action for each task's state, reaches every state the tools can reach, and asserts that it applied `merge`, `teardown`, `block`, `fail`, and `ready` rows.
 
+## Captain decisions of 2026-11-07
+
+### D-056: The test-after waiver for six behaviors is accepted (Decided)
+
+The captain accepts the test-after waiver for U40, U120, U121, U122, U123, and U124 (`analyze.md` F1).
+Cycle R1 re-derived a red for each with a deliberate mutant.
+
+### D-057: D-031 is accepted for this PR, and `factoryman_decide` is a follow-up (Decided)
+
+No tool answers a pipeline finding in this PR.
+A sixth tool, `factoryman_decide`, comes in a follow-up PR.
+
+### D-058: D-030 is a known gap until milestone 10 (Decided)
+
+An approval form is not proof of a human.
+The captain accepts this gap until the branch protection work in milestone 10.
+
+### D-059: A pull request must belong to the project's own repository (Decided)
+
+A worker reports the pull request URL, so the URL is not trusted.
+The pull request executor refuses at preflight unless the URL is `https://<host>/<owner>/<repo>/pull/<number>` in the project's own repository.
+Host, owner, and repo compare case-insensitively.
+The project's remote comes from `bb.sdk.projects.get` through `BbPort.getProjectRemote`, in the forms `git@host:owner/repo(.git)` and `https://host/owner/repo(.git)`.
+A remote that is missing or unreadable also refuses, so the check fails closed.
+The check runs before the approval form and before `request_approval`, and it runs when `yolo` is on.
+`local-only` mode is not affected.
+
+### D-060: A deleted worker thread leaves a merged task alone (Decided)
+
+`thread.deleted` fails a task in any state before `merged`.
+A task that is `merged`, `torn_down`, or `failed` gets no `fail` event and no wake message, so the merged record stays true until teardown.
