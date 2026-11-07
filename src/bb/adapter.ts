@@ -120,12 +120,15 @@ export function createBbPort(bb: BbPluginApi): BbPort {
       return project.sources.map((source) => ({ hostId: source.hostId, path: source.path, isDefault: source.isDefault }));
     },
 
-    async getThreadCost(): Promise<{ amount: number; currency: string } | null> {
-      throw new Error("not implemented");
+    async getThreadCost(threadId) {
+      const context = await bb.sdk.threads.context({ threadId });
+      const cost = context.usage?.cost;
+      return cost === undefined || cost === null ? null : { amount: cost.amount, currency: cost.currency };
     },
 
-    async listProjects(): Promise<Array<{ id: string; name: string }>> {
-      throw new Error("not implemented");
+    async listProjects() {
+      const projects = await bb.sdk.projects.list();
+      return projects.map((project) => ({ id: project.id, name: project.name }));
     },
 
     async startTerminal(hostId, cwd, argv) {

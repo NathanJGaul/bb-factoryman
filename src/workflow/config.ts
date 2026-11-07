@@ -63,6 +63,15 @@ const configSchema = z.strictObject({
       "local-only": checkList.optional(),
     })
     .default({}),
+  limits: z
+    .strictObject({
+      maxWorkers: z.number().int().min(1).optional(),
+      perTaskBudget: z.number().positive().optional(),
+      perDayBudget: z.number().positive().optional(),
+      maxTasksPerDay: z.number().int().min(1).optional(),
+      budgetCurrency: nonBlank.default("USD"),
+    })
+    .prefault({}),
 });
 
 /** The first key at any depth that the file may not carry, as a message, or null. */
@@ -91,7 +100,7 @@ function forbiddenKey(value: unknown, path: string): string | null {
 
 /** The config for a project with no `workflow.json`. */
 export function emptyWorkflowConfig(): WorkflowConfig {
-  return { version: 1, project: {}, checks: {} };
+  return { version: 1, project: {}, checks: {}, limits: { budgetCurrency: "USD" } };
 }
 
 /** Validate a parsed `workflow.json`. Never throws. */

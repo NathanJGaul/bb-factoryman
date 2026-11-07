@@ -5,7 +5,7 @@ import { effectiveProject } from "./effective";
 import type { WorkflowConfig } from "./types";
 
 const stored = (overrides: Partial<ProjectConfig> = {}): ProjectConfig => ({ ...defaultProjectConfig("proj-1"), ...overrides });
-const file = (project: WorkflowConfig["project"]): WorkflowConfig => ({ version: 1, project, checks: {} });
+const file = (project: WorkflowConfig["project"]): WorkflowConfig => ({ version: 1, project, checks: {}, limits: { budgetCurrency: "USD" } });
 
 function config(result: ReturnType<typeof effectiveProject>): ProjectConfig {
   if (!result.ok) throw new Error(result.message);

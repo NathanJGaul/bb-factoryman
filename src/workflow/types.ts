@@ -7,6 +7,15 @@ export interface Check {
   readonly timeoutSeconds?: number;
 }
 
+/** Limits that only restrict work. Every field but the currency is optional. */
+export interface Limits {
+  readonly maxWorkers?: number;
+  readonly perTaskBudget?: number;
+  readonly perDayBudget?: number;
+  readonly maxTasksPerDay?: number;
+  readonly budgetCurrency: string;
+}
+
 /** The parsed `.bb/factoryman/workflow.json`. Every field can only tighten the workflow (hard rule 7). */
 export interface WorkflowConfig {
   readonly version: 1;
@@ -16,4 +25,5 @@ export interface WorkflowConfig {
     readonly defaultMachine?: string;
   };
   readonly checks: Readonly<Partial<Record<DeliveryMode, readonly Check[]>>>;
+  readonly limits: Limits;
 }

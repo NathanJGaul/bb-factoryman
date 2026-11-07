@@ -92,6 +92,8 @@ const createSchema = z.strictObject({
   projectId: id,
   kind: z.enum(TASK_KINDS),
   mode: z.enum(DELIVERY_MODES),
+  /** The dispatch request of a task that waits in the queue (D-085). The machine ignores it and the log keeps it. */
+  request: z.record(z.string(), z.unknown()).optional(),
 });
 
 export type CreateEvent = z.infer<typeof createSchema>;

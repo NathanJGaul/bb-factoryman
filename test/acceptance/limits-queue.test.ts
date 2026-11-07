@@ -90,7 +90,7 @@ describe("worker caps and the queue through the plugin factory", () => {
     await world.call("factoryman_dispatch", TASK);
     await world.call("factoryman_dispatch", TASK);
     expect(state(world, "t2")).toBe("queued");
-    await world.host.setSettings({ maxWorkers: 2 });
+    await world.host.harness.behavior.setSettings({ maxWorkers: 2 });
     await settle(() => state(world, "t2") === "working");
     expect(state(world, "t2")).toBe("working");
   });

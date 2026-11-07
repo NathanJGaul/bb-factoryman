@@ -16,6 +16,7 @@ import { NoMistakesValidator } from "./validator/no-mistakes";
 import { ValidationDriver } from "./validator/driver";
 import type { Validator } from "./validator/types";
 import { EventHandlers, registerHandlers } from "./wiring/handlers";
+import { drain, registerQueue } from "./limits/queue";
 import { registerReadRpc } from "./rpc/read";
 import { reconcileOnStart } from "./wiring/startup";
 import { registerStamper } from "./wiring/stamp";
@@ -90,8 +91,10 @@ export function createPlugin(options: PluginOptions = {}): (bb: BbPluginApi) => 
       },
     });
     let values = await handle.get();
+    const hooks: { afterSettings?: () => void } = {};
     handle.onChange((next) => {
       values = next;
+      hooks.afterSettings?.();
     });
     const settings = (): Settings => ({
       mergeMethod: mergeMethod(values.mergeMethod),
@@ -131,6 +134,9 @@ export function createPlugin(options: PluginOptions = {}): (bb: BbPluginApi) => 
     });
     bb.onDispose(() => driver.dispose());
     registerStamper(rt);
+    registerQueue(rt);
+    // A raised cap frees slots at once.
+    hooks.afterSettings = () => void drain(rt);
     registerReadRpc(bb, store);
     registerHandlers(bb, new EventHandlers(rt, notifier, bb.pluginId));
     registerTools(bb, rt, createMergeExecutor(exec));
@@ -140,6 +146,7 @@ export function createPlugin(options: PluginOptions = {}): (bb: BbPluginApi) => 
       async start(signal) {
         await reconcileOnStart(rt, notifier);
         driver.resumeAll();
+        await drain(rt);
         if (!signal.aborted) await new Promise<void>((resolve) => signal.addEventListener("abort", () => resolve(), { once: true }));
       },
     });

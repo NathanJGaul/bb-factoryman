@@ -5,14 +5,17 @@ import type { MachineInfo } from "../bb/port";
 import { pickMachine, type MachineChoice } from "../dispatch/placement";
 import { preflightOnce, reportText } from "../machines/preflight";
 import type { Resolution } from "../dispatch/types";
-import { createTask, transition } from "../machine/transition";
 import type { ProjectConfig } from "../store/types";
+import type { Limits } from "../workflow/types";
+import { checkBudget } from "../limits/budget";
+import { capReached, enqueue, globalCap } from "../limits/queue";
+import type { QueuedRequest } from "../limits/request";
 import { effectiveProject } from "../workflow/effective";
 import { loadWorkflowConfig } from "../workflow/load";
 import { refuse } from "../machine/refusal";
 import { errorText, type Runtime } from "../runtime";
 import { identify } from "./access";
-import { buildWorkerPrompt } from "./prompt";
+import { launchWorker, previewStart } from "./launch";
 import { failure, refusalOutcome, success, type ToolOutcome } from "./results";
 
 /** What bb tells a tool about its caller. */
@@ -47,8 +50,7 @@ export const dispatchSchema = z
   })
   .refine((value) => value.profile === undefined || value.rule === undefined, "pass either `profile` or `rule`, not both");
 
-/** The branch prefix when a project config sets none (D-034). */
-export const DEFAULT_BRANCH_PREFIX = "fm/";
+export { DEFAULT_BRANCH_PREFIX } from "./launch";
 
 function ambiguousText(resolution: Extract<Resolution, { status: "ambiguous" }>): string {
   const lines = resolution.candidates.map(
@@ -102,6 +104,7 @@ export async function dispatch(rt: Runtime, caller: Caller, raw: unknown): Promi
   const { kind, description, tags, profile: explicit, rule, machine: pinned } = parsed.data;
 
   let config: ProjectConfig;
+  let limits: Limits;
   let resolution: Resolution;
   try {
     const checkout = await bb.getProjectCheckout(caller.projectId);
@@ -111,6 +114,7 @@ export async function dispatch(rt: Runtime, caller: Caller, raw: unknown): Promi
     const effective = effectiveProject(store.getProjectConfig(caller.projectId), workflow.config);
     if (!effective.ok) return failure(`Dispatch blocked (config_invalid): ${effective.message}. No task was created.`);
     config = effective.config;
+    limits = workflow.config.limits;
     const loaded = await loadDispatchConfig(rt.deps.files, checkout);
     if (!loaded.ok) return failure(`Dispatch blocked (config_invalid): ${loaded.message}. No task was created.`);
     resolution = rt.deps.resolver.resolve(
@@ -149,52 +153,45 @@ export async function dispatch(rt: Runtime, caller: Caller, raw: unknown): Promi
     }
   }
 
-  // Ask the state machine about the start before anything exists, so a refused start (such as a local-only task on another machine) spawns no worker.
-  const branchFor = (id: string) => `${config.branchPrefix ?? DEFAULT_BRANCH_PREFIX}${id}`;
-  const startFields = { profile, machine: hostId, cloneMachine: cloneHost };
-  const draft = createTask({ type: "create", actor: "supervisor", taskId: "preview", projectId: caller.projectId, kind, mode: config.deliveryMode });
-  if (draft.ok) {
-    const preview = transition(draft.snapshot, { type: "start", actor: "supervisor", threadId: "preview", branch: branchFor("preview"), ...startFields });
-    if (!preview.ok) return refusalOutcome(preview.refusal);
+  // Ask the state machine about the start before anything exists, so a refused start spawns no worker.
+  const facts = { profile, machine: hostId, cloneMachine: cloneHost };
+  const refusal = previewStart({ projectId: caller.projectId, kind, mode: config.deliveryMode, branchPrefix: config.branchPrefix, facts });
+  if (refusal !== null) return refusalOutcome(refusal);
+
+  // Budgets only add refusals, and a refusal creates no task (D-086).
+  const budget = await checkBudget(rt, caller.projectId, limits);
+  if (!budget.ok) return failure(`${budget.text} No task was created.`);
+  const notes = budget.notes.map((note) => `\nNote: ${note}`).join("");
+
+  // At a cap the task waits in the queue and starts when a slot frees (D-084).
+  const wait = capReached(rt, caller.projectId, { project: limits.maxWorkers ?? null, global: globalCap(rt) });
+  if (wait !== null) {
+    const request: QueuedRequest = { v: 1, description, tags: tags ?? [], profile, machine: hostId, cloneHost, parentThreadId: caller.threadId, branchPrefix: config.branchPrefix, baseBranch: config.baseBranch };
+    const queued = enqueue(rt, { projectId: caller.projectId, kind, mode: config.deliveryMode, request });
+    if (!queued.ok) return failure(`Dispatch failed: ${queued.message}`);
+    return success(`Task ${queued.taskId} is queued: ${wait}. It starts when a slot frees.${notes}`);
   }
 
   const taskId = rt.deps.newId();
-  const branch = branchFor(taskId);
   const created = rt.log.create({ type: "create", actor: "supervisor", taskId, projectId: caller.projectId, kind, mode: config.deliveryMode });
   if (!created.ok) return refusalOutcome(created.refusal);
-
-  let threadId: string;
-  try {
-    ({ threadId } = await bb.spawnWorker({
-      projectId: caller.projectId,
-      parentThreadId: caller.threadId,
-      prompt: buildWorkerPrompt({ taskId, kind, mode: config.deliveryMode, branch, description }),
-      profile,
-      metadata: { role: "worker", taskId, kind },
-      baseBranch: config.baseBranch,
-      hostId,
-    }));
-  } catch (error) {
-    await rt.apply(taskId, { type: "fail", actor: "system", evidence: `worker spawn failed: ${errorText(error)}` });
-    return failure(`Dispatch failed: the worker could not start (${errorText(error)}). Task ${taskId} is failed.`);
-  }
-
-  const started = await rt.apply(taskId, { type: "start", actor: "supervisor", threadId, branch, evidence: description, ...startFields });
-  if (!started.ok) return refusalOutcome(started.refusal);
-
-  // The worker can fail before this record exists, and no event would reach us then.
-  try {
-    if ((await bb.getThread(threadId))?.status === "error") {
-      await rt.apply(taskId, { type: "fail", actor: "system", evidence: "worker thread entered the error state right after it started" });
-      return failure(`Task ${taskId} started, but its worker thread ${threadId} failed at once. Task ${taskId} is failed.`);
-    }
-  } catch (error) {
-    rt.deps.log.warn(`Could not read worker thread ${threadId} after start: ${errorText(error)}`);
-  }
+  const launched = await launchWorker(rt, {
+    taskId,
+    projectId: caller.projectId,
+    kind,
+    mode: config.deliveryMode,
+    description,
+    facts,
+    parentThreadId: caller.threadId,
+    branchPrefix: config.branchPrefix,
+    baseBranch: config.baseBranch,
+  });
+  if (!launched.ok) return failure(launched.text);
+  const { threadId, branch } = launched;
 
   const chosen =
     resolution.source === "override"
       ? ""
       : `\nProfile: ${profile.provider} ${profile.model} ${profile.reasoningLevel} ${profile.permissionMode}, from ${SOURCE_TEXT[resolution.source]}${resolution.ruleId === null ? "" : ` "${resolution.ruleId}"`}.`;
-  return success(`Dispatched ${kind} task ${taskId} in ${config.deliveryMode} mode. Worker thread ${threadId}, branch ${branch}.${hostName === null ? "" : ` Machine ${hostName} (${hostId}).`}${chosen}`);
+  return success(`Dispatched ${kind} task ${taskId} in ${config.deliveryMode} mode. Worker thread ${threadId}, branch ${branch}.${hostName === null ? "" : ` Machine ${hostName} (${hostId}).`}${chosen}${notes}`);
 }
