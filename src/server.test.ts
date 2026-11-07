@@ -4,6 +4,7 @@ import { createEvent } from "../test/fixtures/store";
 import { validEvent } from "../test/fixtures/machine";
 import { DISPATCH, loadWorld } from "../test/fixtures/plugin-host";
 import { createPlugin } from "./server";
+import { recover } from "./store/replay";
 import { openSqliteStore } from "./store/sqlite";
 import { TaskLog } from "./store/task-log";
 
@@ -72,4 +73,63 @@ describe("createPlugin", () => {
     expect(paths.length).toBeGreaterThan(3);
     expect(paths.filter((path) => path.startsWith("plugins."))).toEqual([]);
   });
+
+  it("[U123] registers the command, the five tools, the six event handlers, and one service", async () => {
+    const host = createFakePluginHost({ pluginId: "factoryman" });
+    await createPlugin()(host.bb);
+    const { registrations } = host.harness.inspection;
+    expect(registrations.cli?.name).toBe("factoryman");
+    expect(registrations.agentTools).toHaveLength(5);
+    expect(registrations.services.map((service) => service.name)).toEqual(["factoryman-startup"]);
+    const handled = Object.entries(registrations.threadEventHandlers).filter(([, n]) => n > 0).map(([name]) => name).sort();
+    expect(handled).toEqual(["interaction.pending", "thread.archived", "thread.deleted", "thread.failed", "thread.idle", "turn.failed"]);
+  });
+
+  it("[U124] leaves the replayed task rows equal to the cached rows after a seeded random walk of tool calls and thread events", async () => {
+    const world = await loadWorld();
+    world.setProject({ deliveryMode: "direct-PR", yolo: true });
+    world.execHandler = (command, args) => ({ code: 0, stdout: command === "git" && args[0] === "rev-list" ? "0\n" : "", stderr: "" });
+    let seed = 20261106;
+    const random = () => {
+      seed = (seed + 0x6d2b79f5) | 0;
+      let n = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+      n = (n + Math.imul(n ^ (n >>> 7), 61 | n)) ^ n;
+      return ((n ^ (n >>> 14)) >>> 0) / 4294967296;
+    };
+    const pick = <T,>(items: readonly T[]): T => items[Math.floor(random() * items.length)]!;
+    const pr = "https://github.com/acme/widgets/pull/7";
+    for (let step = 0; step < 300; step += 1) {
+      const task = `t${1 + Math.floor(random() * 6)}`;
+      const worker = { threadId: `thr-w${task.slice(1)}` };
+      world.paths.set(`env-${worker.threadId}`, "/work/tree");
+      switch (pick(["dispatch", "report", "report", "status", "merge", "teardown", "event", "event"] as const)) {
+        case "dispatch":
+          await world.call("factoryman_dispatch", { ...DISPATCH, kind: pick(["ship", "scout"] as const) });
+          break;
+        case "report":
+          await world.call("factoryman_report", { outcome: pick(["done", "done", "blocked", "failed"] as const), evidence: pick(["Evidence.", "", "  "]), prUrl: pick([pr, undefined]), landedCommits: 1 }, worker);
+          break;
+        case "status":
+          await world.call("factoryman_status", pick([{}, { taskId: task }] as const));
+          break;
+        case "merge":
+          await world.call("factoryman_merge", { taskId: task });
+          break;
+        case "teardown":
+          await world.call("factoryman_teardown", { taskId: task });
+          break;
+        case "event":
+          await world.emit(pick(["thread.failed", "thread.idle", "thread.deleted", "thread.archived"] as const), worker.threadId, { error: pick(["boom", null]) });
+          break;
+      }
+    }
+    expect(world.store.listTasks().length).toBeGreaterThan(2);
+    const events = world.store.listEvents();
+    expect(events.filter((row) => row.outcome === "applied").length).toBeGreaterThan(40);
+    expect(events.filter((row) => row.outcome === "refused").length).toBeGreaterThan(10);
+    const report = recover(world.store);
+    expect(report.corrupt).toEqual([]);
+    expect(report.repaired).toEqual([]);
+  });
 });
+

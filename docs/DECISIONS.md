@@ -368,3 +368,23 @@ The worktree report refuses an unreadable commit count.
 A fake runner that returns an empty string for `git rev-list --count` therefore blocks teardown, which is the intended behavior.
 Tests that want a landed worktree script the count as `0`.
 
+## Milestone 5: event wiring
+
+### D-047: A failure waits briefly for its cause, and a deleted thread keeps its parent (Gap)
+
+The spike recorded `thread.failed` with `error: null`, and the cause arrives in `turn.failed` about twenty milliseconds later.
+A handler that read the last turn failure at once would never see it.
+When the error text is empty, the handler waits 500 ms through the injected `sleep`, then reads the remembered category and status code.
+Without either, the evidence is the fixed text `worker thread entered the error state`.
+
+`ThreadInfo` also carries `deleted`.
+bb soft-deletes a thread and may still serve it, with its parent.
+The notifier needs that parent to tell the supervisor, so `getThread` returns `null` only for a 404, and a deleted thread observes as `missing`.
+If bb answers 404, the supervisor cannot be found, the plugin logs a warning, and it writes the `reconcile` row anyway.
+
+### D-048: The start-up service waits for the abort signal (Gap)
+
+`bb.background.service` expects `start` to resolve when the signal aborts.
+The start-up service therefore runs the live-state comparison and then waits.
+Milestone 6 resumes the validator driver in the same service.
+

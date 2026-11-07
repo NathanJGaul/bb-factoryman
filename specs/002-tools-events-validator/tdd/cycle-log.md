@@ -301,3 +301,22 @@ Each behavior in a batch still has its own test, and each entry records the fail
 - refactor: none needed
 - note: an earlier mutant run with a mistyped path applied three mutants without restoring them.
   I rewrote `src/wiring/startup.ts` from the intended implementation and re-ran the tests before this cycle counted. No mutated code was committed.
+
+## Cycle H1: A19 to A28 acceptance through the plugin factory, and the wiring in `src/server.ts` (milestone 5)
+
+- tests: `test/acceptance/wiring-events.test.ts` (A19 to A26), `wiring-startup.test.ts` (A27), `wiring-recorded.test.ts` (A28), and `src/server.test.ts` (U123, U124).
+  The world fixture gained `emit`, `restart`, `runStartup`, a sleep hook, injected thread IDs, and a failing send.
+  `test/fixtures/recorded.ts` loads the real bb payloads from `test/fixtures/recorded/bb-0.48.1/`.
+- red (acceptance, written before the wiring): with the factory registering only the tools, `pnpm vitest run test/acceptance/wiring-events.test.ts test/acceptance/wiring-startup.test.ts test/acceptance/wiring-recorded.test.ts`
+  -> `AssertionError: expected 'working' to be 'failed'` (A19, A21, A25, A28), `AssertionError: expected [] to deeply equal [ StringContaining{…} ]` (A20, A22, A23, A26, A27) (9 failed, 1 passed)
+- A24 passed on the first run because nothing happens without handlers. Deliberate mutant: handlers match any thread
+  -> `A24` failed (1 failed, 137 passed). Restored exactly.
+- green: `createPlugin` builds the `Notifier` and registers it as a runtime listener, registers the six event handlers, and registers the `factoryman-startup` service.
+  The service runs `reconcileOnStart` and then waits for the abort signal.
+  `pnpm vitest run test/acceptance src/server.test.ts` -> 144 passed. Suite `pnpm test` -> 51 files, 546 passed, 0 failed. Lint and type-check clean.
+- test-after admission: U123 and U124 were written after the wiring, because the acceptance tests drove it.
+  U124 is a seeded random walk of 300 tool calls and thread events. It asserts at least 40 applied and 10 refused rows, and that `recover` finds no corrupt task and repairs no cache row.
+  Deliberate mutant: the notifier is not registered as a listener
+  -> `A19`, `A23`, `A25`, `A26`, and `A28` failed (5 failed, 133 passed). Restored exactly.
+- note: A28 replays the real recorded payloads. A sleep hook emits the recorded `turn.failed` while `thread.failed` waits, as the real server did within about twenty milliseconds (D-047).
+- refactor: none needed

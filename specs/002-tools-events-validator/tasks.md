@@ -77,7 +77,7 @@ description: "Task list for tools and approval, event wiring, and the validator"
 - [X] T037 [P] [US1] [U69] [U70] [U71] [U72] [U73] [U74] [U75] [U76] [U77] Worktree report tests in `src/git/report.test.ts` against temporary repositories (clean, dirty, untracked file, unpushed commit, pushed commit, `local-only` base rule, command failure)
 - [X] T038 [P] [US1] [U78] [U79] [U80] [U81] [U82] [U83] [U84] [U85] [U86] [U87] [U88] Merge executor tests in `src/git/merge.test.ts` (the `gh` command line for each method with a fake runner, local merge in a temporary repository, dirty checkout, wrong branch, missing base branch, conflict then abort)
 - [X] T039 [P] [US1] [A18] [U117] [U118] [U119] Supervisor command tests in `test/acceptance/tools-supervisor-command.test.ts` and `src/tools/supervisor-command.test.ts` (stamps a non-worker, refuses a worker; AC-1.18)
-- [ ] T040 [P] [US1] [A17] [U120] [U121] [U123] [U124] Factory tests in `test/acceptance/plugin.test.ts` and `src/server.test.ts` (opens the store on the host database, recovers, registers five tools; AC-1.17)
+- [X] T040 [P] [US1] [A17] [U120] [U121] [U123] [U124] Factory tests in `test/acceptance/plugin.test.ts` and `src/server.test.ts` (opens the store on the host database, recovers, registers five tools; AC-1.17)
 - [X] T041 [P] [US1] [U29] [U30] [U31] [U32] Worker prompt test in `src/tools/prompt.test.ts` (names task ID, branch, mode, and the report tool; says never push for `no-mistakes`)
 - [X] T055 [P] [US1] [U33] [U34] [U35] [U36] [U37] [U38] [U39] [U40] Registration tests in `src/tools/register.test.ts` (configure by role, the closed tool list, dispatch schema, error mapping, no cross-plugin call)
 
@@ -93,7 +93,7 @@ description: "Task list for tools and approval, event wiring, and the validator"
 - [X] T049 [US1] [U107] [U108] [U109] [U110] [U111] [U112] [U113] [U114] [U115] [U116] Implement `factoryman_teardown` in `src/tools/teardown.ts`
 - [X] T050 [US1] [U33] [U34] [U35] [U36] [U37] [U38] [U39] [U40] Implement tool registration, schemas, and `configure` in `src/tools/register.ts`
 - [X] T051 [US1] [U117] [U118] [U119] Implement the supervisor command in `src/tools/supervisor-command.ts`
-- [ ] T052 [US1] [U120] [U121] [U123] [U124] Build the runtime, open the store, run recovery, and register everything in `src/server.ts`
+- [X] T052 [US1] [U120] [U121] [U123] [U124] Build the runtime, open the store, run recovery, and register everything in `src/server.ts`
 - [X] T053 [US1] [U122] Add the `mergeMethod` and approval timeout settings in `src/server.ts` and read them in `src/git/merge.ts` and `src/tools/merge.ts`
 - [X] T054 [US1] Update `docs/DECISIONS.md` with the milestone 4 findings and commit milestone 4
 - [X] T056 [US1] [A1] [A2] [A3] [A4] [A5] [A6] [A7] [A8] [A9] [A10] [A11] [A12] [A13] [A14] [A15] [A16] [A17] [A18] Outer-loop gate: A1 to A18 are green through the plugin factory before milestone 4 is committed
@@ -110,11 +110,11 @@ description: "Task list for tools and approval, event wiring, and the validator"
 
 ### Tests for user story 2 (write first, watch fail)
 
-- [ ] T060 [P] [US2] [A23] [A26] [U125] [U126] [U127] [U128] [U129] [U130] [U131] [U132] [U133] [U134] Wake tests in `src/wiring/wake.test.ts` (attention states, other states silent, message text, parent target, no parent, send failure; AC-2.5, AC-2.8)
-- [ ] T061 [P] [US2] [A19] [A20] [A21] [A22] [A24] [U135] [U136] [U137] [U138] [U139] [U140] [U141] [U142] [U143] [U144] [U145] [U146] [U147] [U148] [U149] [U150] [U151] [U152] Handler tests in `src/wiring/handlers.test.ts` (failed, idle, deleted, archived, pending interaction, ignored events, non-worker threads, terminal tasks, post-handoff states; AC-2.1 to AC-2.4, AC-2.6)
-- [ ] T062 [P] [US2] [A25] Replay test in `test/acceptance/wiring-events.test.ts` (a sequence of at least ten thread events, duplicate failure, exact message list; AC-2.7, SC-004)
-- [ ] T063 [P] [US2] [A28] Recorded payload test in `test/acceptance/wiring-recorded.test.ts` (the real `thread.failed`, `turn.failed`, `thread.idle`, and `interaction.pending` payloads; AC-2.10)
-- [ ] T064 [P] [US2] [A27] Start-up test in `test/acceptance/wiring-startup.test.ts` (missing thread, errored thread, matching thread, second restart sends nothing; AC-2.9)
+- [X] T060 [P] [US2] [A23] [A26] [U125] [U126] [U127] [U128] [U129] [U130] [U131] [U132] [U133] [U134] Wake tests in `src/wiring/wake.test.ts` (attention states, other states silent, message text, parent target, no parent, send failure; AC-2.5, AC-2.8)
+- [X] T061 [P] [US2] [A19] [A20] [A21] [A22] [A24] [U135] [U136] [U137] [U138] [U139] [U140] [U141] [U142] [U143] [U144] [U145] [U146] [U147] [U148] [U149] [U150] [U151] [U152] Handler tests in `src/wiring/handlers.test.ts` (failed, idle, deleted, archived, pending interaction, ignored events, non-worker threads, terminal tasks, post-handoff states; AC-2.1 to AC-2.4, AC-2.6)
+- [X] T062 [P] [US2] [A25] Replay test in `test/acceptance/wiring-events.test.ts` (a sequence of at least ten thread events, duplicate failure, exact message list; AC-2.7, SC-004)
+- [X] T063 [P] [US2] [A28] Recorded payload test in `test/acceptance/wiring-recorded.test.ts` (the real `thread.failed`, `turn.failed`, `thread.idle`, and `interaction.pending` payloads; AC-2.10)
+- [X] T064 [P] [US2] [A27] Start-up test in `test/acceptance/wiring-startup.test.ts` (missing thread, errored thread, matching thread, second restart sends nothing; AC-2.9)
 - [X] T065 [P] [US2] [U153] [U154] [U155] [U156] [U157] [U158] [U159] [U160] Observation tests in `src/wiring/startup.test.ts` (missing, failed, and logged-state mapping)
 
 ### Implementation for user story 2
@@ -122,9 +122,9 @@ description: "Task list for tools and approval, event wiring, and the validator"
 - [X] T066 [P] [US2] [U125] [U126] [U127] [U128] [U129] [U130] [U131] [U132] [U133] [U134] Implement the notifier and message text in `src/wiring/wake.ts`
 - [X] T067 [US2] [U135] [U136] [U137] [U138] [U139] [U140] [U141] [U142] [U143] [U144] [U145] [U146] [U147] [U148] [U149] [U150] [U151] [U152] Implement the thread-event handlers in `src/wiring/handlers.ts`
 - [X] T068 [US2] [U153] [U154] [U155] [U156] [U157] [U158] [U159] [U160] Implement observation, reconcile, and resume in `src/wiring/startup.ts`
-- [ ] T069 [US2] Register the handlers, the notifier listener, and the start-up service in `src/server.ts`
-- [ ] T070 [US2] Update `docs/DECISIONS.md` with the milestone 5 findings and commit milestone 5
-- [ ] T071 [US2] [A19] [A20] [A21] [A22] [A23] [A24] [A25] [A26] [A27] [A28] Outer-loop gate: A19 to A28 are green through the plugin factory before milestone 5 is committed
+- [X] T069 [US2] Register the handlers, the notifier listener, and the start-up service in `src/server.ts`
+- [X] T070 [US2] Update `docs/DECISIONS.md` with the milestone 5 findings and commit milestone 5
+- [X] T071 [US2] [A19] [A20] [A21] [A22] [A23] [A24] [A25] [A26] [A27] [A28] Outer-loop gate: A19 to A28 are green through the plugin factory before milestone 5 is committed
 
 **Checkpoint**: User story 2 passes on its own. A report that reaches `review_ready` now wakes the supervisor.
 

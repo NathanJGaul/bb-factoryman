@@ -1,4 +1,4 @@
-import { createFakePluginHost, type FakePluginHost } from "@get-bb/plugin-sdk/testing";
+import { createFakePluginHost, makeThreadResponse, type FakePluginHost } from "@get-bb/plugin-sdk/testing";
 import { createPlugin } from "../../src/server";
 import type { ExecResult } from "../../src/exec";
 import { defaultProjectConfig } from "../../src/store/store";
@@ -34,11 +34,23 @@ export interface World {
   sent(threadId: string): string[];
   call(tool: string, args: unknown, caller?: { threadId: string; projectId?: string }): Promise<{ text: string; isError: boolean }>;
   sdkCalls(path: string): unknown[][];
+  /** Runs when the plugin waits through its injected `sleep`. */
+  sleepHook: ((ms: number) => Promise<void>) | null;
+  /** Reload the plugin on the same database, as a server restart does. */
+  restart(): Promise<void>;
+  /** Run the start-up service until its work is done, then stop it. */
+  runStartup(): Promise<void>;
+  /** Emit a thread event with a complete thread DTO built from `thread`. */
+  emit(name: "thread.failed" | "thread.idle" | "thread.deleted" | "thread.archived", threadId: string, extra?: Record<string, unknown>): Promise<void>;
 }
 
 export interface WorldOptions {
   settings?: Record<string, string | number | boolean>;
   spawnError?: Error;
+  /** Thread IDs for the workers that `threads.spawn` creates, in order. */
+  threadIds?: string[];
+  /** Make `threads.send` fail. */
+  sendError?: Error;
 }
 
 /** Load the real plugin factory into the fake host, with a small in-memory bb behind `bb.sdk`. */
@@ -56,7 +68,8 @@ export async function loadWorld(options: WorldOptions = {}): Promise<World> {
       threads: {
         spawn: async (args: { projectId: string; parentThreadId?: string; pluginMetadata?: Record<string, unknown> }) => {
           if (options.spawnError) throw options.spawnError;
-          const id = `thr-w${++spawned}`;
+          const id = options.threadIds?.[spawned] ?? `thr-w${spawned + 1}`;
+          spawned += 1;
           threads.set(id, { id, projectId: args.projectId, status: "active", parentThreadId: args.parentThreadId ?? null, environmentId: `env-${id}` });
           metadata.set(id, args.pluginMetadata ?? {});
           return { id };
@@ -67,6 +80,7 @@ export async function loadWorld(options: WorldOptions = {}): Promise<World> {
           return thread;
         },
         send: async ({ threadId, input }: { threadId: string; input?: ReadonlyArray<{ type: string; text?: string }> }) => {
+          if (options.sendError) throw options.sendError;
           sent.set(threadId, [...(sent.get(threadId) ?? []), (input ?? []).map((part) => part.text ?? "").join("")]);
           return { ok: true, delivery: "sent" };
         },
@@ -104,22 +118,40 @@ export async function loadWorld(options: WorldOptions = {}): Promise<World> {
     },
     sent: (threadId) => sent.get(threadId) ?? [],
     async call(tool, args, caller = { threadId: "thr-sup" }) {
-      const result = await host.harness.behavior.callAgentTool(tool, args, { threadId: caller.threadId, projectId: caller.projectId ?? "proj-1" });
+      const result = await world.host.harness.behavior.callAgentTool(tool, args, { threadId: caller.threadId, projectId: caller.projectId ?? "proj-1" });
       if (typeof result === "string") return { text: result, isError: false };
       return { text: result.content.map((part) => (part.type === "text" ? part.text : "")).join(""), isError: result.isError === true };
     },
-    sdkCalls: (path) => host.harness.sdk.callsTo(path),
+    sdkCalls: (path) => world.host.harness.sdk.callsTo(path),
+    sleepHook: null,
+    async restart() {
+      world.host = await world.host.harness.lifecycle.reload(factory);
+      world.store = openSqliteStore(world.host.bb.storage.database());
+    },
+    async runStartup() {
+      const run = world.host.harness.behavior.runService("factoryman-startup");
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      run.controller.abort();
+      await run.done;
+    },
+    async emit(name, threadId, extra = {}) {
+      const thread = world.threads.get(threadId);
+      const dto = makeThreadResponse({ id: threadId, ...(thread ? { projectId: thread.projectId, parentThreadId: thread.parentThreadId, status: thread.status as never } : {}) });
+      await world.host.harness.behavior.emitThreadEvent(name, { thread: dto, ...extra } as never);
+    },
   };
 
   let next = 0;
-  await createPlugin({
+  const factory = createPlugin({
     exec: async (command, args, execOptions) => {
       world.execCalls.push({ command, args, cwd: execOptions?.cwd });
       return world.execHandler(command, args);
     },
     now: ((tick = 0) => () => new Date(Date.parse("2026-11-06T12:00:00.000Z") + tick++ * 1000).toISOString())(),
     newId: () => `t${++next}`,
-  })(host.bb);
+    sleep: async (ms) => world.sleepHook?.(ms),
+  });
+  await factory(host.bb);
   world.store = openSqliteStore(host.bb.storage.database());
   world.addThread({ id: "thr-sup" });
   return world;
