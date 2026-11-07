@@ -360,3 +360,29 @@ Each behavior in a batch still has its own test, and each entry records the fail
   - decode standard error when standard output is empty -> U182 failed (1 failed, 8 passed)
   - exit code 1 is always a failure -> U183 failed (1 failed, 8 passed)
 - refactor: none needed
+
+## Cycle C23: U185 to U207 validation driver (`src/validator/driver.ts`)
+
+- tests: `src/validator/driver.test.ts` `[U185]` to `[U207]` (new), over the memory store, the fake `BbPort`, and the scripted `FakeValidator`.
+  Loop tests use a sleep that yields a macrotask, so an endless wait cannot starve the test.
+- red: a `ValidationDriver` stub whose `step` returns `stop` and whose other methods do nothing, then `pnpm vitest run src/validator/driver.test.ts`
+  -> 19 of 23 tests failed on the validator calls, the applied events, the task state, or the evidence (19 failed, 4 passed)
+- U200, U203, U204, and U205 passed on the first run, because the stub starts no loop and calls nothing.
+- green: `step` reads the task, resolves the worktree path and the intent, and either follows the run through `start` (`validating`) or watches `status` (`needs_decision`).
+  A gate becomes `finding` with the findings as lines. `checks-passed` with a pull request becomes `validated`. `failed` and `cancelled` become `fail`. Every other outcome, and `checks-passed` without a pull request, become `finding`.
+  A `needs_decision` task resolves when the first view of the wait changes or the run is running again.
+  Five errors in a row become a `finding`. `dispose` stops the loops and cancels nothing.
+  First run: 23 passed. Suite `pnpm test` -> 55 files, 593 passed, 0 failed. Lint and type-check clean.
+- deliberate mutants, each restored exactly:
+  - checks-passed without a pull request is validated -> U196 failed (1 failed, 22 passed)
+  - an override outcome is validated -> U197 failed (1 failed, 22 passed)
+  - the loop answers a gate itself -> U192 and U194 failed (2 failed, 21 passed)
+  - dispose cancels the run -> U194 and U204 failed (2 failed, 21 passed)
+  - the error count never resets -> U200 failed (1 failed, 22 passed)
+  - four errors are enough -> U199 and U200 failed (2 failed, 21 passed)
+  - ensure starts a second loop -> U185 failed (1 failed, 22 passed)
+  - the loop never stops for a task that left -> U205 failed (1 failed, 22 passed)
+  - the first view after a restart resolves -> U207 failed (1 failed, 22 passed)
+  U203 has no mutant: the machine makes `validating` unreachable outside `no-mistakes` mode, so the driver has no mode check of its own to break.
+- refactor: none needed
+- note: `answer` does not start a loop, because the running loop already polls `status` in `needs_decision`.

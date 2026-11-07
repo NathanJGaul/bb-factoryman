@@ -371,29 +371,29 @@ Boundaries have both sides, and error paths name the failure.
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| U185 | `ensure` on a `validating` task starts one loop, and a second `ensure` starts none | FR-311 | example | PENDING | |
-| U186 | The loop calls `start` with the worker environment's path and the `start` evidence as intent | FR-303, D-033 | example | PENDING | |
-| U187 | A gate applies `finding` with evidence naming the step and the finding count | FR-306 | example | PENDING | |
-| U188 | A `needs_decision` task whose view is unchanged stays parked | FR-307 | example | PENDING | |
-| U189 | A `needs_decision` task whose view changed applies `resolve` | FR-307 | example | PENDING | |
-| U190 | A `needs_decision` task whose run is running again applies `resolve` | FR-307 | example | PENDING | |
-| U191 | A status error in `needs_decision` keeps waiting | FR-304 | example | PENDING | |
-| U192 | `answer` calls the validator and then applies `resolve` with the caller's actor | FR-307 | example | PENDING | |
-| U193 | A failed `answer` applies no `resolve` | FR-307 | example | PENDING | |
-| U194 | No scripted run makes the loop call `answer` | FR-308 | example | PENDING | |
-| U195 | `checks-passed` with a pull request applies `validated` with `pipelineFinished` and the URL | FR-309 | example | PENDING | |
-| U196 | `checks-passed` without a pull request applies `finding` | FR-310 | example | PENDING | |
-| U197 | `passed-with-override`, `passed-with-skips`, and `passed` each apply `finding` | FR-310 | example | PENDING | |
-| U198 | `failed` and `cancelled` each apply `fail` with the validator's error | FR-310 | example | PENDING | |
-| U199 | Four validator errors in a row keep trying, and the fifth applies `finding` | FR-304, D-039 | example | PENDING | |
-| U200 | A successful call resets the error count | FR-304 | example | PENDING | |
-| U201 | A running view keeps the loop waiting through the injected sleep | FR-311, FR-314 | example | PENDING | |
-| U202 | `resumeAll` starts loops for `validating` and `needs_decision` tasks only | FR-312 | example | PENDING | |
-| U203 | A task that is not on the `no-mistakes` mode never gets a loop | FR-305 | example | PENDING | |
-| U204 | `dispose` stops every loop and cancels no run | FR-313 | example | PENDING | |
-| U205 | The loop ends when the task leaves its two states | FR-311 | example | PENDING | |
-| U206 | A task whose environment path cannot be read counts as a validator error | FR-304 | example | PENDING | |
-| U207 | A `needs_decision` task takes its first view after a restart as the baseline | FR-307, FR-312 | example | PENDING | |
+| U185 | `ensure` on a `validating` task starts one loop, and a second `ensure` starts none | FR-311 | example | DONE | `src/validator/driver.test.ts::[U185] starts one loop for a validating task, and a second ensure starts none` |
+| U186 | The loop calls `start` with the worker environment's path and the `start` evidence as intent | FR-303, D-033 | example | DONE | `src/validator/driver.test.ts::[U186] calls start with the worker environment` |
+| U187 | A gate applies `finding` with evidence naming the step and the finding count | FR-306 | example | DONE | `src/validator/driver.test.ts::[U187] applies finding for a gate with evidence that names the step, the count, and each finding verbatim` |
+| U188 | A `needs_decision` task whose view is unchanged stays parked | FR-307 | example | DONE | `src/validator/driver.test.ts::[U188] stays parked while the validator` |
+| U189 | A `needs_decision` task whose view changed applies `resolve` | FR-307 | example | DONE | `src/validator/driver.test.ts::[U189] applies resolve when the view changed` |
+| U190 | A `needs_decision` task whose run is running again applies `resolve` | FR-307 | example | DONE | `src/validator/driver.test.ts::[U190] applies resolve when the run is running again` |
+| U191 | A status error in `needs_decision` keeps waiting | FR-304 | example | DONE | `src/validator/driver.test.ts::[U191] keeps waiting when status fails` |
+| U192 | `answer` calls the validator and then applies `resolve` with the caller's actor | FR-307 | example | DONE | `src/validator/driver.test.ts::[U192] answer calls the validator and then applies resolve with the caller` |
+| U193 | A failed `answer` applies no `resolve` | FR-307 | example | DONE | `src/validator/driver.test.ts::[U193] applies no resolve when the answer fails, and refuses an answer outside needs_decision` |
+| U194 | No scripted run makes the loop call `answer` | FR-308 | example | DONE | `src/validator/driver.test.ts::[U194] never calls answer on its own while it follows a run through a gate` |
+| U195 | `checks-passed` with a pull request applies `validated` with `pipelineFinished` and the URL | FR-309 | example | DONE | `src/validator/driver.test.ts::[U195] applies validated with the pull request for checks-passed, and the task becomes review_ready` |
+| U196 | `checks-passed` without a pull request applies `finding` | FR-310 | example | DONE | `src/validator/driver.test.ts::[U196] applies finding for checks-passed without a pull request` |
+| U197 | `passed-with-override`, `passed-with-skips`, and `passed` each apply `finding` | FR-310 | example | DONE | `src/validator/driver.test.ts::[U197] applies finding for passed-with-override, passed-with-skips, and passed` |
+| U198 | `failed` and `cancelled` each apply `fail` with the validator's error | FR-310 | example | DONE | `src/validator/driver.test.ts::[U198] applies fail with the validator` |
+| U199 | Four validator errors in a row keep trying, and the fifth applies `finding` | FR-304, D-039 | example | DONE | `src/validator/driver.test.ts::[U199] keeps trying through four validator errors and applies finding on the fifth` |
+| U200 | A successful call resets the error count | FR-304 | example | DONE | `src/validator/driver.test.ts::[U200] resets the error count after a successful call` |
+| U201 | A running view keeps the loop waiting through the injected sleep | FR-311, FR-314 | example | DONE | `src/validator/driver.test.ts::[U201] keeps waiting through the injected sleep while the run is running` |
+| U202 | `resumeAll` starts loops for `validating` and `needs_decision` tasks only | FR-312 | example | DONE | `src/validator/driver.test.ts::[U202] resumeAll starts loops for validating and needs_decision tasks only` |
+| U203 | A task that is not on the `no-mistakes` mode never gets a loop | FR-305 | example | DONE | `src/validator/driver.test.ts::[U203] never starts a loop for a task in a delivery mode without the validator` |
+| U204 | `dispose` stops every loop and cancels no run | FR-313 | example | DONE | `src/validator/driver.test.ts::[U204] dispose stops every loop and cancels no run` |
+| U205 | The loop ends when the task leaves its two states | FR-311 | example | DONE | `src/validator/driver.test.ts::[U205] ends the loop when the task leaves its two states` |
+| U206 | A task whose environment path cannot be read counts as a validator error | FR-304 | example | DONE | `src/validator/driver.test.ts::[U206] counts an unreadable worktree path as a validator error` |
+| U207 | A `needs_decision` task takes its first view after a restart as the baseline | FR-307, FR-312 | example | DONE | `src/validator/driver.test.ts::[U207] takes the first view after a restart as the baseline` |
 
 ### `test/acceptance/layout.test.ts`
 

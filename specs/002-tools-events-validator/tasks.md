@@ -156,7 +156,7 @@ description: "Task list for tools and approval, event wiring, and the validator"
 - [X] T089 [P] [US3] [U161] [U162] [U163] Implement the scripted fake in `src/validator/fake.ts`
 - [X] T090 [US3] [U164] [U165] [U166] [U167] [U168] [U169] [U170] [U171] [U172] [U173] [U174] [U175] Implement the decoder in `src/validator/toon.ts`
 - [X] T091 [US3] [U176] [U177] [U178] [U179] [U180] [U181] [U182] [U183] [U184] Implement the adapter in `src/validator/no-mistakes.ts`
-- [ ] T092 [US3] [U185] [U186] [U187] [U188] [U189] [U190] [U191] [U192] [U193] [U194] [U195] [U196] [U197] [U198] [U199] [U200] [U201] [U202] [U203] [U204] [U205] [U206] [U207] Implement the driver in `src/validator/driver.ts`
+- [X] T092 [US3] [U185] [U186] [U187] [U188] [U189] [U190] [U191] [U192] [U193] [U194] [U195] [U196] [U197] [U198] [U199] [U200] [U201] [U202] [U203] [U204] [U205] [U206] [U207] Implement the driver in `src/validator/driver.ts`
 - [ ] T093 [US3] Register the driver listener, resume on start-up, and dispose in `src/server.ts`
 - [ ] T094 [US3] Update `docs/DECISIONS.md` with the milestone 6 findings and commit milestone 6
 - [ ] T095 [US3] [A29] [A30] [A31] [A32] [A33] [A34] [A35] [A36] [A37] [A38] Outer-loop gate: A29 to A38 are green through the plugin factory before milestone 6 is committed
