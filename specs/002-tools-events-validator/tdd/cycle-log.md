@@ -93,3 +93,20 @@ Each behavior in a batch still has its own test, and each entry records the fail
 - green: `wouldAccept` replays the task and runs the pure `transition`, mapping a missing task to `unknown_task`.
   Suite `pnpm test` -> 25 files, 381 passed, 0 failed. Lint and type-check clean.
 - refactor: none needed
+
+## Cycle C6: U26 to U32 tool results and worker prompt (`src/tools/results.ts`, `src/tools/prompt.ts`)
+
+- tests: `src/tools/results.test.ts` `[U26]` to `[U28]` and `src/tools/prompt.test.ts` `[U29]` to `[U32]` (new)
+- red: stub helpers that return empty or wrong values, then `pnpm vitest run src/tools/results.test.ts src/tools/prompt.test.ts`
+  -> `U29 AssertionError: expected '' to contain 'k1'`
+  -> `U30 AssertionError: expected '' to match /never push/i`
+  -> `U31 AssertionError: expected '' to match /pull request URL/`
+  -> `U32 AssertionError: expected '' to match /do not contact the owner/i`
+  -> `U26 AssertionError: expected { ok: true, text: '' } to deeply equal { ok: false, …(1) }`
+  -> `U27 AssertionError: expected '' to be 'Task k1 is now validating.'`
+  -> `U28 AssertionError: expected 'aaaaaaaaaaa' to be 'aaaaaaaaa…'` (7 failed)
+- green: `results.ts` builds the outcomes and `clip`, and `prompt.ts` assembles the prompt from a per-mode handoff paragraph.
+  Suite `pnpm test` -> 27 files, 388 passed, 0 failed. Lint and type-check clean.
+- refactor: none needed
+- note: two small behaviors in one cycle because both files are text builders with no collaborators.
+  The clip boundary is tested at limit minus one, at the limit, and at limit plus one.

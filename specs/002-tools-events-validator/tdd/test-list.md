@@ -122,18 +122,18 @@ Boundaries have both sides, and error paths name the failure.
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| U26 | A refusal becomes error text with its reason code and message | FR-105, FR-123 | example | PENDING | |
-| U27 | A success becomes plain text that names the task and its state | FR-123 | example | PENDING | |
-| U28 | Text longer than the limit is cut, and text exactly at the limit is unchanged | FR-210, FR-123 | example | PENDING | |
+| U26 | A refusal becomes error text with its reason code and message | FR-105, FR-123 | example | DONE | `src/tools/results.test.ts::[U26] turns a refusal into error text with its reason code and message` |
+| U27 | A success becomes plain text that names the task and its state | FR-123 | example | DONE | `src/tools/results.test.ts::[U27] turns a success into plain text that names the task and its state` |
+| U28 | Text longer than the limit is cut, and text exactly at the limit is unchanged | FR-210, FR-123 | example | DONE | `src/tools/results.test.ts::[U28] cuts text longer than the limit and leaves text at or under the limit unchanged` |
 
 ### `src/tools/prompt.ts`
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| U29 | The worker prompt names the task ID, kind, mode, branch, and the report tool | FR-108 | example | PENDING | |
-| U30 | A `no-mistakes` prompt says never to push | FR-108, DESIGN direct pushes | example | PENDING | |
-| U31 | A `direct-PR` prompt asks for an open pull request and a `local-only` prompt asks for landed commits | FR-110 | example | PENDING | |
-| U32 | Every prompt tells the worker not to contact the owner | DESIGN worker silence | example | PENDING | |
+| U29 | The worker prompt names the task ID, kind, mode, branch, and the report tool | FR-108 | example | DONE | `src/tools/prompt.test.ts::[U29] names the task ID, kind, mode, branch, description, and the report tool` |
+| U30 | A `no-mistakes` prompt says never to push | FR-108, DESIGN direct pushes | example | DONE | `src/tools/prompt.test.ts::[U30] tells a no-mistakes worker never to push` |
+| U31 | A `direct-PR` prompt asks for an open pull request and a `local-only` prompt asks for landed commits | FR-110 | example | DONE | `src/tools/prompt.test.ts::[U31] asks a direct-PR worker for an open pull request and a local-only worker for landed commits` |
+| U32 | Every prompt tells the worker not to contact the owner | DESIGN worker silence | example | DONE | `src/tools/prompt.test.ts::[U32] tells every worker not to contact the owner` |
 
 ### `src/tools/register.ts`
 

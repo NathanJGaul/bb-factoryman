@@ -43,7 +43,7 @@ description: "Task list for tools and approval, event wiring, and the validator"
 - [X] T012 [P] [U10] [U11] [U12] [U13] [U14] [U15] [U16] [U17] [U18] Adapter test in `src/bb/adapter.test.ts` through the fake host (spawn arguments, parent notifications off, plugin metadata, thread read maps a missing thread to null, send uses mode `auto`, retire archives then deletes, input form passes through)
 - [X] T013 [P] [U19] [U20] [U21] [U22] Access test in `src/tools/access.test.ts` (worker by recorded thread ID, other for everything else, project check)
 - [X] T014 [P] [U23] [U24] [U25] Preview test in `src/tools/preview.test.ts` (would-accept and would-refuse for a `merge` event, no row written)
-- [ ] T022 [P] [U26] [U27] [U28] Results test in `src/tools/results.test.ts` (refusal text, success text, cut at the limit and at limit minus one and plus one)
+- [X] T022 [P] [U26] [U27] [U28] Results test in `src/tools/results.test.ts` (refusal text, success text, cut at the limit and at limit minus one and plus one)
 
 ### Implementation
 
@@ -53,7 +53,7 @@ description: "Task list for tools and approval, event wiring, and the validator"
 - [X] T018 [U6] [U7] [U8] [U9] Implement `Runtime` and the one apply path in `src/runtime.ts`
 - [X] T019 [P] [U19] [U20] [U21] [U22] Implement `identify` in `src/tools/access.ts`
 - [X] T020 [P] [U23] [U24] [U25] Implement `wouldAccept` in `src/tools/preview.ts`
-- [ ] T021 [P] [U26] [U27] [U28] Implement `ToolOutcome` helpers and refusal formatting in `src/tools/results.ts`
+- [X] T021 [P] [U26] [U27] [U28] Implement `ToolOutcome` helpers and refusal formatting in `src/tools/results.ts`
 
 **Checkpoint**: The foundational tests pass, and nothing registers with bb yet.
 
@@ -78,14 +78,14 @@ description: "Task list for tools and approval, event wiring, and the validator"
 - [ ] T038 [P] [US1] [U78] [U79] [U80] [U81] [U82] [U83] [U84] [U85] [U86] [U87] [U88] Merge executor tests in `src/git/merge.test.ts` (the `gh` command line for each method with a fake runner, local merge in a temporary repository, dirty checkout, wrong branch, missing base branch, conflict then abort)
 - [ ] T039 [P] [US1] [A18] [U117] [U118] [U119] Supervisor command tests in `test/acceptance/tools-supervisor-command.test.ts` and `src/tools/supervisor-command.test.ts` (stamps a non-worker, refuses a worker; AC-1.18)
 - [ ] T040 [P] [US1] [A17] [U120] [U121] [U123] [U124] Factory tests in `test/acceptance/plugin.test.ts` and `src/server.test.ts` (opens the store on the host database, recovers, registers five tools; AC-1.17)
-- [ ] T041 [P] [US1] [U29] [U30] [U31] [U32] Worker prompt test in `src/tools/prompt.test.ts` (names task ID, branch, mode, and the report tool; says never push for `no-mistakes`)
+- [X] T041 [P] [US1] [U29] [U30] [U31] [U32] Worker prompt test in `src/tools/prompt.test.ts` (names task ID, branch, mode, and the report tool; says never push for `no-mistakes`)
 - [ ] T055 [P] [US1] [U33] [U34] [U35] [U36] [U37] [U38] [U39] [U40] Registration tests in `src/tools/register.test.ts` (configure by role, the closed tool list, dispatch schema, error mapping, no cross-plugin call)
 
 ### Implementation for user story 1
 
 - [ ] T042 [P] [US1] [U69] [U70] [U71] [U72] [U73] [U74] [U75] [U76] [U77] Implement the worktree report in `src/git/report.ts`
 - [ ] T043 [P] [US1] [U78] [U79] [U80] [U81] [U82] [U83] [U84] [U85] [U86] [U87] [U88] Implement the merge executors and preflight in `src/git/merge.ts`
-- [ ] T044 [P] [US1] [U29] [U30] [U31] [U32] Implement `buildWorkerPrompt` in `src/tools/prompt.ts`
+- [X] T044 [P] [US1] [U29] [U30] [U31] [U32] Implement `buildWorkerPrompt` in `src/tools/prompt.ts`
 - [ ] T045 [US1] [U41] [U42] [U43] [U44] [U45] [U46] [U47] [U48] [U49] [U50] [U51] Implement `factoryman_dispatch` in `src/tools/dispatch.ts`
 - [ ] T046 [US1] [U52] [U53] [U54] [U55] [U56] [U57] [U58] [U59] [U60] [U61] Implement `factoryman_report` in `src/tools/report.ts`
 - [ ] T047 [P] [US1] [U62] [U63] [U64] [U65] [U66] [U67] [U68] Implement `factoryman_status` in `src/tools/status.ts`
