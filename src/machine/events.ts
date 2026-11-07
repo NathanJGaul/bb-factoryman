@@ -18,6 +18,9 @@ const worktree = z.strictObject({
   unpushedCommits: count,
 });
 
+/** The result of each custom check, gathered by the caller (D-015, D-080). */
+const checkFacts = z.array(z.strictObject({ name: nonEmpty, passed: z.boolean() })).optional();
+
 /** Fields every event carries. `evidence` is optional here; guards decide where it is required. */
 const common = {
   actor: z.enum(ACTORS),
@@ -34,8 +37,8 @@ const eventSchema = z.discriminatedUnion("type", [
   event("start", { profile: profile.nullish(), threadId: nonEmpty, branch: nonEmpty, machine: nonEmpty.nullish(), cloneMachine: nonEmpty.nullish() }),
   event("block", {}),
   event("unblock", {}),
-  event("handoff", {}),
-  event("ready", { prUrl: z.url().optional(), landedCommits: count.optional() }),
+  event("handoff", { checks: checkFacts }),
+  event("ready", { prUrl: z.url().optional(), landedCommits: count.optional(), checks: checkFacts }),
   event("report", {}),
   event("finding", {}),
   event("resolve", {}),

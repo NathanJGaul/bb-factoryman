@@ -26,8 +26,8 @@ const ship: Lane = {
   queued: { start: go("working", "profileResolved", "localOnlyStaysOnClone"), fail },
   working: {
     block: go("blocked"),
-    handoff: go("validating", "modeIsNoMistakes", "evidenceProvided"),
-    ready: go("review_ready", "modeIsNotNoMistakes", "evidenceProvided", "readyModeCheck"),
+    handoff: go("validating", "modeIsNoMistakes", "evidenceProvided", "customChecksPassed"),
+    ready: go("review_ready", "modeIsNotNoMistakes", "evidenceProvided", "readyModeCheck", "customChecksPassed"),
     fail,
   },
   blocked: { unblock: go("working"), fail },

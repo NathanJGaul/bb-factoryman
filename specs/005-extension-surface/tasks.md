@@ -13,8 +13,8 @@ description: "Task list for the extension surface"
 
 ## Phase 2: Group 1, the workflow config and the check gate
 
-- [ ] T910 Tests and stubs: `src/workflow/{config,load,effective,checks}.test.ts`, the `checks` event field, `customChecksPassed` guard, table, and reason code in `src/machine/*.test.ts`, the report and dispatch changes, and `test/acceptance/extension-workflow.test.ts` (A901 to A912)
-- [ ] T911 Implement `src/workflow/*`, the machine additions, and the report and dispatch changes
+- [X] T910 Tests and stubs: `src/workflow/{config,load,effective,checks}.test.ts`, the `checks` event field, `customChecksPassed` guard, table, and reason code in `src/machine/*.test.ts`, the report and dispatch changes, and `test/acceptance/extension-workflow.test.ts` (A901 to A912)
+- [X] T911 Implement `src/workflow/*`, the machine additions, and the report and dispatch changes
 
 ## Phase 3: Group 2, metadata and the read RPC
 

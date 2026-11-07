@@ -6,6 +6,9 @@ import { pickMachine, type MachineChoice } from "../dispatch/placement";
 import { preflightOnce, reportText } from "../machines/preflight";
 import type { Resolution } from "../dispatch/types";
 import { createTask, transition } from "../machine/transition";
+import type { ProjectConfig } from "../store/types";
+import { effectiveProject } from "../workflow/effective";
+import { loadWorkflowConfig } from "../workflow/load";
 import { refuse } from "../machine/refusal";
 import { errorText, type Runtime } from "../runtime";
 import { identify } from "./access";
@@ -98,10 +101,17 @@ export async function dispatch(rt: Runtime, caller: Caller, raw: unknown): Promi
   }
   const { kind, description, tags, profile: explicit, rule, machine: pinned } = parsed.data;
 
-  const config = store.getProjectConfig(caller.projectId);
+  let config: ProjectConfig;
   let resolution: Resolution;
   try {
-    const loaded = await loadDispatchConfig(rt.deps.files, await bb.getProjectCheckout(caller.projectId));
+    const checkout = await bb.getProjectCheckout(caller.projectId);
+    // The workflow file can tighten the project's config, never loosen it. A bad file blocks (hard rules 7 and 8).
+    const workflow = await loadWorkflowConfig(rt.deps.files, checkout);
+    if (!workflow.ok) return failure(`Dispatch blocked (config_invalid): ${workflow.message}. No task was created.`);
+    const effective = effectiveProject(store.getProjectConfig(caller.projectId), workflow.config);
+    if (!effective.ok) return failure(`Dispatch blocked (config_invalid): ${effective.message}. No task was created.`);
+    config = effective.config;
+    const loaded = await loadDispatchConfig(rt.deps.files, checkout);
     if (!loaded.ok) return failure(`Dispatch blocked (config_invalid): ${loaded.message}. No task was created.`);
     resolution = rt.deps.resolver.resolve(
       { kind, mode: config.deliveryMode, description, tags: tags ?? [] },

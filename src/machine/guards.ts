@@ -127,7 +127,12 @@ const localOnlyStaysOnClone: Guard = (context, event) => {
       );
 };
 
-const customChecksPassed: Guard = () => null;
+/** Hard rule 7: a custom check can only add a refusal. A failed check refuses `handoff` and `ready`. */
+const customChecksPassed: Guard = (_context, event) => {
+  if (event.type !== "handoff" && event.type !== "ready") return null;
+  const failed = (event.checks ?? []).filter((entry) => !entry.passed).map((entry) => entry.name);
+  return failed.length === 0 ? null : refuse("check_failed", `Custom checks failed: ${failed.join(", ")}. Fix them, commit, and report again.`);
+};
 
 export const GUARDS: Record<GuardName, Guard> = {
   profileResolved,

@@ -1,4 +1,4 @@
-import type { Exec } from "../exec";
+import type { Exec, ExecResult } from "../exec";
 import type { Check } from "./types";
 
 export interface CheckFact {
@@ -12,10 +12,35 @@ export interface CheckRun {
   failures: string[];
 }
 
-export async function runChecks(_exec: Exec, _checks: readonly Check[], _where: { cwd: string; host: string | null }): Promise<CheckRun> {
-  return { facts: [], failures: [] };
+const TAIL_CHARS = 600;
+
+function detail(result: ExecResult): string {
+  if (result.code === null) return result.error ?? "the command could not run";
+  const output = result.stderr.trim() || result.stdout.trim();
+  return output === "" ? `exit code ${result.code}` : output.length <= TAIL_CHARS ? output : `…${output.slice(-TAIL_CHARS)}`;
 }
 
-export function failureText(_run: CheckRun): string {
-  return "";
+/**
+ * Run each check in the worktree, with no shell, on the host of the task.
+ * Every check runs, even after one fails, so the worker sees all the problems
+ * at once. A check passes only on exit code 0 (FR-907).
+ */
+export async function runChecks(exec: Exec, checks: readonly Check[], where: { cwd: string; host: string | null }): Promise<CheckRun> {
+  const run: CheckRun = { facts: [], failures: [] };
+  for (const check of checks) {
+    const [command, ...args] = check.argv as [string, ...string[]];
+    const result = await exec(command, args, {
+      cwd: where.cwd,
+      host: where.host,
+      timeoutMs: check.timeoutSeconds === undefined ? undefined : check.timeoutSeconds * 1000,
+    });
+    const passed = result.code === 0;
+    run.facts.push({ name: check.name, passed });
+    if (!passed) run.failures.push(`- ${check.name}: ${detail(result)}`);
+  }
+  return run;
+}
+
+export function failureText(run: CheckRun): string {
+  return run.failures.join("\n");
 }
