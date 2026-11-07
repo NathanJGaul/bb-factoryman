@@ -110,3 +110,23 @@ Each behavior in a batch still has its own test, and each entry records the fail
 - refactor: none needed
 - note: two small behaviors in one cycle because both files are text builders with no collaborators.
   The clip boundary is tested at limit minus one, at the limit, and at limit plus one.
+
+## Cycle C7: U69 to U77 worktree report (`src/git/report.ts`)
+
+- tests: `src/git/report.test.ts` `[U69]` to `[U77]` (new), against temporary git repositories built by `test/fixtures/git-repo.ts` (T002)
+- red: a stub `worktreeReport` that returns a clean report, then `pnpm vitest run src/git/report.test.ts`
+  -> `U70 AssertionError: expected false to be true` (modified file)
+  -> `U71 AssertionError: expected false to be true` (untracked file)
+  -> `U72 AssertionError: expected { ok: true, report: { …(2) } } to deeply equal { ok: true, report: { …(2) } }`
+  -> `U74 AssertionError: expected +0 to be 2`
+  -> `U75 AssertionError: expected { ok: true, report: { …(2) } } to deeply equal …`
+  -> `U76 AssertionError: expected true to be false`
+  -> `U77 AssertionError: expected true to be false` (7 failed, 2 passed)
+- U69 and U73 passed on the first run because the stub returns a clean report. Deliberate mutants:
+  - `uncommittedChanges: true` -> U69, U72, U73, U75 failed (4 failed, 5 passed).
+  - count with `rev-list --count HEAD` (no `--not --remotes`) -> U69, U72, U73 failed (3 failed, 6 passed).
+  Restored the code exactly, then 9 passed.
+- green: `worktreeReport` runs `git status --porcelain` and `git rev-list --count`, with the remote-ref rule for the pull request modes and the base-branch rule for `local-only`.
+  A failed command, a missing base branch, or an unreadable count is an error result.
+  Suite `pnpm test` -> 28 files, 397 passed, 0 failed. Lint and type-check clean.
+- refactor: none needed

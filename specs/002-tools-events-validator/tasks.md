@@ -74,7 +74,7 @@ description: "Task list for tools and approval, event wiring, and the validator"
 - [ ] T034 [P] [US1] [A7] [U62] [U63] [U64] [U65] [U66] [U67] [U68] Status tests in `test/acceptance/tools-status.test.ts` and `src/tools/status.test.ts` (one task, project list, state filter, writes nothing; AC-1.7)
 - [ ] T035 [P] [US1] [A8] [A9] [A10] [A11] [A12] [A13] [A14] [U89] [U90] [U91] [U92] [U93] [U94] [U95] [U96] [U97] [U98] [U99] [U100] [U101] [U102] [U103] [U104] [U105] [U106] Merge approval tests in `test/acceptance/tools-merge.test.ts` and `src/tools/merge.test.ts` (submitted approval, denial, cancelled form, timed-out form, unreadable answer, `yolo`, executor failure, wrong state, scout, worker caller, second call while a form is open; AC-1.8 to AC-1.14)
 - [ ] T036 [P] [US1] [A15] [A16] [U107] [U108] [U109] [U110] [U111] [U112] [U113] [U114] [U115] [U116] Teardown tests in `test/acceptance/tools-teardown.test.ts` and `src/tools/teardown.test.ts` (dirty tree, unpushed commits, clean and landed, failed task, retire failure after the event; AC-1.15, AC-1.16)
-- [ ] T037 [P] [US1] [U69] [U70] [U71] [U72] [U73] [U74] [U75] [U76] [U77] Worktree report tests in `src/git/report.test.ts` against temporary repositories (clean, dirty, untracked file, unpushed commit, pushed commit, `local-only` base rule, command failure)
+- [X] T037 [P] [US1] [U69] [U70] [U71] [U72] [U73] [U74] [U75] [U76] [U77] Worktree report tests in `src/git/report.test.ts` against temporary repositories (clean, dirty, untracked file, unpushed commit, pushed commit, `local-only` base rule, command failure)
 - [ ] T038 [P] [US1] [U78] [U79] [U80] [U81] [U82] [U83] [U84] [U85] [U86] [U87] [U88] Merge executor tests in `src/git/merge.test.ts` (the `gh` command line for each method with a fake runner, local merge in a temporary repository, dirty checkout, wrong branch, missing base branch, conflict then abort)
 - [ ] T039 [P] [US1] [A18] [U117] [U118] [U119] Supervisor command tests in `test/acceptance/tools-supervisor-command.test.ts` and `src/tools/supervisor-command.test.ts` (stamps a non-worker, refuses a worker; AC-1.18)
 - [ ] T040 [P] [US1] [A17] [U120] [U121] [U123] [U124] Factory tests in `test/acceptance/plugin.test.ts` and `src/server.test.ts` (opens the store on the host database, recovers, registers five tools; AC-1.17)
@@ -83,7 +83,7 @@ description: "Task list for tools and approval, event wiring, and the validator"
 
 ### Implementation for user story 1
 
-- [ ] T042 [P] [US1] [U69] [U70] [U71] [U72] [U73] [U74] [U75] [U76] [U77] Implement the worktree report in `src/git/report.ts`
+- [X] T042 [P] [US1] [U69] [U70] [U71] [U72] [U73] [U74] [U75] [U76] [U77] Implement the worktree report in `src/git/report.ts`
 - [ ] T043 [P] [US1] [U78] [U79] [U80] [U81] [U82] [U83] [U84] [U85] [U86] [U87] [U88] Implement the merge executors and preflight in `src/git/merge.ts`
 - [X] T044 [P] [US1] [U29] [U30] [U31] [U32] Implement `buildWorkerPrompt` in `src/tools/prompt.ts`
 - [ ] T045 [US1] [U41] [U42] [U43] [U44] [U45] [U46] [U47] [U48] [U49] [U50] [U51] Implement `factoryman_dispatch` in `src/tools/dispatch.ts`

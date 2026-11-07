@@ -195,15 +195,15 @@ Boundaries have both sides, and error paths name the failure.
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| U69 | A clean worktree reports no uncommitted changes and no unpushed commits | FR-118, FR-119 | example | PENDING | |
-| U70 | A modified tracked file reports uncommitted changes | FR-118 | example | PENDING | |
-| U71 | An untracked file reports uncommitted changes | FR-118 | example | PENDING | |
-| U72 | A pull request mode counts a commit that is on no remote ref as unpushed | FR-119 | example | PENDING | |
-| U73 | A pull request mode counts a pushed commit as landed | FR-119 | example | PENDING | |
-| U74 | A pull request mode with no remote counts every commit as unpushed | FR-119, hard rule 8 | example | PENDING | |
-| U75 | A `local-only` branch counts commits not reachable from the base branch, and counts none once it is merged | FR-119 | example | PENDING | |
-| U76 | A `local-only` report without a base branch is an error | FR-117, edge cases | example | PENDING | |
-| U77 | A failed git command is an error and never an empty report | FR-118, hard rule 8 | example | PENDING | |
+| U69 | A clean worktree reports no uncommitted changes and no unpushed commits | FR-118, FR-119 | example | DONE | `src/git/report.test.ts::[U69] reports a clean worktree with no uncommitted changes and no unpushed commits` |
+| U70 | A modified tracked file reports uncommitted changes | FR-118 | example | DONE | `src/git/report.test.ts::[U70] reports a modified tracked file as an uncommitted change` |
+| U71 | An untracked file reports uncommitted changes | FR-118 | example | DONE | `src/git/report.test.ts::[U71] reports an untracked file as an uncommitted change` |
+| U72 | A pull request mode counts a commit that is on no remote ref as unpushed | FR-119 | example | DONE | `src/git/report.test.ts::[U72] counts a commit that is on no remote ref as unpushed in a pull request mode` |
+| U73 | A pull request mode counts a pushed commit as landed | FR-119 | example | DONE | `src/git/report.test.ts::[U73] counts a pushed commit as landed in a pull request mode` |
+| U74 | A pull request mode with no remote counts every commit as unpushed | FR-119, hard rule 8 | example | DONE | `src/git/report.test.ts::[U74] counts every commit as unpushed when the repository has no remote` |
+| U75 | A `local-only` branch counts commits not reachable from the base branch, and counts none once it is merged | FR-119 | example | DONE | `src/git/report.test.ts::[U75] counts local-only commits that the base branch lacks, and none once they are merged` |
+| U76 | A `local-only` report without a base branch is an error | FR-117, edge cases | example | DONE | `src/git/report.test.ts::[U76] is an error for local-only without a base branch` |
+| U77 | A failed git command is an error and never an empty report | FR-118, hard rule 8 | example | DONE | `src/git/report.test.ts::[U77] is an error and never an empty report when git fails` |
 
 ### `src/git/merge.ts`
 
