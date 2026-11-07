@@ -108,6 +108,7 @@ async function startOne(rt: Runtime, task: TaskRow, raw: unknown): Promise<boole
   }
   if (capReached(rt, task.projectId, { project: workflow.config.limits.maxWorkers ?? null, global: globalCap(rt) }) !== null) return false;
 
+  rt.launching.add(task.taskId);
   try {
     const sources = await bb.getProjectSources(task.projectId);
     let host = null;
@@ -154,6 +155,8 @@ async function startOne(rt: Runtime, task: TaskRow, raw: unknown): Promise<boole
   } catch (error) {
     log.warn(`Task ${task.taskId} stays queued: ${errorText(error)}`);
     return false;
+  } finally {
+    rt.launching.delete(task.taskId);
   }
 }
 

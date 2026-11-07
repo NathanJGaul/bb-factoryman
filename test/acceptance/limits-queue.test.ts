@@ -52,6 +52,28 @@ describe("worker caps and the queue through the plugin factory", () => {
     expect(world.metadata.get("thr-w3")).toMatchObject({ role: "worker", taskId: "t3", kind: "ship" });
   });
 
+  it("[A1040] holds the cap while a queued task is being started: a dispatch in that window queues instead of exceeding the cap", async () => {
+    const world = await setup({ limits: { maxWorkers: 1 } });
+    await world.call("factoryman_dispatch", TASK);
+    await world.call("factoryman_dispatch", TASK);
+    expect([state(world, "t1"), state(world, "t2")]).toEqual(["working", "queued"]);
+    let release!: () => void;
+    world.holdProviders = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const failing = fail(world, "thr-w1");
+    await settle(() => world.holdProviders === null);
+    const third = await world.call("factoryman_dispatch", TASK);
+    expect(third.text).toMatch(/Task t3 is queued/);
+    release();
+    await failing;
+    await settle(() => state(world, "t2") === "working");
+    const running = ["t1", "t2", "t3"].filter((id) => state(world, id) === "working");
+    expect(running).toEqual(["t2"]);
+    expect(state(world, "t3")).toBe("queued");
+    expect(world.sdkCalls("threads.spawn")).toHaveLength(2);
+  });
+
   it("[A1004] shows a queued task and its description in factoryman_status", async () => {
     const world = await setup({ limits: { maxWorkers: 1 } });
     await world.call("factoryman_dispatch", TASK);

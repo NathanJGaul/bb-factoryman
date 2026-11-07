@@ -77,6 +77,8 @@ export interface World {
   machines: HostFixture[];
   /** The fake terminals behind `bb.sdk.terminals`, which stand in for remote machines. */
   remote: RemoteFake;
+  /** Hold the next `providers.list` call until this promise settles. The call clears it. */
+  holdProviders: Promise<void> | null;
   /** Make `threads.updatePluginMetadata` fail. */
   failMetadata: Error | null;
   /** The cost that `threads.context` reports per thread. A thread that is missing reports no cost. */
@@ -210,6 +212,9 @@ export async function loadWorld(options: WorldOptions = {}): Promise<World> {
       providers: {
         list: async (args?: { hostId?: string }) => {
           if (options.providersError) throw options.providersError;
+          const held = world.holdProviders;
+          world.holdProviders = null;
+          if (held !== null) await held;
           const byHost = args?.hostId === undefined ? undefined : options.providersByHost?.[args.hostId];
           return byHost ?? options.providers ?? [providerFixture("claude"), providerFixture("claude-code")];
         },
@@ -255,6 +260,7 @@ export async function loadWorld(options: WorldOptions = {}): Promise<World> {
     machines,
     remote,
     failMetadata: null,
+    holdProviders: null,
     costs,
     webhook,
     skewClock(ms) {
