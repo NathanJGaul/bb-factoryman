@@ -114,9 +114,9 @@ Boundaries have both sides, and error paths name the failure.
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| U23 | `wouldAccept` returns ok for a legal event and writes no row | FR-115 | example | PENDING | |
-| U24 | `wouldAccept` returns the machine's refusal for an illegal event and writes no row | FR-115 | example | PENDING | |
-| U25 | `wouldAccept` refuses an unknown task | FR-115 | example | PENDING | |
+| U23 | `wouldAccept` returns ok for a legal event and writes no row | FR-115 | example | DONE | `src/tools/preview.test.ts::[U23] says ok for a legal event and writes no row` |
+| U24 | `wouldAccept` returns the machine's refusal for an illegal event and writes no row | FR-115 | example | DONE | `src/tools/preview.test.ts::[U24] returns the machine` |
+| U25 | `wouldAccept` refuses an unknown task | FR-115 | example | DONE | `src/tools/preview.test.ts::[U25] refuses an unknown task` |
 
 ### `src/tools/results.ts`
 

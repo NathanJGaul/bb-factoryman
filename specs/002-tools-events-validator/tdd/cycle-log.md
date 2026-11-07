@@ -82,3 +82,14 @@ Each behavior in a batch still has its own test, and each entry records the fail
 - green: `identify` finds the task whose `workerThreadId` equals the thread ID, and `sameProject` compares project IDs.
   Suite `pnpm test` -> 24 files, 378 passed, 0 failed. Lint and type-check clean.
 - refactor: none needed
+
+## Cycle C5: U23 to U25 preview (`src/tools/preview.ts`)
+
+- tests: `src/tools/preview.test.ts` `[U23]` to `[U25]` (new)
+- red: a stub `wouldAccept` that returns `{ ok: true, to: "queued" }`, then `pnpm vitest run src/tools/preview.test.ts`
+  -> `U23 AssertionError: expected { ok: true, to: 'queued' } to deeply equal { ok: true, to: 'merged' }`
+  -> `U24 AssertionError: expected true to be false`
+  -> `U25 AssertionError: expected true to be false` (3 failed)
+- green: `wouldAccept` replays the task and runs the pure `transition`, mapping a missing task to `unknown_task`.
+  Suite `pnpm test` -> 25 files, 381 passed, 0 failed. Lint and type-check clean.
+- refactor: none needed
