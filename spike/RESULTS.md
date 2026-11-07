@@ -215,6 +215,17 @@ Fallback: teardown archives the worker thread and then deletes the environment.
 If the environment still has another live thread, the removal fails after the `teardown` event is recorded, and the tool result says so.
 The landed-work check has already passed by then, so nothing is lost.
 
+## 26. Spawning a worker in a managed worktree
+
+Result: partial
+
+Evidence: the live smoke test of the built plugin on the throwaway bb 0.48.1 server called `bb.sdk.threads.spawn` with `environment: { type: "host", workspace: { type: "managed-worktree", ... } }`.
+bb answered `HTTP 400: hostId is required unless workspace.type is personal`.
+The fake plugin host accepted the same call, so only the real server showed the difference.
+
+Fallback: the adapter reads the project's default source and sends its `hostId`.
+It refuses to spawn when bb reports no host.
+
 ## Not checked
 
 These items belong to milestones 7 to 11, or to the owner's live install, and the task brief excludes them.

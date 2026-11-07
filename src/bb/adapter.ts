@@ -32,6 +32,10 @@ function isNotFound(error: unknown): boolean {
 export function createBbPort(bb: BbPluginApi): BbPort {
   return {
     async spawnWorker(request) {
+      // bb 0.48.1 rejects a host workspace without a host ID (found in the live smoke test), so use the project's default host.
+      const project = await bb.sdk.projects.get({ projectId: request.projectId });
+      const hostId = project.sources.find((candidate) => candidate.isDefault)?.hostId;
+      if (hostId === undefined || hostId === null) throw new Error(`bb reports no host for project ${request.projectId}.`);
       const thread = await bb.sdk.threads.spawn({
         projectId: request.projectId,
         prompt: request.prompt,
@@ -44,6 +48,7 @@ export function createBbPort(bb: BbPluginApi): BbPort {
         pluginMetadata: request.metadata,
         environment: {
           type: "host",
+          hostId,
           workspace: {
             type: "managed-worktree",
             baseBranch: request.baseBranch === null ? { kind: "default" } : { kind: "named", name: request.baseBranch },

@@ -13,8 +13,10 @@ class NotFound extends Error {
 }
 
 describe("createBbPort", () => {
-  it("[U10] spawns a worker with the project, parent, off notifications, role metadata, profile, and a managed worktree", async () => {
-    const { port, sdk } = setup({ threads: { spawn: async () => ({ id: "thr-9" }) } });
+  const projects = { get: async () => ({ id: "proj-1", sources: [{ type: "local_path", isDefault: true, hostId: "host_1", path: "/work/repo" }] }) };
+
+  it("[U10] spawns a worker with the project, parent, off notifications, role metadata, profile, and a managed worktree on the project's host", async () => {
+    const { port, sdk } = setup({ threads: { spawn: async () => ({ id: "thr-9" }) }, projects });
     const result = await port.spawnWorker({
       projectId: "proj-1",
       parentThreadId: "thr-sup",
@@ -39,14 +41,14 @@ describe("createBbPort", () => {
           // The server adds the origin for a plugin spawn (SDK normalization).
           origin: "plugin",
           originPluginId: "factoryman",
-          environment: { type: "host", workspace: { type: "managed-worktree", baseBranch: { kind: "named", name: "main" } } },
+          environment: { type: "host", hostId: "host_1", workspace: { type: "managed-worktree", baseBranch: { kind: "named", name: "main" } } },
         },
       ],
     ]);
   });
 
   it("[U10] uses the default base branch when none is set", async () => {
-    const { port, sdk } = setup({ threads: { spawn: async () => ({ id: "thr-9" }) } });
+    const { port, sdk } = setup({ threads: { spawn: async () => ({ id: "thr-9" }) }, projects });
     await port.spawnWorker({
       projectId: "proj-1",
       parentThreadId: "thr-sup",
@@ -56,7 +58,15 @@ describe("createBbPort", () => {
       baseBranch: null,
     });
     const [[args]] = sdk.callsTo("threads.spawn") as [[{ environment: unknown }]];
-    expect(args.environment).toEqual({ type: "host", workspace: { type: "managed-worktree", baseBranch: { kind: "default" } } });
+    expect(args.environment).toEqual({ type: "host", hostId: "host_1", workspace: { type: "managed-worktree", baseBranch: { kind: "default" } } });
+  });
+
+  it("[U10] refuses to spawn when bb reports no host for the project, and spawns nothing", async () => {
+    const { port, sdk } = setup({ threads: { spawn: async () => ({ id: "thr-9" }) }, projects: { get: async () => ({ id: "proj-1", sources: [] }) } });
+    await expect(
+      port.spawnWorker({ projectId: "proj-1", parentThreadId: "thr-sup", prompt: "x", profile: { ...PROFILE, permissionMode: "auto" }, metadata: {}, baseBranch: null }),
+    ).rejects.toThrow(/no host/i);
+    expect(sdk.callsTo("threads.spawn")).toEqual([]);
   });
 
   it("[U11] reads a thread as id, project, status, parent, and environment", async () => {

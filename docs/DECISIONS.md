@@ -416,3 +416,12 @@ Nothing else in the plugin chooses a validator, so a second implementation (for 
 A restart resumes every task in `validating` or `needs_decision`, asks again from the worktree, and starts no second run.
 The run ID appears in the evidence of the events that the driver records.
 
+## Live smoke test on the throwaway bb server
+
+### D-053: The fake plugin host accepted a spawn that real bb rejects (Gap, fixed)
+
+The first live dispatch failed with `HTTP 400: hostId is required unless workspace.type is personal`.
+The adapter now sends the project's default host ID and refuses to spawn when bb reports none (`spike/RESULTS.md` item 26).
+The fake host does not check this rule, so the fix is covered by an adapter test that asserts the host ID.
+The live smoke test stays part of the close-out, because it finds contract differences that the fake host cannot.
+

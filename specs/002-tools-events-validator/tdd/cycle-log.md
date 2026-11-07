@@ -403,3 +403,18 @@ Each behavior in a batch still has its own test, and each entry records the fail
   A29 and A38 have no wiring mutant: the machine makes `validating` unreachable outside `no-mistakes` mode, and the interface test checks only that the functions exist.
 - note: A36 uses a derived `checks-passed` output (D-049) because the spike could not record one.
 - refactor: none needed
+
+## Cycle L1: U10 sends the project's host ID (found by the live smoke test)
+
+- finding: the live smoke test of the built plugin on the throwaway bb 0.48.1 server dispatched a scout task.
+  bb rejected the spawn with `HTTP 400: hostId is required unless workspace.type is personal`, and the plugin recorded the task as failed with that error, as the design requires.
+  The fake plugin host accepted the same call (D-053, `spike/RESULTS.md` item 26).
+- tests: `src/bb/adapter.test.ts` `[U10]` changed to expect `hostId` in the environment, a second `[U10]` default-branch case changed the same way, and a new `[U10]` case for a project with no host.
+  The acceptance world fixture's `projects.get` stub now returns a `hostId`.
+- red: `pnpm vitest run src/bb/adapter.test.ts`
+  -> `U10` (named branch) `AssertionError: expected [ [ { projectId: 'proj-1', …(11) } ] ] to deeply equal [ [ { projectId: 'proj-1', …(11) } ] ]`
+  -> `U10` (default branch) `AssertionError: expected { type: 'host', workspace: { …(2) } } to deeply equal { Object (type, hostId, ...) }`
+  -> `U10` (no host) `AssertionError: promise resolved "{ threadId: 'thr-9' }" instead of rejecting` (3 failed, 10 passed)
+- green: `spawnWorker` reads the project's default source, sends its `hostId`, and throws when there is none.
+  `pnpm vitest run src/bb/adapter.test.ts test/acceptance` -> 161 passed. Suite `pnpm test` -> 57 files, 604 passed, 0 failed. Lint and type-check clean.
+- refactor: none needed

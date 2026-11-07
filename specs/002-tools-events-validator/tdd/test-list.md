@@ -91,7 +91,7 @@ Boundaries have both sides, and error paths name the failure.
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| U10 | `spawnWorker` sends project, parent thread, off parent notifications, role metadata, profile, and a managed worktree, and returns the thread ID | FR-107, FR-108 | example | DONE | `src/bb/adapter.test.ts::[U10] spawns a worker with the project, parent, off notifications, role metadata, profile, and a managed worktree`, `src/bb/adapter.test.ts::[U10] uses the default base branch when none is set` |
+| U10 | `spawnWorker` sends project, parent thread, off parent notifications, role metadata, profile, and a managed worktree, and returns the thread ID | FR-107, FR-108 | example | DONE | `src/bb/adapter.test.ts::[U10] spawns a worker with the project, parent, off notifications, role metadata, profile, and a managed worktree on the project`, `src/bb/adapter.test.ts::[U10] uses the default base branch when none is set` |
 | U11 | `getThread` returns ID, project, status, parent, and environment | FR-209, FR-213 | example | DONE | `src/bb/adapter.test.ts::[U11] reads a thread as id, project, status, parent, and environment`, `src/bb/adapter.test.ts::[U11] flags a soft-deleted thread and keeps its parent` |
 | U12 | `getThread` returns null when bb does not know the thread | FR-213 | example | DONE | `src/bb/adapter.test.ts::[U12] reads an unknown thread as null, and rethrows other failures` |
 | U13 | `sendMessage` sends one text input in `auto` mode | FR-209 | example | DONE | `src/bb/adapter.test.ts::[U13] sends one text input in auto mode` |
