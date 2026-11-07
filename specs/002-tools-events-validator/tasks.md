@@ -86,7 +86,7 @@ description: "Task list for tools and approval, event wiring, and the validator"
 - [X] T042 [P] [US1] [U69] [U70] [U71] [U72] [U73] [U74] [U75] [U76] [U77] Implement the worktree report in `src/git/report.ts`
 - [X] T043 [P] [US1] [U78] [U79] [U80] [U81] [U82] [U83] [U84] [U85] [U86] [U87] [U88] Implement the merge executors and preflight in `src/git/merge.ts`
 - [X] T044 [P] [US1] [U29] [U30] [U31] [U32] Implement `buildWorkerPrompt` in `src/tools/prompt.ts`
-- [ ] T045 [US1] [U41] [U42] [U43] [U44] [U45] [U46] [U47] [U48] [U49] [U50] [U51] Implement `factoryman_dispatch` in `src/tools/dispatch.ts`
+- [X] T045 [US1] [U41] [U42] [U43] [U44] [U45] [U46] [U47] [U48] [U49] [U50] [U51] Implement `factoryman_dispatch` in `src/tools/dispatch.ts`
 - [ ] T046 [US1] [U52] [U53] [U54] [U55] [U56] [U57] [U58] [U59] [U60] [U61] Implement `factoryman_report` in `src/tools/report.ts`
 - [ ] T047 [P] [US1] [U62] [U63] [U64] [U65] [U66] [U67] [U68] Implement `factoryman_status` in `src/tools/status.ts`
 - [ ] T048 [US1] [U89] [U90] [U91] [U92] [U93] [U94] [U95] [U96] [U97] [U98] [U99] [U100] [U101] [U102] [U103] [U104] [U105] [U106] Implement `factoryman_merge` and the approval form schema in `src/tools/merge.ts`

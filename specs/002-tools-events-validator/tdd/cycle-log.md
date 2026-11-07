@@ -146,3 +146,17 @@ Each behavior in a batch still has its own test, and each entry records the fail
   Suite `pnpm test` -> 29 files, 408 passed, 0 failed. Lint and type-check clean.
 - refactor: none needed
 - note: no test merges a real pull request (D-042).
+
+## Cycle C9: U41 to U51 dispatch (`src/tools/dispatch.ts`)
+
+- tests: `src/tools/dispatch.test.ts` `[U41]` to `[U51]` (new), over the memory store and the fake `BbPort`
+- red: a stub `dispatch` that returns `{ ok: false, text: "not implemented" }`, then `pnpm vitest run src/tools/dispatch.test.ts`
+  -> `U41`, `U42`, `U43`, `U44`, `U45`, `U46`, `U47`, `U49`, `U50`, `U51` failed on assertions about the task row, the log, the spawn request, or the result text (10 failed, 1 passed)
+- U48 passed on the first run because the stub refuses everything and creates nothing.
+  Deliberate mutant: the description schema accepts a blank string
+  -> `U48` failed (1 failed, 10 passed): a blank description created a task.
+  Restored the code exactly, then 11 passed.
+- green: `dispatch` refuses a worker caller, validates with a strict schema, creates the task, spawns the worker, records `start` with the description as evidence, and re-reads the thread once.
+  A spawn error records `fail` with the error.
+  Suite `pnpm test` -> 30 files, 419 passed, 0 failed. Lint and type-check clean.
+- refactor: none needed

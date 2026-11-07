@@ -152,17 +152,17 @@ Boundaries have both sides, and error paths name the failure.
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| U41 | A ship dispatch creates a ship task in the project's configured delivery mode | FR-106 | example | PENDING | |
-| U42 | A project with no config dispatches in `no-mistakes` mode with `yolo` off | FR-106, edge cases | example | PENDING | |
-| U43 | A scout dispatch creates a scout task | FR-106 | example | PENDING | |
-| U44 | The planned branch is the configured prefix plus the task ID, and `fm/` plus the task ID when there is no prefix | FR-108, D-034 | example | PENDING | |
-| U45 | `start` carries the profile, the worker thread, the branch, and the description as evidence | FR-108, D-033 | example | PENDING | |
-| U46 | The worker spawns once, as a child of the caller, with notifications off and role metadata with task ID and kind | FR-107, FR-108 | example | PENDING | |
-| U47 | A worker caller is refused with no task and no spawn | FR-104 | example | PENDING | |
-| U48 | Invalid arguments are refused with no task and no spawn | FR-106 | example | PENDING | |
-| U49 | A spawn error records `fail` with evidence that contains the error | FR-105 | example | PENDING | |
-| U50 | A worker thread that is already in error after `start` is recorded as failed | FR-105, FR-203 | example | PENDING | |
-| U51 | The result names the task ID, the worker thread, and the branch | FR-123 | example | PENDING | |
+| U41 | A ship dispatch creates a ship task in the project's configured delivery mode | FR-106 | example | DONE | `src/tools/dispatch.test.ts::[U41] creates a ship task in the project` |
+| U42 | A project with no config dispatches in `no-mistakes` mode with `yolo` off | FR-106, edge cases | example | DONE | `src/tools/dispatch.test.ts::[U42] dispatches a project with no config in no-mistakes mode` |
+| U43 | A scout dispatch creates a scout task | FR-106 | example | DONE | `src/tools/dispatch.test.ts::[U43] creates a scout task for a scout dispatch` |
+| U44 | The planned branch is the configured prefix plus the task ID, and `fm/` plus the task ID when there is no prefix | FR-108, D-034 | example | DONE | `src/tools/dispatch.test.ts::[U44] plans the branch as the configured prefix plus the task ID, or fm/ plus the task ID` |
+| U45 | `start` carries the profile, the worker thread, the branch, and the description as evidence | FR-108, D-033 | example | DONE | `src/tools/dispatch.test.ts::[U45] records start with the profile, the worker thread, the branch, and the description as evidence` |
+| U46 | The worker spawns once, as a child of the caller, with notifications off and role metadata with task ID and kind | FR-107, FR-108 | example | DONE | `src/tools/dispatch.test.ts::[U46] spawns one worker as a child of the caller with role metadata and the built prompt` |
+| U47 | A worker caller is refused with no task and no spawn | FR-104 | example | DONE | `src/tools/dispatch.test.ts::[U47] refuses a worker caller with no task and no spawn` |
+| U48 | Invalid arguments are refused with no task and no spawn | FR-106 | example | DONE | `src/tools/dispatch.test.ts::[U48] refuses invalid arguments with no task and no spawn` |
+| U49 | A spawn error records `fail` with evidence that contains the error | FR-105 | example | DONE | `src/tools/dispatch.test.ts::[U49] records fail with the spawn error as evidence when the spawn fails` |
+| U50 | A worker thread that is already in error after `start` is recorded as failed | FR-105, FR-203 | example | DONE | `src/tools/dispatch.test.ts::[U50] records fail when the worker thread is already in error after start` |
+| U51 | The result names the task ID, the worker thread, and the branch | FR-123 | example | DONE | `src/tools/dispatch.test.ts::[U51] names the task ID, the worker thread, and the branch in the result` |
 
 ### `src/tools/report.ts`
 
