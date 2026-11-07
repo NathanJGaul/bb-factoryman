@@ -24,7 +24,7 @@ const FRAME = /^FMX1 (-?\d+) (\S*) (\S*)\s*$/;
 
 const failed = (error: string): ExecResult => ({ code: null, stdout: "", stderr: "", error });
 
-function decodeFrame(output: string): ExecResult | null {
+export function decodeFrame(output: string): ExecResult | null {
   const lines = output.split(/\r?\n/);
   for (let index = lines.length - 1; index >= 0; index -= 1) {
     const match = FRAME.exec(lines[index] as string);

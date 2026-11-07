@@ -85,6 +85,12 @@ describe("createPlugin", () => {
     expect(handled).toEqual(["experimental_host.deleted", "interaction.pending", "thread.archived", "thread.deleted", "thread.failed", "thread.idle", "turn.failed"]);
   });
 
+  it("[U876] defines the machine check interval setting with a default of 30 seconds", async () => {
+    const host = createFakePluginHost({ pluginId: "factoryman" });
+    await createPlugin()(host.bb);
+    expect(host.harness.inspection.registrations.settingsDescriptors["machinePollSeconds"]).toMatchObject({ type: "number", default: 30 });
+  });
+
   it("[U124] leaves the replayed task rows equal to the cached rows after a seeded random walk of tool calls and thread events", async () => {
     const world = await loadWorld();
     world.setProject({ deliveryMode: "direct-PR", yolo: true });

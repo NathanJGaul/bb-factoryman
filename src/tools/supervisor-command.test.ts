@@ -39,33 +39,56 @@ describe("bb factoryman supervisor", () => {
       return t;
     }
 
-    it("[U856] runs the preflight for a machine and project and prints the report, and prints usage for a bad call", async () => {
+    it("[U856] runs the preflight for a machine and project and prints a ready report", async () => {
       const t = remoteRuntime();
       const ok = await runFactorymanCommand(t.runtime, ["preflight", "gpu-box", "--project", "proj-1"]);
       expect(ok.exitCode).toBe(0);
       expect(ok.stdout).toContain("gpu-box");
       expect(ok.stdout).toMatch(/ready/);
       expect(t.execCalls.every((call) => call.cwd === "/work/gpu")).toBe(true);
+    });
 
+    it("[U856] exits 1 and prints the failed check when the machine is missing something", async () => {
+      const t = remoteRuntime();
       t.execHandler = (command, args) => (command === "gh" && args[0] === "auth" ? { code: 1, stdout: "", stderr: "not logged in" } : { code: 0, stdout: "", stderr: "" });
       const failed = await runFactorymanCommand(t.runtime, ["preflight", "gpu-box", "--project", "proj-1"]);
       expect(failed.exitCode).toBe(1);
       expect(failed.stdout).toContain("gh_credentials");
+    });
 
+    it("[U856] takes the project from the command context when --project is absent", async () => {
+      const t = remoteRuntime();
+      t.execHandler = () => ({ code: 1, stdout: "", stderr: "" });
       const viaContext = await runFactorymanCommand(t.runtime, ["preflight", "gpu-box"], { projectId: "proj-1" });
       expect(viaContext.exitCode).toBe(1);
+      expect(t.bb.callsTo("getProjectSources")).toEqual([["proj-1"]]);
+    });
 
-      for (const argv of [["preflight"], ["preflight", "gpu-box"], ["preflight", "gpu-box", "--project"], ["preflight", "gpu-box", "--bogus", "x"]]) {
-        const bad = await runFactorymanCommand(t.runtime, argv);
-        expect(bad.exitCode, argv.join(" ")).toBe(2);
-        expect(bad.stderr).toContain("Usage: bb factoryman preflight <machine> --project <project-id>");
-      }
+    it.each([[["preflight"]], [["preflight", "gpu-box"]], [["preflight", "gpu-box", "--project"]], [["preflight", "gpu-box", "--bogus", "x"]]])("[U856] prints usage and exits 2 for `%j`", async (argv) => {
+      const t = remoteRuntime();
+      const bad = await runFactorymanCommand(t.runtime, argv);
+      expect(bad.exitCode).toBe(2);
+      expect(bad.stderr).toContain("Usage: bb factoryman preflight <machine> --project <project-id>");
+      expect(t.execCalls).toEqual([]);
+    });
+
+    it("[U856] reports an unknown machine and runs nothing", async () => {
+      const t = remoteRuntime();
       const unknown = await runFactorymanCommand(t.runtime, ["preflight", "nowhere", "--project", "proj-1"]);
       expect(unknown.exitCode).toBe(1);
       expect(unknown.stderr).toContain("machine_unknown");
+      expect(t.execCalls).toEqual([]);
     });
 
-    it("skips the checks that the delivery mode does not need, and reports a machine that is offline", async () => {
+    it("[U874] says that the host which holds the clone needs no remote preflight, and runs nothing", async () => {
+      const t = remoteRuntime();
+      const result = await runFactorymanCommand(t.runtime, ["preflight", "local-box", "--project", "proj-1"]);
+      expect(result.exitCode).toBe(0);
+      expect(result.stdout).toContain("holds the project's clone");
+      expect(t.execCalls).toEqual([]);
+    });
+
+    it("[U873] skips the checks that the delivery mode does not need, and reports a machine that is offline", async () => {
       const t = remoteRuntime("local-only");
       const ok = await runFactorymanCommand(t.runtime, ["preflight", "gpu-box", "--project", "proj-1"]);
       expect(ok.exitCode).toBe(0);

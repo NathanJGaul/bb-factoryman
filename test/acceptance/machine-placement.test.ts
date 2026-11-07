@@ -63,23 +63,27 @@ describe("machine placement through factoryman_dispatch", () => {
     expect(startPayload(world)).toMatchObject({ cloneMachine: "host_local" });
   });
 
-  it("[A805] resolves a machine name to its host ID, and blocks an unknown or ambiguous name with no task", async () => {
+  it("[A805] resolves a machine name to its host ID, whatever its case", async () => {
     const world = await setup();
     expect((await world.call("factoryman_dispatch", { ...TASK, machine: "GPU-BOX" })).isError).toBe(false);
     expect(world.store.getTask("t1")?.machine).toBe("host_gpu");
+  });
 
-    const unknown = await setup();
-    const missing = await unknown.call("factoryman_dispatch", { ...TASK, machine: "nowhere" });
+  it("[A805] blocks an unknown machine name with no task and no worker", async () => {
+    const world = await setup();
+    const missing = await world.call("factoryman_dispatch", { ...TASK, machine: "nowhere" });
     expect(missing.isError).toBe(true);
     expect(missing.text).toContain("machine_unknown");
+    expect(world.store.listTasks()).toEqual([]);
+    expect(world.sdkCalls("threads.spawn")).toEqual([]);
+  });
 
-    const twins = await setup({ machines: [...MACHINES, hostFixture("host_gpu2", "gpu-box")], sources: [...SOURCES, { hostId: "host_gpu2", path: "/w2" }] });
-    const ambiguous = await twins.call("factoryman_dispatch", { ...TASK, machine: "gpu-box" });
+  it("[A805] blocks a machine name that two machines share with no task and no worker", async () => {
+    const world = await setup({ machines: [...MACHINES, hostFixture("host_gpu2", "gpu-box")], sources: [...SOURCES, { hostId: "host_gpu2", path: "/w2" }] });
+    const ambiguous = await world.call("factoryman_dispatch", { ...TASK, machine: "gpu-box" });
     expect(ambiguous.text).toContain("machine_ambiguous");
-    for (const w of [unknown, twins]) {
-      expect(w.store.listTasks()).toEqual([]);
-      expect(w.sdkCalls("threads.spawn")).toEqual([]);
-    }
+    expect(world.store.listTasks()).toEqual([]);
+    expect(world.sdkCalls("threads.spawn")).toEqual([]);
   });
 
   it("[A806] blocks a machine that holds no source of the project", async () => {
@@ -144,5 +148,35 @@ describe("machine placement through factoryman_dispatch", () => {
     world.setProject({ deliveryMode: "local-only" });
     expect((await world.call("factoryman_dispatch", TASK)).isError).toBe(false);
     expect(spawned(world).environment.hostId).toBe("host_local");
+  });
+});
+
+describe("local-only without a clone host", () => {
+  it("[A826] refuses a local-only dispatch to a machine when the project has no default source", async () => {
+    const checkout = makeCheckout();
+    const world = await loadWorld({
+      machines: MACHINES,
+      checkout,
+      // The requested machine comes first, so a fallback that takes the first source as the clone would let it through.
+      sources: [
+        { hostId: "host_gpu", path: "/work/gpu", isDefault: false },
+        { hostId: "host_local", path: checkout, isDefault: false },
+      ],
+    });
+    world.setProject({ deliveryMode: "local-only" });
+    const result = await world.call("factoryman_dispatch", { ...TASK, machine: "gpu-box" });
+    expect(result.isError).toBe(true);
+    expect(result.text).toContain("machine_mismatch");
+    expect(world.sdkCalls("threads.spawn")).toEqual([]);
+    expect(world.store.listTasks()).toEqual([]);
+  });
+
+  it("[A827] stops, and spawns nothing, when bb cannot list the machines", async () => {
+    const world = await setup({ hostsError: new Error("bb is down") });
+    const result = await world.call("factoryman_dispatch", { ...TASK, machine: "gpu-box" });
+    expect(result.isError).toBe(true);
+    expect(result.text).toContain("could not read bb's machines");
+    expect(world.sdkCalls("threads.spawn")).toEqual([]);
+    expect(world.store.listTasks()).toEqual([]);
   });
 });

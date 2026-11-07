@@ -77,7 +77,7 @@ describe("runPreflight", () => {
     expect(problems).toEqual([expect.objectContaining({ check: "git", message: expect.stringContaining("timed out") })]);
   });
 
-  it("reports every failed check together", async () => {
+  it("[U870] reports every failed check together", async () => {
     const { bb, exec, input } = setup({ [NM_INSTALLED]: { code: 1 }, [GH]: { code: 1 } });
     const problems = await runPreflight({ bb, exec }, input("no-mistakes"));
     expect(problems.map((problem) => problem.check)).toEqual(["no_mistakes_installed", "gh_credentials"]);
@@ -85,7 +85,7 @@ describe("runPreflight", () => {
 });
 
 describe("preflightOnce", () => {
-  it("[U844] caches a pass per host, project, mode, and provider, and does not cache a failure", async () => {
+  it("[U844] caches a pass for the same project and mode, and runs again for another mode or project", async () => {
     const { bb, exec, calls, input } = setup();
     const cache = new Set<string>();
     await preflightOnce({ bb, exec }, cache, "proj-1", input("local-only"));
@@ -94,9 +94,12 @@ describe("preflightOnce", () => {
     expect(calls.length).toBe(afterFirst);
     await preflightOnce({ bb, exec }, cache, "proj-1", input("direct-PR"));
     expect(calls.length).toBeGreaterThan(afterFirst);
+    const afterMode = calls.length;
     await preflightOnce({ bb, exec }, cache, "proj-2", input("local-only"));
-    expect(calls.length).toBeGreaterThan(afterFirst + 1);
+    expect(calls.length).toBeGreaterThan(afterMode);
+  });
 
+  it("[U844] does not cache a failure", async () => {
     const failing = setup({ [GH]: { code: 1 } });
     const failCache = new Set<string>();
     await preflightOnce({ bb: failing.bb, exec: failing.exec }, failCache, "proj-1", failing.input("direct-PR"));
@@ -120,7 +123,36 @@ describe("reportText", () => {
     expect(text).toContain("gh auth login");
   });
 
-  it("says so when nothing is missing", () => {
+  it("[U871] says so when nothing is missing", () => {
     expect(reportText(HOST, "local-only", [])).toMatch(/ready/);
+  });
+});
+
+describe("preflightOnce cache keys", () => {
+  it("[U882] runs its own checks for a second host", async () => {
+    const { bb, exec, calls, input } = setup();
+    const cache = new Set<string>();
+    await preflightOnce({ bb, exec }, cache, "proj-1", input("local-only"));
+    const first = calls.length;
+    await preflightOnce({ bb, exec }, cache, "proj-1", { ...input("local-only"), host: { ...HOST, id: "host_other", name: "other-box" } });
+    expect(calls.length).toBeGreaterThan(first);
+  });
+
+  it("[U883] runs its own checks for a second provider", async () => {
+    const { bb, exec, calls, input } = setup();
+    const cache = new Set<string>();
+    await preflightOnce({ bb, exec }, cache, "proj-1", input("local-only", "claude"));
+    const first = calls.length;
+    await preflightOnce({ bb, exec }, cache, "proj-1", input("local-only", "codex"));
+    expect(calls.length).toBeGreaterThan(first);
+  });
+
+  it("[U884] caches a pass for the same host, project, mode, and provider", async () => {
+    const { bb, exec, calls, input } = setup();
+    const cache = new Set<string>();
+    await preflightOnce({ bb, exec }, cache, "proj-1", input("local-only", "claude"));
+    const first = calls.length;
+    await preflightOnce({ bb, exec }, cache, "proj-1", input("local-only", "claude"));
+    expect(calls.length).toBe(first);
   });
 });

@@ -4,7 +4,7 @@ loop: outside-in
 profile: .specify/memory/tdd-profile.md
 spec_criteria: 24
 planned_at: 5028c96
-updated_at: 5028c96
+updated_at: 9e765f8
 suite_baseline: green
 ---
 
@@ -151,6 +151,45 @@ The suite baseline was 63 files and 708 tests, all passing.
 | --- | --- | --- | --- | --- | --- |
 | U855 | `factoryman_status` shows the machine of a task that has one | FR-801 | example | DONE | `src/tools/status.test.ts::[U855]` |
 | U856 | `bb factoryman preflight <machine> --project <id>` runs the preflight and prints the report, and a bad call prints usage | FR-812 | example | DONE | `src/tools/supervisor-command.test.ts::[U856]` |
+
+## Added by the audit (cycle R1)
+
+| id | behavior | traces | kind | state | test |
+| --- | --- | --- | --- | --- | --- |
+| A825 | After a pass, the next dispatch to the same machine does not repeat the preflight | AC-4.4 | example | DONE | `test/acceptance/machine-remote.test.ts::[A825]` |
+| A826 | A `local-only` dispatch to a machine is refused when the project has no default source, even if the machine is the first source | AC-3.1 | boundary | DONE | `test/acceptance/machine-placement.test.ts::[A826]` |
+| A827 | A machine list that bb cannot return stops the dispatch with no task and no worker | AC-1.5, AC-2.1 | error | DONE | `test/acceptance/machine-placement.test.ts::[A827]` |
+| U857 | A machine list or a source list that bb cannot return stops the dispatch with no task and no worker | AC-2.1 | error | DONE | `src/tools/dispatch.test.ts::[U857]` |
+| U858 | A preflight that cannot run stops the dispatch | AC-4.4 | error | DONE | `src/tools/dispatch.test.ts::[U858]` |
+| U859 | The provider is checked on the target host | AC-4.4 | example | DONE | `src/tools/dispatch.test.ts::[U859]` |
+| U860 | The provider is still checked after a preflight pass is cached | AC-4.4 | example | DONE | `src/tools/dispatch.test.ts::[U860]` |
+| U861 | Teardown refuses, records nothing, and removes nothing when the project sources cannot be read | AC-5.2 | error | DONE | `src/tools/teardown.test.ts::[U861]` |
+| U862 | A worker's block after a monitor block and unblock stays | AC-2.3 | example | DONE | `src/machines/monitor.test.ts::[U862]` |
+| U863 | A refused row after the monitor's block does not stop the unblock | AC-2.3 | boundary | DONE | `src/machines/monitor.test.ts::[U863]` |
+| U864 | A system block without the monitor's prefix stays | AC-2.3 | example | DONE | `src/machines/monitor.test.ts::[U864]` |
+| U865 | A deleted machine's task is never unblocked, even when the list still shows the host online | AC-2.4 | example | DONE | `src/machines/monitor.test.ts::[U865]` |
+| U866 | The warning for a task in another state repeats after an outage ends and a new one begins | AC-2.6 | example | DONE | `src/machines/monitor.test.ts::[U866]` |
+| U867 | A torn down task on an offline machine is ignored without a warning | AC-2.6 | example | DONE | `src/machines/monitor.test.ts::[U867]` |
+| U868 | `pickMachine` marks the host that holds the clone | FR-805 | example | DONE | `src/dispatch/placement.test.ts::[U868]` |
+| U869 | `hostFor` reads nothing from bb for a task with no machine | FR-810 | example | DONE | `src/machines/route.test.ts::[U869]` |
+| U870 | The preflight reports every failed check together | FR-808 | example | DONE | `src/machines/preflight.test.ts::[U870]` |
+| U871 | The report says so when nothing is missing | FR-808 | example | DONE | `src/machines/preflight.test.ts::[U871]` |
+| U872 | A disconnected terminal is an error | FR-809 | error | DONE | `src/machines/remote-exec.test.ts::[U872]` |
+| U873 | The preflight command skips checks the mode does not need and reports an offline machine | FR-812 | example | DONE | `src/tools/supervisor-command.test.ts::[U873]` |
+| U874 | The preflight command says that the clone host needs no remote preflight and runs nothing | AC-4.5 | example | DONE | `src/tools/supervisor-command.test.ts::[U874]` |
+| U875 | `pollMsFrom` turns seconds into milliseconds with a floor of one second | FR-806 | boundary | DONE | `src/machines/monitor.test.ts::[U875]` |
+| U876 | The machine check interval setting has a default of 30 seconds | FR-806 | example | DONE | `src/server.test.ts::[U876]` |
+| U877 | A worker's block that copies the monitor's evidence prefix stays | AC-2.3 | example | DONE | `src/machines/monitor.test.ts::[U877]` |
+| U878 | The `FMX1` wrapper, run by a real shell, reports exit codes, both streams, and non-ASCII text | FR-809 | example | DONE | `src/machines/remote-exec.test.ts::[U878]` |
+| U879 | The remote host reaches the validator when it answers a finding | FR-810 | example | DONE | `src/validator/driver.test.ts::[U879]` |
+| U880 | The remote host reaches the validator while it waits for a person | FR-810 | example | DONE | `src/validator/driver.test.ts::[U880]` |
+| U881 | A `starting` terminal is polled again | FR-809 | example | DONE | `src/machines/remote-exec.test.ts::[U881]` |
+| U882 | A second host gets its own preflight | FR-808 | example | DONE | `src/machines/preflight.test.ts::[U882]` |
+| U883 | A second provider gets its own preflight | FR-808 | example | DONE | `src/machines/preflight.test.ts::[U883]` |
+| U884 | A pass for the same host, project, mode, and provider is cached | FR-808 | example | DONE | `src/machines/preflight.test.ts::[U884]` |
+
+`[A812]` is now one case per move of both lanes (33), with no skipped row.
+`[U856]`, `[A805]`, and `[U844]` are split into one behavior per test.
 
 ## Cycle plan
 

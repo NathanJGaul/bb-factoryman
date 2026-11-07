@@ -28,5 +28,19 @@ description: "Task list for machine placement"
 
 ## Phase 5: Close-out
 
-- [X] T840 Record D-069 to D-074 in `docs/DECISIONS.md`, update `spike/RESULTS.md` (Not checked table), and update the profile helpers
-- [ ] T841 `/speckit.tdd.verify`, remediation, `/speckit.checklist`, `/speckit.analyze`, `/speckit.converge`
+- [X] T840 Record D-069 to D-077 in `docs/DECISIONS.md`, update `spike/RESULTS.md` (Not checked table), and update the profile helpers
+- [X] T841 `/speckit.tdd.verify`, remediation, `/speckit.checklist`, `/speckit.analyze`, `/speckit.converge`
+
+## Phase 6: Audit remediation (from `tdd/verification.md`)
+
+- [X] R1 `[U857]`, `[A827]`: a `bb` read failure during placement stops the dispatch
+- [X] R2 `[U861]`: teardown refuses when the sources cannot be read
+- [X] R3 `[U882]` to `[U884]`: the preflight cache key holds host, project, mode, and provider
+- [X] R4 `[U878]`: the `FMX1` wrapper runs under a real shell
+- [X] R5 `[A826]`: `local-only` with a machine and no default source is refused
+- [X] R6 `[U858]` to `[U860]`: the provider check on the target host, and a preflight that cannot run
+- [X] R7 `[U879]`, `[U880]`: the remote host reaches `answer` and the status poll
+- [X] R8 `[U862]` to `[U864]`, `[U877]`: the monitor unblocks only its own blocks
+- [X] R9 `[U865]`: a deleted machine's task is never unblocked (the monitor remembers removed hosts)
+- [X] R10 `[A812]` per move, and the three eager tests split
+- [X] R11 `[U868]` to `[U876]`, `[U881]`, `[A825]`: the smaller survivors and the bookkeeping

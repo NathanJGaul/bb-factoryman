@@ -585,7 +585,8 @@ A real remote machine is the owner's live check.
 A task in `validating`, `needs_decision`, `review_ready`, or `awaiting_approval` on an offline machine gets one warning in the plugin log and no event.
 The monitor marks its own blocks with the evidence prefix `machine offline: `, and it unblocks a task only when the latest applied row is a system `block` with that prefix.
 A block that the worker reported stays until a person acts.
-A removed machine (`experimental_host.deleted`) blocks its working tasks at once, and its tasks never return, because the host is gone from the list.
+A removed machine (`experimental_host.deleted`) blocks its working tasks at once.
+The monitor remembers the removed host ID until the process restarts, and bb answers 404 for the host after that, so the tasks never return.
 bb sends no disconnect event (spike item 7), so the monitor reads `hosts.list()` every `machinePollSeconds` seconds (default 30, at least 1).
 
 ### D-073: The `start` event carries `cloneMachine`, and a guard enforces hard rule 6 (Deviation from milestone 2)

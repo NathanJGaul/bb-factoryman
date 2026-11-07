@@ -87,3 +87,23 @@ Red commit: the commit before this group's implementation (`test: add machine mo
 - `[U123]` changed with the requirement: two services and seven event handlers (D-077).
 - green: `monitor.ts` (`tick`, `hostDeleted`, the warn-once set, and unblock only for the monitor's own latest block), the `machinePollSeconds` setting, the `factoryman-machines` service, and the `experimental_host.deleted` handler.
   `pnpm run check` -> 72 files, 801 passed, 0 failed. Type check and lint clean.
+
+## Cycle R1: audit remediation (tests added to kill surviving mutants)
+
+The cold audit (`tdd/verification.md`, commit `9e765f8`) returned FAIL: 91 mutants, 22 survived, 21 of them real gaps. Four sat on fail-open paths.
+One production change came out of it (R9). Every other new test passed at once, because the code was already right, so each one was proven by re-running its mutant.
+
+- R1 `[U857]`, `[A827]`: a machine or source read that fails stops the dispatch. Mutant: return `ok: true` from the `place` catch (D4) -> `[U857]` (two cases) and `[A827]` failed (3 failed). Reverted.
+- R2 `[U861]`: teardown refuses when the sources cannot be read. Mutant: set `host = null` instead of refusing (H3) -> `[U861]` failed. Reverted.
+- R3 `[U882]`, `[U883]`, `[U884]`: Mutants: drop the host from the cache key (F4) -> `[U882]`; drop the provider (F5) -> `[U883]`. Reverted.
+- R4 `[U878]`: five tests run `WRAPPER` under a real `sh`. Mutants: `c=0` (W1) -> 3 failed; merge the streams (W2) -> 4 failed. Reverted.
+- R5 `[A826]`: the first version survived the "first source is the clone" mutant (D13), because the requested machine was second. The machine now comes first in the source list, and the mutant failed it. Reverted.
+- R6 `[U858]`, `[U859]`, `[U860]`: Mutants: check providers on the default host only (D5) -> `[U859]`, `[U860]`; swallow the preflight throw (D8) -> `[U858]`. Reverted.
+- R7 `[U879]`, `[U880]`: Mutants: drop the host from `answer` (H6) -> `[U192]`, `[U879]`; drop it from the status poll (H5) -> `[U880]`. Reverted.
+- R8 `[U862]`, `[U863]`, `[U864]`, `[U877]`: Mutants: drop the `applied` filter (N6) -> `[U863]`; drop the actor check (N3) survived until `[U877]` (a worker block that copies the prefix) was added, and then failed it. Reverted.
+  The mutant that reads "the latest applied block row" instead of "the latest applied row" (N5) is equivalent: the task is `blocked` here, and the latest applied row of a blocked task is always its latest block.
+- R9 `[U865]` was red: `hostDeleted` and then a tick with the host still listed online moved the task to `working`. `MachineMonitor` now keeps a set of removed host IDs (D-072). Mutant: ignore the set -> `[U865]` failed. Reverted.
+- R10 `[A812]` is one case per move (33), and the two rows it skipped now get their own context (`direct-PR` for `ready`, a `promote` scope for a scout). Mutant: `request_changes` clears the machine -> failed. `[U856]`, `[A805]`, and `[U844]` are split.
+- R11 `[U866]`, `[U867]`, `[U874]`, `[U875]`, `[U876]`, `[U881]`, `[A825]`, and the six formerly untagged tests (`[U868]` to `[U872]`, `[U873]`). Mutants: no warn re-arm (N8), torn_down not ignored (N9), clone host runs the preflight (P11), `starting` treated as done (R4), poll floor, unit, and default (N16, S2, S1) -> each failed its test. Reverted.
+- `[U809]` uses non-empty lists now. The monitor acceptance tests wait for host reads (`ticks`) and not for fixed sleeps.
+- suite: `pnpm run check` -> 72 files, 873 passed, 0 failed. Type check and lint clean.

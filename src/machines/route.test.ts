@@ -22,7 +22,7 @@ describe("hostFor", () => {
     expect(await hostFor(setup(), { machine: "host_gpu", projectId: "proj-1" })).toBe("host_gpu");
   });
 
-  it("reads nothing from bb when the task has no machine", async () => {
+  it("[U869] reads nothing from bb when the task has no machine", async () => {
     const bb = setup();
     await hostFor(bb, { machine: null, projectId: "proj-1" });
     expect(bb.callsTo("getProjectSources")).toEqual([]);

@@ -363,3 +363,33 @@ function testRuntimeWithSleep(t: TestRuntime): TestRuntime {
   return { ...t, runtime, sleeps };
 }
 
+
+describe("ValidationDriver on a remote machine", () => {
+  async function remoteParked() {
+    const t = await withDispatchedTask();
+    t.bb.machines.push({ id: "host_gpu", name: "gpu-box", status: "connected", phase: "active", online: true });
+    t.bb.sources.push({ hostId: "host_gpu", path: "/work/gpu", isDefault: false });
+    t.bb.envPaths.set("env-thr-w2", "/work/gpu/tree");
+    expect((await dispatch(t.runtime, SUPERVISOR, { ...DISPATCH_ARGS, machine: "gpu-box" })).ok).toBe(true);
+    await t.runtime.apply("t2", { type: "handoff", actor: "worker", evidence: "Committed." });
+    await t.runtime.apply("t2", { type: "finding", actor: "system", evidence: "Gate review has 1 finding." });
+    const built = driverFor(t);
+    return built;
+  }
+
+  it("[U879] passes the remote host to the validator when it answers a finding", async () => {
+    const { t, driver, validator } = await remoteParked();
+    validator.script("answer", [ok(view())]);
+    const result = await driver.answer("t2", { action: "approve" }, "user");
+    expect(result).toEqual({ ok: true });
+    expect(state2(t)).toBe("validating");
+    expect(calls(validator, "answer")).toEqual([{ operation: "answer", input: { cwd: "/work/gpu/tree", host: "host_gpu", response: { action: "approve" } } }]);
+  });
+
+  it("[U880] passes the remote host to the validator while it waits for a person", async () => {
+    const { driver, validator } = await remoteParked();
+    validator.script("status", [ok(gateView("review-1"))]);
+    await driver.step("t2");
+    expect(calls(validator, "status")).toEqual([{ operation: "status", input: { cwd: "/work/gpu/tree", host: "host_gpu" } }]);
+  });
+});

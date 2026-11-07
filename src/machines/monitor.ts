@@ -5,6 +5,11 @@ import type { TaskRow } from "../store/types";
 /** The start of the evidence on a block that the monitor wrote. The monitor unblocks only blocks that start with it. */
 export const MACHINE_OFFLINE = "machine offline: ";
 
+/** The monitor reads the machines at most once a second, whatever the setting says. */
+export function pollMsFrom(seconds: number): number {
+  return Math.max(1000, Math.round(seconds * 1000));
+}
+
 /** States where a task has ended, so its machine no longer matters. */
 const ENDED: readonly string[] = ["failed", "torn_down"];
 
@@ -18,6 +23,8 @@ const ENDED: readonly string[] = ["failed", "torn_down"];
 export class MachineMonitor {
   /** `taskId:state` pairs that already got a warning, so a long outage warns once. */
   private readonly warned = new Set<string>();
+  /** Host IDs that bb removed while this process ran. Their tasks never come back. */
+  private readonly removed = new Set<string>();
 
   constructor(private readonly rt: Runtime) {}
 
@@ -33,16 +40,24 @@ export class MachineMonitor {
     for (const task of store.listTasks()) {
       if (task.machine === null || ENDED.includes(task.state)) continue;
       const machine = machines.find((candidate) => candidate.id === task.machine);
-      if (machine?.online === true) {
+      if (machine?.online === true && !this.removed.has(machine.id)) {
         await this.recover(task, machine);
       } else {
-        await this.lost(task, machine === undefined ? `machine ${task.machine} is missing from bb` : `${machine.name} (${machine.id}) is ${machine.status}, phase ${machine.phase}`);
+        await this.lost(
+          task,
+          machine === undefined
+            ? `machine ${task.machine} is missing from bb`
+            : this.removed.has(machine.id)
+              ? `${machine.name} (${machine.id}) was removed`
+              : `${machine.name} (${machine.id}) is ${machine.status}, phase ${machine.phase}`,
+        );
       }
     }
   }
 
   /** bb removed a machine: block its working tasks at once. */
   async hostDeleted(hostId: string, name: string): Promise<void> {
+    this.removed.add(hostId);
     for (const task of this.rt.deps.store.listTasks()) {
       if (task.machine === hostId && !ENDED.includes(task.state)) await this.lost(task, `${name} (${hostId}) was removed`);
     }

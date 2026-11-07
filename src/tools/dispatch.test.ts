@@ -123,3 +123,59 @@ describe("factoryman_dispatch", () => {
     expect(outcome).toEqual({ ok: true, text: "Dispatched ship task t1 in no-mistakes mode. Worker thread thr-w1, branch fm/t1." });
   });
 });
+
+describe("factoryman_dispatch placement failures", () => {
+  function remote() {
+    const t = setup();
+    t.bb.machines.push({ id: "host_gpu", name: "gpu-box", status: "connected", phase: "active", online: true });
+    t.bb.sources.push({ hostId: "host_gpu", path: "/work/gpu", isDefault: false });
+    return t;
+  }
+
+  it.each([
+    ["the machines cannot be listed", (t: ReturnType<typeof remote>) => void (t.bb.machinesError = new Error("bb is down"))],
+    ["the project sources cannot be read", (t: ReturnType<typeof remote>) => void (t.bb.sourcesError = new Error("bb is down"))],
+  ])("[U857] stops, and spawns nothing on any host, when %s", async (_label, break_) => {
+    const t = remote();
+    break_(t);
+    const outcome = await dispatch(t.runtime, supervisor, { ...valid, machine: "gpu-box" });
+    expect(outcome.ok).toBe(false);
+    expect(outcome.text).toContain("could not read bb's machines");
+    expect(outcome.text).toContain("No task was created");
+    expect(t.bb.callsTo("spawnWorker")).toEqual([]);
+    expect(t.runtime.deps.store.listTasks()).toEqual([]);
+  });
+
+  it("[U858] stops when the preflight cannot run, and spawns nothing", async () => {
+    const t = remote();
+    t.runtime.deps.exec = async () => {
+      throw new Error("terminal exploded");
+    };
+    const outcome = await dispatch(t.runtime, supervisor, { ...valid, machine: "gpu-box" });
+    expect(outcome.ok).toBe(false);
+    expect(outcome.text).toContain("preflight");
+    expect(outcome.text).toContain("terminal exploded");
+    expect(t.bb.callsTo("spawnWorker")).toEqual([]);
+    expect(t.runtime.deps.store.listTasks()).toEqual([]);
+  });
+
+  it("[U859] checks the provider on the target host and not only on the default host", async () => {
+    const t = remote();
+    t.bb.providersByHost.set("host_gpu", [{ id: "claude", available: false, permissionModes: ["accept-edits"], reasoningLevels: [] }]);
+    const outcome = await dispatch(t.runtime, supervisor, { ...valid, machine: "gpu-box" });
+    expect(outcome.ok).toBe(false);
+    expect(outcome.text).toContain("provider_unavailable");
+    expect(t.bb.callsTo("listProviders").map(([host]) => host)).toContain("host_gpu");
+    expect(t.bb.callsTo("spawnWorker")).toEqual([]);
+  });
+
+  it("[U860] still checks the provider after a preflight pass is cached", async () => {
+    const t = remote();
+    expect((await dispatch(t.runtime, supervisor, { ...valid, machine: "gpu-box" })).ok).toBe(true);
+    t.bb.providersByHost.set("host_gpu", [{ id: "claude", available: false, permissionModes: ["accept-edits"], reasoningLevels: [] }]);
+    const second = await dispatch(t.runtime, supervisor, { ...valid, machine: "gpu-box" });
+    expect(second.ok).toBe(false);
+    expect(second.text).toContain("provider_unavailable");
+    expect(t.bb.callsTo("spawnWorker")).toHaveLength(1);
+  });
+});

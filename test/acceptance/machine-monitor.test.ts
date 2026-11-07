@@ -23,6 +23,12 @@ const setGpu = (world: World, host: ReturnType<typeof gpu> | null) => {
   world.machines.splice(1, world.machines.length, ...(host === null ? [] : [host]));
 };
 const state = (world: World, id = "t1") => world.store.getTask(id)?.state;
+const hostReads = (world: World) => world.sdkCalls("hosts.list").length;
+/** Wait until the monitor has read the machines `count` more times, so a negative result has had its chance to fail. */
+async function ticks(world: World, count = 3): Promise<void> {
+  const target = hostReads(world) + count;
+  await settle(() => hostReads(world) >= target, 2000);
+}
 
 describe("the machine monitor through the plugin factory", () => {
   it("[A809] blocks a working task whose machine goes offline and wakes the supervisor once", async () => {
@@ -30,7 +36,7 @@ describe("the machine monitor through the plugin factory", () => {
     const monitor = world.startMonitor();
     setGpu(world, gpu({ status: "disconnected" }));
     await settle(() => state(world) === "blocked");
-    await new Promise((resolve) => setTimeout(resolve, 20));
+    await ticks(world);
     await monitor.stop();
     expect(state(world)).toBe("blocked");
     const wakes = world.sent("thr-sup");
@@ -51,7 +57,7 @@ describe("the machine monitor through the plugin factory", () => {
     await settle(() => state(world, "t1") === "blocked");
     setGpu(world, gpu());
     await settle(() => state(world, "t1") === "working");
-    await new Promise((resolve) => setTimeout(resolve, 20));
+    await ticks(world);
     await monitor.stop();
     expect(state(world, "t1")).toBe("working");
     expect(state(world, "t2")).toBe("blocked");
@@ -65,7 +71,7 @@ describe("the machine monitor through the plugin factory", () => {
     expect(world.sent("thr-sup")).toHaveLength(1);
     setGpu(world, null);
     const monitor = world.startMonitor();
-    await new Promise((resolve) => setTimeout(resolve, 30));
+    await ticks(world);
     await monitor.stop();
     expect(state(world)).toBe("blocked");
   });
@@ -82,7 +88,7 @@ describe("the machine monitor through the plugin factory", () => {
     const monitor = world.startMonitor();
     setGpu(world, gpu({ status: "disconnected" }));
     await settle(() => state(world, "t1") === "blocked");
-    await new Promise((resolve) => setTimeout(resolve, 20));
+    await ticks(world);
     await monitor.stop();
     expect(state(world, "t2")).toBe("review_ready");
     expect(world.store.listEvents({ taskId: "t2" })).toHaveLength(before);

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { DISPATCH_ARGS, SUPERVISOR, testRuntime, type TestRuntime } from "../../test/fixtures/runtime";
 import type { MachineInfo } from "../bb/port";
 import { dispatch } from "../tools/dispatch";
-import { MACHINE_OFFLINE, MachineMonitor } from "./monitor";
+import { MACHINE_OFFLINE, MachineMonitor, pollMsFrom } from "./monitor";
 
 const gpu = (overrides: Partial<MachineInfo> = {}): MachineInfo => ({ id: "host_gpu", name: "gpu-box", status: "connected", phase: "active", online: true, ...overrides });
 const OFFLINE = { status: "disconnected", online: false } as const;
@@ -141,5 +141,103 @@ describe("MachineMonitor.hostDeleted", () => {
     expect(state(t, "t1")).toBe("blocked");
     await monitor.hostDeleted("host_gpu", "gpu-box");
     expect(rows(t).filter((row) => row.event === "block")).toHaveLength(1);
+  });
+});
+
+describe("MachineMonitor unblock rule", () => {
+  it("[U862] leaves a worker's block alone after the monitor blocked and unblocked the task once", async () => {
+    const t = await remoteTask();
+    const monitor = new MachineMonitor(t.runtime);
+    setGpu(t, gpu(OFFLINE));
+    await monitor.tick();
+    setGpu(t, gpu());
+    await monitor.tick();
+    expect(state(t)).toBe("working");
+    await t.runtime.apply("t1", { type: "block", actor: "worker", evidence: "Waiting for a decision." });
+    await monitor.tick();
+    expect(state(t)).toBe("blocked");
+    expect(lastApplied(t)).toMatchObject({ event: "block", actor: "worker" });
+  });
+
+  it("[U863] still unblocks after a refused row follows the monitor's own block", async () => {
+    const t = await remoteTask();
+    const monitor = new MachineMonitor(t.runtime);
+    setGpu(t, gpu(OFFLINE));
+    await monitor.tick();
+    const refused = await t.runtime.apply("t1", { type: "merge", actor: "supervisor", yolo: false });
+    expect(refused.ok).toBe(false);
+    expect(rows(t).at(-1)?.outcome).toBe("refused");
+    setGpu(t, gpu());
+    await monitor.tick();
+    expect(state(t)).toBe("working");
+  });
+
+  it("[U864] leaves a system block that does not start with the monitor's prefix alone", async () => {
+    const t = await remoteTask();
+    await t.runtime.apply("t1", { type: "block", actor: "system", evidence: "Something else stopped the task." });
+    await new MachineMonitor(t.runtime).tick();
+    expect(state(t)).toBe("blocked");
+  });
+
+  it("[U865] never unblocks the task of a deleted machine, even when the list still shows the host online", async () => {
+    const t = await remoteTask();
+    const monitor = new MachineMonitor(t.runtime);
+    await monitor.hostDeleted("host_gpu", "gpu-box");
+    expect(state(t)).toBe("blocked");
+    await monitor.tick();
+    await monitor.tick();
+    expect(state(t)).toBe("blocked");
+    expect(rows(t).filter((row) => row.event === "unblock")).toEqual([]);
+  });
+
+  it("[U866] warns again when a long outage ends and a new one begins", async () => {
+    const t = await remoteTask();
+    await t.runtime.apply("t1", { type: "handoff", actor: "worker", evidence: "Committed." });
+    const monitor = new MachineMonitor(t.runtime);
+    const warnings = () => t.lines.filter((line) => line.level === "warn" && line.message.includes("Task t1")).length;
+    setGpu(t, gpu(OFFLINE));
+    await monitor.tick();
+    expect(warnings()).toBe(1);
+    setGpu(t, gpu());
+    await monitor.tick();
+    setGpu(t, gpu(OFFLINE));
+    await monitor.tick();
+    expect(warnings()).toBe(2);
+  });
+
+  it("[U867] ignores a torn down task on an offline machine, without a warning", async () => {
+    const t = await remoteTask();
+    t.bb.envPaths.set("env-thr-w1", "/work/gpu/tree");
+    await t.runtime.apply("t1", { type: "fail", actor: "system", evidence: "Gave up." });
+    t.execHandler = (command, args) => ({ code: 0, stdout: command === "git" && args[0] === "rev-list" ? "0\n" : "", stderr: "" });
+    const { teardown } = await import("../tools/teardown");
+    expect((await teardown(t.runtime, SUPERVISOR, { taskId: "t1" })).ok).toBe(true);
+    expect(state(t)).toBe("torn_down");
+    setGpu(t, gpu(OFFLINE));
+    const count = rows(t).length;
+    await new MachineMonitor(t.runtime).tick();
+    expect(rows(t)).toHaveLength(count);
+    expect(t.lines.filter((line) => line.level === "warn" && line.message.includes("Task t1"))).toEqual([]);
+  });
+});
+
+describe("pollMsFrom", () => {
+  it("[U875] turns seconds into milliseconds with a floor of one second", () => {
+    expect(pollMsFrom(30)).toBe(30_000);
+    expect(pollMsFrom(1.5)).toBe(1500);
+    expect(pollMsFrom(1)).toBe(1000);
+    expect(pollMsFrom(0.2)).toBe(1000);
+    expect(pollMsFrom(0)).toBe(1000);
+    expect(pollMsFrom(-5)).toBe(1000);
+  });
+});
+
+describe("MachineMonitor spoofed evidence", () => {
+  it("[U877] leaves a worker's block alone even when its evidence copies the monitor's prefix", async () => {
+    const t = await remoteTask();
+    await t.runtime.apply("t1", { type: "block", actor: "worker", evidence: `${MACHINE_OFFLINE}pretending the machine is down.` });
+    await new MachineMonitor(t.runtime).tick();
+    expect(state(t)).toBe("blocked");
+    expect(lastApplied(t)).toMatchObject({ event: "block", actor: "worker" });
   });
 });

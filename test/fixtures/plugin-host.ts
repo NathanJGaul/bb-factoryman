@@ -118,6 +118,8 @@ export interface WorldOptions {
   providersError?: Error;
   /** Make `projects.get` fail. */
   projectError?: Error;
+  /** Make `hosts.list` fail. */
+  hostsError?: Error;
   /** Replace the rules-table resolver. */
   resolver?: DispatchResolver;
   /** Run some commands for real. Return undefined to fall back to the scripted handler. */
@@ -186,7 +188,10 @@ export async function loadWorld(options: WorldOptions = {}): Promise<World> {
         },
       },
       hosts: {
-        list: async () => machines,
+        list: async () => {
+          if (options.hostsError) throw options.hostsError;
+          return machines;
+        },
       },
       terminals: {
         create: async (rawArgs: unknown) => {

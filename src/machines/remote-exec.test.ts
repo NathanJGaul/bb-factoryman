@@ -1,8 +1,12 @@
+import { spawnSync } from "node:child_process";
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { frame } from "../../test/fixtures/frame";
 import { FakeBbPort } from "../../test/fixtures/bb-port";
-import type { Exec } from "../exec";
-import { createRemoteRunner, routeExec } from "./remote-exec";
+import type { Exec, ExecResult } from "../exec";
+import { createRemoteRunner, decodeFrame, routeExec, WRAPPER } from "./remote-exec";
 
 function setup(options: { pollMs?: number; timeoutMs?: number } = {}) {
   const bb = new FakeBbPort();
@@ -94,7 +98,7 @@ describe("createRemoteRunner", () => {
     expect(bb.terminalClosed).toEqual(["term-1", "term-2", "term-3"]);
   });
 
-  it("reports a terminal that disconnected as an error", async () => {
+  it("[U872] reports a terminal that disconnected as an error", async () => {
     const { bb, run } = setup();
     bb.terminalReads = [{ status: "disconnected", exitCode: null, output: "", truncated: false }];
     expect(await run("h", "x", [])).toMatchObject({ code: null, error: expect.stringMatching(/disconnected/) });
@@ -110,5 +114,52 @@ describe("routeExec", () => {
     expect((await exec("git", ["x"], { cwd: "/w" })).stdout).toBe("local");
     expect((await exec("git", ["x"], { host: null })).stdout).toBe("local");
     expect((await exec("git", ["x"], { host: "host_gpu", cwd: "/w" })).stdout).toBe("remote:host_gpu");
+  });
+});
+
+describe("the FMX1 wrapper, run by a real shell", () => {
+  /** Run `WRAPPER` the way the terminal does: `sh -c <wrapper> sh <command> <args>`. */
+  function runWrapped(command: string, args: string[], cwd?: string): ExecResult | null {
+    const run = spawnSync("sh", ["-c", WRAPPER, "sh", command, ...args], { encoding: "utf8", cwd });
+    return decodeFrame(run.stdout.replace(/\n/g, "\r\n"));
+  }
+
+  it("[U878] reports exit code 0 with empty streams", () => {
+    expect(runWrapped("true", [])).toEqual({ code: 0, stdout: "", stderr: "" });
+  });
+
+  it("[U878] reports a non-zero exit code with output on both streams, kept apart", () => {
+    expect(runWrapped("sh", ["-c", "echo out-line; echo err-line >&2; exit 3"])).toEqual({ code: 3, stdout: "out-line\n", stderr: "err-line\n" });
+  });
+
+  it("[U878] reports the exit code of a failing git command in a directory that is not a repository", () => {
+    const dir = mkdtempSync(join(tmpdir(), "factoryman-wrapper-"));
+    try {
+      const result = runWrapped("git", ["status", "--porcelain"], dir);
+      expect(result?.code).not.toBe(0);
+      expect(result?.stderr).toMatch(/not a git repository/i);
+      expect(result?.stdout).toBe("");
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("[U878] reports exit code 127 and the error for a command that does not exist", () => {
+    const result = runWrapped("factoryman-no-such-command", []);
+    expect(result?.code).toBe(127);
+    expect(result?.stdout).toBe("");
+  });
+
+  it("[U878] carries multi-line output and non-ASCII text through the frame", () => {
+    expect(runWrapped("sh", ["-c", "printf 'a\\nb\\n'; printf 'h\\303\\251llo' >&2"])).toEqual({ code: 0, stdout: "a\nb\n", stderr: "héllo" });
+  });
+});
+
+describe("createRemoteRunner terminal states", () => {
+  it("[U881] keeps polling while the terminal is starting", async () => {
+    const bb = new FakeBbPort();
+    bb.terminalReads = [{ status: "starting", exitCode: null, output: "", truncated: false }, { status: "exited", exitCode: 0, output: frame(0, "ok"), truncated: false }];
+    const run = createRemoteRunner(bb, async () => undefined, { pollMs: 10, timeoutMs: 100 });
+    expect(await run("h", "x", [])).toMatchObject({ code: 0, stdout: "ok" });
   });
 });

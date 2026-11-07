@@ -5,7 +5,7 @@ import { RulesTableResolver } from "./dispatch/resolver";
 import type { DispatchResolver } from "./dispatch/types";
 import { runCommand, type Exec } from "./exec";
 import { nodeFiles, type Files } from "./files";
-import { MachineMonitor } from "./machines/monitor";
+import { MachineMonitor, pollMsFrom } from "./machines/monitor";
 import { createRemoteRunner, routeExec } from "./machines/remote-exec";
 import { createMergeExecutor } from "./git/merge";
 import { Runtime, type Settings } from "./runtime";
@@ -80,7 +80,7 @@ export function createPlugin(options: PluginOptions = {}): (bb: BbPluginApi) => 
     const settings = (): Settings => ({
       mergeMethod: mergeMethod(values.mergeMethod),
       approvalTimeoutMs: Math.max(1, Math.round(values.approvalTimeoutMinutes * 60_000)),
-      machinePollMs: options.machinePollMs ?? Math.max(1000, Math.round(values.machinePollSeconds * 1000)),
+      machinePollMs: options.machinePollMs ?? pollMsFrom(values.machinePollSeconds),
     });
 
     const store = openSqliteStore(bb.storage.database());

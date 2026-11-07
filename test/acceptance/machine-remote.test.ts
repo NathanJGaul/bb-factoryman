@@ -72,7 +72,7 @@ describe("dispatch to a remote machine", () => {
     expect(world.store.listTasks()).toEqual([]);
   });
 
-  it("[A820] dispatches once the preflight passes, and does not repeat the checks for the next task", async () => {
+  it("[A825] dispatches once the preflight passes, and does not repeat the checks for the next task", async () => {
     const world = await setup();
     expect((await world.call("factoryman_dispatch", { ...TASK, machine: "gpu-box" })).isError).toBe(false);
     const checks = world.remote.runs.length;

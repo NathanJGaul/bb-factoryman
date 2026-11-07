@@ -34,6 +34,7 @@ export class FakeBbPort implements BbPort {
   /** What `listMachines` returns. The default is one online host, `host_local`. */
   machines: MachineInfo[] = [{ id: "host_local", name: "local-box", status: "connected", phase: "active", online: true }];
   machinesError: Error | null = null;
+  sourcesError: Error | null = null;
   /** The project's sources. The default is one default source on `host_local`. */
   sources: ProjectSource[] = [{ hostId: "host_local", path: "/work/repo", isDefault: true }];
   spawnError: Error | null = null;
@@ -145,6 +146,7 @@ export class FakeBbPort implements BbPort {
 
   async getProjectSources(projectId: string): Promise<ProjectSource[]> {
     this.calls.push({ method: "getProjectSources", args: [projectId] });
+    if (this.sourcesError) throw this.sourcesError;
     return this.sources;
   }
 

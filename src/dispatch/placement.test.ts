@@ -72,10 +72,11 @@ describe("pickMachine", () => {
   });
 
   it("[U809] gives none, and reads no host, when no value is set", () => {
-    expect(pickMachine({}, [], [])).toEqual({ status: "none" });
+    expect(pickMachine({}, ALL, SOURCES)).toEqual({ status: "none" });
+    expect(pickMachine({ explicit: " ", rule: "", projectDefault: null }, ALL, SOURCES)).toEqual({ status: "none" });
   });
 
-  it("marks the host that holds the clone", () => {
+  it("[U868] marks the host that holds the clone", () => {
     expect(pickMachine({ explicit: "alpha" }, ALL, SOURCES)).toMatchObject({ status: "chosen", isClone: true });
     expect(pickMachine({ explicit: "beta" }, ALL, SOURCES)).toMatchObject({ status: "chosen", isClone: false });
   });
