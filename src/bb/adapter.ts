@@ -1,5 +1,5 @@
 import type { BbPluginApi } from "@get-bb/plugin-sdk";
-import type { BbPort, InputResult, Json } from "./port";
+import type { BbPort, InputResult, Json, MachineInfo, ProjectSource } from "./port";
 
 const PERMISSION_MODES = ["accept-edits", "auto", "full"] as const;
 type PermissionMode = (typeof PERMISSION_MODES)[number];
@@ -32,10 +32,12 @@ function isNotFound(error: unknown): boolean {
 export function createBbPort(bb: BbPluginApi): BbPort {
   return {
     async spawnWorker(request) {
-      // bb 0.48.1 rejects a host workspace without a host ID (found in the live smoke test), so use the project's default host.
+      // bb 0.48.1 rejects a host workspace without a host ID (found in the live smoke test), so use the project's default host
+      // unless the task is pinned to a machine. A pinned machine must hold a source of the project (spike item 6).
       const project = await bb.sdk.projects.get({ projectId: request.projectId });
-      const hostId = project.sources.find((candidate) => candidate.isDefault)?.hostId;
+      const hostId = request.hostId ?? project.sources.find((candidate) => candidate.isDefault)?.hostId;
       if (hostId === undefined || hostId === null) throw new Error(`bb reports no host for project ${request.projectId}.`);
+      if (!project.sources.some((candidate) => candidate.hostId === hostId)) throw new Error(`The project has no source on host ${hostId}.`);
       const thread = await bb.sdk.threads.spawn({
         projectId: request.projectId,
         prompt: request.prompt,
@@ -102,8 +104,24 @@ export function createBbPort(bb: BbPluginApi): BbPort {
       return result as InputResult;
     },
 
-    async listProviders() {
-      const providers = await bb.sdk.providers.list();
+    async listMachines(): Promise<MachineInfo[]> {
+      const hosts = await bb.sdk.hosts.list();
+      return hosts.map((host) => ({
+        id: host.id,
+        name: host.name,
+        status: host.status,
+        phase: host.lifecycle.phase,
+        online: host.status === "connected" && host.lifecycle.phase === "active",
+      }));
+    },
+
+    async getProjectSources(projectId): Promise<ProjectSource[]> {
+      const project = await bb.sdk.projects.get({ projectId });
+      return project.sources.map((source) => ({ hostId: source.hostId, path: source.path, isDefault: source.isDefault }));
+    },
+
+    async listProviders(hostId) {
+      const providers = await bb.sdk.providers.list(hostId === undefined ? undefined : { hostId });
       return providers.map((provider) => ({
         id: provider.id,
         available: provider.available,

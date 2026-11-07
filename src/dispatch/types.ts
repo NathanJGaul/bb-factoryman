@@ -15,6 +15,8 @@ export interface Rule {
   readonly when: RuleCondition;
   /** A key of `DispatchConfig.profiles`. */
   readonly profile: string;
+  /** The machine to run on, by ID or name. Absent means the call or the project decides. */
+  readonly machine?: string;
 }
 
 /** The owner's standing permissions. Each is off unless the file turns it on. */
@@ -56,10 +58,18 @@ export interface Candidate {
   readonly ruleId: string;
   readonly profileName: string;
   readonly profile: Profile;
+  readonly machine: string | null;
 }
 
 export type Resolution =
-  | { readonly status: "clear"; readonly profile: Profile; readonly source: ProfileSource; readonly ruleId: string | null }
+  | {
+      readonly status: "clear";
+      readonly profile: Profile;
+      readonly source: ProfileSource;
+      readonly ruleId: string | null;
+      /** The matching rule's machine, or null. A resolver that has no machine column may omit it. */
+      readonly machine?: string | null;
+    }
   | { readonly status: "ambiguous"; readonly candidates: readonly Candidate[] }
   | { readonly status: "blocked"; readonly code: BlockCode; readonly message: string };
 

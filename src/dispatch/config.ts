@@ -25,7 +25,7 @@ const when = z
   })
   .refine((value) => Object.values(value).some((entry) => entry !== undefined), "a rule needs at least one condition");
 
-const rule = z.strictObject({ id: nonBlank, when, profile: nonBlank });
+const rule = z.strictObject({ id: nonBlank, when, profile: nonBlank, machine: nonBlank.optional() });
 
 const configSchema = z
   .strictObject({

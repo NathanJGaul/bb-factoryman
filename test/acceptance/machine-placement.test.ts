@@ -5,10 +5,11 @@ import { hostFixture, loadWorld, type World } from "../fixtures/plugin-host";
 afterEach(removeCheckouts);
 
 const MACHINES = [hostFixture("host_local", "local-box"), hostFixture("host_gpu", "gpu-box")];
-const SOURCES = [
-  { hostId: "host_local", path: "/work/repo", isDefault: true },
+const remoteSources = (clonePath: string) => [
+  { hostId: "host_local", path: clonePath, isDefault: true },
   { hostId: "host_gpu", path: "/work/gpu", isDefault: false },
 ];
+const SOURCES = remoteSources("/work/repo");
 const PROFILES = {
   deep: { provider: "claude", model: "opus", reasoningLevel: "xhigh", permissionMode: "auto" },
 };
@@ -16,7 +17,8 @@ const rules = (...list: Array<Record<string, unknown>>) => ({ version: 1, profil
 const TASK = { kind: "ship", description: "Add a --json flag to the status command." } as const;
 
 async function setup(options: Parameters<typeof loadWorld>[0] = {}, dispatch?: unknown): Promise<World> {
-  return loadWorld({ machines: MACHINES, sources: SOURCES, checkout: makeCheckout({ dispatch }), ...options });
+  const checkout = makeCheckout({ dispatch });
+  return loadWorld({ machines: MACHINES, sources: remoteSources(checkout), checkout, ...options });
 }
 
 function spawned(world: World): { environment: { hostId: string } } {

@@ -13,8 +13,8 @@ description: "Task list for machine placement"
 
 ## Phase 2: Group 1, choosing a machine and the `local-only` gate
 
-- [ ] T810 Tests and stubs: `src/dispatch/placement.test.ts`, the rule `machine` in `config.test.ts` and `resolver.test.ts`, the `cloneMachine` event and `localOnlyStaysOnClone` guard in `src/machine/*.test.ts`, port and adapter tests, and `test/acceptance/machine-placement.test.ts` (A801 to A808, A814 to A816)
-- [ ] T811 Implement `placement.ts`, the rule `machine`, the event field and guard, `listMachines`, `getProjectSources`, `listProviders(hostId)`, the spawn `hostId`, the dispatch `machine` argument and flow, and the status line
+- [X] T810 Tests and stubs: `src/dispatch/placement.test.ts`, the rule `machine` in `config.test.ts` and `resolver.test.ts`, the `cloneMachine` event and `localOnlyStaysOnClone` guard in `src/machine/*.test.ts`, port and adapter tests, and `test/acceptance/machine-placement.test.ts` (A801 to A808, A814 to A816)
+- [X] T811 Implement `placement.ts`, the rule `machine`, the event field and guard, `listMachines`, `getProjectSources`, `listProviders(hostId)`, the spawn `hostId`, the dispatch `machine` argument and flow, and the status line
 
 ## Phase 3: Group 2, remote commands and the preflight
 

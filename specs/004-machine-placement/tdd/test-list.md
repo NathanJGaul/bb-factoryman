@@ -19,22 +19,22 @@ The suite baseline was 63 files and 708 tests, all passing.
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| A801 | An explicit `machine` spawns the worker on that host, records the host ID on the task, and the `start` event carries the clone host | AC-1.1, FR-801, FR-805 | example | TODO | `test/acceptance/machine-placement.test.ts::[A801]` |
-| A802 | With no explicit machine, the matching rule's machine applies | AC-1.2, FR-801 | example | TODO | `test/acceptance/machine-placement.test.ts::[A802]` |
-| A803 | With neither, the project's default machine applies | AC-1.3, FR-801 | example | TODO | `test/acceptance/machine-placement.test.ts::[A803]` |
-| A804 | With none of the three, the worker spawns on the project's default host and the task records no machine | AC-1.4, FR-801 | example | TODO | `test/acceptance/machine-placement.test.ts::[A804]` |
-| A805 | A machine name resolves to its host ID, and an unknown or ambiguous name blocks with no task | AC-1.5, FR-802, FR-803 | example | TODO | `test/acceptance/machine-placement.test.ts::[A805]` |
-| A806 | A host with no source of the project blocks dispatch | AC-1.6, FR-803 | example | TODO | `test/acceptance/machine-placement.test.ts::[A806]` |
-| A807 | Two matching rules with equal profiles and different machines are `ambiguous` | AC-1.7, FR-811 | example | TODO | `test/acceptance/machine-placement.test.ts::[A807]` |
-| A808 | A pinned machine that is disconnected or not active blocks with `machine_offline`, tries no other machine, and creates no task | AC-2.1, FR-803, FR-804, SC-802 | example | TODO | `test/acceptance/machine-placement.test.ts::[A808]` |
+| A801 | An explicit `machine` spawns the worker on that host, records the host ID on the task, and the `start` event carries the clone host | AC-1.1, FR-801, FR-805 | example | DONE | `test/acceptance/machine-placement.test.ts::[A801]` |
+| A802 | With no explicit machine, the matching rule's machine applies | AC-1.2, FR-801 | example | DONE | `test/acceptance/machine-placement.test.ts::[A802]` |
+| A803 | With neither, the project's default machine applies | AC-1.3, FR-801 | example | DONE | `test/acceptance/machine-placement.test.ts::[A803]` |
+| A804 | With none of the three, the worker spawns on the project's default host and the task records no machine | AC-1.4, FR-801 | example | DONE | `test/acceptance/machine-placement.test.ts::[A804]` |
+| A805 | A machine name resolves to its host ID, and an unknown or ambiguous name blocks with no task | AC-1.5, FR-802, FR-803 | example | DONE | `test/acceptance/machine-placement.test.ts::[A805]` |
+| A806 | A host with no source of the project blocks dispatch | AC-1.6, FR-803 | example | DONE | `test/acceptance/machine-placement.test.ts::[A806]` |
+| A807 | Two matching rules with equal profiles and different machines are `ambiguous` | AC-1.7, FR-811 | example | DONE | `test/acceptance/machine-placement.test.ts::[A807]` |
+| A808 | A pinned machine that is disconnected or not active blocks with `machine_offline`, tries no other machine, and creates no task | AC-2.1, FR-803, FR-804, SC-802 | example | DONE | `test/acceptance/machine-placement.test.ts::[A808]` |
 | A809 | A `working` task whose machine goes offline becomes `blocked` with system evidence, and the supervisor gets one wake message | AC-2.2, FR-806, SC-801 | example | TODO | `test/acceptance/machine-monitor.test.ts::[A809]` |
 | A810 | A task that the monitor blocked returns to `working` when its machine is back, and a task that its worker blocked does not | AC-2.3, FR-806 | example | TODO | `test/acceptance/machine-monitor.test.ts::[A810]` |
 | A811 | A deleted machine blocks its `working` tasks at once, and nothing unblocks them | AC-2.4, FR-807 | example | TODO | `test/acceptance/machine-monitor.test.ts::[A811]` |
-| A812 | After `start`, no event type changes the task's machine | AC-2.5, FR-804 | example | TODO | `test/acceptance/machine-placement-gates.test.ts::[A812]` |
+| A812 | After `start`, no event type changes the task's machine | AC-2.5, FR-804 | example | DONE | `test/acceptance/machine-placement-gates.test.ts::[A812]` |
 | A813 | A task in a state other than `working` on an offline machine only logs a warning | AC-2.6, FR-806 | example | TODO | `test/acceptance/machine-monitor.test.ts::[A813]` |
-| A814 | A `local-only` dispatch to a machine other than the clone host is refused by the state machine, spawns nothing, and creates no task | AC-3.1, FR-805 | example | TODO | `test/acceptance/machine-placement.test.ts::[A814]` |
-| A815 | A `local-only` dispatch to the clone host succeeds | AC-3.2, FR-805 | example | TODO | `test/acceptance/machine-placement.test.ts::[A815]` |
-| A816 | A `local-only` dispatch with no machine succeeds on the clone host | AC-3.3, FR-805 | example | TODO | `test/acceptance/machine-placement.test.ts::[A816]` |
+| A814 | A `local-only` dispatch to a machine other than the clone host is refused by the state machine, spawns nothing, and creates no task | AC-3.1, FR-805 | example | DONE | `test/acceptance/machine-placement.test.ts::[A814]` |
+| A815 | A `local-only` dispatch to the clone host succeeds | AC-3.2, FR-805 | example | DONE | `test/acceptance/machine-placement.test.ts::[A815]` |
+| A816 | A `local-only` dispatch with no machine succeeds on the clone host | AC-3.3, FR-805 | example | DONE | `test/acceptance/machine-placement.test.ts::[A816]` |
 | A817 | `bb factoryman preflight` reports an agent CLI that is not available on the machine | AC-4.1, FR-808, FR-812 | example | TODO | `test/acceptance/machine-remote.test.ts::[A817]` |
 | A818 | The preflight reports `no-mistakes` missing, and not initialized in the project's source | AC-4.2, FR-808 | example | TODO | `test/acceptance/machine-remote.test.ts::[A818]` |
 | A819 | The preflight reports missing `gh` credentials for the pull request modes and not for `local-only` | AC-4.3, FR-808 | example | TODO | `test/acceptance/machine-remote.test.ts::[A819]` |
@@ -50,43 +50,43 @@ The suite baseline was 63 files and 708 tests, all passing.
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| U801 | The explicit value wins over the rule, which wins over the project default, which wins over none | FR-801 | example | TODO | `src/dispatch/placement.test.ts::[U801]` |
-| U802 | A name or an ID resolves to the host, case-insensitively for names | FR-802 | example | TODO | `src/dispatch/placement.test.ts::[U802]` |
-| U803 | A value that matches no host is blocked with `machine_unknown` | FR-803 | example | TODO | `src/dispatch/placement.test.ts::[U803]` |
-| U804 | A name that two hosts share is blocked with `machine_ambiguous`, and an ID wins over a name | FR-802, FR-803 | boundary | TODO | `src/dispatch/placement.test.ts::[U804]` |
-| U805 | A disconnected host is blocked with `machine_offline` | FR-803 | example | TODO | `src/dispatch/placement.test.ts::[U805]` |
-| U806 | A connected host in a phase other than `active` is blocked with `machine_offline` | FR-803 | boundary | TODO | `src/dispatch/placement.test.ts::[U806]` |
-| U807 | A host with no source of the project is blocked with `machine_no_source` | FR-803 | example | TODO | `src/dispatch/placement.test.ts::[U807]` |
-| U808 | A blocked result names no other host, so a caller cannot fall back | FR-804 | example | TODO | `src/dispatch/placement.test.ts::[U808]` |
-| U809 | With no value at all the result is `none` and reads no host | FR-801 | example | TODO | `src/dispatch/placement.test.ts::[U809]` |
+| U801 | The explicit value wins over the rule, which wins over the project default, which wins over none | FR-801 | example | DONE | `src/dispatch/placement.test.ts::[U801]` |
+| U802 | A name or an ID resolves to the host, case-insensitively for names | FR-802 | example | DONE | `src/dispatch/placement.test.ts::[U802]` |
+| U803 | A value that matches no host is blocked with `machine_unknown` | FR-803 | example | DONE | `src/dispatch/placement.test.ts::[U803]` |
+| U804 | A name that two hosts share is blocked with `machine_ambiguous`, and an ID wins over a name | FR-802, FR-803 | boundary | DONE | `src/dispatch/placement.test.ts::[U804]` |
+| U805 | A disconnected host is blocked with `machine_offline` | FR-803 | example | DONE | `src/dispatch/placement.test.ts::[U805]` |
+| U806 | A connected host in a phase other than `active` is blocked with `machine_offline` | FR-803 | boundary | DONE | `src/dispatch/placement.test.ts::[U806]` |
+| U807 | A host with no source of the project is blocked with `machine_no_source` | FR-803 | example | DONE | `src/dispatch/placement.test.ts::[U807]` |
+| U808 | A blocked result names no other host, so a caller cannot fall back | FR-804 | example | DONE | `src/dispatch/placement.test.ts::[U808]` |
+| U809 | With no value at all the result is `none` and reads no host | FR-801 | example | DONE | `src/dispatch/placement.test.ts::[U809]` |
 
 ### `src/dispatch/config.ts` and `resolver.ts`
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| U810 | A rule accepts an optional `machine`, and a blank machine is rejected | FR-801 | example | TODO | `src/dispatch/config.test.ts::[U810]` |
-| U811 | A clear result from a rule carries the rule's machine, and other sources carry none | FR-801 | example | TODO | `src/dispatch/resolver.test.ts::[U811]` |
-| U812 | Matching rules with equal profiles and different machines are ambiguous | FR-811 | example | TODO | `src/dispatch/resolver.test.ts::[U812]` |
+| U810 | A rule accepts an optional `machine`, and a blank machine is rejected | FR-801 | example | DONE | `src/dispatch/config.test.ts::[U810]` |
+| U811 | A clear result from a rule carries the rule's machine, and other sources carry none | FR-801 | example | DONE | `src/dispatch/resolver.test.ts::[U811]` |
+| U812 | Matching rules with equal profiles and different machines are ambiguous | FR-811 | example | DONE | `src/dispatch/resolver.test.ts::[U812]` |
 
 ### `src/machine/` (events, guards, table)
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| U813 | A `start` event accepts `cloneMachine` | FR-805 | example | TODO | `src/machine/events.test.ts::[U813]` |
-| U814 | A `local-only` start with a machine that differs from the clone machine is refused with `machine_mismatch` | FR-805 | example | TODO | `src/machine/guards.test.ts::[U814]` |
-| U815 | A `local-only` start with the clone machine, or with no machine, passes | FR-805 | boundary | TODO | `src/machine/guards.test.ts::[U815]` |
-| U816 | A `local-only` start with a machine and no clone machine is refused | FR-805 | boundary | TODO | `src/machine/guards.test.ts::[U816]` |
-| U817 | A task in another mode ignores the clone machine | FR-805 | example | TODO | `src/machine/guards.test.ts::[U817]` |
-| U818 | The `start` event records the machine in the task context, in both lanes | FR-801 | example | TODO | `src/machine/transition.test.ts::[U818]` |
+| U813 | A `start` event accepts `cloneMachine` | FR-805 | example | DONE | `src/machine/events.test.ts::[U813]` |
+| U814 | A `local-only` start with a machine that differs from the clone machine is refused with `machine_mismatch` | FR-805 | example | DONE | `src/machine/guards.test.ts::[U814]` |
+| U815 | A `local-only` start with the clone machine, or with no machine, passes | FR-805 | boundary | DONE | `src/machine/guards.test.ts::[U815]` |
+| U816 | A `local-only` start with a machine and no clone machine is refused | FR-805 | boundary | DONE | `src/machine/guards.test.ts::[U816]` |
+| U817 | A task in another mode ignores the clone machine | FR-805 | example | DONE | `src/machine/guards.test.ts::[U817]` |
+| U818 | The `start` event records the machine in the task context, in both lanes | FR-801 | example | DONE | `src/machine/transition.test.ts::[U818]` |
 
 ### `src/bb/adapter.ts`
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| U819 | `listMachines` maps ID, name, status, phase, and an `online` flag | FR-803, FR-806 | example | TODO | `src/bb/adapter.test.ts::[U819]` |
-| U820 | `getProjectSources` returns each source with host ID, path, and default flag | FR-803, FR-805 | example | TODO | `src/bb/adapter.test.ts::[U820]` |
-| U821 | `listProviders(hostId)` passes the host ID to bb, and without one passes none | FR-808 | example | TODO | `src/bb/adapter.test.ts::[U821]` |
-| U822 | `spawnWorker` with a host ID spawns on that host and with none uses the project's default host | FR-801 | example | TODO | `src/bb/adapter.test.ts::[U822]` |
+| U819 | `listMachines` maps ID, name, status, phase, and an `online` flag | FR-803, FR-806 | example | DONE | `src/bb/adapter.test.ts::[U819]` |
+| U820 | `getProjectSources` returns each source with host ID, path, and default flag | FR-803, FR-805 | example | DONE | `src/bb/adapter.test.ts::[U820]` |
+| U821 | `listProviders(hostId)` passes the host ID to bb, and without one passes none | FR-808 | example | DONE | `src/bb/adapter.test.ts::[U821]` |
+| U822 | `spawnWorker` with a host ID spawns on that host and with none uses the project's default host | FR-801 | example | DONE | `src/bb/adapter.test.ts::[U822]` |
 | U823 | The terminal methods start a `host_path` terminal in `argv` mode, read decoded output, and close it | FR-809 | example | TODO | `src/bb/adapter.test.ts::[U823]` |
 
 ### `src/machines/remote-exec.ts`

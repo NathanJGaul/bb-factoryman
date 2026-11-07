@@ -15,6 +15,9 @@ export const BUILTIN_PROFILE: Profile = {
 const sameProfile = (a: Profile, b: Profile): boolean =>
   a.provider === b.provider && a.model === b.model && a.reasoningLevel === b.reasoningLevel && a.permissionMode === b.permissionMode;
 
+/** Two candidates are the same choice only when profile and machine both agree (D-065, D-075). */
+const sameChoice = (a: Candidate, b: Candidate): boolean => sameProfile(a.profile, b.profile) && a.machine === b.machine;
+
 function escapeRegExp(text: string): string {
   return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
@@ -75,25 +78,26 @@ export class RulesTableResolver implements DispatchResolver {
           if (reason !== null) return blocked("reasoning_lowered", reason);
         }
       }
-      return { status: "clear", profile: choice.profile, source: "override", ruleId: null };
+      return { status: "clear", profile: choice.profile, source: "override", ruleId: null, machine: null };
     }
 
     if (choice.rule !== undefined) {
       const picked = matching.find((rule) => rule.id === choice.rule);
       return picked === undefined
         ? blocked("rule_not_applicable", `Rule \`${choice.rule}\` does not exist or does not match this task.`)
-        : { status: "clear", profile: profileOf(picked), source: "rule", ruleId: picked.id };
+        : { status: "clear", profile: profileOf(picked), source: "rule", ruleId: picked.id, machine: picked.machine ?? null };
     }
 
     const [first] = matching;
     if (first !== undefined) {
-      const candidates: Candidate[] = matching.map((rule) => ({ ruleId: rule.id, profileName: rule.profile, profile: profileOf(rule) }));
-      const distinct = candidates.some((candidate) => !sameProfile(candidate.profile, profileOf(first)));
-      return distinct ? { status: "ambiguous", candidates } : { status: "clear", profile: profileOf(first), source: "rule", ruleId: first.id };
+      const candidates: Candidate[] = matching.map((rule) => ({ ruleId: rule.id, profileName: rule.profile, profile: profileOf(rule), machine: rule.machine ?? null }));
+      const [head] = candidates as [Candidate, ...Candidate[]];
+      const distinct = candidates.some((candidate) => !sameChoice(candidate, head));
+      return distinct ? { status: "ambiguous", candidates } : { status: "clear", profile: head.profile, source: "rule", ruleId: first.id, machine: head.machine };
     }
     if (config.default !== null) {
-      return { status: "clear", profile: config.profiles[config.default] as Profile, source: "default", ruleId: null };
+      return { status: "clear", profile: config.profiles[config.default] as Profile, source: "default", ruleId: null, machine: null };
     }
-    return { status: "clear", profile: BUILTIN_PROFILE, source: "builtin", ruleId: null };
+    return { status: "clear", profile: BUILTIN_PROFILE, source: "builtin", ruleId: null, machine: null };
   }
 }

@@ -116,10 +116,10 @@ export async function loadWorld(options: WorldOptions = {}): Promise<World> {
     settings: options.settings,
     sdk: {
       threads: {
-        spawn: async (args: { projectId: string; parentThreadId?: string; pluginMetadata?: Record<string, unknown>; environment?: { hostId?: string } }) => {
+        spawn: async (args: { projectId: string; parentThreadId?: string; pluginMetadata?: Record<string, unknown>; environment?: unknown }) => {
           if (options.spawnError) throw options.spawnError;
           // Real bb answers HTTP 409 for a host that holds no source of the project (spike item 6).
-          const hostId = args.environment?.hostId;
+          const hostId = (args.environment as { hostId?: string } | undefined)?.hostId;
           if (hostId !== undefined && !sources().some((source) => source.hostId === hostId)) throw new Error("HTTP 409: No project source configured for this host");
           const id = options.threadIds?.[spawned] ?? `thr-w${spawned + 1}`;
           spawned += 1;

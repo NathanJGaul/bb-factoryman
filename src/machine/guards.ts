@@ -114,7 +114,17 @@ const worktreeLanded: Guard = (_context, event) => {
     : refuse("unlanded_work", `Teardown refused: the worktree has ${unpushedCommits} unpushed commit(s).`);
 };
 
-const localOnlyStaysOnClone: Guard = () => null;
+/** Hard rule 6: `local-only` commits stay in the clone, so the worker must run on the machine that holds it. */
+const localOnlyStaysOnClone: Guard = (context, event) => {
+  if (event.type !== "start" || context.mode !== "local-only") return null;
+  if (event.machine === undefined || event.machine === null) return null;
+  return event.cloneMachine !== undefined && event.cloneMachine !== null && event.machine === event.cloneMachine
+    ? null
+    : refuse(
+        "machine_mismatch",
+        `A \`local-only\` task stays on the machine that holds the clone (${event.cloneMachine ?? "unknown"}), but the task was pinned to ${event.machine}.`,
+      );
+};
 
 export const GUARDS: Record<GuardName, Guard> = {
   profileResolved,

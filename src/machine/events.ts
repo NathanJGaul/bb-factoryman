@@ -30,7 +30,8 @@ function event<const T extends EventType, S extends z.ZodRawShape>(type: T, shap
 
 const eventSchema = z.discriminatedUnion("type", [
   // `profile` may be null or absent so the `profileResolved` guard can name the refusal.
-  event("start", { profile: profile.nullish(), threadId: nonEmpty, branch: nonEmpty, machine: nonEmpty.nullish() }),
+  // `cloneMachine` is the host that holds the project's clone, gathered by the caller (D-015, D-073).
+  event("start", { profile: profile.nullish(), threadId: nonEmpty, branch: nonEmpty, machine: nonEmpty.nullish(), cloneMachine: nonEmpty.nullish() }),
   event("block", {}),
   event("unblock", {}),
   event("handoff", {}),

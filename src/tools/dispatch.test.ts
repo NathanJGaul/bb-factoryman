@@ -51,7 +51,7 @@ describe("factoryman_dispatch", () => {
     await dispatch(t.runtime, supervisor, valid);
     const start = t.runtime.deps.store.listEvents({ taskId: "t1" }).find((row) => row.event === "start");
     expect(start).toMatchObject({ outcome: "applied", actor: "supervisor", evidence: valid.description });
-    expect(start?.payload).toEqual({ profile, threadId: "thr-w1", branch: "fm/t1" });
+    expect(start?.payload).toEqual({ profile, threadId: "thr-w1", branch: "fm/t1", machine: null, cloneMachine: "host_local" });
   });
 
   it("[U46] spawns one worker as a child of the caller with role metadata and the built prompt", async () => {

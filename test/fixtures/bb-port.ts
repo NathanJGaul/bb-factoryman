@@ -1,4 +1,4 @@
-import type { BbPort, InputRequest, InputResult, ProviderAvailability, SpawnWorkerRequest, ThreadInfo } from "../../src/bb/port";
+import type { BbPort, InputRequest, InputResult, MachineInfo, ProjectSource, ProviderAvailability, SpawnWorkerRequest, ThreadInfo } from "../../src/bb/port";
 
 export interface RecordedCall {
   method: string;
@@ -21,7 +21,14 @@ export class FakeBbPort implements BbPort {
     permissionModes: ["accept-edits", "auto", "full"],
     reasoningLevels: ["low", "medium", "high", "xhigh", "max"],
   }));
+  /** What `listProviders` returns for a given host ID, instead of `providers`. */
+  providersByHost = new Map<string, ProviderAvailability[]>();
   providersError: Error | null = null;
+  /** What `listMachines` returns. The default is one online host, `host_local`. */
+  machines: MachineInfo[] = [{ id: "host_local", name: "local-box", status: "connected", phase: "active", online: true }];
+  machinesError: Error | null = null;
+  /** The project's sources. The default is one default source on `host_local`. */
+  sources: ProjectSource[] = [{ hostId: "host_local", path: "/work/repo", isDefault: true }];
   spawnError: Error | null = null;
   sendError: Error | null = null;
   retireError: Error | null = null;
@@ -98,10 +105,21 @@ export class FakeBbPort implements BbPort {
     return this.inputHandler(request);
   }
 
-  async listProviders(): Promise<ProviderAvailability[]> {
-    this.calls.push({ method: "listProviders", args: [] });
+  async listProviders(hostId?: string): Promise<ProviderAvailability[]> {
+    this.calls.push({ method: "listProviders", args: [hostId] });
     if (this.providersError) throw this.providersError;
-    return this.providers;
+    return (hostId === undefined ? undefined : this.providersByHost.get(hostId)) ?? this.providers;
+  }
+
+  async listMachines(): Promise<MachineInfo[]> {
+    this.calls.push({ method: "listMachines", args: [] });
+    if (this.machinesError) throw this.machinesError;
+    return this.machines;
+  }
+
+  async getProjectSources(projectId: string): Promise<ProjectSource[]> {
+    this.calls.push({ method: "getProjectSources", args: [projectId] });
+    return this.sources;
   }
 
   async setThreadMetadata(threadId: string, metadata: Record<string, unknown>): Promise<void> {
