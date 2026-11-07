@@ -320,3 +320,14 @@ Each behavior in a batch still has its own test, and each entry records the fail
   -> `A19`, `A23`, `A25`, `A26`, and `A28` failed (5 failed, 133 passed). Restored exactly.
 - note: A28 replays the real recorded payloads. A sleep hook emits the recorded `turn.failed` while `thread.failed` waits, as the real server did within about twenty milliseconds (D-047).
 - refactor: none needed
+
+## Cycle C20: U161 to U163 validator types and fake (`src/validator/types.ts`, `src/validator/fake.ts`), with the `@toon-format/toon` dependency (T080)
+
+- tests: `src/validator/fake.test.ts` `[U161]` to `[U163]` (new)
+- setup: `pnpm add --save-exact @toon-format/toon@4.4.0` added the dependency and the lockfile entry. No behavior changed.
+- red: a `FakeValidator` whose operations throw `not implemented`, then `pnpm vitest run src/validator/fake.test.ts`
+  -> `Error: not implemented` for U161, U162, and U163 (3 failed)
+- green: `FakeValidator` queues scripted results per operation, repeats the last one, records each call, and returns a `no_run` error for an operation with no script.
+  Suite `pnpm test` -> 52 files, 549 passed, 0 failed. Lint and type-check clean.
+- refactor: none needed
+- note: the interface in `types.ts` has no behavior of its own; U161 checks that the fake and the adapter offer the five operations.

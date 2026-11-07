@@ -26,6 +26,7 @@
     "check": "pnpm run typecheck && pnpm run lint && pnpm run test"
   },
   "dependencies": {
+    "@toon-format/toon": "4.4.0",
     "better-sqlite3": "12.10.0",
     "xstate": "^5.33.3",
     "zod": "^4.6.7"

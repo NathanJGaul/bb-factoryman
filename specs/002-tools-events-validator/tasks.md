@@ -144,7 +144,7 @@ description: "Task list for tools and approval, event wiring, and the validator"
 
 - [ ] T081 [P] [US3] [U164] [U165] [U166] [U167] [U168] [U169] [U170] [U171] [U172] [U173] [U174] [U175] TOON decode tests in `src/validator/toon.test.ts` over every recorded file (gate, findings columns from the header, outcome, error, `other_branch_run`, unreadable and empty output; AC-3.8)
 - [ ] T082 [P] [US3] [U176] [U177] [U178] [U179] [U180] [U181] [U182] [U183] [U184] Adapter tests in `src/validator/no-mistakes.test.ts` with a fake runner (command lines, `cwd`, stdout only, never `--yes`, exit codes, unknown outcome; AC-3.8)
-- [ ] T083 [P] [US3] [U161] [U162] [U163] Fake validator tests in `src/validator/fake.test.ts` (scripted views, recorded calls)
+- [X] T083 [P] [US3] [U161] [U162] [U163] Fake validator tests in `src/validator/fake.test.ts` (scripted views, recorded calls)
 - [ ] T084 [P] [US3] [A30] [A31] [A32] [A33] [A34] [A35] [A37] [A38] [U185] [U186] [U187] [U188] [U189] [U190] [U191] [U192] [U193] [U194] [U195] [U196] [U197] [U198] [U199] [U200] [U201] [U202] [U203] [U204] [U205] [U206] [U207] Driver tests in `src/validator/driver.test.ts` (handoff starts a run, gate to `needs_decision`, answer to `validating`, external answer observed, `checks-passed` to `review_ready`, failed and cancelled to `failed`, override and skips and no PR to `needs_decision`, unreadable five times, no second run, no run for other modes, resume; AC-3.2 to AC-3.7, AC-3.9, AC-3.10)
 - [ ] T085 [P] [US3] [A29] [A30] [A31] [A32] [A33] [A34] [A35] [A37] [A38] Acceptance test with the fake validator in `test/acceptance/validator-fake.test.ts` (dispatch, report done, validating, finding, answer, validated, review ready, wake messages; SC-005)
 - [ ] T086 [P] [US3] [A36] Acceptance test with recorded output in `test/acceptance/validator-recorded.test.ts` (the real adapter over replayed recorded stdout; SC-005, SC-006)
@@ -152,8 +152,8 @@ description: "Task list for tools and approval, event wiring, and the validator"
 
 ### Implementation for user story 3
 
-- [ ] T088 [P] [US3] [U161] [U162] [U163] Define the interface and types in `src/validator/types.ts`
-- [ ] T089 [P] [US3] [U161] [U162] [U163] Implement the scripted fake in `src/validator/fake.ts`
+- [X] T088 [P] [US3] [U161] [U162] [U163] Define the interface and types in `src/validator/types.ts`
+- [X] T089 [P] [US3] [U161] [U162] [U163] Implement the scripted fake in `src/validator/fake.ts`
 - [ ] T090 [US3] [U164] [U165] [U166] [U167] [U168] [U169] [U170] [U171] [U172] [U173] [U174] [U175] Implement the decoder in `src/validator/toon.ts`
 - [ ] T091 [US3] [U176] [U177] [U178] [U179] [U180] [U181] [U182] [U183] [U184] Implement the adapter in `src/validator/no-mistakes.ts`
 - [ ] T092 [US3] [U185] [U186] [U187] [U188] [U189] [U190] [U191] [U192] [U193] [U194] [U195] [U196] [U197] [U198] [U199] [U200] [U201] [U202] [U203] [U204] [U205] [U206] [U207] Implement the driver in `src/validator/driver.ts`

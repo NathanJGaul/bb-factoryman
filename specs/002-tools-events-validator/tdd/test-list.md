@@ -332,9 +332,9 @@ Boundaries have both sides, and error paths name the failure.
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| U161 | The fake offers the five operations and returns its scripted views in order | FR-301, FR-302 | example | PENDING | |
-| U162 | The fake records every call with its input | FR-302 | example | PENDING | |
-| U163 | The fake returns a scripted error as a result and does not throw | FR-301 | example | PENDING | |
+| U161 | The fake offers the five operations and returns its scripted views in order | FR-301, FR-302 | example | DONE | `src/validator/fake.test.ts::[U161] offers the five operations and returns its scripted views in order` |
+| U162 | The fake records every call with its input | FR-302 | example | DONE | `src/validator/fake.test.ts::[U162] records every call with its input` |
+| U163 | The fake returns a scripted error as a result and does not throw | FR-301 | example | DONE | `src/validator/fake.test.ts::[U163] returns a scripted error as a result and repeats the last scripted result` |
 
 ### `src/validator/toon.ts`
 
