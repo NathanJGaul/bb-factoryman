@@ -357,15 +357,15 @@ Boundaries have both sides, and error paths name the failure.
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| U176 | `start` runs `no-mistakes axi run --intent <intent> --wait <wait>` in the given `cwd` | FR-303 | example | PENDING | |
-| U177 | `status` runs `no-mistakes axi status`, and adds `--run <id>` when given a run ID | FR-303 | example | PENDING | |
-| U178 | `findings` returns the gate's findings, and an empty list when there is no gate | FR-301 | example | PENDING | |
-| U179 | `answer` maps approve, skip, and fix with finding IDs and instructions to `axi respond` flags | FR-303 | example | PENDING | |
-| U180 | No operation ever passes `--yes` or `-y` | FR-308, FR-303 | example | PENDING | |
-| U181 | `cancel` runs `no-mistakes axi abort`, with `--run <id>` when given | FR-301 | example | PENDING | |
-| U182 | Only stdout is decoded, and banner text on stderr is ignored | FR-303 | example | PENDING | |
-| U183 | Exit code 1 with a decodable `failed` outcome decodes as a finished run | FR-304 | example | PENDING | |
-| U184 | Exit code 2 or a missing binary is a command failure | FR-304 | example | PENDING | |
+| U176 | `start` runs `no-mistakes axi run --intent <intent> --wait <wait>` in the given `cwd` | FR-303 | example | DONE | `src/validator/no-mistakes.test.ts::[U176] runs` |
+| U177 | `status` runs `no-mistakes axi status`, and adds `--run <id>` when given a run ID | FR-303 | example | DONE | `src/validator/no-mistakes.test.ts::[U177] runs` |
+| U178 | `findings` returns the gate's findings, and an empty list when there is no gate | FR-301 | example | DONE | `src/validator/no-mistakes.test.ts::[U178] returns the gate` |
+| U179 | `answer` maps approve, skip, and fix with finding IDs and instructions to `axi respond` flags | FR-303 | example | DONE | `src/validator/no-mistakes.test.ts::[U179] maps approve, skip, and fix with finding IDs and instructions to` |
+| U180 | No operation ever passes `--yes` or `-y` | FR-308, FR-303 | example | DONE | `src/validator/no-mistakes.test.ts::[U180] never passes --yes or -y in any operation` |
+| U181 | `cancel` runs `no-mistakes axi abort`, with `--run <id>` when given | FR-301 | example | DONE | `src/validator/no-mistakes.test.ts::[U181] runs` |
+| U182 | Only stdout is decoded, and banner text on stderr is ignored | FR-303 | example | DONE | `src/validator/no-mistakes.test.ts::[U182] decodes standard output only and ignores banner text on standard error` |
+| U183 | Exit code 1 with a decodable `failed` outcome decodes as a finished run | FR-304 | example | DONE | `src/validator/no-mistakes.test.ts::[U183] decodes a failed outcome printed with exit code 1 as a finished run, and exit code 2 as a command failure` |
+| U184 | Exit code 2 or a missing binary is a command failure | FR-304 | example | DONE | `src/validator/no-mistakes.test.ts::[U184] reports a missing binary as a command failure` |
 
 ### `src/validator/driver.ts`
 

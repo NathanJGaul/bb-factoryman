@@ -346,3 +346,17 @@ Each behavior in a batch still has its own test, and each entry records the fail
   - an unknown outcome is accepted -> U171 failed (1 failed, 11 passed)
   - a gate is reported as phase running -> U164, U165, and U173 failed (3 failed, 9 passed)
 - refactor: none needed
+
+## Cycle C22: U176 to U184 no-mistakes adapter (`src/validator/no-mistakes.ts`)
+
+- tests: `src/validator/no-mistakes.test.ts` `[U176]` to `[U184]` (new), with a recording fake runner that replies with the recorded stdout
+- red: a `NoMistakesValidator` whose operations return a `no_run` error, then `pnpm vitest run src/validator/no-mistakes.test.ts`
+  -> all 9 tests failed on the recorded command lines or the decoded results (9 failed)
+- green: the adapter builds the `axi` command lines in the given `cwd`, decodes standard output with `parseRun` or `parseAbort`, and turns a missing binary or exit code 2 into a command failure.
+  Exit code 1 still decodes, because a failed or cancelled final outcome prints with code 1.
+  First run: 9 passed. Suite `pnpm test` -> 54 files, 570 passed, 0 failed. Lint and type-check clean.
+- deliberate mutants, each restored exactly:
+  - `respond` passes `--yes` -> U179 and U180 failed (2 failed, 7 passed)
+  - decode standard error when standard output is empty -> U182 failed (1 failed, 8 passed)
+  - exit code 1 is always a failure -> U183 failed (1 failed, 8 passed)
+- refactor: none needed
