@@ -57,6 +57,7 @@ Option A, a separate account or seat, would give a cap of its own and stays the 
 3. A clean copy of this repository to build from. Never build from the clone that bb registers as a project.
 4. `pnpm run check` passes in that copy.
 5. Before you start, snapshot the machine: `bblab-evidence snap before`.
+6. Read your Claude usage on your account's usage page and write the numbers down. You compare them after tier 2 (section 10).
 
 ## 4. Bring-up and install
 
@@ -120,8 +121,20 @@ no-mistakes daemon status                   # the host view: the shared daemon, 
 ```
 
 Set the project to `local-only` mode and give it a base branch.
-Nothing in the plugin sets a project's mode or base branch from a file (D-037, D-078), and the registry import is a dry run.
-Use the plugin's database from a one-off script inside the lab, and record exactly what you did.
+Nothing in the plugin sets a project's mode or base branch from a file or a command (D-037, D-078), and the registry import is a dry run.
+Write the row into the plugin's own database from inside the lab, and keep `yolo` at 0:
+
+```sh
+bblab x bash -c "cd $BBLAB_DIR/plugin-src && node -e \"
+const Database = require('better-sqlite3');
+const db = new Database(process.env.BB_DATA_DIR + '/plugins/bb-factoryman/data.db');
+db.prepare('INSERT OR REPLACE INTO project_config (project_id, delivery_mode, yolo, branch_prefix, base_branch, default_machine) VALUES (?, ?, 0, NULL, ?, NULL)').run('$PROJ', 'local-only', 'main');
+console.log(JSON.stringify(db.prepare('SELECT * FROM project_config').all()));
+\""
+```
+
+The output must show your project with `delivery_mode` `local-only` and `yolo` 0.
+Record that you wrote this row, because it is the only way to reach `local-only` mode today.
 
 Put the spend limits in the project, so the plugin enforces them (D-084, D-086).
 Write `.bb/factoryman/workflow.json` in `$BBLAB_DIR/repos/work`, commit it, and push it:
@@ -145,7 +158,7 @@ Run these first. Each must pass before you spend anything.
 
 | Check | Command | Expect |
 | --- | --- | --- |
-| The plugin's command | `bblab x bb factoryman preflight lab-box --project $PROJ` | the clone host: "holds the project's clone, so no remote preflight applies" |
+| The plugin's command | `bblab x bb factoryman preflight server --project $PROJ` | the clone host (the lab's one machine is named `server`): "holds the project's clone, so no remote preflight applies" |
 | The protection checklist | `bblab x bb factoryman protection acme/widgets` | prints steps, and says it ran nothing |
 | The import dry run | `bblab x bb factoryman import-registry --file <registry copy>` | a report, and `bb factoryman import-registry --apply` is refused |
 | The read RPC | call `listTasks` and `apiVersion` over the plugin's RPC route | `{ "apiVersion": 1, ... }` |
@@ -180,9 +193,18 @@ Write the stub agent as a separate, small task, then run the scout and ship flow
 
 Only the captain runs `claude setup-token`.
 Run it in your own terminal, with your own Claude login.
-No agent creates, reads, or handles the token.
+No agent creates, reads, or handles the token while you set it up.
 Do not paste the token into a chat, a file, or a command line.
 Anything you put on a command line shows in the process list, and anything you put in a file stays on disk.
+
+### What can read the token
+
+The token reaches the lab, because the Claude CLI inside the lab needs it to run.
+The CLI, and anything an agent session runs through it, may be able to read the token from its environment.
+The lab keeps the token away from your own bb, your files, and the rest of firstmate, and the token reaches only your Claude account.
+Revoke the token when the run ends (see the end of this section).
+`bblab up` copies the environment of the shell that runs it into the lab's keeper process.
+Run tier 2 from a fresh shell that holds only what the run needs, so no other secret of yours rides along.
 
 ### Spend caps
 
@@ -206,6 +228,13 @@ The lab directory, the project, and the plugin stay in place.
 
 ```sh
 bblab down
+env -i HOME="$HOME" PATH="$PATH" TERM="$TERM" BBLAB_DIR="$BBLAB_DIR" EVIDENCE_DIR="$EVIDENCE_DIR" bash --noprofile --norc
+```
+
+The second command opens a fresh shell with a clean environment.
+Run the rest of this section in that shell, and leave it with `exit` at the end.
+
+```sh
 read -rs CLAUDE_CODE_OAUTH_TOKEN          # paste the token that `claude setup-token` printed, then press Enter
 export CLAUDE_CODE_OAUTH_TOKEN
 export BBLAB_RO="$(dirname "$(readlink -f "$(command -v claude)")")"
@@ -217,32 +246,45 @@ WATCHDOG=$!
 bblab x bb plugin list | grep -A3 bb-factoryman      # running again
 ```
 
-`bblab` passes only the variables named in `BBLAB_PASS_ENV` into the lab, and bb passes only these two to the Claude CLI.
+`bblab` passes only the variables named in `BBLAB_PASS_ENV` into the lab's commands, and bb passes only these two to the Claude CLI.
 The report did not exercise binding the agent CLI into the sandbox.
 If `bb provider list` shows `claude-code` and a spawn still fails, stop and record the error.
 Do not widen the sandbox to fix it.
 
 ### Run the tasks
 
-Spawn a supervisor thread with the cheapest model and the supervisor skill's role, and stamp it:
+Spawn the supervisor thread with the cheapest model, stamp it, and then send it its first instruction:
 
 ```sh
 SUP=$(bblab x bb thread spawn --project "$PROJ" --provider claude-code --model <cheapest model> \
         --reasoning-level low --new-environment worktree --base-branch main \
-        --prompt "You are the factoryman supervisor." --json | jq -r .id)
+        --prompt "You are the factoryman supervisor. Wait for instructions." --json | jq -r .id)
+bblab x bb thread wait "$SUP" --status idle
 bblab x bb factoryman supervisor "$SUP"
 ```
 
-The supervisor sees `factoryman_dispatch`, `factoryman_status`, `factoryman_merge`, and `factoryman_teardown`, and the `factoryman-supervisor` skill.
+The stamp applies from the thread's next session, and the thread already ran its first turn.
+Send the first instruction with `bb thread tell` and check the tools in the reply:
+
+```sh
+bblab x bb thread tell "$SUP" "List the factoryman tools you have, then wait."
+bblab x bb thread wait "$SUP" --status idle
+bblab x bb thread output "$SUP"
+```
+
+The supervisor must list `factoryman_dispatch`, `factoryman_status`, `factoryman_merge`, and `factoryman_teardown`, and it must see the `factoryman-supervisor` skill.
 A worker thread sees `factoryman_report` and the `factoryman-worker` skill.
-Check this on the first turn: if the supervisor has no factoryman tools, the skill selection failed, and the check stops here.
+If the supervisor has no factoryman tool, the running session did not restart.
+Record that in `spike/RESULTS.md`, run `bblab down`, bring the lab up again with the same exports, and send the message again.
+A resumed thread starts a new session.
+If the tools are still missing, the skill selection failed, and the check stops here.
 
 **Scout task.**
-Ask the supervisor to dispatch a scout task: "List the files in this repository and report."
+Send the supervisor: "Dispatch a scout task: list the files in this repository and report."
 Expect: the worker reports `done` with the report as evidence, the task reaches `report_ready`, and the supervisor gets a `[factoryman]` wake message.
 
 **Ship task.**
-Ask the supervisor to dispatch a ship task: "Add a line to README.md."
+Send the supervisor: "Dispatch a ship task: add a line to README.md."
 Expect: the worker commits on `fm/<task-id>` and reports `done` with `landedCommits`, the task reaches `review_ready`, and the supervisor asks for a merge.
 `factoryman_merge` opens the approval form on the supervisor thread.
 Answer it from the web UI at the lab's loopback address.
@@ -258,15 +300,16 @@ Record which skill each session loaded, and whether a worker read the `factoryma
 kill "$WATCHDOG"                          # only if you finish before the 30 minutes
 bblab down
 unset CLAUDE_CODE_OAUTH_TOKEN BB_CLAUDE_CODE_EXECUTABLE BBLAB_PASS_ENV BBLAB_RO
+exit
 ```
 
-Then revoke the token if you do not plan another run.
-Close the terminal that held it.
+Then revoke the token in your Claude account settings, unless you plan another run today.
+Close the terminal that held the token.
 
 ## 8. Hard-rule checks to run in the lab
 
 Each of these must be refused and logged, and none may fail open.
-The first six need no model if you call the tools from a stub agent (tier 1).
+Run them from the stub agent when it exists (tier 1).
 Under tier 2, ask the supervisor for each one.
 
 1. `factoryman_merge` with no approval (cancel the form): nothing merges.
@@ -290,6 +333,7 @@ These stay unverified, and each needs something outside the lab:
 - Which of a plugin skill and a project skill with the same name a session loads (spike item 11).
 - The tier 1 stub agent, until someone writes it.
 - A no-mistakes pipeline run with a real agent.
+- Whether a process inside the lab can read the token from the environment of the lab's keeper process. The fresh shell of section 7 limits what that environment holds. Nobody has tested the rest.
 
 ## 10. Teardown and the "firstmate was undisturbed" checklist
 
@@ -300,6 +344,9 @@ bblab-evidence diff before after
 ```
 
 Then run the report's section 6.8 checklist: identical listeners, the shared no-mistakes daemon at the same process ID and active, no new systemd units, a tripwire count of zero, your own `~/.bb` and `~/.bb-machines` untouched, the lab ports free, and no lab processes left.
+Read your Claude usage again and compare it with the numbers from section 3.
+The difference must match the caps in section 7.
+A larger difference means the lab or something else spent quota, and you stop and look before another run.
 
 ## 11. Record the results
 

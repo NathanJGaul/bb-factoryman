@@ -769,7 +769,8 @@ A throwaway bb 0.48.1 listed both with scope `plugin` after a path install (spik
 The selection is a hint and not a gate, because the metadata is writable (spike item 2).
 A wrong or unknown name rejects the plugin's whole selection, tools included.
 The tests read the names from the skill files, so a rename that misses one place fails (`[A1102]`).
-The worker's first message names the `factoryman-worker` skill.
+The worker's first message names the `factoryman-worker` skill, and a test dispatches through the fake host to prove the prompt reaches the spawn.
+`MERGEABLE_STATES` in `merge.ts` lists the states that `factoryman_merge` accepts, and the supervisor skill is tested against it, against `WAKE_STATES`, and against the teardown arrows of `TABLES`, so a skill that disagrees with the code fails a test.
 
 ### D-091: The skills are advice, and a project may add skills of its own (Gap)
 
@@ -786,8 +787,10 @@ The runbook says not to install into the owner's bb and never to touch the share
 The captain decided that tier 2 uses the captain's own Claude account (option B of the report), and accepted that this competes with firstmate for quota.
 The runbook carries the report's caps: the cheapest model, a low reasoning level, one worker at a time, a tiny repository, a 30 minute watchdog, and `bblab down` as the hard stop.
 It adds the plugin's own limits (`maxWorkers` 1 and `maxTasksPerDay` 2 in the project's `workflow.json`).
-The captain runs `claude setup-token` and passes the token through `BBLAB_PASS_ENV` into a second bring-up of the lab.
-No agent creates, reads, or handles the token, and the runbook writes it nowhere.
+The captain runs `claude setup-token` and passes the token through `BBLAB_PASS_ENV` into a second bring-up of the lab, started from a fresh `env -i` shell so that no other secret of the captain rides into the lab's keeper process.
+No agent creates, reads, or handles the token while the captain sets it up, and the runbook writes it nowhere.
+The runbook says plainly that the Claude CLI in the lab holds the token and that an agent session may be able to read it, so the captain revokes it after the run.
+Whether a lab process can read the keeper's environment is untested, because `bblab` is not installed here.
 Tiers 0 and 1 run first and tier 2 waits for them.
 
 ### D-093: Tier 1 has no stub agent yet, so the runbook says what the gate is (Gap)

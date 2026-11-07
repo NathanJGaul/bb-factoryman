@@ -58,16 +58,17 @@ A wake message starts with `[factoryman]` and names the task, its state, and the
 
 ## Merge
 
-Call `factoryman_merge` only for a task in `review_ready`.
+Call `factoryman_merge` only for a ship task in `review_ready` or `awaiting_approval`.
 The plugin opens an approval form for the owner.
 It merges only after the owner approves in that form, unless the project has `yolo` on.
 Tell the owner that the merge needs their approval, and do not describe a merge as done until the tool says it is merged.
 The plugin merges only a pull request in the project's own repository.
-If the owner does not answer, the task stays as it was. Ask again later.
+If the owner does not answer, or denies the merge, the task stays in `awaiting_approval`.
+Call `factoryman_merge` again when the owner wants to merge.
 
 ## Tear down
 
-Call `factoryman_teardown` for a merged or failed task.
+Call `factoryman_teardown` for a task in `merged` or `failed`, or for a scout in `report_ready`.
 The plugin refuses while the worktree has uncommitted changes or unpushed commits.
 Report that refusal to the owner. Do not try to work around it.
 

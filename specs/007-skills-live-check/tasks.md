@@ -23,4 +23,5 @@ description: "Task list for skills and the live check"
 ## Phase 4: Close-out
 
 - [X] T1130 Record D-090 to D-093 in `docs/DECISIONS.md` and finish `spike/RESULTS.md`
-- [ ] T1131 `/speckit.tdd.verify`, remediation, `/speckit.checklist`, `/speckit.analyze`, `/speckit.converge`
+- [X] T1131 `/speckit.tdd.verify`, remediation, `/speckit.checklist`, `/speckit.analyze`, `/speckit.converge`
+- [X] T1132 Remediation R1 to R14 from the audit (cycle R1 in `tdd/cycle-log.md`)

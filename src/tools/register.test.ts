@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { skillNamesOnDisk } from "../../test/fixtures/skills";
 import { testRuntime } from "../../test/fixtures/runtime";
 import type { MergeExecutor } from "../git/merge";
-import { registerTools, skillsForMetadata } from "./register";
+import { registerTools, skillsForMetadata, toolsForMetadata } from "./register";
 
 const executor: MergeExecutor = { preflight: async () => null, merge: async () => ({ ok: true }) };
 
@@ -90,5 +90,12 @@ describe("skillsForMetadata", () => {
     expect(skillsForMetadata({})).toEqual([]);
     expect(skillsForMetadata({ role: "owner" })).toEqual([]);
     expect(skillsForMetadata({ role: 3 })).toEqual([]);
+  });
+
+  it("[U1103] ignores a role that is not exactly the string supervisor or worker, like the tool selection does", () => {
+    for (const role of ["Supervisor", "WORKER", " worker ", "supervisor\n", ["supervisor"], ["worker"], null, undefined, {}, true, 0]) {
+      expect(skillsForMetadata({ role: role as never }), JSON.stringify(role)).toEqual([]);
+      expect(toolsForMetadata({ role: role as never }), JSON.stringify(role)).toEqual([]);
+    }
   });
 });
