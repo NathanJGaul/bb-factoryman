@@ -65,4 +65,14 @@ describe("WebhookNotifier", () => {
       expect(warnings[0]).not.toContain("token=abc");
     }
   });
+
+  it("[U1044] gives up after the timeout and logs the host", async () => {
+    const warnings: string[] = [];
+    const log: Logger = { debug: () => undefined, info: () => undefined, warn: (m) => void warnings.push(m), error: () => undefined };
+    const hanging: FetchLike = (_url, init) => new Promise((_resolve, reject) => init.signal.addEventListener("abort", () => reject(new Error("timed out"))));
+    const notifier = new WebhookNotifier({ fetch: hanging, log, url: () => "https://hooks.example.com/x", timeoutMs: 20 });
+    await notifier.post(TASK, EVENT);
+    expect(warnings).toHaveLength(1);
+    expect(warnings[0]).toContain("hooks.example.com");
+  });
 });

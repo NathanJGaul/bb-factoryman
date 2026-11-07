@@ -17,6 +17,7 @@ import { ValidationDriver } from "./validator/driver";
 import type { Validator } from "./validator/types";
 import { EventHandlers, registerHandlers } from "./wiring/handlers";
 import { drain, registerQueue } from "./limits/queue";
+import { WebhookNotifier } from "./limits/webhook";
 import { registerReadRpc } from "./rpc/read";
 import { reconcileOnStart } from "./wiring/startup";
 import { registerStamper } from "./wiring/stamp";
@@ -126,7 +127,8 @@ export function createPlugin(options: PluginOptions = {}): (bb: BbPluginApi) => 
       settings,
     });
 
-    const notifier = new Notifier(rt);
+    const webhook = new WebhookNotifier({ fetch: options.fetch ?? ((url, init) => fetch(url, init)), log: bb.log, url: () => values.webhookUrl });
+    const notifier = new Notifier(rt, webhook);
     rt.onApplied((applied) => notifier.onApplied(applied));
     const driver = new ValidationDriver(rt, options.validator ?? new NoMistakesValidator(exec), { pollMs: options.pollMs });
     rt.onApplied(({ task }) => {

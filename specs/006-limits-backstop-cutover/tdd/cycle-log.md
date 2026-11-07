@@ -36,3 +36,22 @@ Red commit: the commit before this group's implementation (`test: add worker cap
 - green: `request.ts`, `budget.ts`, `queue.ts` (running count, caps, `enqueue`, an exclusive `drain`, the listener), `launch.ts` (the spawn and start code that moved out of `dispatch.ts`, now shared with the queue), the dispatch order (preview, budget, cap, then create and launch), the `limits` section, `create.request`, the adapter reads, the queued description in `factoryman_status`, the `maxWorkers` setting, and the drain at start-up and when the setting changes.
   `pnpm run check` -> 85 files, 1026 passed, 0 failed. Type check and lint clean.
 - the existing dispatch tests passed unchanged through the refactor, which moved the spawn, start, and early-failure code into `launchWorker`.
+
+## Group 2: the webhook
+
+Red commit: `test: add webhook tests with a stub, group 2 (red)`. It holds the tests and a `WebhookNotifier` stub whose `post` does nothing.
+
+- red: `pnpm vitest run src/limits/webhook.test.ts test/acceptance/limits-webhook.test.ts` -> 5 failed
+  - `[U1017]`, `[U1019]`: `expected [] to have a length of 1 but got +0`
+  - `[U1018]` (http and https): `expected undefined to be 'http://localhost:9999/hook'`
+  - `[A1013]`: `expected [] to deeply equal [ 't1:blocked', ... ]`; `[A1015]`: no warning
+- Passed against the stub: `[U1018]` (the posts-nothing cases), `[A1014]`, `[A1016]`. Mutants after the implementation:
+  - post to any scheme -> `[U1018]` (file and javascript URLs) and `[A1016]` failed
+  - an attention filter that posts on every state -> `[A1013]`, `[A1014]`, `[A1015]` failed
+- Mutants on the new behavior:
+  - log the URL instead of the host -> `[U1019]`, `[A1015]`; rethrow a failure -> the same tests; a bad status silent -> `[U1019]`; evidence not clipped -> `[U1017]`
+  - the webhook not wired in `server.ts` -> `[A1013]`, `[A1015]`
+  - no timeout survived at first, because the test only checked that a signal exists. `timeoutMs` is injectable now, `[U1044]` uses a fetch that waits for the abort and a 20 ms timeout, and the mutant then failed it (it hung to the test timeout). Reverted.
+  - a blank URL posts anyway: equivalent. `new URL("")` throws and the call returns, so the early return is a shortcut.
+- green: `webhook.ts` and the `Notifier` call on a transition into an attention state.
+  `pnpm run check` -> 87 files, 1041 passed, 0 failed. Type check and lint clean.
