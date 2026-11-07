@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { worktreeReport } from "../git/report";
+import { hostFor } from "../machines/route";
 import { refuse } from "../machine/refusal";
 import { errorText, type Runtime } from "../runtime";
 import { identify, sameProject } from "./access";
@@ -39,7 +40,13 @@ export async function teardown(rt: Runtime, caller: Caller, raw: unknown): Promi
     return failure(`Teardown refused: bb reports no worktree path for task ${taskId}, so the landed-work check cannot run. Nothing was recorded.`);
   }
 
-  const report = await worktreeReport(rt.deps.exec, { path, mode: task.mode, baseBranch: store.getProjectConfig(task.projectId).baseBranch });
+  let host: string | null;
+  try {
+    host = await hostFor(bb, task);
+  } catch (error) {
+    return failure(`Teardown refused: could not tell which machine holds the worktree (${errorText(error)}). Nothing was recorded.`);
+  }
+  const report = await worktreeReport(rt.deps.exec, { path, mode: task.mode, baseBranch: store.getProjectConfig(task.projectId).baseBranch, host });
   if (!report.ok) return failure(`Teardown refused: could not read the worktree (${report.message}). Nothing was recorded.`);
 
   const applied = await rt.apply(taskId, { type: "teardown", actor: "supervisor", worktree: report.report });

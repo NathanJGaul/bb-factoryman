@@ -18,8 +18,8 @@ description: "Task list for machine placement"
 
 ## Phase 3: Group 2, remote commands and the preflight
 
-- [ ] T820 Tests and stubs: `src/machines/remote-exec.test.ts`, `src/machines/preflight.test.ts`, the exec routing in the validator, the driver, and teardown, the `preflight` command, and `test/acceptance/machine-remote.test.ts` (A817 to A824)
-- [ ] T821 Implement `remote-exec.ts`, `route.ts`, `preflight.ts`, the terminal methods of the port, the host option of `Exec`, the validator and report changes, and the command
+- [X] T820 Tests and stubs: `src/machines/remote-exec.test.ts`, `src/machines/preflight.test.ts`, the exec routing in the validator, the driver, and teardown, the `preflight` command, and `test/acceptance/machine-remote.test.ts` (A817 to A824)
+- [X] T821 Implement `remote-exec.ts`, `route.ts`, `preflight.ts`, the terminal methods of the port, the host option of `Exec`, the validator and report changes, and the command
 
 ## Phase 4: Group 3, the machine monitor
 

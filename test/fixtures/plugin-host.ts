@@ -42,8 +42,10 @@ export interface RemoteRun {
 
 export interface RemoteFake {
   runs: RemoteRun[];
-  /** Decide the result of a remote command. `hang` never exits, and `truncate` returns truncated output. */
-  handler: (run: RemoteRun) => ExecResult | "hang" | "truncate";
+  /** Decide the result of a remote command. `hang` never exits. */
+  handler: (run: RemoteRun) => ExecResult | "hang";
+  /** Mark every result's output as truncated, whatever the handler returned. */
+  truncate: boolean;
   /** Make `terminals.create` fail. */
   createError: Error | null;
 }
@@ -127,7 +129,7 @@ export async function loadWorld(options: WorldOptions = {}): Promise<World> {
   const metadata = new Map<string, Record<string, unknown>>();
   const machines: HostFixture[] = options.machines ?? [hostFixture("host_local", "local-box")];
   const sources = () => (options.sources ?? [{ hostId: "host_local", path: options.checkout ?? "/work/repo", isDefault: true }]).map((source, index) => ({ type: "local_path", isDefault: source.isDefault ?? index === 0, ...source }));
-  const remote: RemoteFake = { runs: [], handler: () => ({ code: 0, stdout: "", stderr: "" }), createError: null };
+  const remote: RemoteFake = { runs: [], handler: () => ({ code: 0, stdout: "", stderr: "" }), truncate: false, createError: null };
   const terminals = new Map<string, { status: string; exitCode: number | null; output: string; truncated: boolean }>();
   const sent = new Map<string, string[]>();
   let spawned = 0;
@@ -185,7 +187,8 @@ export async function loadWorld(options: WorldOptions = {}): Promise<World> {
         list: async () => machines,
       },
       terminals: {
-        create: async (args: { scope: { hostId: string; cwd: string | null }; start: { argv: string[] } }) => {
+        create: async (rawArgs: unknown) => {
+          const args = rawArgs as { scope: { hostId: string; cwd: string | null }; start: { argv: string[] } };
           if (remote.createError) throw remote.createError;
           // The runner starts `sh -c <wrapper> sh <command> <args>`, so the real command starts at index 4.
           const [, , , , command = "", ...rest] = args.start.argv;
@@ -197,9 +200,7 @@ export async function loadWorld(options: WorldOptions = {}): Promise<World> {
             id,
             result === "hang"
               ? { status: "running", exitCode: null, output: "", truncated: false }
-              : result === "truncate"
-                ? { status: "exited", exitCode: 0, output: frame(0, "x"), truncated: true }
-                : { status: "exited", exitCode: 0, output: frame(result.code ?? 1, result.stdout, result.stderr), truncated: false },
+              : { status: "exited", exitCode: 0, output: frame(result.code ?? 1, result.stdout, result.stderr), truncated: remote.truncate },
           );
           return { id };
         },

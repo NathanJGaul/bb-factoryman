@@ -1,7 +1,9 @@
 import { z } from "zod";
 import { checkProfile } from "../dispatch/availability";
 import { loadDispatchConfig } from "../dispatch/load";
+import type { MachineInfo } from "../bb/port";
 import { pickMachine, type MachineChoice } from "../dispatch/placement";
+import { preflightOnce, reportText } from "../machines/preflight";
 import type { Resolution } from "../dispatch/types";
 import { createTask, transition } from "../machine/transition";
 import { refuse } from "../machine/refusal";
@@ -56,7 +58,7 @@ function ambiguousText(resolution: Extract<Resolution, { status: "ambiguous" }>)
   ].join("\n");
 }
 
-type Placed = { ok: true; hostId: string | null; hostName: string | null; cloneHost: string | null } | { ok: false; text: string };
+type Placed = { ok: true; machine: MachineInfo | null; sourcePath: string | null; cloneHost: string | null } | { ok: false; text: string };
 
 /** Read the project's sources and, when a machine is wanted, pick it. Returns the text to show when dispatch must stop. */
 async function place(rt: Runtime, projectId: string, choice: MachineChoice): Promise<Placed> {
@@ -65,11 +67,11 @@ async function place(rt: Runtime, projectId: string, choice: MachineChoice): Pro
     const sources = await bb.getProjectSources(projectId);
     const cloneHost = sources.find((source) => source.isDefault)?.hostId ?? null;
     const wanted = choice.explicit ?? choice.rule ?? choice.projectDefault;
-    if (wanted === null || wanted === undefined) return { ok: true, hostId: null, hostName: null, cloneHost };
+    if (wanted === null || wanted === undefined) return { ok: true, machine: null, sourcePath: null, cloneHost };
     const placement = pickMachine(choice, await bb.listMachines(), sources);
     if (placement.status === "blocked") return { ok: false, text: `Dispatch blocked (${placement.code}): ${placement.message} No task was created.` };
-    if (placement.status === "none") return { ok: true, hostId: null, hostName: null, cloneHost };
-    return { ok: true, hostId: placement.machine.id, hostName: placement.machine.name, cloneHost };
+    if (placement.status === "none") return { ok: true, machine: null, sourcePath: null, cloneHost };
+    return { ok: true, machine: placement.machine, sourcePath: sources.find((source) => source.hostId === placement.machine.id)?.path ?? null, cloneHost };
   } catch (error) {
     return { ok: false, text: `Dispatch failed: could not read bb's machines (${errorText(error)}). No task was created.` };
   }
@@ -116,13 +118,25 @@ export async function dispatch(rt: Runtime, caller: Caller, raw: unknown): Promi
   // Choose the machine. A pinned machine that cannot take the work blocks the dispatch, and nothing falls back (hard rule 5).
   const placed = await place(rt, caller.projectId, { explicit: pinned, rule: resolution.machine, projectDefault: config.defaultMachine });
   if (!placed.ok) return failure(placed.text);
-  const { hostId, hostName, cloneHost } = placed;
+  const { machine: host, sourcePath, cloneHost } = placed;
+  const hostId = host?.id ?? null;
+  const hostName = host?.name ?? null;
 
   try {
     const problem = checkProfile(profile, await bb.listProviders(hostId ?? undefined));
     if (problem !== null) return failure(`Dispatch blocked (provider_unavailable): ${problem} No task was created.`);
   } catch (error) {
     return failure(`Dispatch failed: could not read bb's providers (${errorText(error)}). No task was created.`);
+  }
+
+  // A remote machine must pass the preflight first. The host that holds the clone is the server's own environment, so it skips it.
+  if (host !== null && sourcePath !== null && host.id !== cloneHost) {
+    try {
+      const problems = await preflightOnce({ bb, exec: rt.deps.exec }, rt.preflightPassed, caller.projectId, { host, sourcePath, mode: config.deliveryMode, provider: profile.provider });
+      if (problems.length > 0) return failure(`Dispatch blocked (preflight_failed): ${reportText(host, config.deliveryMode, problems)}\nNo task was created.`);
+    } catch (error) {
+      return failure(`Dispatch failed: the preflight of ${host.name} could not run (${errorText(error)}). No task was created.`);
+    }
   }
 
   // Ask the state machine about the start before anything exists, so a refused start (such as a local-only task on another machine) spawns no worker.

@@ -114,7 +114,7 @@ describe("gate commands run where the worktree lives", () => {
   it.each([
     ["a terminal that cannot start", (world: World) => void (world.remote.createError = new Error("host is gone"))],
     ["a terminal that never exits", (world: World) => void (world.remote.handler = () => "hang")],
-    ["output that is truncated", (world: World) => void (world.remote.handler = () => "truncate")],
+    ["output that is truncated", (world: World) => void ((world.remote.truncate = true), (world.remote.handler = (run) => ({ code: 0, stdout: run.args[0] === "rev-list" ? "0\n" : "", stderr: "" })))],
   ])("[A823] refuses teardown for %s, and records nothing", async (_label, break_) => {
     const world = await setup();
     await failedRemoteTask(world);

@@ -1,4 +1,5 @@
 import type { Actor } from "../machine/types";
+import { hostFor } from "../machines/route";
 import { errorText, type Runtime } from "../runtime";
 import type { TaskRow } from "../store/types";
 import type { Answer, Finding, RunView, Validator } from "./types";
@@ -79,7 +80,7 @@ export class ValidationDriver {
     if (!task || task.state !== "needs_decision") return { ok: false, message: `Task ${taskId} is not waiting for a decision.` };
     const context = await this.context(task);
     if (!context.ok) return { ok: false, message: context.message };
-    const sent = await this.validator.answer({ cwd: context.cwd, response });
+    const sent = await this.validator.answer({ cwd: context.cwd, host: context.host, response });
     if (!sent.ok) return { ok: false, message: sent.error.message };
     const applied = await this.rt.apply(taskId, { type: "resolve", actor, evidence: `answered the gate: ${response.action}` });
     this.baselines.delete(taskId);
@@ -96,7 +97,7 @@ export class ValidationDriver {
     }
     const context = await this.context(task);
     if (!context.ok) return this.failed(task, context.message);
-    return task.state === "validating" ? this.followRun(task, context) : this.followWait(task, context.cwd);
+    return task.state === "validating" ? this.followRun(task, context) : this.followWait(task, context);
   }
 
   private async loop(taskId: string): Promise<void> {
@@ -110,21 +111,21 @@ export class ValidationDriver {
     }
   }
 
-  private async context(task: TaskRow): Promise<{ ok: true; cwd: string; intent: string } | { ok: false; message: string }> {
+  private async context(task: TaskRow): Promise<{ ok: true; cwd: string; host: string | null; intent: string } | { ok: false; message: string }> {
     const { store, bb } = this.rt.deps;
     try {
       const environmentId = task.workerThreadId === null ? null : ((await bb.getThread(task.workerThreadId))?.environmentId ?? null);
       const cwd = environmentId === null ? null : await bb.getEnvironmentPath(environmentId);
       if (cwd === null) return { ok: false, message: "cannot read the worker's worktree path" };
       const start = store.listEvents({ taskId: task.taskId }).find((row) => row.event === "start" && row.outcome === "applied");
-      return { ok: true, cwd, intent: start?.evidence ?? `Complete task ${task.taskId}.` };
+      return { ok: true, cwd, host: await hostFor(bb, task), intent: start?.evidence ?? `Complete task ${task.taskId}.` };
     } catch (error) {
       return { ok: false, message: `cannot read the worker's worktree path (${errorText(error)})` };
     }
   }
 
-  private async followRun(task: TaskRow, context: { cwd: string; intent: string }): Promise<"continue" | "stop"> {
-    const result = await this.validator.start({ cwd: context.cwd, intent: context.intent, wait: this.wait });
+  private async followRun(task: TaskRow, context: { cwd: string; host: string | null; intent: string }): Promise<"continue" | "stop"> {
+    const result = await this.validator.start({ cwd: context.cwd, host: context.host, intent: context.intent, wait: this.wait });
     if (!result.ok) return this.failed(task, result.error.message);
     this.errors.delete(task.taskId);
     const view = result.value;
@@ -148,8 +149,8 @@ export class ValidationDriver {
     }
   }
 
-  private async followWait(task: TaskRow, cwd: string): Promise<"continue" | "stop"> {
-    const result = await this.validator.status({ cwd });
+  private async followWait(task: TaskRow, context: { cwd: string; host: string | null }): Promise<"continue" | "stop"> {
+    const result = await this.validator.status({ cwd: context.cwd, host: context.host });
     if (!result.ok) return "continue";
     const view = result.value;
     const baseline = this.baselines.get(task.taskId) ?? null;

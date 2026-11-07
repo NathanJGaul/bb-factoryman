@@ -33,10 +33,16 @@ export type ValidatorResult<T> = { ok: true; value: T } | { ok: false; error: { 
 
 export type Answer = { action: "approve" } | { action: "skip" } | { action: "fix"; findingIds: string[]; instructions?: string };
 
+/** Where a validator command runs. `host` is the host ID of a remote machine, and null or absent means the server. */
+export interface Where {
+  cwd: string;
+  host?: string | null;
+}
+
 export interface Validator {
-  start(input: { cwd: string; intent: string; wait?: string }): Promise<ValidatorResult<RunView>>;
-  status(input: { cwd: string; runId?: string }): Promise<ValidatorResult<RunView>>;
-  findings(input: { cwd: string; runId?: string }): Promise<ValidatorResult<Finding[]>>;
-  answer(input: { cwd: string; response: Answer }): Promise<ValidatorResult<RunView>>;
-  cancel(input: { cwd: string; runId?: string }): Promise<ValidatorResult<void>>;
+  start(input: Where & { intent: string; wait?: string }): Promise<ValidatorResult<RunView>>;
+  status(input: Where & { runId?: string }): Promise<ValidatorResult<RunView>>;
+  findings(input: Where & { runId?: string }): Promise<ValidatorResult<Finding[]>>;
+  answer(input: Where & { response: Answer }): Promise<ValidatorResult<RunView>>;
+  cancel(input: Where & { runId?: string }): Promise<ValidatorResult<void>>;
 }

@@ -50,6 +50,8 @@ export class Runtime {
   readonly log: TaskLog;
   /** Task IDs whose merge approval form is open right now. */
   readonly openMergeForms = new Set<string>();
+  /** Passed preflights, by host, project, mode, and provider. A restart clears it. */
+  readonly preflightPassed = new Set<string>();
   private readonly listeners: AppliedListener[] = [];
 
   constructor(readonly deps: RuntimeDeps) {

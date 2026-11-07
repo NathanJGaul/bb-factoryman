@@ -45,7 +45,7 @@ describe("ValidationDriver.step in validating", () => {
     const { driver, validator } = await validating();
     validator.script("start", [ok(view())]);
     await driver.step("t1");
-    expect(validator.calls[0]).toEqual({ operation: "start", input: { cwd: "/work/tree", intent: expect.stringContaining("Add a --json flag to the status command."), wait: undefined } });
+    expect(validator.calls[0]).toEqual({ operation: "start", input: { cwd: "/work/tree", host: null, intent: expect.stringContaining("Add a --json flag to the status command."), wait: undefined } });
   });
 
   it("[U187] applies finding for a gate with evidence that names the step, the count, and each finding verbatim", async () => {
@@ -183,7 +183,7 @@ describe("ValidationDriver.step in needs_decision", () => {
     validator.script("start", [ok(view())]);
     const result = await driver.answer("t1", { action: "fix", findingIds: ["review-1"], instructions: "Small fix." }, "user");
     expect(result).toEqual({ ok: true });
-    expect(calls(validator, "answer")).toEqual([{ operation: "answer", input: { cwd: "/work/tree", response: { action: "fix", findingIds: ["review-1"], instructions: "Small fix." } } }]);
+    expect(calls(validator, "answer")).toEqual([{ operation: "answer", input: { cwd: "/work/tree", host: null, response: { action: "fix", findingIds: ["review-1"], instructions: "Small fix." } } }]);
     expect(state(t)).toBe("validating");
     expect(lastEvent(t)).toMatchObject({ event: "resolve", actor: "user" });
   });

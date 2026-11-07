@@ -5,6 +5,7 @@ import { RulesTableResolver } from "./dispatch/resolver";
 import type { DispatchResolver } from "./dispatch/types";
 import { runCommand, type Exec } from "./exec";
 import { nodeFiles, type Files } from "./files";
+import { createRemoteRunner, routeExec } from "./machines/remote-exec";
 import { createMergeExecutor } from "./git/merge";
 import { Runtime, type Settings } from "./runtime";
 import { recover } from "./store/replay";
@@ -78,17 +79,20 @@ export function createPlugin(options: PluginOptions = {}): (bb: BbPluginApi) => 
       bb.log.error(`Task ${corrupt.taskId} has a corrupt log (row ${corrupt.seq}): ${corrupt.message}`);
     }
 
-    const exec = options.exec ?? runCommand;
+    const port = createBbPort(bb);
+    const sleep = options.sleep ?? ((ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms)));
+    // Commands for a task on a remote machine run there, through a host terminal. The rest run on the server.
+    const exec = routeExec(options.exec ?? runCommand, createRemoteRunner(port, sleep, options.remote));
     const rt = new Runtime({
       store,
-      bb: createBbPort(bb),
+      bb: port,
       exec,
       files: options.files ?? nodeFiles,
       resolver: options.resolver ?? new RulesTableResolver(),
       log: bb.log,
       now: options.now ?? (() => new Date().toISOString()),
       newId: options.newId ?? (() => `t-${randomBytes(4).toString("hex")}`),
-      sleep: options.sleep ?? ((ms) => new Promise((resolve) => setTimeout(resolve, ms))),
+      sleep,
       settings,
     });
 
@@ -119,8 +123,13 @@ export function createPlugin(options: PluginOptions = {}): (bb: BbPluginApi) => 
           summary: "Make a thread the supervisor, so bb offers it the four supervisor tools",
           usage: "bb factoryman supervisor <thread-id>",
         },
+        {
+          name: "preflight",
+          summary: "Report what a remote machine is missing before the first dispatch",
+          usage: "bb factoryman preflight <machine> --project <project-id> [--provider <provider-id>]",
+        },
       ],
-      run: (argv) => runFactorymanCommand(rt, argv),
+      run: (argv, ctx) => runFactorymanCommand(rt, argv, ctx),
     });
   };
 }

@@ -16,6 +16,7 @@ function describeTask(rt: Runtime, task: TaskRow): string {
   const lines = [`Task ${task.taskId}: ${task.kind}, ${task.mode}, state ${task.state}`];
   if (task.workerThreadId !== null) lines.push(`  worker thread: ${task.workerThreadId}`);
   if (task.branch !== null) lines.push(`  branch: ${task.branch}`);
+  if (task.machine !== null) lines.push(`  machine: ${task.machine}`);
   if (task.pullRequestUrl !== null) lines.push(`  pull request: ${task.pullRequestUrl}`);
   const start = rt.deps.store.listEvents({ taskId: task.taskId }).find((row) => row.event === "start" && row.outcome === "applied");
   const firstLine = start?.evidence?.split("\n")[0]?.trim();

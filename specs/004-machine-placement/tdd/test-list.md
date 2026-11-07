@@ -35,14 +35,14 @@ The suite baseline was 63 files and 708 tests, all passing.
 | A814 | A `local-only` dispatch to a machine other than the clone host is refused by the state machine, spawns nothing, and creates no task | AC-3.1, FR-805 | example | DONE | `test/acceptance/machine-placement.test.ts::[A814]` |
 | A815 | A `local-only` dispatch to the clone host succeeds | AC-3.2, FR-805 | example | DONE | `test/acceptance/machine-placement.test.ts::[A815]` |
 | A816 | A `local-only` dispatch with no machine succeeds on the clone host | AC-3.3, FR-805 | example | DONE | `test/acceptance/machine-placement.test.ts::[A816]` |
-| A817 | `bb factoryman preflight` reports an agent CLI that is not available on the machine | AC-4.1, FR-808, FR-812 | example | TODO | `test/acceptance/machine-remote.test.ts::[A817]` |
-| A818 | The preflight reports `no-mistakes` missing, and not initialized in the project's source | AC-4.2, FR-808 | example | TODO | `test/acceptance/machine-remote.test.ts::[A818]` |
-| A819 | The preflight reports missing `gh` credentials for the pull request modes and not for `local-only` | AC-4.3, FR-808 | example | TODO | `test/acceptance/machine-remote.test.ts::[A819]` |
-| A820 | A failed preflight blocks dispatch to a remote machine and spawns no worker | AC-4.4, FR-808 | example | TODO | `test/acceptance/machine-remote.test.ts::[A820]` |
-| A821 | The preflight is skipped for the clone host | AC-4.5, FR-808 | example | TODO | `test/acceptance/machine-remote.test.ts::[A821]` |
-| A822 | Teardown of a task on a remote machine runs its git commands on that machine through a host terminal | AC-5.1, FR-809, FR-810 | example | TODO | `test/acceptance/machine-remote.test.ts::[A822]` |
-| A823 | A host terminal that fails, times out, or truncates makes teardown refuse | AC-5.2, FR-809 | error | TODO | `test/acceptance/machine-remote.test.ts::[A823]` |
-| A824 | A task with no machine runs its commands on the server as before | AC-5.3, FR-810 | example | TODO | `test/acceptance/machine-remote.test.ts::[A824]` |
+| A817 | `bb factoryman preflight` reports an agent CLI that is not available on the machine | AC-4.1, FR-808, FR-812 | example | DONE | `test/acceptance/machine-remote.test.ts::[A817]` |
+| A818 | The preflight reports `no-mistakes` missing, and not initialized in the project's source | AC-4.2, FR-808 | example | DONE | `test/acceptance/machine-remote.test.ts::[A818]` |
+| A819 | The preflight reports missing `gh` credentials for the pull request modes and not for `local-only` | AC-4.3, FR-808 | example | DONE | `test/acceptance/machine-remote.test.ts::[A819]` |
+| A820 | A failed preflight blocks dispatch to a remote machine and spawns no worker | AC-4.4, FR-808 | example | DONE | `test/acceptance/machine-remote.test.ts::[A820]` |
+| A821 | The preflight is skipped for the clone host | AC-4.5, FR-808 | example | DONE | `test/acceptance/machine-remote.test.ts::[A821]` |
+| A822 | Teardown of a task on a remote machine runs its git commands on that machine through a host terminal | AC-5.1, FR-809, FR-810 | example | DONE | `test/acceptance/machine-remote.test.ts::[A822]` |
+| A823 | A host terminal that fails, times out, or truncates makes teardown refuse | AC-5.2, FR-809 | error | DONE | `test/acceptance/machine-remote.test.ts::[A823]` |
+| A824 | A task with no machine runs its commands on the server as before | AC-5.3, FR-810 | example | DONE | `test/acceptance/machine-remote.test.ts::[A824]` |
 
 ## Inner loop: unit behaviors
 
@@ -87,49 +87,49 @@ The suite baseline was 63 files and 708 tests, all passing.
 | U820 | `getProjectSources` returns each source with host ID, path, and default flag | FR-803, FR-805 | example | DONE | `src/bb/adapter.test.ts::[U820]` |
 | U821 | `listProviders(hostId)` passes the host ID to bb, and without one passes none | FR-808 | example | DONE | `src/bb/adapter.test.ts::[U821]` |
 | U822 | `spawnWorker` with a host ID spawns on that host and with none uses the project's default host | FR-801 | example | DONE | `src/bb/adapter.test.ts::[U822]` |
-| U823 | The terminal methods start a `host_path` terminal in `argv` mode, read decoded output, and close it | FR-809 | example | TODO | `src/bb/adapter.test.ts::[U823]` |
+| U823 | The terminal methods start a `host_path` terminal in `argv` mode, read decoded output, and close it | FR-809 | example | DONE | `src/bb/adapter.test.ts::[U823]` |
 
 ### `src/machines/remote-exec.ts`
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| U824 | The runner starts one terminal with `sh -c <wrapper> sh <command> <args>` in the given directory on the given host | FR-809 | example | TODO | `src/machines/remote-exec.test.ts::[U824]` |
-| U825 | A `FMX1` frame decodes into exit code, standard output, and standard error | FR-809 | example | TODO | `src/machines/remote-exec.test.ts::[U825]` |
-| U826 | The runner polls until the terminal leaves `running`, sleeping between reads | FR-809 | example | TODO | `src/machines/remote-exec.test.ts::[U826]` |
-| U827 | A terminal that never exits is closed and reported as a timeout | FR-809 | error | TODO | `src/machines/remote-exec.test.ts::[U827]` |
-| U828 | Output with no frame is reported as an error that quotes its tail | FR-809 | error | TODO | `src/machines/remote-exec.test.ts::[U828]` |
-| U829 | Truncated output is an error | FR-809 | error | TODO | `src/machines/remote-exec.test.ts::[U829]` |
-| U830 | A terminal that cannot start is an error result and not a throw | FR-809 | error | TODO | `src/machines/remote-exec.test.ts::[U830]` |
-| U831 | The terminal is closed after a result and after an error | FR-809 | example | TODO | `src/machines/remote-exec.test.ts::[U831]` |
-| U832 | `routeExec` runs locally with no host and remotely with a host | FR-810 | example | TODO | `src/machines/remote-exec.test.ts::[U832]` |
+| U824 | The runner starts one terminal with `sh -c <wrapper> sh <command> <args>` in the given directory on the given host | FR-809 | example | DONE | `src/machines/remote-exec.test.ts::[U824]` |
+| U825 | A `FMX1` frame decodes into exit code, standard output, and standard error | FR-809 | example | DONE | `src/machines/remote-exec.test.ts::[U825]` |
+| U826 | The runner polls until the terminal leaves `running`, sleeping between reads | FR-809 | example | DONE | `src/machines/remote-exec.test.ts::[U826]` |
+| U827 | A terminal that never exits is closed and reported as a timeout | FR-809 | error | DONE | `src/machines/remote-exec.test.ts::[U827]` |
+| U828 | Output with no frame is reported as an error that quotes its tail | FR-809 | error | DONE | `src/machines/remote-exec.test.ts::[U828]` |
+| U829 | Truncated output is an error | FR-809 | error | DONE | `src/machines/remote-exec.test.ts::[U829]` |
+| U830 | A terminal that cannot start is an error result and not a throw | FR-809 | error | DONE | `src/machines/remote-exec.test.ts::[U830]` |
+| U831 | The terminal is closed after a result and after an error | FR-809 | example | DONE | `src/machines/remote-exec.test.ts::[U831]` |
+| U832 | `routeExec` runs locally with no host and remotely with a host | FR-810 | example | DONE | `src/machines/remote-exec.test.ts::[U832]` |
 
 ### `src/machines/route.ts`
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| U833 | `hostFor` returns null for a task with no machine and for a machine that is the clone host | FR-810 | example | TODO | `src/machines/route.test.ts::[U833]` |
-| U834 | `hostFor` returns the machine ID for a remote machine | FR-810 | example | TODO | `src/machines/route.test.ts::[U834]` |
+| U833 | `hostFor` returns null for a task with no machine and for a machine that is the clone host | FR-810 | example | DONE | `src/machines/route.test.ts::[U833]` |
+| U834 | `hostFor` returns the machine ID for a remote machine | FR-810 | example | DONE | `src/machines/route.test.ts::[U834]` |
 
 ### `src/validator`, `src/git/report.ts`, `src/tools/teardown.ts`
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| U835 | Every `no-mistakes` command passes the host option to `exec` | FR-810 | example | TODO | `src/validator/no-mistakes.test.ts::[U835]` |
-| U836 | The validation driver passes the task's remote host to the validator | FR-810 | example | TODO | `src/validator/driver.test.ts::[U836]` |
-| U837 | The worktree report passes the host option to each git command | FR-810 | example | TODO | `src/git/report.test.ts::[U837]` |
+| U835 | Every `no-mistakes` command passes the host option to `exec` | FR-810 | example | DONE | `src/validator/no-mistakes.test.ts::[U835]` |
+| U836 | The validation driver passes the task's remote host to the validator | FR-810 | example | DONE | `src/validator/driver.test.ts::[U836]` |
+| U837 | The worktree report passes the host option to each git command | FR-810 | example | DONE | `src/git/report.test.ts::[U837]` |
 
 ### `src/machines/preflight.ts`
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| U838 | A machine that passes every check gives an empty problem list | FR-808 | example | TODO | `src/machines/preflight.test.ts::[U838]` |
-| U839 | A provider that is not available on the host is reported | FR-808 | example | TODO | `src/machines/preflight.test.ts::[U839]` |
-| U840 | `no-mistakes` not found is reported for `no-mistakes` mode only | FR-808 | example | TODO | `src/machines/preflight.test.ts::[U840]` |
-| U841 | A missing `no-mistakes` remote in the source is reported for `no-mistakes` mode | FR-808 | example | TODO | `src/machines/preflight.test.ts::[U841]` |
-| U842 | A failing `gh auth status` is reported for `no-mistakes` and `direct-PR` and not for `local-only` | FR-808 | example | TODO | `src/machines/preflight.test.ts::[U842]` |
-| U843 | A command that cannot run (code null) counts as a failed check | FR-808 | error | TODO | `src/machines/preflight.test.ts::[U843]` |
-| U844 | A pass is cached per host, project, and mode until restart, and a failure is not | FR-808 | example | TODO | `src/machines/preflight.test.ts::[U844]` |
-| U845 | The report text names each problem and the fix | FR-808, FR-812 | example | TODO | `src/machines/preflight.test.ts::[U845]` |
+| U838 | A machine that passes every check gives an empty problem list | FR-808 | example | DONE | `src/machines/preflight.test.ts::[U838]` |
+| U839 | A provider that is not available on the host is reported | FR-808 | example | DONE | `src/machines/preflight.test.ts::[U839]` |
+| U840 | `no-mistakes` not found is reported for `no-mistakes` mode only | FR-808 | example | DONE | `src/machines/preflight.test.ts::[U840]` |
+| U841 | A missing `no-mistakes` remote in the source is reported for `no-mistakes` mode | FR-808 | example | DONE | `src/machines/preflight.test.ts::[U841]` |
+| U842 | A failing `gh auth status` is reported for `no-mistakes` and `direct-PR` and not for `local-only` | FR-808 | example | DONE | `src/machines/preflight.test.ts::[U842]` |
+| U843 | A command that cannot run (code null) counts as a failed check | FR-808 | error | DONE | `src/machines/preflight.test.ts::[U843]` |
+| U844 | A pass is cached per host, project, and mode until restart, and a failure is not | FR-808 | example | DONE | `src/machines/preflight.test.ts::[U844]` |
+| U845 | The report text names each problem and the fix | FR-808, FR-812 | example | DONE | `src/machines/preflight.test.ts::[U845]` |
 
 ### `src/machines/monitor.ts`
 
@@ -149,8 +149,8 @@ The suite baseline was 63 files and 708 tests, all passing.
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| U855 | `factoryman_status` shows the machine of a task that has one | FR-801 | example | TODO | `src/tools/status.test.ts::[U855]` |
-| U856 | `bb factoryman preflight <machine> --project <id>` runs the preflight and prints the report, and a bad call prints usage | FR-812 | example | TODO | `src/tools/supervisor-command.test.ts::[U856]` |
+| U855 | `factoryman_status` shows the machine of a task that has one | FR-801 | example | DONE | `src/tools/status.test.ts::[U855]` |
+| U856 | `bb factoryman preflight <machine> --project <id>` runs the preflight and prints the report, and a bad call prints usage | FR-812 | example | DONE | `src/tools/supervisor-command.test.ts::[U856]` |
 
 ## Cycle plan
 

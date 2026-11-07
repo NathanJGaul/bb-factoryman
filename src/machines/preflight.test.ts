@@ -40,6 +40,13 @@ describe("runPreflight", () => {
     expect(any).toEqual([expect.objectContaining({ check: "agent_cli" })]);
     bb.providersByHost.set("host_gpu", [{ id: "claude", available: true, permissionModes: ["auto"], reasoningLevels: [] }]);
     expect(await runPreflight({ bb, exec }, input("local-only", null))).toEqual([]);
+    // Another provider is available, but the task needs `claude`.
+    bb.providersByHost.set("host_gpu", [
+      { id: "claude", available: false, permissionModes: ["auto"], reasoningLevels: [] },
+      { id: "codex", available: true, permissionModes: ["auto"], reasoningLevels: [] },
+    ]);
+    expect(await runPreflight({ bb, exec }, input("local-only", "claude"))).toEqual([expect.objectContaining({ check: "agent_cli" })]);
+    expect(await runPreflight({ bb, exec }, input("local-only", null))).toEqual([]);
   });
 
   it("[U840] reports a missing no-mistakes for no-mistakes mode only", async () => {

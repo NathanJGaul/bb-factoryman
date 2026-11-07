@@ -120,16 +120,22 @@ export function createBbPort(bb: BbPluginApi): BbPort {
       return project.sources.map((source) => ({ hostId: source.hostId, path: source.path, isDefault: source.isDefault }));
     },
 
-    async startTerminal(): Promise<{ terminalId: string }> {
-      throw new Error("not implemented");
+    async startTerminal(hostId, cwd, argv) {
+      const session = await bb.sdk.terminals.create({ cols: 200, rows: 50, scope: { kind: "host_path", hostId, cwd }, start: { mode: "argv", argv } });
+      return { terminalId: session.id };
     },
 
-    async readTerminal(): Promise<TerminalRead> {
-      throw new Error("not implemented");
+    async readTerminal(terminalId): Promise<TerminalRead> {
+      const read = await bb.sdk.terminals.output({ terminalId });
+      const output = [...read.chunks]
+        .sort((a, b) => a.seq - b.seq)
+        .map((chunk) => Buffer.from(chunk.dataBase64, "base64").toString("utf8"))
+        .join("");
+      return { status: read.status, exitCode: read.exitCode, output, truncated: read.truncated };
     },
 
-    async closeTerminal(): Promise<void> {
-      throw new Error("not implemented");
+    async closeTerminal(terminalId) {
+      await bb.sdk.terminals.close({ terminalId, mode: "force" });
     },
 
     async listProviders(hostId) {
