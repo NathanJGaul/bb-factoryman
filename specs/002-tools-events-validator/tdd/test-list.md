@@ -263,9 +263,9 @@ Boundaries have both sides, and error paths name the failure.
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| U117 | The command stamps `{ role: "supervisor" }` and prints a confirmation | FR-122 | example | PENDING | |
-| U118 | The command refuses a thread that is a recorded worker and stamps nothing | FR-122 | example | PENDING | |
-| U119 | The command without a thread ID prints usage and exits non-zero | FR-122 | example | PENDING | |
+| U117 | The command stamps `{ role: "supervisor" }` and prints a confirmation | FR-122 | example | DONE | `src/tools/supervisor-command.test.ts::[U117] stamps the supervisor role on a thread and prints a confirmation` |
+| U118 | The command refuses a thread that is a recorded worker and stamps nothing | FR-122 | example | DONE | `src/tools/supervisor-command.test.ts::[U118] refuses a recorded worker thread and stamps nothing` |
+| U119 | The command without a thread ID prints usage and exits non-zero | FR-122 | example | DONE | `src/tools/supervisor-command.test.ts::[U119] prints usage and exits non-zero without a thread ID or with an unknown command` |
 
 ### `src/server.ts`
 

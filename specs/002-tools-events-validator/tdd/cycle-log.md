@@ -204,3 +204,13 @@ Each behavior in a batch still has its own test, and each entry records the fail
   - retire the worker before recording the event -> U107, U108, U109, U112, U113 failed (5 failed, 5 passed)
   - ignore the git report and send a clean one -> U108, U109, U111 failed (3 failed, 7 passed)
 - refactor: none needed
+
+## Cycle C14: U117 to U119 supervisor command (`src/tools/supervisor-command.ts`)
+
+- tests: `src/tools/supervisor-command.test.ts` `[U117]` to `[U119]` (new)
+- red: a stub `runFactorymanCommand` that returns `{ exitCode: 0 }`, then `pnpm vitest run src/tools/supervisor-command.test.ts`
+  -> `U117`, `U118`, and `U119` failed on the stamped metadata, the exit code, and the usage text (3 failed)
+- green: the command checks its arguments, refuses a recorded worker, and stamps `{ role: "supervisor" }` through the port.
+  Suite `pnpm test` -> 35 files, 468 passed, 0 failed. Lint and type-check clean.
+- deliberate mutant: skip the worker check -> U118 failed (1 failed, 2 passed). Restored exactly.
+- refactor: none needed

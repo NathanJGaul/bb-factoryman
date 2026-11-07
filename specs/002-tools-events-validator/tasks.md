@@ -92,7 +92,7 @@ description: "Task list for tools and approval, event wiring, and the validator"
 - [X] T048 [US1] [U89] [U90] [U91] [U92] [U93] [U94] [U95] [U96] [U97] [U98] [U99] [U100] [U101] [U102] [U103] [U104] [U105] [U106] Implement `factoryman_merge` and the approval form schema in `src/tools/merge.ts`
 - [X] T049 [US1] [U107] [U108] [U109] [U110] [U111] [U112] [U113] [U114] [U115] [U116] Implement `factoryman_teardown` in `src/tools/teardown.ts`
 - [ ] T050 [US1] [U33] [U34] [U35] [U36] [U37] [U38] [U39] [U40] Implement tool registration, schemas, and `configure` in `src/tools/register.ts`
-- [ ] T051 [US1] [U117] [U118] [U119] Implement the supervisor command in `src/tools/supervisor-command.ts`
+- [X] T051 [US1] [U117] [U118] [U119] Implement the supervisor command in `src/tools/supervisor-command.ts`
 - [ ] T052 [US1] [U120] [U121] [U123] [U124] Build the runtime, open the store, run recovery, and register everything in `src/server.ts`
 - [ ] T053 [US1] [U122] Add the `mergeMethod` and approval timeout settings in `src/server.ts` and read them in `src/git/merge.ts` and `src/tools/merge.ts`
 - [ ] T054 [US1] Update `docs/DECISIONS.md` with the milestone 4 findings and commit milestone 4
