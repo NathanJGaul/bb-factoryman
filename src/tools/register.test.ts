@@ -2,7 +2,7 @@ import { createFakePluginHost, makePluginAgentConfigurationContext } from "@get-
 import { describe, expect, it } from "vitest";
 import { testRuntime } from "../../test/fixtures/runtime";
 import type { MergeExecutor } from "../git/merge";
-import { registerTools } from "./register";
+import { registerTools, skillsForMetadata } from "./register";
 
 const executor: MergeExecutor = { preflight: async () => null, merge: async () => ({ ok: true }) };
 
@@ -79,5 +79,15 @@ describe("registerTools", () => {
     expect(ok).toBe("No tasks match.");
     const failed = await host.harness.behavior.callAgentTool("factoryman_status", { taskId: "t9" }, { threadId: "thr-sup", projectId: "proj-1" });
     expect(failed).toEqual({ content: [{ type: "text", text: "No task t9 exists in this project." }], isError: true });
+  });
+});
+
+describe("skillsForMetadata", () => {
+  it("[U1101] returns the supervisor skill, the worker skill, or nothing, and ignores an unknown role", () => {
+    expect(skillsForMetadata({ role: "supervisor" })).toEqual(["factoryman-supervisor"]);
+    expect(skillsForMetadata({ role: "worker", taskId: "t1" })).toEqual(["factoryman-worker"]);
+    expect(skillsForMetadata({})).toEqual([]);
+    expect(skillsForMetadata({ role: "owner" })).toEqual([]);
+    expect(skillsForMetadata({ role: 3 })).toEqual([]);
   });
 });

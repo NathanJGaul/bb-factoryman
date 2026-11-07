@@ -453,6 +453,23 @@ I read both files and wrote to neither.
 
 Fallback: the import is a dry run that reads one file and prints a table.
 
+## Milestone 11: skills and live check
+
+## 11. Skill override
+
+Result: partial
+
+Evidence: a throwaway bb 0.48.1 listed the skill that `probec` ships in `skills/example-todos/SKILL.md` with scope `plugin` and provider `bb`.
+The skill's name is the directory name and the front matter name.
+A project skill with the same name, `.claude/skills/example-todos/SKILL.md` in a registered project, appeared beside it with scope `provider-project`.
+`bb skill list --project <id> --json` returned both rows, and a project skill does not replace or hide the plugin skill in the listing.
+No agent thread ran, so which one a session loads is not known.
+The scaffold's `bb.agents.configure({ skills: [...] })` takes skill names, and the fake host returns them (`[A1102]`).
+
+Fallback: the skills are advice and no gate depends on them (D-091).
+A project can add a skill of its own with a different name.
+The live check records which skill a real session loads (`docs/LIVE-CHECK.md`, section 9).
+
 ## Not checked
 
 These items belong to milestones 7 to 11, or to the owner's live install, and the task brief excludes them.

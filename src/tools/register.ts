@@ -25,6 +25,12 @@ export function toolsForMetadata(metadata: Record<string, unknown>): string[] {
   return [];
 }
 
+/** Which skills bb loads for a thread, by role. Like the tools, this is a hint and not a gate. */
+export function skillsForMetadata(metadata: Record<string, unknown>): string[] {
+  void metadata;
+  return [];
+}
+
 export function toToolResult(outcome: ToolOutcome): PluginAgentToolResult {
   return outcome.ok ? outcome.text : { content: [{ type: "text", text: outcome.text }], isError: true };
 }
@@ -83,5 +89,5 @@ export function registerTools(bb: BbPluginApi, rt: Runtime, executor: MergeExecu
     (c, params) => report(rt, c, params),
   );
 
-  bb.agents.configure((context) => ({ tools: toolsForMetadata(context.pluginMetadata), skills: [] }));
+  bb.agents.configure((context) => ({ tools: toolsForMetadata(context.pluginMetadata), skills: skillsForMetadata(context.pluginMetadata) }));
 }
