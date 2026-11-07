@@ -225,24 +225,24 @@ Boundaries have both sides, and error paths name the failure.
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| U89 | Without `yolo` the form opens on the caller's thread with the renderer ID, task ID, branch, pull request URL, and evidence | FR-112 | example | PENDING | |
-| U90 | The form timeout comes from the approval timeout setting and defaults to ten minutes | FR-112 | example | PENDING | |
-| U91 | An approved answer records `record_approval` with actor `user` and scope `merge`, then merges once | FR-113, FR-115 | example | PENDING | |
-| U92 | An approval comment becomes the approval event's evidence | FR-113 | example | PENDING | |
-| U93 | A denied answer records a denial, runs no merge, and leaves `awaiting_approval` | FR-114 | example | PENDING | |
-| U94 | A cancelled form records nothing, for the reasons timeout, user, and thread-stopped | FR-114 | example | PENDING | |
-| U95 | A submitted object with an extra field is unreadable and records nothing | FR-113 | example | PENDING | |
-| U96 | A submitted decision other than `approved` or `denied` is unreadable and records nothing | FR-113 | example | PENDING | |
-| U97 | A submitted value that is not an object is unreadable and records nothing | FR-113 | example | PENDING | |
-| U98 | Under `yolo` no form opens, the task passes through `awaiting_approval`, and the merge event carries `yolo: true` | FR-116 | example | PENDING | |
-| U99 | A failed executor records no merge event and returns the error | FR-115 | example | PENDING | |
-| U100 | A merge the machine would refuse never reaches the executor | FR-115 | example | PENDING | |
-| U101 | From `review_ready` the tool records `request_approval` first, and from `awaiting_approval` it does not record it again | FR-112, edge cases | example | PENDING | |
-| U102 | A preflight failure leaves the task in `review_ready` with no form | FR-117 | example | PENDING | |
-| U103 | A second call while the form is open is refused, and a call after it settles opens a new form | edge cases | example | PENDING | |
-| U104 | An approval submitted after the task left `awaiting_approval` is refused by the machine and merges nothing | edge cases, FR-115 | example | PENDING | |
-| U105 | A task in another project is refused with no form | FR-103 | example | PENDING | |
-| U106 | An executor success followed by a refused `merge` event reports that the forge merged and the log refused | FR-115, hard rule 8 | example | PENDING | |
+| U89 | Without `yolo` the form opens on the caller's thread with the renderer ID, task ID, branch, pull request URL, and evidence | FR-112 | example | DONE | `src/tools/merge.test.ts::[U89] opens the form on the caller` |
+| U90 | The form timeout comes from the approval timeout setting and defaults to ten minutes | FR-112 | example | DONE | `src/tools/merge.test.ts::[U90] takes the form timeout from the approval timeout setting` |
+| U91 | An approved answer records `record_approval` with actor `user` and scope `merge`, then merges once | FR-113, FR-115 | example | DONE | `src/tools/merge.test.ts::[U91] records the owner` |
+| U92 | An approval comment becomes the approval event's evidence | FR-113 | example | DONE | `src/tools/merge.test.ts::[U92] records the approval comment as the approval event` |
+| U93 | A denied answer records a denial, runs no merge, and leaves `awaiting_approval` | FR-114 | example | DONE | `src/tools/merge.test.ts::[U93] records a denial, runs no merge, and leaves the task awaiting approval` |
+| U94 | A cancelled form records nothing, for the reasons timeout, user, and thread-stopped | FR-114 | example | DONE | `src/tools/merge.test.ts::[U94] records nothing for a cancelled form, whatever the reason` |
+| U95 | A submitted object with an extra field is unreadable and records nothing | FR-113 | example | DONE | `src/tools/merge.test.ts::[U95] treats a submitted object with an extra field as unreadable and records nothing` |
+| U96 | A submitted decision other than `approved` or `denied` is unreadable and records nothing | FR-113 | example | DONE | `src/tools/merge.test.ts::[U96] treats a decision other than approved or denied as unreadable and records nothing` |
+| U97 | A submitted value that is not an object is unreadable and records nothing | FR-113 | example | DONE | `src/tools/merge.test.ts::[U97] treats a submitted value that is not an object as unreadable and records nothing` |
+| U98 | Under `yolo` no form opens, the task passes through `awaiting_approval`, and the merge event carries `yolo: true` | FR-116 | example | DONE | `src/tools/merge.test.ts::[U98] skips the form under yolo, passes through awaiting approval, and records yolo on the merge event` |
+| U99 | A failed executor records no merge event and returns the error | FR-115 | example | DONE | `src/tools/merge.test.ts::[U99] records no merge event and returns the error when the executor fails` |
+| U100 | A merge the machine would refuse never reaches the executor | FR-115 | example | DONE | `src/tools/merge.test.ts::[U100] never reaches the executor when the machine would refuse the merge` |
+| U101 | From `review_ready` the tool records `request_approval` first, and from `awaiting_approval` it does not record it again | FR-112, edge cases | example | DONE | `src/tools/merge.test.ts::[U101] records request_approval from review_ready and does not record it again from awaiting_approval` |
+| U102 | A preflight failure leaves the task in `review_ready` with no form | FR-117 | example | DONE | `src/tools/merge.test.ts::[U102] leaves the task in review_ready with no form when preflight fails` |
+| U103 | A second call while the form is open is refused, and a call after it settles opens a new form | edge cases | example | DONE | `src/tools/merge.test.ts::[U103] refuses a second call while the form is open and opens a new form after it settles` |
+| U104 | An approval submitted after the task left `awaiting_approval` is refused by the machine and merges nothing | edge cases, FR-115 | example | DONE | `src/tools/merge.test.ts::[U104] merges nothing when the approval arrives after the task left awaiting approval` |
+| U105 | A task in another project is refused with no form | FR-103 | example | DONE | `src/tools/merge.test.ts::[U105] refuses a task in another project with no form` |
+| U106 | An executor success followed by a refused `merge` event reports that the forge merged and the log refused | FR-115, hard rule 8 | example | DONE | `src/tools/merge.test.ts::[U106] says the forge merged and the log refused when the merge event is refused after a successful merge` |
 
 ### `src/tools/teardown.ts`
 

@@ -9,6 +9,8 @@ import { failure, refusalOutcome, success, type ToolOutcome } from "./results";
 export interface Caller {
   threadId: string;
   projectId: string;
+  /** Aborts when bb cancels the call. */
+  signal?: AbortSignal;
 }
 
 const nonBlank = z.string().refine((value) => value.trim() !== "", "must not be blank");

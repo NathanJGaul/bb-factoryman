@@ -40,6 +40,8 @@ export interface RuntimeDeps {
  */
 export class Runtime {
   readonly log: TaskLog;
+  /** Task IDs whose merge approval form is open right now. */
+  readonly openMergeForms = new Set<string>();
   private readonly listeners: AppliedListener[] = [];
 
   constructor(readonly deps: RuntimeDeps) {

@@ -88,3 +88,16 @@ export async function withDispatchedTask(options: { kind?: "ship" | "scout"; mod
   if (!outcome.ok) throw new Error(`fixture dispatch failed: ${outcome.text}`);
   return t;
 }
+
+export const PR_URL = "https://github.com/acme/widgets/pull/7";
+
+/** Move task `t1` from `working` to `review_ready` in a `no-mistakes` project. */
+export async function toReviewReady(t: TestRuntime): Promise<void> {
+  for (const event of [
+    { type: "handoff", actor: "worker", evidence: "Committed." },
+    { type: "validated", actor: "system", evidence: "Pipeline finished.", prUrl: PR_URL, pipelineFinished: true },
+  ]) {
+    const outcome = await t.runtime.apply("t1", event);
+    if (!outcome.ok) throw new Error(`fixture ${event.type} refused: ${outcome.refusal.message}`);
+  }
+}

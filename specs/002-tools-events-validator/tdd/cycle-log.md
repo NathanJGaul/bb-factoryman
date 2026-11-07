@@ -175,3 +175,20 @@ Each behavior in a batch still has its own test, and each entry records the fail
   Suite `pnpm test` -> 32 files, 436 passed, 0 failed. Lint and type-check clean.
 - refactor: none needed
 - note: the report tool leaves blank evidence to the machine, so the refusal is logged as a refused row (U58).
+
+## Cycle C12: U89 to U106 merge and approval (`src/tools/merge.ts`)
+
+- tests: `src/tools/merge.test.ts` `[U89]` to `[U106]` (new), over the fake `BbPort`, a fake `MergeExecutor`, and the memory store.
+  One more test without an id covers the worker caller, the scout, and the wrong-state refusals that acceptance behavior A14 will cover through the plugin.
+- red: a stub `merge` that returns `{ ok: false, text: "not implemented" }`, then `pnpm vitest run src/tools/merge.test.ts`
+  -> all 19 tests failed on assertions about the form request, the recorded events, the executor calls, the task state, or the result text (19 failed)
+- green: `merge` refuses a worker, a scout, a wrong state, another project, and an open form; runs the executor preflight; records `request_approval`; opens the form unless `yolo`;
+  accepts only the strict answer schema; records the owner's approval or denial; previews the `merge` event; runs the executor; and records `merge` only after the executor succeeds.
+  `Runtime` gained `openMergeForms` and `Caller` gained an optional `signal`.
+  Suite `pnpm test` -> 33 files, 455 passed, 0 failed. Lint and type-check clean.
+- deliberate mutants on the gate (hard rule 1), each restored exactly:
+  - a denial falls through to the merge -> U93 failed (1 failed, 18 passed)
+  - no open-form guard -> U103 failed (1 failed, 18 passed)
+  - the form is always asked, even under `yolo` -> U98 failed (1 failed, 18 passed)
+  - the merge event always records `yolo: false` -> U98 failed (1 failed, 18 passed)
+- refactor: none needed
