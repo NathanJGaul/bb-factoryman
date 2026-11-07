@@ -285,6 +285,28 @@ Also not driven live: `gh pr merge` against a real forge, a person answering the
 Fallback: the unit and acceptance tests cover the paths that could not be driven live.
 No production code was added to make them drivable.
 
+## Milestone 7: dispatch resolver
+
+The checks in this section ran on 2026-11-07 against a throwaway bb 0.48.1 server.
+`bb-app` started it with `--data-dir <scratch>/bb-data --server-port 39971 --host-daemon-port 39972`, and `BB_SERVER_URL` pointed the `bb` CLI at it.
+The owner's `~/.bb` and the shared bb stayed untouched.
+
+## 29. Provider availability and catalog
+
+Result: confirmed
+
+Evidence: `bb provider list --json` on the throwaway server returned seven providers.
+Each entry has an `available` boolean, `capabilities.permissionModes`, and an ordered `reasoningLevels` list of `{ id, label }`.
+`bb.sdk.providers.list()` returns the same `ProviderInfo[]` (`ProvidersArea.list` in `@get-bb/plugin-sdk` 0.6.104).
+
+- `pi` offers only the `full` permission mode, so a profile can name a mode that its provider rejects.
+- Reasoning level IDs are provider-specific strings: `codex` lists `none` and `ultra`, and `claude-code` lists `ultracode`.
+  No shared enum exists, so the resolver compares levels with a ladder from the dispatch config.
+- `bb thread spawn --reasoning-level` accepts "low, medium, high, xhigh, max, or a provider-specific id".
+
+Fallback: none needed.
+A provider that the list omits, or that reports `available: false`, counts as unavailable, so the check fails closed.
+
 ## Not checked
 
 These items belong to milestones 7 to 11, or to the owner's live install, and the task brief excludes them.
