@@ -18,6 +18,8 @@ export interface TestRuntime {
   execHandler: (command: string, args: readonly string[]) => ExecResult;
   settings: Settings;
   clock: () => string;
+  /** Every delay the code asked for, in order. */
+  sleeps: number[];
 }
 
 /** A runtime over the memory store, a fake clock, sequential IDs, and a fake port. */
@@ -38,6 +40,7 @@ export function testRuntime(overrides: Partial<RuntimeDeps> = {}): TestRuntime {
   };
   const settings: Settings = { mergeMethod: "squash", approvalTimeoutMs: 600_000 };
   const clock = fakeClock();
+  const sleeps: number[] = [];
   let next = 1;
   const runtime = new Runtime({
     store: createMemoryStore(),
@@ -46,6 +49,7 @@ export function testRuntime(overrides: Partial<RuntimeDeps> = {}): TestRuntime {
     log,
     now: clock,
     newId: () => `t${next++}`,
+    sleep: async (ms) => void sleeps.push(ms),
     settings: () => settings,
     ...overrides,
   });
@@ -62,6 +66,7 @@ export function testRuntime(overrides: Partial<RuntimeDeps> = {}): TestRuntime {
     },
     settings,
     clock,
+    sleeps,
   };
 }
 

@@ -281,16 +281,16 @@ Boundaries have both sides, and error paths name the failure.
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| U125 | Each of the five attention states sends one message | FR-208 | example | PENDING | |
-| U126 | The states `queued`, `working`, `validating`, `awaiting_approval`, `merged`, and `torn_down` send nothing | FR-208 | example | PENDING | |
-| U127 | The message names the task, kind, mode, state, evidence, thread, and branch | FR-210 | example | PENDING | |
-| U128 | Evidence is cut to 600 characters, and evidence of exactly 600 is unchanged | FR-210 | example | PENDING | |
-| U129 | The target is the parent of the worker thread as `getThread` reports it | FR-209 | example | PENDING | |
-| U130 | A worker with no parent sends nothing and logs a warning | FR-209 | example | PENDING | |
-| U131 | A failed send is logged and does not throw | FR-211 | example | PENDING | |
-| U132 | Findings are listed one per line exactly as the validator wrote them | FR-306 | example | PENDING | |
-| U133 | A wake that is not a transition uses the same first line with a reason in place of the state | FR-205, FR-206, FR-207 | example | PENDING | |
-| U134 | The wake is registered as a runtime listener and fires after tool-driven transitions | FR-208 | example | PENDING | |
+| U125 | Each of the five attention states sends one message | FR-208 | example | DONE | `src/wiring/wake.test.ts::[U125] sends one message for each of the five attention states` |
+| U126 | The states `queued`, `working`, `validating`, `awaiting_approval`, `merged`, and `torn_down` send nothing | FR-208 | example | DONE | `src/wiring/wake.test.ts::[U126] sends nothing for validating, awaiting_approval, merged, and torn_down` |
+| U127 | The message names the task, kind, mode, state, evidence, thread, and branch | FR-210 | example | DONE | `src/wiring/wake.test.ts::[U127] names the task, kind, mode, state, evidence, thread, and branch in the message` |
+| U128 | Evidence is cut to 600 characters, and evidence of exactly 600 is unchanged | FR-210 | example | DONE | `src/wiring/wake.test.ts::[U128] cuts evidence to 600 characters and leaves evidence of exactly 600 unchanged` |
+| U129 | The target is the parent of the worker thread as `getThread` reports it | FR-209 | example | DONE | `src/wiring/wake.test.ts::[U129] sends to the parent of the worker thread as the port reports it` |
+| U130 | A worker with no parent sends nothing and logs a warning | FR-209 | example | DONE | `src/wiring/wake.test.ts::[U130] sends nothing and logs a warning for a worker with no parent` |
+| U131 | A failed send is logged and does not throw | FR-211 | example | DONE | `src/wiring/wake.test.ts::[U131] logs a failed send and does not throw` |
+| U132 | Findings are listed one per line exactly as the validator wrote them | FR-306 | example | DONE | `src/wiring/wake.test.ts::[U132] keeps multi-line finding evidence whole for a needs_decision message` |
+| U133 | A wake that is not a transition uses the same first line with a reason in place of the state | FR-205, FR-206, FR-207 | example | DONE | `src/wiring/wake.test.ts::[U133] uses the same first line with a reason in place of the state for a wake that is not a transition` |
+| U134 | The wake is registered as a runtime listener and fires after tool-driven transitions | FR-208 | example | DONE | `src/wiring/wake.test.ts::[U134] fires after a transition that a tool applied` |
 
 ### `src/wiring/handlers.ts`
 

@@ -245,3 +245,17 @@ Each behavior in a batch still has its own test, and each entry records the fail
 - note: A10 covers the timed-out form with `approvalTimeoutMinutes: 0.0005` (30 ms), and the fake host returns `cancelled` with reason `timeout` as the real bb did in the spike.
 - note: the milestone 1 test `A1` (plugin load registers nothing) is replaced by the new A17 (D-045).
 - refactor: none needed
+
+## Cycle C17: U125 to U134 wake messages (`src/wiring/wake.ts`), plus the injected `sleep` dependency
+
+- tests: `src/wiring/wake.test.ts` `[U125]` to `[U134]` (new). `Runtime` gained an injected `sleep` (FR-314), and the fixture records every delay.
+- red: a `Notifier` stub whose methods do nothing, then `pnpm vitest run src/wiring/wake.test.ts`
+  -> all 10 tests failed on the messages the supervisor thread received, the warning lines, or the task state (10 failed)
+- green: `Notifier.onApplied` wakes for the five attention states, and `wake` reads the worker's parent through the port and sends one message.
+  Evidence is cut to 600 characters, except for `needs_decision`, where it carries the findings and the limit is 8000.
+  Suite `pnpm test` -> 46 files, 506 passed, 0 failed. Lint and type-check clean.
+- deliberate mutants, each restored exactly:
+  - wake for every state -> U126 and U132 failed (2 failed, 8 passed)
+  - evidence limit 599 -> U128 failed (1 failed, 9 passed)
+- refactor: none needed
+- note: findings reach the supervisor as lines in the `finding` event's evidence, which the validator driver builds (milestone 6).

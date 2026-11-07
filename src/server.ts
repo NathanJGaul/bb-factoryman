@@ -13,6 +13,7 @@ export interface PluginOptions {
   exec?: Exec;
   now?: () => string;
   newId?: () => string;
+  sleep?: (ms: number) => Promise<void>;
 }
 
 const MERGE_METHODS = ["squash", "merge", "rebase"] as const;
@@ -68,6 +69,7 @@ export function createPlugin(options: PluginOptions = {}): (bb: BbPluginApi) => 
       log: bb.log,
       now: options.now ?? (() => new Date().toISOString()),
       newId: options.newId ?? (() => `t-${randomBytes(4).toString("hex")}`),
+      sleep: options.sleep ?? ((ms) => new Promise((resolve) => setTimeout(resolve, ms))),
       settings,
     });
 

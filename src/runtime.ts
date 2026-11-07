@@ -30,6 +30,8 @@ export interface RuntimeDeps {
   log: Logger;
   now: () => string;
   newId: () => string;
+  /** Waits `ms` milliseconds. Injected so that tests never wait. */
+  sleep: (ms: number) => Promise<void>;
   settings: () => Settings;
 }
 

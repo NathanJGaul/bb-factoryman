@@ -95,7 +95,7 @@ description: "Task list for tools and approval, event wiring, and the validator"
 - [X] T051 [US1] [U117] [U118] [U119] Implement the supervisor command in `src/tools/supervisor-command.ts`
 - [ ] T052 [US1] [U120] [U121] [U123] [U124] Build the runtime, open the store, run recovery, and register everything in `src/server.ts`
 - [X] T053 [US1] [U122] Add the `mergeMethod` and approval timeout settings in `src/server.ts` and read them in `src/git/merge.ts` and `src/tools/merge.ts`
-- [ ] T054 [US1] Update `docs/DECISIONS.md` with the milestone 4 findings and commit milestone 4
+- [X] T054 [US1] Update `docs/DECISIONS.md` with the milestone 4 findings and commit milestone 4
 - [X] T056 [US1] [A1] [A2] [A3] [A4] [A5] [A6] [A7] [A8] [A9] [A10] [A11] [A12] [A13] [A14] [A15] [A16] [A17] [A18] Outer-loop gate: A1 to A18 are green through the plugin factory before milestone 4 is committed
 
 **Checkpoint**: User story 1 passes on its own. The tools run through the fake host with no wake messages and no validator.
@@ -119,7 +119,7 @@ description: "Task list for tools and approval, event wiring, and the validator"
 
 ### Implementation for user story 2
 
-- [ ] T066 [P] [US2] [U125] [U126] [U127] [U128] [U129] [U130] [U131] [U132] [U133] [U134] Implement the notifier and message text in `src/wiring/wake.ts`
+- [X] T066 [P] [US2] [U125] [U126] [U127] [U128] [U129] [U130] [U131] [U132] [U133] [U134] Implement the notifier and message text in `src/wiring/wake.ts`
 - [ ] T067 [US2] [U135] [U136] [U137] [U138] [U139] [U140] [U141] [U142] [U143] [U144] [U145] [U146] [U147] [U148] [U149] [U150] [U151] [U152] Implement the thread-event handlers in `src/wiring/handlers.ts`
 - [ ] T068 [US2] [U153] [U154] [U155] [U156] [U157] [U158] [U159] [U160] Implement observation, reconcile, and resume in `src/wiring/startup.ts`
 - [ ] T069 [US2] Register the handlers, the notifier listener, and the start-up service in `src/server.ts`
