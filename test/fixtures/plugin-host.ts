@@ -70,6 +70,8 @@ export interface World {
   machines: HostFixture[];
   /** The fake terminals behind `bb.sdk.terminals`, which stand in for remote machines. */
   remote: RemoteFake;
+  /** Make `threads.updatePluginMetadata` fail. */
+  failMetadata: Error | null;
   metadata: Map<string, Record<string, unknown>>;
   execCalls: Array<{ command: string; args: readonly string[]; cwd?: string }>;
   /** Override to script git and gh. The default is a successful empty run. */
@@ -166,6 +168,7 @@ export async function loadWorld(options: WorldOptions = {}): Promise<World> {
         },
         archive: async () => ({}),
         updatePluginMetadata: async ({ threadId, set }: { threadId: string; set?: Record<string, unknown> }) => {
+          if (world.failMetadata) throw world.failMetadata;
           metadata.set(threadId, { ...(metadata.get(threadId) ?? {}), ...set });
           return {};
         },
@@ -227,6 +230,7 @@ export async function loadWorld(options: WorldOptions = {}): Promise<World> {
     paths,
     machines,
     remote,
+    failMetadata: null,
     metadata,
     execCalls: [],
     execHandler: () => ({ code: 0, stdout: "", stderr: "" }),

@@ -30,6 +30,7 @@ export class FakeBbPort implements BbPort {
   terminalReads: TerminalRead[] = [];
   terminalClosed: string[] = [];
   terminalStartError: Error | null = null;
+  setMetadataError: Error | null = null;
   terminalReadError: Error | null = null;
   /** What `listMachines` returns. The default is one online host, `host_local`. */
   machines: MachineInfo[] = [{ id: "host_local", name: "local-box", status: "connected", phase: "active", online: true }];
@@ -152,6 +153,7 @@ export class FakeBbPort implements BbPort {
 
   async setThreadMetadata(threadId: string, metadata: Record<string, unknown>): Promise<void> {
     this.calls.push({ method: "setThreadMetadata", args: [threadId, metadata] });
+    if (this.setMetadataError) throw this.setMetadataError;
     this.metadata.set(threadId, metadata);
   }
 
