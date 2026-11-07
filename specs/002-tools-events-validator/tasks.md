@@ -23,10 +23,10 @@ description: "Task list for tools and approval, event wiring, and the validator"
 
 **Purpose**: Give every story the same fakes and loaders. These tasks add test helpers and no production behavior.
 
-- [ ] T001 [P] Add the recorded-fixture loader in `test/fixtures/recorded.ts` (read `test/fixtures/recorded/bb-0.48.1/*.json` and `no-mistakes-1.84.0/*.toon`)
-- [ ] T002 [P] Add temporary git repository builders in `test/fixtures/git-repo.ts` (init, commit, bare remote, branch, dirty tree)
-- [ ] T003 Add the hand-written `BbPort` fake in `test/fixtures/bb-port.ts` (records calls, scripted results; written together with the port types in T012)
-- [ ] T004 Add the runtime builder over the memory store, a fake clock, and fake IDs in `test/fixtures/runtime.ts`
+- [X] T001 [P] Add the recorded-fixture loader in `test/fixtures/recorded.ts` (read `test/fixtures/recorded/bb-0.48.1/*.json` and `no-mistakes-1.84.0/*.toon`)
+- [X] T002 [P] Add temporary git repository builders in `test/fixtures/git-repo.ts` (init, commit, bare remote, branch, dirty tree)
+- [X] T003 Add the hand-written `BbPort` fake in `test/fixtures/bb-port.ts` (records calls, scripted results; written together with the port types in T012)
+- [X] T004 Add the runtime builder over the memory store, a fake clock, and fake IDs in `test/fixtures/runtime.ts`
 
 **Checkpoint**: The suite still passes, and no production file changed.
 
@@ -48,7 +48,7 @@ description: "Task list for tools and approval, event wiring, and the validator"
 ### Implementation
 
 - [X] T015 [P] [U1] [U2] [U3] [U4] [U5] Implement the runner and the `Exec` type in `src/exec.ts`
-- [ ] T016 [P] Define `BbPort` and its data types in `src/bb/port.ts`
+- [X] T016 [P] Define `BbPort` and its data types in `src/bb/port.ts`
 - [X] T017 [U10] [U11] [U12] [U13] [U14] [U15] [U16] [U17] [U18] Implement `BbPort` over `BbPluginApi` in `src/bb/adapter.ts`
 - [X] T018 [U6] [U7] [U8] [U9] Implement `Runtime` and the one apply path in `src/runtime.ts`
 - [X] T019 [P] [U19] [U20] [U21] [U22] Implement `identify` in `src/tools/access.ts`
@@ -138,7 +138,7 @@ description: "Task list for tools and approval, event wiring, and the validator"
 
 ### Setup for user story 3
 
-- [ ] T080 [US3] Add `@toon-format/toon` 4.4.0 with `pnpm add --save-exact` and commit `pnpm-lock.yaml`
+- [X] T080 [US3] Add `@toon-format/toon` 4.4.0 with `pnpm add --save-exact` and commit `pnpm-lock.yaml`
 
 ### Tests for user story 3 (write first, watch fail)
 
@@ -167,10 +167,10 @@ description: "Task list for tools and approval, event wiring, and the validator"
 
 ## Phase 6: Polish and close-out
 
-- [ ] T100 Run `pnpm run build` and check `dist/server.js` and `dist/server.meta.json` (SC-008)
-- [ ] T101 Run `pnpm run check` and confirm no skipped test and a total time under 90 seconds (SC-007)
-- [ ] T102 Run the deliberate-mutant pass on the gate-bearing functions and record it (SC-009)
-- [ ] T103 Update `.specify/memory/tdd-profile.md` with the new helpers and suite time
+- [X] T100 Run `pnpm run build` and check `dist/server.js` and `dist/server.meta.json` (SC-008)
+- [X] T101 Run `pnpm run check` and confirm no skipped test and a total time under 90 seconds (SC-007)
+- [X] T102 Run the deliberate-mutant pass on the gate-bearing functions and record it (SC-009)
+- [X] T103 Update `.specify/memory/tdd-profile.md` with the new helpers and suite time
 - [ ] T104 Run `/speckit.tdd.verify`, `/speckit.checklist`, `/speckit.analyze`, and `/speckit.converge`, and commit the artifacts
 
 ---
