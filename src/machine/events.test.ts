@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { EVENT_TYPES, validEvent } from "../../test/fixtures/machine";
-import { parseEvent } from "./events";
+import { parseCreate, parseEvent } from "./events";
 
 function refusalCode(raw: unknown): string {
   const result = parseEvent(raw);
@@ -92,5 +92,13 @@ describe("parseEvent", () => {
     expect(parseEvent(validEvent("handoff", { checks: [{ name: "x", passed: true, extra: 1 }] })).ok).toBe(false);
     expect(parseEvent(validEvent("fail", { checks })).ok).toBe(false);
     expect(parseEvent(validEvent("merge", { checks })).ok).toBe(false);
+  });
+
+  it("[U1045] accepts an optional request object on a create event, and refuses any other shape or key", () => {
+    const base = { type: "create", actor: "supervisor", taskId: "t1", projectId: "p1", kind: "ship", mode: "no-mistakes" };
+    expect(parseCreate(base).ok).toBe(true);
+    expect(parseCreate({ ...base, request: { v: 1, anything: ["goes"] } }).ok).toBe(true);
+    for (const request of ["text", 5, null, ["a"]]) expect(parseCreate({ ...base, request }).ok, JSON.stringify(request)).toBe(false);
+    expect(parseCreate({ ...base, extra: 1 }).ok).toBe(false);
   });
 });

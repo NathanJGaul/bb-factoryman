@@ -93,12 +93,13 @@ describe("bb factoryman import-registry", () => {
   it("[A1022] changes no project config and only reads the registry file", async () => {
     const world = await loadWorld({ projectList: projects });
     world.setProject({ yolo: false, branchPrefix: null });
-    const before = JSON.stringify(["proj-1", "proj-gadgets", "proj-gizmos"].map((id) => world.store.getProjectConfig(id)));
+    const tables = () => JSON.stringify(["project_config", "task", "task_event", "approval"].map((name) => world.host.bb.storage.database().prepare(`select * from ${name}`).all()));
+    const before = tables();
     const path = registryFile();
     const stat = statSync(path);
     const events = world.store.listEvents().length;
     await cli(world, ["import-registry", "--file", path]);
-    expect(JSON.stringify(["proj-1", "proj-gadgets", "proj-gizmos"].map((id) => world.store.getProjectConfig(id)))).toBe(before);
+    expect(tables()).toBe(before);
     expect(world.store.listEvents()).toHaveLength(events);
     expect(statSync(path).mtimeMs).toBe(stat.mtimeMs);
     expect(readFileSync(path, "utf8")).toBe(REGISTRY);
@@ -120,6 +121,6 @@ describe("bb factoryman import-registry", () => {
     expect(none.stderr).toContain("Usage: bb factoryman import-registry --file <path>");
     const missing = await cli(world, ["import-registry", "--file", "/nonexistent/projects.md"]);
     expect(missing.exitCode).toBe(1);
-    expect(missing.stderr).toMatch(/could not read/);
+    expect(missing.stderr).toMatch(/could not read/i);
   });
 });

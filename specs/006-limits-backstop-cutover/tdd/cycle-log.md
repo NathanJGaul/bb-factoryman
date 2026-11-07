@@ -55,3 +55,23 @@ Red commit: `test: add webhook tests with a stub, group 2 (red)`. It holds the t
   - a blank URL posts anyway: equivalent. `new URL("")` throws and the call returns, so the early return is a shortcut.
 - green: `webhook.ts` and the `Notifier` call on a transition into an attention state.
   `pnpm run check` -> 87 files, 1041 passed, 0 failed. Type check and lint clean.
+
+## Group 3: the backstop and the cutover
+
+Red commit: `test: add protection checklist and registry import tests with stubs, group 3 (red)`. It holds the tests, a `parseRegistry` stub that returns no entries, a `protectionSteps` stub that fails, the registry fixture, and a missing `docs/BRANCH-PROTECTION.md`.
+
+- red: `pnpm vitest run src/limits/registry.test.ts src/limits/protection.test.ts src/tools/supervisor-command.test.ts test/acceptance/limits-cutover.test.ts` -> 19 failed
+  - `[U1022]` to `[U1027]`, the gerrit test: `expected undefined to match object ...` (no entries)
+  - `[U1020]`, `[U1021]`: `Error: not implemented`
+  - `[U1030]`, `[A1017]`, `[A1019]`, `[A1020]`, `[A1021]`, `[A1023]`: the commands printed the usage and exited 2
+  - `[A1018]`: `ENOENT: no such file or directory, open '.../docs/BRANCH-PROTECTION.md'`
+- Passed against the stubs: `[A1022]` (the missing command changed nothing). The first mutant that wrote a project config for every entry survived, because the last entry's `yolo` equaled the default. `[A1022]` now compares the raw rows of `project_config`, `task`, `task_event`, and `approval` before and after, and the mutant then failed it. Reverted.
+- Mutants on the new behavior, all killed:
+  - `yolo` ignored -> `[U1022]`, `[A1019]`; an empty `branch=` becomes `fm/` -> `[U1025]`, `[A1019]`; an unknown mode guessed -> `[U1026]`, `[A1021]`
+  - `no-mistakes-prod-only` mapped to `local-only` -> `[U1024]`, `[A1020]`; the name ends at the dash only -> six tests; an extra token not flagged -> `[U1026]`, `[A1021]`; the gerrit note dropped -> its test
+  - the repo, branch, or check not validated -> `[U1021]`; `enforce_admins` false -> `[U1020]`
+  - `--apply` accepted -> `[U1030]`, `[A1023]`; projects matched case-sensitively -> `[A1019]`; the dry-run line dropped -> `[U1030]`, `[A1019]`
+  - the command writes a project config -> `[A1022]` (after the strengthening above)
+- `[U1045]` (FR-1012) passed at once. Mutant: remove `request` from the `create` schema -> `[U1045]` and six queue tests failed. Reverted.
+- green: `registry.ts`, `protection.ts`, the `protection` and `import-registry` commands in `supervisor-command.ts`, and the two docs. Two tests expected a lowercase "could not read", and the message is capitalized, so the tests match with `/i` (the wording did not change).
+  `pnpm run check` -> 90 files, 1062 passed, 0 failed. Type check and lint clean.

@@ -685,3 +685,62 @@ The design's idea of a version in the contract is carried by this field and not 
 
 Dispatch and report read `workflow.json` each time and do not cache it.
 The cost is one small file read, and an edited file takes effect at once, which is what an agent that writes config expects.
+
+## Milestone 10: limits, backstop, and cutover
+
+### D-084: A worker counts as running in four states, and the caps default to none (Gap)
+
+The design says each project config sets "a cap on running workers" and the plugin sets "a global cap".
+A task counts against a cap in `working`, `blocked`, `validating`, and `needs_decision`, because its worker thread is alive and may be waiting on a person.
+A task also counts while its worker is starting, so two dispatches in a row cannot both pass a cap.
+`review_ready` and every later state free the slot, because the worker has handed off.
+The project cap is `limits.maxWorkers` in `workflow.json`, and the global cap is the `maxWorkers` setting.
+`0`, or no value, means no cap.
+The default is no cap, because a cap is a resource limit and not an authority gate: it can only delay work, and an owner who installs the plugin with defaults gets today's behavior.
+The design also says the plugin returns `wait` from bb's `message.dispatch` hook.
+The plugin queues the task in its own log instead, so the cap does not depend on bb's concurrency-limit plugin or on how the two hooks order themselves (spike item 5 stays unchecked).
+bb's own `concurrency-limit` plugin still applies to every worker's turns, with its automatic limit of one thread per processor, whatever this plugin does.
+
+### D-085: The queued request lives in the `create` event (Gap)
+
+A queued task needs its description, profile, machine, and parent thread later.
+The `create` event gains an optional `request` object, validated by the machine only as an object, and the plugin reads it back with a strict schema.
+The log is the source of truth, so a restart keeps the queue without a new table, and replay never reads the field.
+A request that fails the strict schema fails its task with evidence.
+No tool cancels a queued task in this release (AC-1.4), so a follow-up such as `factoryman_decide` would add that.
+
+### D-086: Budgets refuse and never stop work, and unknown cost is not guessed (Gap)
+
+`limits.maxTasksPerDay` counts tasks created on the UTC date of the injected clock.
+`limits.perDayBudget` refuses when the cost of today's tasks reaches the budget.
+`limits.perTaskBudget` refuses while a running task has cost more than it.
+The cost comes from `bb.sdk.threads.context().usage.cost` (spike item 12).
+A cost that is missing, in another currency than `budgetCurrency` (default `USD`), or unreadable is unknown, and the budget is not enforced on it.
+The dispatch result then says which budgets could not be checked, and `maxTasksPerDay` stays the one spend limit in force.
+A refusal creates no task (D-066).
+The plugin never stops or fails a running worker for cost.
+
+### D-087: The webhook posts attention states as JSON (Gap)
+
+The `webhookUrl` setting holds a URL, and the plugin posts `{ event: "task.attention", at, task, evidence }` to it when a task enters `needs_decision`, `review_ready`, `report_ready`, `blocked`, or `failed`.
+Only `http` and `https` URLs post, the call times out after five seconds, and evidence is cut to 600 characters.
+The URL is a secret, so a failure logs the host and never the URL.
+A failure never undoes a transition.
+Spike item 13: bb's push-notifications plugin has a command but the plugin calls no other plugin, so the webhook is the design's fallback.
+
+### D-088: The registry import is a dry run that only reads (Decided in the task brief)
+
+`bb factoryman import-registry --file <path>` reads one file through the `Files` port and prints each project's registered mode, the mode this plugin would use, `yolo`, branch prefix, forge, and the bb project with the same name (case-insensitive).
+It follows the format in the header of firstmate's `bin/fm-project-mode.sh`: the name ends at the first ` [` or ` - `, the bracket tokens come in any order, a line with no bracket is `no-mistakes` with `yolo` off, and `no-mistakes-prod-only` maps to `no-mistakes` with a note.
+An unknown mode or token is flagged and not guessed.
+`--apply` is refused.
+Nothing writes the stored project config, so a project stays in `no-mistakes` mode with `yolo` off until the owner decides on an apply path.
+That decision is open (D-078).
+
+### D-089: The branch-protection command prints and never runs (Decided in the task brief)
+
+`bb factoryman protection <owner/repo>` builds text from strictly checked inputs and runs nothing.
+It cannot run anything: the function takes no runtime.
+The steps name the required `no-mistakes` check, `enforce_admins`, scoped tokens, and a verification.
+`docs/BRANCH-PROTECTION.md` and `docs/CUTOVER.md` hold the same steps as prose.
+No GitHub setting changed, and no forge was reached.

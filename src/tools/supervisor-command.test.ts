@@ -144,7 +144,7 @@ describe("bb factoryman supervisor", () => {
       }
       const missing = await runFactorymanCommand(t.runtime, ["import-registry", "--file", "/nope.md"]);
       expect(missing.exitCode).toBe(1);
-      expect(missing.stderr).toMatch(/could not read/);
+      expect(missing.stderr).toMatch(/could not read/i);
       t.files.errors.set("/err.md", new Error("EACCES: permission denied"));
       const denied = await runFactorymanCommand(t.runtime, ["import-registry", "--file", "/err.md"]);
       expect(denied.exitCode).toBe(1);

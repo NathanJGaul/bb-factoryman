@@ -185,6 +185,16 @@ export function createPlugin(options: PluginOptions = {}): (bb: BbPluginApi) => 
           usage: "bb factoryman supervisor <thread-id>",
         },
         {
+          name: "protection",
+          summary: "Print the branch-protection steps for a repository. It runs nothing",
+          usage: "bb factoryman protection <owner/repo> [--branch <branch>] [--check <name>]",
+        },
+        {
+          name: "import-registry",
+          summary: "Preview the move from firstmate's project registry. It only reads",
+          usage: "bb factoryman import-registry --file <path>",
+        },
+        {
           name: "preflight",
           summary: "Report what a remote machine is missing before the first dispatch",
           usage: "bb factoryman preflight <machine> --project <project-id> [--provider <provider-id>]",

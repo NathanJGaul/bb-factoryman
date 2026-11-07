@@ -1,5 +1,7 @@
 import { pickMachine } from "../dispatch/placement";
 import { reportText, runPreflight } from "../machines/preflight";
+import { protectionSteps } from "../limits/protection";
+import { parseRegistry, type RegistryEntry } from "../limits/registry";
 import { errorText, type Runtime } from "../runtime";
 import { identify } from "./access";
 
@@ -9,7 +11,11 @@ export interface CommandResult {
   stderr?: string;
 }
 
-const USAGE = "Usage: bb factoryman supervisor <thread-id>\nUsage: bb factoryman preflight <machine> --project <project-id> [--provider <provider-id>]\n";
+const USAGE =
+  "Usage: bb factoryman supervisor <thread-id>\n" +
+  "Usage: bb factoryman preflight <machine> --project <project-id> [--provider <provider-id>]\n" +
+  "Usage: bb factoryman protection <owner/repo> [--branch <branch>] [--check <name>]\n" +
+  "Usage: bb factoryman import-registry --file <path>\n";
 
 /** What bb tells a command about where it was called. */
 export interface CommandContext {
@@ -28,6 +34,8 @@ export async function runFactorymanCommand(rt: Runtime, argv: string[], ctx: Com
   const [command, ...rest] = argv;
   if (command === "supervisor") return supervisor(rt, rest);
   if (command === "preflight") return preflight(rt, rest, ctx);
+  if (command === "protection") return protection(rest);
+  if (command === "import-registry") return importRegistry(rt, rest);
   return { exitCode: 2, stderr: USAGE };
 }
 
@@ -78,4 +86,70 @@ async function preflight(rt: Runtime, args: string[], ctx: CommandContext): Prom
   } catch (error) {
     return { exitCode: 1, stderr: `Preflight could not run: ${errorText(error)}\n` };
   }
+}
+
+/** `bb factoryman protection <owner/repo>` prints the branch-protection steps. It runs nothing (hard rule 8, D-089). */
+function protection(args: string[]): CommandResult {
+  const [repo, ...flags] = args;
+  if (repo === undefined || repo.startsWith("--") || flags.length % 2 !== 0) return { exitCode: 2, stderr: USAGE };
+  let branch = "main";
+  let check = "no-mistakes";
+  for (let i = 0; i < flags.length; i += 2) {
+    const value = flags[i + 1] as string;
+    if (flags[i] === "--branch") branch = value;
+    else if (flags[i] === "--check") check = value;
+    else return { exitCode: 2, stderr: USAGE };
+  }
+  const steps = protectionSteps({ repo, branch, check });
+  return steps.ok ? { exitCode: 0, stdout: steps.text } : { exitCode: 2, stderr: `${steps.message}\n${USAGE}` };
+}
+
+const DRY_RUN_ONLY = "bb factoryman import-registry is a dry run. --apply is not implemented in this release, so nothing was read or written.\n";
+
+function reportLine(entry: RegistryEntry, projectId: string | undefined): string {
+  return [entry.name, entry.registeredMode, entry.mode ?? "unknown", entry.yolo ? "on" : "off", entry.branchPrefix, entry.forge, projectId ?? "not found in bb"].join(" | ");
+}
+
+/** Read firstmate's registry and print what each project would become. It writes nothing (D-088). */
+async function importRegistry(rt: Runtime, args: string[]): Promise<CommandResult> {
+  let file: string | null = null;
+  let apply = false;
+  for (let i = 0; i < args.length; i += 1) {
+    if (args[i] === "--apply") apply = true;
+    else if (args[i] === "--file" && args[i + 1] !== undefined && !(args[i + 1] as string).startsWith("--")) {
+      file = args[i + 1] as string;
+      i += 1;
+    } else return { exitCode: 2, stderr: USAGE };
+  }
+  if (apply) return { exitCode: 2, stderr: DRY_RUN_ONLY };
+  if (file === null) return { exitCode: 2, stderr: USAGE };
+
+  let text: string | null;
+  try {
+    text = await rt.deps.files.readText(file);
+  } catch (error) {
+    return { exitCode: 1, stderr: `Could not read ${file}: ${errorText(error)}\n` };
+  }
+  if (text === null) return { exitCode: 1, stderr: `Could not read ${file}: the file does not exist.\n` };
+
+  const { entries, skipped } = parseRegistry(text);
+  let projects: Array<{ id: string; name: string }> = [];
+  try {
+    projects = await rt.deps.bb.listProjects();
+  } catch (error) {
+    rt.deps.log.warn(`Could not list the bb projects for the registry report: ${errorText(error)}`);
+  }
+  const idOf = (name: string) => projects.find((project) => project.name.toLowerCase() === name.toLowerCase())?.id;
+  const lines = [
+    `Registry ${file}: ${entries.length} projects, ${skipped} other lines skipped.`,
+    "Dry run: nothing was written. A project keeps its stored config (no-mistakes, yolo off) until a person sets it.",
+    "",
+    "name | registered mode | plugin mode | yolo | branch prefix | forge | bb project",
+    ...entries.map((entry) => reportLine(entry, idOf(entry.name))),
+  ];
+  const flagged = entries.flatMap((entry) => entry.flags.map((flag) => `- ${entry.name}: ${flag}`));
+  const notes = entries.flatMap((entry) => entry.notes.map((note) => `- ${entry.name}: ${note}`));
+  if (flagged.length > 0) lines.push("", "Flags (look at these before the cutover):", ...flagged);
+  if (notes.length > 0) lines.push("", "Notes:", ...notes);
+  return { exitCode: 0, stdout: `${lines.join("\n")}\n` };
 }
