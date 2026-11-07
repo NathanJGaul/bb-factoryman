@@ -307,6 +307,62 @@ Each entry has an `available` boolean, `capabilities.permissionModes`, and an or
 Fallback: none needed.
 A provider that the list omits, or that reports `available: false`, counts as unavailable, so the check fails closed.
 
+## Milestone 8: machine placement
+
+These checks ran on 2026-11-07 against the same throwaway bb 0.48.1 server as milestone 7.
+It had one machine, the local host, and a throwaway project (a git repository with a local bare `origin`) whose only source sat on that host.
+A second enrolled daemon would write enrollment credentials outside the throwaway data directory, so no check enrolled one.
+
+## 6. Spawn on a machine
+
+Result: confirmed
+
+Evidence: `bb thread spawn --project <id> --machine <host-id> --new-environment worktree ...` created a thread on the local host (`status: starting`).
+The SDK call is the one the adapter already makes: `environment: { type: "host", hostId, workspace }` (D-053).
+Two refusals show the contract:
+
+- An unknown machine: `Machine 'host_bogus' was not found. Available machines: ...`.
+- A machine with no source of the project: `HTTP 409: No project source configured for this host`.
+
+A project therefore needs a source on the chosen machine, and the plugin reads `bb.sdk.projects.get().sources` to check it before the spawn.
+
+Fallback: none needed.
+
+## 7. Disconnect detection
+
+Result: partial
+
+Evidence: a machine is a `Host`.
+`bb.sdk.hosts.list()` and `.get()` return `status: "connected" | "disconnected"`, `lastSeenAt`, and `lifecycle.phase` (`creating`, `active`, `suspending`, `suspended`, `resuming`, `removing`, `destroyed`).
+`bb machine create --provider manual --no-wait` made a host that was `disconnected` with `lastSeenAt: null`, in phase `creating` and then `removing`.
+The plugin event list (`PluginThreadEventPayloads`) has no connect or disconnect event.
+It has `experimental_host.deleted`, which fires once after a machine is removed.
+
+Not driven: a real enrolled daemon that stops and comes back, because enrolling a second daemon would write outside the throwaway directory.
+
+Fallback: poll `hosts.list()` on an interval, and treat `status !== "connected"` or `phase !== "active"` as offline.
+Handle `experimental_host.deleted` at once.
+A host that bb no longer lists counts as offline.
+
+## 8. Remote prerequisites
+
+Result: partial
+
+Evidence: two mechanisms exist, both checked on the local host of the throwaway server.
+
+- `bb.sdk.providers.list({ hostId })` (CLI: `bb provider list --machine <id>`) reports `available` for a provider on that machine.
+- `bb.sdk.terminals.create({ scope: { kind: "host_path", hostId, cwd }, start: { mode: "argv", argv }, cols, rows })` runs one command on a host.
+  `terminals.get` reports `status: "exited"` and `exitCode`, and `terminals.output` returns base64 chunks, `exitCode`, `truncated`, and `closeReason`.
+  `bb terminal create --machine <id> --cwd <dir> --command "echo probe-ok; command -v no-mistakes; exit 3"` printed both lines and exited with code 3.
+- A terminal is a PTY, so it merges standard error into standard output and ends lines with a carriage return.
+  Wrapping the command in `sh` with `mktemp`, `base64`, and `tr -d '\n'` returned one line, `FMX1 <code> <stdout base64> <stderr base64>`, and a command that wrote to both streams and exited with 4 came back as `FMX1 4 b3V0LWxpbmUK ZXJyLWxpbmUK`.
+
+So the plugin can check the agent CLI per machine, `no-mistakes` (installed, and a `no-mistakes` git remote in the source), and `gh auth status`, and it can run the validator and the landed-work check where the worktree lives.
+
+Not driven: a real remote machine, so the sign-in state of an agent CLI and the scope of `gh` credentials were not read from one.
+
+Fallback: a failed, timed-out, or truncated terminal command is a failed command, so every caller fails closed.
+
 ## Not checked
 
 These items belong to milestones 7 to 11, or to the owner's live install, and the task brief excludes them.

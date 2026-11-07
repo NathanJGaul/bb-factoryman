@@ -189,4 +189,61 @@ describe("createBbPort", () => {
       { id: "pi", available: false, permissionModes: ["full"], reasoningLevels: [] },
     ]);
   });
+
+  it("[U819] lists machines with ID, name, status, phase, and an online flag", async () => {
+    const host = (id: string, status: string, phase: string) => ({ id, name: `name-${id}`, status, lifecycle: { phase } });
+    const { port } = setup({
+      hosts: { list: async () => [host("h1", "connected", "active"), host("h2", "disconnected", "active"), host("h3", "connected", "suspended")] },
+    } as FakeSdkOverrides);
+    expect(await port.listMachines()).toEqual([
+      { id: "h1", name: "name-h1", status: "connected", phase: "active", online: true },
+      { id: "h2", name: "name-h2", status: "disconnected", phase: "active", online: false },
+      { id: "h3", name: "name-h3", status: "connected", phase: "suspended", online: false },
+    ]);
+  });
+
+  it("[U820] lists the project's sources with host, path, and default flag", async () => {
+    const { port } = setup({
+      projects: {
+        get: async () => ({
+          id: "proj-1",
+          sources: [
+            { type: "local_path", isDefault: true, hostId: "h1", path: "/work/a" },
+            { type: "local_path", isDefault: false, hostId: "h2", path: "/work/b" },
+          ],
+        }),
+      },
+    } as FakeSdkOverrides);
+    expect(await port.getProjectSources("proj-1")).toEqual([
+      { hostId: "h1", path: "/work/a", isDefault: true },
+      { hostId: "h2", path: "/work/b", isDefault: false },
+    ]);
+  });
+
+  it("[U821] passes the host ID to the provider list, and none when it is absent", async () => {
+    const { port, sdk } = setup({ providers: { list: async () => [] } } as FakeSdkOverrides);
+    await port.listProviders("h2");
+    await port.listProviders();
+    expect(sdk.callsTo("providers.list")).toEqual([[{ hostId: "h2" }], [undefined]]);
+  });
+
+  it("[U822] spawns on the given host, and on the project's default host when none is given", async () => {
+    const twoHosts = {
+      get: async () => ({
+        id: "proj-1",
+        sources: [
+          { type: "local_path", isDefault: true, hostId: "host_1", path: "/work/repo" },
+          { type: "local_path", isDefault: false, hostId: "host_2", path: "/work/other" },
+        ],
+      }),
+    };
+    const { port, sdk } = setup({ threads: { spawn: async () => ({ id: "thr-9" }) }, projects: twoHosts } as FakeSdkOverrides);
+    const base = { projectId: "proj-1", parentThreadId: "thr-sup", prompt: "x", profile: { ...PROFILE, permissionMode: "auto" as const }, metadata: {}, baseBranch: null };
+    await port.spawnWorker({ ...base, hostId: "host_2" });
+    await port.spawnWorker({ ...base, hostId: null });
+    await port.spawnWorker(base);
+    const hosts = (sdk.callsTo("threads.spawn") as Array<[{ environment: { hostId: string } }]>).map(([args]) => args.environment.hostId);
+    expect(hosts).toEqual(["host_2", "host_1", "host_1"]);
+    await expect(port.spawnWorker({ ...base, hostId: "host_9" })).rejects.toThrow(/host_9/);
+  });
 });

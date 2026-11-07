@@ -12,6 +12,8 @@ export interface SpawnWorkerRequest {
   metadata: Record<string, Json>;
   /** The branch the worktree starts from, or null for the project default. */
   baseBranch: string | null;
+  /** The host to run on. Absent or null means the project's default host. */
+  hostId?: string | null;
 }
 
 export interface ThreadInfo {
@@ -53,8 +55,12 @@ export interface BbPort {
   getProjectRemote(projectId: string): Promise<string | null>;
   requestInput(request: InputRequest): Promise<InputResult>;
   setThreadMetadata(threadId: string, metadata: Record<string, Json>): Promise<void>;
-  /** Every provider bb knows, with its availability. */
-  listProviders(): Promise<ProviderAvailability[]>;
+  /** Every provider bb knows, with its availability on `hostId`, or on the default host when it is absent. */
+  listProviders(hostId?: string): Promise<ProviderAvailability[]>;
+  /** Every machine bb knows. */
+  listMachines(): Promise<MachineInfo[]>;
+  /** The project's sources: the hosts that hold a copy of it. */
+  getProjectSources(projectId: string): Promise<ProjectSource[]>;
 }
 
 /** One provider as bb reports it, cut to the fields that the dispatch check reads (spike item 29). */
@@ -64,4 +70,23 @@ export interface ProviderAvailability {
   permissionModes: string[];
   /** Reasoning level IDs. An empty list means bb reported none. */
   reasoningLevels: string[];
+}
+
+/** A machine as bb reports it: an enrolled host (spike items 6 and 7). */
+export interface MachineInfo {
+  id: string;
+  name: string;
+  /** bb's connection status, `connected` or `disconnected`. */
+  status: string;
+  /** bb's lifecycle phase, for example `active`. */
+  phase: string;
+  /** True only when the host is connected and its phase is `active`. */
+  online: boolean;
+}
+
+/** One place where the project's files live: a host and a path. */
+export interface ProjectSource {
+  hostId: string;
+  path: string;
+  isDefault: boolean;
 }

@@ -33,11 +33,19 @@ describe("parseDispatchConfig", () => {
 
   it.each([
     ["when", valid({ rules: [{ id: "r", when: { kind: "ship", keyword: ["x"] }, profile: "deep" }] }), /keyword/],
-    ["a rule", valid({ rules: [{ id: "r", when: { kind: "ship" }, profile: "deep", machine: "m" }] }), /machine/],
+    ["a rule", valid({ rules: [{ id: "r", when: { kind: "ship" }, profile: "deep", color: "red" }] }), /color/],
     ["a profile", valid({ profiles: { deep: { ...PROFILE, effort: "max" } } }), /effort/],
     ["the standing permissions", valid({ standingPermission: { lowerReasoning: false, other: true } }), /other/],
   ])("[U702] rejects an unknown key in %s", (_where, raw, pattern) => {
     expect(failure(raw)).toMatch(pattern);
+  });
+
+  it("[U810] accepts an optional machine on a rule and rejects a blank one", () => {
+    const withMachine = parseDispatchConfig(valid({ rules: [{ id: "r", when: { kind: "ship" }, profile: "deep", machine: "gpu-box" }] }));
+    expect(withMachine.ok && withMachine.config.rules[0]).toMatchObject({ machine: "gpu-box" });
+    const without = parseDispatchConfig(valid({ rules: [{ id: "r", when: { kind: "ship" }, profile: "deep" }] }));
+    expect(without.ok && without.config.rules[0]?.machine).toBeUndefined();
+    expect(failure(valid({ rules: [{ id: "r", when: { kind: "ship" }, profile: "deep", machine: "  " }] }))).toMatch(/machine/);
   });
 
   it("[U703] rejects a rule that names an undefined profile", () => {

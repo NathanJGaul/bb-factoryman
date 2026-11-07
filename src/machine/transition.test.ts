@@ -182,6 +182,14 @@ describe("start", () => {
     });
   });
 
+  it.each(["ship", "scout"] as const)("[U818] records the machine in a %s task and refuses a local-only start on another machine", (kind) => {
+    const task = snapshot("queued", { kind, profile: null, mode: "local-only" });
+    const moved = nextSnapshot(task, validEvent("start", { machine: "host_a", cloneMachine: "host_a" }));
+    expect(moved.context.machine).toBe("host_a");
+    const refused = transition(task, validEvent("start", { machine: "host_b", cloneMachine: "host_a" }));
+    expect(refused).toMatchObject({ ok: false, refusal: { code: "machine_mismatch" } });
+  });
+
   it("records a null machine when none is pinned", () => {
     const next = nextSnapshot(snapshot("queued", { profile: null }), validEvent("start", { machine: undefined }));
     expect(next.context.machine).toBeNull();

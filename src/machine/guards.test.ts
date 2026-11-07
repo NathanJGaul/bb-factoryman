@@ -174,3 +174,29 @@ describe("worktreeLanded", () => {
     expect(GUARDS.worktreeLanded(context(), parsedEvent("merge"))?.code).toBe("unlanded_work");
   });
 });
+
+describe("localOnlyStaysOnClone", () => {
+  const check = (mode: "local-only" | "direct-PR" | "no-mistakes", fields: Record<string, unknown>) =>
+    GUARDS.localOnlyStaysOnClone(context({ mode }), parsedEvent("start", fields));
+
+  it("[U814] refuses a local-only start on a machine other than the clone machine", () => {
+    const refusal = check("local-only", { machine: "host_b", cloneMachine: "host_a" });
+    expect(refusal?.code).toBe("machine_mismatch");
+    expect(refusal?.message).toMatch(/local-only/);
+  });
+
+  it("[U815] accepts a local-only start on the clone machine, and one with no machine", () => {
+    expect(check("local-only", { machine: "host_a", cloneMachine: "host_a" })).toBeNull();
+    expect(check("local-only", { machine: undefined, cloneMachine: "host_a" })).toBeNull();
+    expect(check("local-only", { machine: null, cloneMachine: null })).toBeNull();
+  });
+
+  it("[U816] refuses a local-only start on a machine when no clone machine is known", () => {
+    expect(check("local-only", { machine: "host_b", cloneMachine: undefined })?.code).toBe("machine_mismatch");
+    expect(check("local-only", { machine: "host_b", cloneMachine: null })?.code).toBe("machine_mismatch");
+  });
+
+  it.each(["direct-PR", "no-mistakes"] as const)("[U817] ignores the clone machine in %s mode", (mode) => {
+    expect(check(mode, { machine: "host_b", cloneMachine: "host_a" })).toBeNull();
+  });
+});

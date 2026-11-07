@@ -18,6 +18,19 @@ export function providerFixture(id: string, overrides: Record<string, unknown> =
   };
 }
 
+/** A host as `bb.sdk.hosts.list` returns it, cut to the fields the plugin reads. */
+export function hostFixture(id: string, name: string, overrides: { status?: string; phase?: string } = {}) {
+  return { id, name, status: overrides.status ?? "connected", lifecycle: { phase: overrides.phase ?? "active" } };
+}
+
+export type HostFixture = ReturnType<typeof hostFixture>;
+
+export interface SourceFixture {
+  hostId: string;
+  path: string;
+  isDefault?: boolean;
+}
+
 export interface FakeThread {
   id: string;
   projectId: string;
@@ -34,6 +47,8 @@ export interface World {
   host: FakePluginHost;
   threads: Map<string, FakeThread>;
   paths: Map<string, string>;
+  /** The machines `hosts.list` returns. Tests change it to take a machine offline. */
+  machines: HostFixture[];
   metadata: Map<string, Record<string, unknown>>;
   execCalls: Array<{ command: string; args: readonly string[]; cwd?: string }>;
   /** Override to script git and gh. The default is a successful empty run. */
@@ -70,6 +85,12 @@ export interface WorldOptions {
   checkout?: string;
   /** What `providers.list` returns. The default lists `claude` and `claude-code`. */
   providers?: unknown[];
+  /** The machines bb knows. The default is one connected host, `host_local`, named `local-box`. */
+  machines?: HostFixture[];
+  /** The project's sources. The default is one default source on `host_local`. */
+  sources?: SourceFixture[];
+  /** What `providers.list` returns per host ID, instead of `providers`. */
+  providersByHost?: Record<string, unknown[]>;
   /** Make `providers.list` fail. */
   providersError?: Error;
   /** Make `projects.get` fail. */
@@ -85,6 +106,8 @@ export async function loadWorld(options: WorldOptions = {}): Promise<World> {
   const threads = new Map<string, FakeThread>();
   const paths = new Map<string, string>();
   const metadata = new Map<string, Record<string, unknown>>();
+  const machines: HostFixture[] = options.machines ?? [hostFixture("host_local", "local-box")];
+  const sources = () => (options.sources ?? [{ hostId: "host_local", path: options.checkout ?? "/work/repo", isDefault: true }]).map((source, index) => ({ type: "local_path", isDefault: source.isDefault ?? index === 0, ...source }));
   const sent = new Map<string, string[]>();
   let spawned = 0;
 
@@ -93,8 +116,11 @@ export async function loadWorld(options: WorldOptions = {}): Promise<World> {
     settings: options.settings,
     sdk: {
       threads: {
-        spawn: async (args: { projectId: string; parentThreadId?: string; pluginMetadata?: Record<string, unknown> }) => {
+        spawn: async (args: { projectId: string; parentThreadId?: string; pluginMetadata?: Record<string, unknown>; environment?: { hostId?: string } }) => {
           if (options.spawnError) throw options.spawnError;
+          // Real bb answers HTTP 409 for a host that holds no source of the project (spike item 6).
+          const hostId = args.environment?.hostId;
+          if (hostId !== undefined && !sources().some((source) => source.hostId === hostId)) throw new Error("HTTP 409: No project source configured for this host");
           const id = options.threadIds?.[spawned] ?? `thr-w${spawned + 1}`;
           spawned += 1;
           threads.set(id, { id, projectId: args.projectId, status: "active", parentThreadId: args.parentThreadId ?? null, environmentId: `env-${id}` });
@@ -124,14 +150,18 @@ export async function loadWorld(options: WorldOptions = {}): Promise<World> {
       projects: {
         get: async ({ projectId }: { projectId: string }) => {
           if (options.projectError) throw options.projectError;
-          return { id: projectId, gitRemoteUrl: "git@github.com:acme/widgets.git", sources: [{ type: "local_path", isDefault: true, hostId: "host_local", path: options.checkout ?? "/work/repo" }] };
+          return { id: projectId, gitRemoteUrl: "git@github.com:acme/widgets.git", sources: sources() };
         },
       },
       providers: {
-        list: async () => {
+        list: async (args?: { hostId?: string }) => {
           if (options.providersError) throw options.providersError;
-          return options.providers ?? [providerFixture("claude"), providerFixture("claude-code")];
+          const byHost = args?.hostId === undefined ? undefined : options.providersByHost?.[args.hostId];
+          return byHost ?? options.providers ?? [providerFixture("claude"), providerFixture("claude-code")];
         },
+      },
+      hosts: {
+        list: async () => machines,
       },
     },
   });
@@ -140,6 +170,7 @@ export async function loadWorld(options: WorldOptions = {}): Promise<World> {
     host,
     threads,
     paths,
+    machines,
     metadata,
     execCalls: [],
     execHandler: () => ({ code: 0, stdout: "", stderr: "" }),

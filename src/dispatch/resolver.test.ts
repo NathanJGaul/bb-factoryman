@@ -21,12 +21,12 @@ const resolve = (cfg: DispatchConfig, facts: Partial<TaskFacts> = {}, choice = {
 describe("RulesTableResolver precedence", () => {
   it("[U710] lets an explicit profile win over a matching rule, the default, and the built-in default", () => {
     const cfg = config([rule("r", { kind: "ship" }, "fast")], { default: "steady", standingPermission: { lowerReasoning: true } });
-    expect(resolve(cfg, {}, { profile: deep })).toEqual({ status: "clear", profile: deep, source: "override", ruleId: null });
+    expect(resolve(cfg, {}, { profile: deep })).toEqual({ status: "clear", profile: deep, source: "override", ruleId: null, machine: null });
   });
 
   it("[U711] is clear with source rule and its ID for the one matching rule", () => {
     const cfg = config([rule("scouting", { kind: "scout" }, "fast"), rule("shipping", { kind: "ship" }, "steady")]);
-    expect(resolve(cfg)).toEqual({ status: "clear", profile: steady, source: "rule", ruleId: "shipping" });
+    expect(resolve(cfg)).toEqual({ status: "clear", profile: steady, source: "rule", ruleId: "shipping", machine: null });
   });
 
   it("[U712] is ambiguous with both candidates in config order when two matching rules name different profiles", () => {
@@ -34,8 +34,8 @@ describe("RulesTableResolver precedence", () => {
     expect(resolve(cfg)).toEqual({
       status: "ambiguous",
       candidates: [
-        { ruleId: "a", profileName: "steady", profile: steady },
-        { ruleId: "b", profileName: "deep", profile: deep },
+        { ruleId: "a", profileName: "steady", profile: steady, machine: null },
+        { ruleId: "b", profileName: "deep", profile: deep, machine: null },
       ],
     });
   });
@@ -50,6 +50,25 @@ describe("RulesTableResolver precedence", () => {
     expect(resolve(cfg).status).toBe("ambiguous");
   });
 
+  it("[U811] carries the rule's machine on a clear result, and no machine from any other source", () => {
+    const withMachine = config([{ ...rule("m", { kind: "ship" }, "deep"), machine: "gpu-box" }]);
+    expect(resolve(withMachine)).toMatchObject({ status: "clear", source: "rule", machine: "gpu-box" });
+    expect(resolve(withMachine, {}, { rule: "m" })).toMatchObject({ machine: "gpu-box" });
+    expect(resolve(config([rule("m", { kind: "ship" })]))).toMatchObject({ source: "rule", machine: null });
+    expect(resolve(config([], { default: "steady" }))).toMatchObject({ source: "default", machine: null });
+    expect(resolve(config(), {}, { profile: deep })).toMatchObject({ source: "override", machine: null });
+    expect(resolve(config())).toMatchObject({ source: "builtin", machine: null });
+  });
+
+  it("[U812] is ambiguous when two matching rules have equal profiles and different machines", () => {
+    const cfg = config([{ ...rule("a", { kind: "ship" }, "deep"), machine: "one" }, { ...rule("b", { mode: "no-mistakes" }, "deep"), machine: "two" }]);
+    expect(resolve(cfg)).toMatchObject({ status: "ambiguous", candidates: [{ ruleId: "a", machine: "one" }, { ruleId: "b", machine: "two" }] });
+    const same = config([{ ...rule("a", { kind: "ship" }, "deep"), machine: "one" }, { ...rule("b", { mode: "no-mistakes" }, "deep"), machine: "one" }]);
+    expect(resolve(same).status).toBe("clear");
+    const oneBare = config([{ ...rule("a", { kind: "ship" }, "deep"), machine: "one" }, rule("b", { mode: "no-mistakes" }, "deep")]);
+    expect(resolve(oneBare).status).toBe("ambiguous");
+  });
+
   it("[U713] is clear when two matching rules name equal profiles", () => {
     const cfg = config([rule("a", { kind: "ship" }, "deep"), rule("b", { mode: "no-mistakes" }, "deep")]);
     expect(resolve(cfg)).toMatchObject({ status: "clear", profile: deep, source: "rule", ruleId: "a" });
@@ -57,7 +76,7 @@ describe("RulesTableResolver precedence", () => {
 
   it("[U714] lets rule pick one of the matching rules", () => {
     const cfg = config([rule("a", { kind: "ship" }, "steady"), rule("b", { mode: "no-mistakes" }, "deep")]);
-    expect(resolve(cfg, {}, { rule: "b" })).toEqual({ status: "clear", profile: deep, source: "rule", ruleId: "b" });
+    expect(resolve(cfg, {}, { rule: "b" })).toEqual({ status: "clear", profile: deep, source: "rule", ruleId: "b", machine: null });
   });
 
   it.each(["scouting", "ghost"])("[U715] blocks the rule `%s`, which does not exist or does not match the task", (id) => {
@@ -66,11 +85,11 @@ describe("RulesTableResolver precedence", () => {
   });
 
   it("[U716] applies the configured default when no rule matches", () => {
-    expect(resolve(config([rule("scouting", { kind: "scout" })], { default: "steady" }))).toEqual({ status: "clear", profile: steady, source: "default", ruleId: null });
+    expect(resolve(config([rule("scouting", { kind: "scout" })], { default: "steady" }))).toEqual({ status: "clear", profile: steady, source: "default", ruleId: null, machine: null });
   });
 
   it("[U717] applies the built-in default when there is no rule match and no default", () => {
-    expect(resolve(config())).toEqual({ status: "clear", profile: BUILTIN_PROFILE, source: "builtin", ruleId: null });
+    expect(resolve(config())).toEqual({ status: "clear", profile: BUILTIN_PROFILE, source: "builtin", ruleId: null, machine: null });
     expect(BUILTIN_PROFILE).toEqual({ provider: "claude-code", model: "claude-sonnet-5-5", reasoningLevel: "high", permissionMode: "auto" });
   });
 });

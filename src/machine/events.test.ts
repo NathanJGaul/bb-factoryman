@@ -74,4 +74,11 @@ describe("parseEvent", () => {
   it.each([undefined, null, 5, "start", true, []])("refuses non-object input %j as invalid_event", (raw) => {
     expect(refusalCode(raw)).toBe("invalid_event");
   });
+
+  it("[U813] accepts cloneMachine on a start event and refuses a blank one", () => {
+    expect(parseEvent(validEvent("start", { machine: "host_b", cloneMachine: "host_a" })).ok).toBe(true);
+    expect(parseEvent(validEvent("start", { cloneMachine: null })).ok).toBe(true);
+    expect(parseEvent(validEvent("start", { cloneMachine: "" })).ok).toBe(false);
+    expect(parseEvent(validEvent("merge", { cloneMachine: "host_a" })).ok).toBe(false);
+  });
 });

@@ -16,6 +16,7 @@ export const GUARD_NAMES = [
   "mergeAuthorized",
   "promotionAuthorized",
   "worktreeLanded",
+  "localOnlyStaysOnClone",
 ] as const;
 
 export type GuardName = (typeof GUARD_NAMES)[number];
@@ -113,6 +114,8 @@ const worktreeLanded: Guard = (_context, event) => {
     : refuse("unlanded_work", `Teardown refused: the worktree has ${unpushedCommits} unpushed commit(s).`);
 };
 
+const localOnlyStaysOnClone: Guard = () => null;
+
 export const GUARDS: Record<GuardName, Guard> = {
   profileResolved,
   evidenceProvided,
@@ -127,4 +130,5 @@ export const GUARDS: Record<GuardName, Guard> = {
   mergeAuthorized,
   promotionAuthorized,
   worktreeLanded,
+  localOnlyStaysOnClone,
 };
