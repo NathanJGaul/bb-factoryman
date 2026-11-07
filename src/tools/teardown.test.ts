@@ -134,3 +134,27 @@ describe("factoryman_teardown", () => {
     expect(state(t)).toBe("torn_down");
   });
 });
+
+describe("factoryman_teardown on a remote machine", () => {
+  it("[U861] refuses, records nothing, and removes nothing when the project sources cannot be read", async () => {
+    const t = await withDispatchedTask();
+    t.bb.machines.push({ id: "host_gpu", name: "gpu-box", status: "connected", phase: "active", online: true });
+    t.bb.sources.push({ hostId: "host_gpu", path: "/work/gpu", isDefault: false });
+    const { dispatch } = await import("./dispatch");
+    const { DISPATCH_ARGS } = await import("../../test/fixtures/runtime");
+    expect((await dispatch(t.runtime, SUPERVISOR, { ...DISPATCH_ARGS, machine: "gpu-box" })).ok).toBe(true);
+    await t.runtime.apply("t2", { type: "fail", actor: "system", evidence: "Gave up." });
+    t.bb.envPaths.set("env-thr-w2", "/work/gpu/tree");
+    t.execHandler = (command, args) => ({ code: 0, stdout: command === "git" && args[0] === "rev-list" ? "0\n" : "", stderr: "" });
+    t.bb.sourcesError = new Error("bb is down");
+    const before = t.runtime.deps.store.listEvents({ taskId: "t2" }).length;
+    const mark = t.execCalls.length;
+    const outcome = await teardown(t.runtime, SUPERVISOR, { taskId: "t2" });
+    expect(outcome.ok).toBe(false);
+    expect(outcome.text).toContain("Teardown refused");
+    expect(outcome.text).toContain("which machine");
+    expect(t.runtime.deps.store.listEvents({ taskId: "t2" })).toHaveLength(before);
+    expect(t.execCalls.slice(mark)).toEqual([]);
+    expect(t.bb.callsTo("retireWorker")).toEqual([]);
+  });
+});

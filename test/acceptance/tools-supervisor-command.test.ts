@@ -12,6 +12,6 @@ describe("bb factoryman supervisor through the plugin factory", () => {
     await world.call("factoryman_dispatch", DISPATCH);
     const refused = await world.host.harness.behavior.runCli(["supervisor", "thr-w1"]);
     expect(refused.exitCode).not.toBe(0);
-    expect(world.metadata.get("thr-w1")).toEqual({ role: "worker", taskId: "t1", kind: "ship" });
+    expect(world.metadata.get("thr-w1")).toEqual({ role: "worker", taskId: "t1", kind: "ship", mode: "no-mistakes", state: "working", machine: null });
   });
 });

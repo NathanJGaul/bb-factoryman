@@ -18,6 +18,9 @@ const worktree = z.strictObject({
   unpushedCommits: count,
 });
 
+/** The result of each custom check, gathered by the caller (D-015, D-080). */
+const checkFacts = z.array(z.strictObject({ name: nonEmpty, passed: z.boolean() })).optional();
+
 /** Fields every event carries. `evidence` is optional here; guards decide where it is required. */
 const common = {
   actor: z.enum(ACTORS),
@@ -30,11 +33,12 @@ function event<const T extends EventType, S extends z.ZodRawShape>(type: T, shap
 
 const eventSchema = z.discriminatedUnion("type", [
   // `profile` may be null or absent so the `profileResolved` guard can name the refusal.
-  event("start", { profile: profile.nullish(), threadId: nonEmpty, branch: nonEmpty, machine: nonEmpty.nullish() }),
+  // `cloneMachine` is the host that holds the project's clone, gathered by the caller (D-015, D-073).
+  event("start", { profile: profile.nullish(), threadId: nonEmpty, branch: nonEmpty, machine: nonEmpty.nullish(), cloneMachine: nonEmpty.nullish() }),
   event("block", {}),
   event("unblock", {}),
-  event("handoff", {}),
-  event("ready", { prUrl: z.url().optional(), landedCommits: count.optional() }),
+  event("handoff", { checks: checkFacts }),
+  event("ready", { prUrl: z.url().optional(), landedCommits: count.optional(), checks: checkFacts }),
   event("report", {}),
   event("finding", {}),
   event("resolve", {}),
@@ -88,6 +92,8 @@ const createSchema = z.strictObject({
   projectId: id,
   kind: z.enum(TASK_KINDS),
   mode: z.enum(DELIVERY_MODES),
+  /** The dispatch request of a task that waits in the queue (D-085). The machine ignores it and the log keeps it. */
+  request: z.record(z.string(), z.unknown()).optional(),
 });
 
 export type CreateEvent = z.infer<typeof createSchema>;

@@ -12,10 +12,12 @@ export interface ReportInput {
   path: string;
   mode: DeliveryMode;
   baseBranch: string | null;
+  /** The host that holds the worktree, or null for the server. */
+  host?: string | null;
 }
 
-async function git(exec: Exec, cwd: string, args: string[]): Promise<{ ok: true; stdout: string } | { ok: false; message: string }> {
-  const result = await exec("git", args, { cwd });
+async function git(exec: Exec, cwd: string, args: string[], host: string | null): Promise<{ ok: true; stdout: string } | { ok: false; message: string }> {
+  const result = await exec("git", args, { cwd, host });
   if (result.code !== 0) {
     const detail = result.error ?? (result.stderr.trim() || `exit code ${String(result.code)}`);
     return { ok: false, message: `git ${args.join(" ")} failed: ${detail}` };
@@ -36,12 +38,13 @@ export async function worktreeReport(exec: Exec, input: ReportInput): Promise<Re
   if (input.mode === "local-only" && (input.baseBranch === null || input.baseBranch.trim() === "" || input.baseBranch.startsWith("-"))) {
     return { ok: false, message: "A local-only project needs a base branch to check landed work, and none is configured." };
   }
-  const status = await git(exec, input.path, ["status", "--porcelain"]);
+  const host = input.host ?? null;
+  const status = await git(exec, input.path, ["status", "--porcelain"], host);
   if (!status.ok) return status;
 
   const range =
     input.mode === "local-only" ? ["rev-list", "--count", `${input.baseBranch}..HEAD`] : ["rev-list", "--count", "HEAD", "--not", "--remotes"];
-  const count = await git(exec, input.path, range);
+  const count = await git(exec, input.path, range, host);
   if (!count.ok) return count;
   const unpushedCommits = Number.parseInt(count.stdout.trim(), 10);
   if (!Number.isInteger(unpushedCommits) || unpushedCommits < 0) {

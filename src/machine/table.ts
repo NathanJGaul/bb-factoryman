@@ -23,11 +23,11 @@ const failedLane = { teardown: go("torn_down", "notWorker", "worktreeLanded") };
  * checks the mode.
  */
 const ship: Lane = {
-  queued: { start: go("working", "profileResolved"), fail },
+  queued: { start: go("working", "profileResolved", "localOnlyStaysOnClone"), fail },
   working: {
     block: go("blocked"),
-    handoff: go("validating", "modeIsNoMistakes", "evidenceProvided"),
-    ready: go("review_ready", "modeIsNotNoMistakes", "evidenceProvided", "readyModeCheck"),
+    handoff: go("validating", "modeIsNoMistakes", "evidenceProvided", "customChecksPassed"),
+    ready: go("review_ready", "modeIsNotNoMistakes", "evidenceProvided", "readyModeCheck", "customChecksPassed"),
     fail,
   },
   blocked: { unblock: go("working"), fail },
@@ -54,7 +54,7 @@ const ship: Lane = {
 
 /** The scout lane. `promote` re-enters `queued` as a ship task. */
 const scout: Lane = {
-  queued: { start: go("working", "profileResolved"), fail },
+  queued: { start: go("working", "profileResolved", "localOnlyStaysOnClone"), fail },
   working: { block: go("blocked"), report: go("report_ready", "evidenceProvided"), fail },
   blocked: { unblock: go("working"), fail },
   report_ready: {

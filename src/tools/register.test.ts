@@ -1,13 +1,14 @@
 import { createFakePluginHost, makePluginAgentConfigurationContext } from "@get-bb/plugin-sdk/testing";
 import { describe, expect, it } from "vitest";
+import { skillNamesOnDisk } from "../../test/fixtures/skills";
 import { testRuntime } from "../../test/fixtures/runtime";
 import type { MergeExecutor } from "../git/merge";
-import { registerTools } from "./register";
+import { registerTools, skillsForMetadata, toolsForMetadata } from "./register";
 
 const executor: MergeExecutor = { preflight: async () => null, merge: async () => ({ ok: true }) };
 
 function setup() {
-  const host = createFakePluginHost({ pluginId: "factoryman" });
+  const host = createFakePluginHost({ pluginId: "factoryman", agentSkillIds: skillNamesOnDisk() });
   const t = testRuntime();
   registerTools(host.bb, t.runtime, executor);
   return { host, t };
@@ -53,7 +54,9 @@ describe("registerTools", () => {
     const schema = dispatchTool?.inputSchema as { type: string; additionalProperties: boolean; required: string[]; properties: { profile: { properties: { permissionMode: { enum: string[] } } } } };
     expect(schema.type).toBe("object");
     expect(schema.additionalProperties).toBe(false);
-    expect(schema.required).toEqual(["kind", "description", "profile"]);
+    // Milestone 7 made the profile optional: the dispatch rules choose it when the caller gives none (D-067).
+    expect(schema.required).toEqual(["kind", "description"]);
+    expect(Object.keys(schema.properties)).toEqual(expect.arrayContaining(["tags", "profile", "rule"]));
     expect(schema.properties.profile.properties.permissionMode.enum).toEqual(["accept-edits", "auto", "full"]);
   });
 
@@ -77,5 +80,22 @@ describe("registerTools", () => {
     expect(ok).toBe("No tasks match.");
     const failed = await host.harness.behavior.callAgentTool("factoryman_status", { taskId: "t9" }, { threadId: "thr-sup", projectId: "proj-1" });
     expect(failed).toEqual({ content: [{ type: "text", text: "No task t9 exists in this project." }], isError: true });
+  });
+});
+
+describe("skillsForMetadata", () => {
+  it("[U1101] returns the supervisor skill, the worker skill, or nothing, and ignores an unknown role", () => {
+    expect(skillsForMetadata({ role: "supervisor" })).toEqual(["factoryman-supervisor"]);
+    expect(skillsForMetadata({ role: "worker", taskId: "t1" })).toEqual(["factoryman-worker"]);
+    expect(skillsForMetadata({})).toEqual([]);
+    expect(skillsForMetadata({ role: "owner" })).toEqual([]);
+    expect(skillsForMetadata({ role: 3 })).toEqual([]);
+  });
+
+  it("[U1103] ignores a role that is not exactly the string supervisor or worker, like the tool selection does", () => {
+    for (const role of ["Supervisor", "WORKER", " worker ", "supervisor\n", ["supervisor"], ["worker"], null, undefined, {}, true, 0]) {
+      expect(skillsForMetadata({ role: role as never }), JSON.stringify(role)).toEqual([]);
+      expect(toolsForMetadata({ role: role as never }), JSON.stringify(role)).toEqual([]);
+    }
   });
 });

@@ -1,4 +1,4 @@
-import type { BbPort, InputRequest, InputResult, SpawnWorkerRequest, ThreadInfo } from "../../src/bb/port";
+import type { BbPort, InputRequest, InputResult, MachineInfo, ProjectSource, ProviderAvailability, SpawnWorkerRequest, TerminalRead, ThreadInfo } from "../../src/bb/port";
 
 export interface RecordedCall {
   method: string;
@@ -14,10 +14,42 @@ export class FakeBbPort implements BbPort {
   /** A project missing from this map has the default remote. Set null for an unreadable remote. */
   remotes = new Map<string, string | null>();
   metadata = new Map<string, Record<string, unknown>>();
+  /** What `listProviders` returns. The default lists `claude` and `claude-code`, each with every mode and the usual levels. */
+  providers: ProviderAvailability[] = ["claude", "claude-code"].map((id) => ({
+    id,
+    available: true,
+    permissionModes: ["accept-edits", "auto", "full"],
+    reasoningLevels: ["low", "medium", "high", "xhigh", "max"],
+  }));
+  /** What `listProviders` returns for a given host ID, instead of `providers`. */
+  providersByHost = new Map<string, ProviderAvailability[]>();
+  providersError: Error | null = null;
+  /** Every terminal that `startTerminal` opened. */
+  terminalRuns: Array<{ hostId: string; cwd: string | null; argv: string[] }> = [];
+  /** The reads `readTerminal` returns, in order. The last one repeats. */
+  terminalReads: TerminalRead[] = [];
+  terminalClosed: string[] = [];
+  terminalStartError: Error | null = null;
+  setMetadataError: Error | null = null;
+  /** What `getThreadCost` returns per thread. A thread that is missing has no cost data. */
+  costs = new Map<string, { amount: number; currency: string } | null>();
+  costError: Error | null = null;
+  /** What `listProjects` returns. */
+  projectList: Array<{ id: string; name: string }> = [];
+  projectsError: Error | null = null;
+  terminalReadError: Error | null = null;
+  /** What `listMachines` returns. The default is one online host, `host_local`. */
+  machines: MachineInfo[] = [{ id: "host_local", name: "local-box", status: "connected", phase: "active", online: true }];
+  machinesError: Error | null = null;
+  sourcesError: Error | null = null;
+  /** The project's sources. The default is one default source on `host_local`. */
+  sources: ProjectSource[] = [{ hostId: "host_local", path: "/work/repo", isDefault: true }];
   spawnError: Error | null = null;
   sendError: Error | null = null;
   retireError: Error | null = null;
   getThreadError: Error | null = null;
+  checkoutError: Error | null = null;
+  envPathError: Error | null = null;
   /** Called for each form. Defaults to a timeout cancellation. */
   inputHandler: (request: InputRequest) => Promise<InputResult> = async () => ({ outcome: "cancelled", reason: "timeout" });
   private nextThread = 1;
@@ -67,6 +99,7 @@ export class FakeBbPort implements BbPort {
 
   async getEnvironmentPath(environmentId: string): Promise<string | null> {
     this.calls.push({ method: "getEnvironmentPath", args: [environmentId] });
+    if (this.envPathError) throw this.envPathError;
     return this.envPaths.get(environmentId) ?? null;
   }
 
@@ -77,6 +110,7 @@ export class FakeBbPort implements BbPort {
 
   async getProjectCheckout(projectId: string): Promise<string | null> {
     this.calls.push({ method: "getProjectCheckout", args: [projectId] });
+    if (this.checkoutError) throw this.checkoutError;
     return this.checkouts.get(projectId) ?? null;
   }
 
@@ -90,8 +124,58 @@ export class FakeBbPort implements BbPort {
     return this.inputHandler(request);
   }
 
+  async getThreadCost(threadId: string): Promise<{ amount: number; currency: string } | null> {
+    this.calls.push({ method: "getThreadCost", args: [threadId] });
+    if (this.costError) throw this.costError;
+    return this.costs.get(threadId) ?? null;
+  }
+
+  async listProjects(): Promise<Array<{ id: string; name: string }>> {
+    this.calls.push({ method: "listProjects", args: [] });
+    if (this.projectsError) throw this.projectsError;
+    return this.projectList;
+  }
+
+  async startTerminal(hostId: string, cwd: string | null, argv: string[]): Promise<{ terminalId: string }> {
+    this.calls.push({ method: "startTerminal", args: [hostId, cwd, argv] });
+    if (this.terminalStartError) throw this.terminalStartError;
+    this.terminalRuns.push({ hostId, cwd, argv });
+    return { terminalId: `term-${this.terminalRuns.length}` };
+  }
+
+  async readTerminal(terminalId: string): Promise<TerminalRead> {
+    this.calls.push({ method: "readTerminal", args: [terminalId] });
+    if (this.terminalReadError) throw this.terminalReadError;
+    const next = this.terminalReads.length > 1 ? this.terminalReads.shift() : this.terminalReads[0];
+    return next ?? { status: "exited", exitCode: 0, output: "", truncated: false };
+  }
+
+  async closeTerminal(terminalId: string): Promise<void> {
+    this.calls.push({ method: "closeTerminal", args: [terminalId] });
+    this.terminalClosed.push(terminalId);
+  }
+
+  async listProviders(hostId?: string): Promise<ProviderAvailability[]> {
+    this.calls.push({ method: "listProviders", args: [hostId] });
+    if (this.providersError) throw this.providersError;
+    return (hostId === undefined ? undefined : this.providersByHost.get(hostId)) ?? this.providers;
+  }
+
+  async listMachines(): Promise<MachineInfo[]> {
+    this.calls.push({ method: "listMachines", args: [] });
+    if (this.machinesError) throw this.machinesError;
+    return this.machines;
+  }
+
+  async getProjectSources(projectId: string): Promise<ProjectSource[]> {
+    this.calls.push({ method: "getProjectSources", args: [projectId] });
+    if (this.sourcesError) throw this.sourcesError;
+    return this.sources;
+  }
+
   async setThreadMetadata(threadId: string, metadata: Record<string, unknown>): Promise<void> {
     this.calls.push({ method: "setThreadMetadata", args: [threadId, metadata] });
+    if (this.setMetadataError) throw this.setMetadataError;
     this.metadata.set(threadId, metadata);
   }
 

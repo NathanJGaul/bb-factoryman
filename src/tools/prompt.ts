@@ -20,7 +20,7 @@ const HANDOFF: Record<DeliveryMode, string> = {
     "Then call factoryman_report with outcome \"done\", your evidence, and the number of commits you landed as landedCommits.",
 };
 
-/** The first message a worker reads. The worker skill (milestone 11) will add detail. */
+/** The first message a worker reads. The `factoryman-worker` skill holds the detail. */
 export function buildWorkerPrompt(input: PromptInput): string {
   const lines = [
     `You are the worker for ${input.kind} task ${input.taskId}. The delivery mode is ${input.mode}.`,
@@ -29,6 +29,7 @@ export function buildWorkerPrompt(input: PromptInput): string {
     input.description,
     "",
     `First, create and switch to the branch ${input.branch}.`,
+    "The factoryman-worker skill lists the rules for your work. Read it before you start.",
   ];
   if (input.kind === "scout") {
     lines.push(

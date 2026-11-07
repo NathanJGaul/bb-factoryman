@@ -77,4 +77,32 @@ describe("factoryman_status", () => {
     const queued = (await status(t.runtime, SUPERVISOR, { taskId: "t7" })).text;
     expect(queued).toBe("Task t7: ship, no-mistakes, state queued");
   });
+
+  it("[U855] shows the machine of a task that has one, and no machine line for a task without one", async () => {
+    const t = await withDispatchedTask();
+    t.bb.machines.push({ id: "host_gpu", name: "gpu-box", status: "connected", phase: "active", online: true });
+    t.bb.sources.push({ hostId: "host_gpu", path: "/work/gpu", isDefault: false });
+    const { dispatch } = await import("./dispatch");
+    const { DISPATCH_ARGS } = await import("../../test/fixtures/runtime");
+    await dispatch(t.runtime, SUPERVISOR, { ...DISPATCH_ARGS, machine: "gpu-box" });
+    expect((await status(t.runtime, SUPERVISOR, { taskId: "t2" })).text).toContain("  machine: host_gpu");
+    expect((await status(t.runtime, SUPERVISOR, { taskId: "t1" })).text).not.toContain("machine:");
+  });
+  it("[U1031] shows a queued task with the description from its stored request", async () => {
+    const t = await withDispatchedTask();
+    const queued = t.runtime.log.create({
+      type: "create",
+      actor: "supervisor",
+      taskId: "q1",
+      projectId: "proj-1",
+      kind: "ship",
+      mode: "no-mistakes",
+      request: { v: 1, description: "Queued work.\nWith details.", tags: [], profile: { provider: "claude", model: "opus", reasoningLevel: "high", permissionMode: "auto" }, machine: null, cloneHost: null, parentThreadId: "thr-sup", branchPrefix: null, baseBranch: null },
+    });
+    expect(queued.ok).toBe(true);
+    const text = (await status(t.runtime, SUPERVISOR, { taskId: "q1" })).text;
+    expect(text).toContain("Task q1: ship, no-mistakes, state queued");
+    expect(text).toContain("  description: Queued work.");
+    expect(text).not.toContain("With details");
+  });
 });

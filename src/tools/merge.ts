@@ -9,6 +9,9 @@ import type { Caller } from "./dispatch";
 import { failure, refusalOutcome, success, type ToolOutcome } from "./results";
 
 export const MERGE_RENDERER_ID = "factoryman-merge-approval";
+/** The states in which `factoryman_merge` accepts a task. A task that waits for the owner stays in the second one. */
+export const MERGEABLE_STATES: readonly string[] = ["review_ready", "awaiting_approval"];
+
 export const mergeSchema = z.strictObject({ taskId: z.string().min(1) });
 
 /** The only answers the approval form accepts. Anything else counts as no answer. */
@@ -41,7 +44,7 @@ export async function merge(rt: Runtime, executor: MergeExecutor, caller: Caller
   const task = store.getTask(taskId);
   if (task === null || !sameProject(task, caller.projectId)) return failure(`No task ${taskId} exists in this project.`);
   if (task.kind !== "ship") return refusalOutcome(refuse("illegal_transition", "Only a ship task can be merged."));
-  if (task.state !== "review_ready" && task.state !== "awaiting_approval") {
+  if (!MERGEABLE_STATES.includes(task.state)) {
     return refusalOutcome(refuse("illegal_transition", `Task ${taskId} is ${task.state}. A merge needs review_ready or awaiting_approval.`));
   }
   if (rt.openMergeForms.has(taskId)) return failure(`A merge approval for task ${taskId} is already waiting for the owner.`);

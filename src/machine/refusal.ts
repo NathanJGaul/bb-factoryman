@@ -13,6 +13,8 @@ export const REASON_CODES = [
   "mode_mismatch",
   "mode_check_failed",
   "unlanded_work",
+  "machine_mismatch",
+  "check_failed",
   "internal_mismatch",
   "corrupt_log",
 ] as const;

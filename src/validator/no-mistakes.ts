@@ -1,6 +1,6 @@
 import type { Exec, ExecResult } from "../exec";
 import { parseAbort, parseRun } from "./toon";
-import type { Answer, Finding, RunView, Validator, ValidatorResult } from "./types";
+import type { Answer, Finding, RunView, Validator, ValidatorResult, Where } from "./types";
 
 const DEFAULT_WAIT = "4m";
 
@@ -22,36 +22,36 @@ export class NoMistakesValidator implements Validator {
     this.defaultWait = options.wait ?? DEFAULT_WAIT;
   }
 
-  start(input: { cwd: string; intent: string; wait?: string }) {
-    return this.run(input.cwd, ["axi", "run", "--intent", input.intent, "--wait", input.wait ?? this.defaultWait]);
+  start(input: Where & { intent: string; wait?: string }) {
+    return this.run(input, ["axi", "run", "--intent", input.intent, "--wait", input.wait ?? this.defaultWait]);
   }
 
-  status(input: { cwd: string; runId?: string }) {
-    return this.run(input.cwd, ["axi", "status", ...(input.runId === undefined ? [] : ["--run", input.runId])]);
+  status(input: Where & { runId?: string }) {
+    return this.run(input, ["axi", "status", ...(input.runId === undefined ? [] : ["--run", input.runId])]);
   }
 
-  async findings(input: { cwd: string; runId?: string }): Promise<ValidatorResult<Finding[]>> {
+  async findings(input: Where & { runId?: string }): Promise<ValidatorResult<Finding[]>> {
     const view = await this.status(input);
     return view.ok ? { ok: true, value: view.value.gate?.findings ?? [] } : view;
   }
 
-  answer(input: { cwd: string; response: Answer }) {
+  answer(input: Where & { response: Answer }) {
     const { response } = input;
     const flags =
       response.action === "fix"
         ? ["--action", "fix", "--findings", response.findingIds.join(","), ...(response.instructions === undefined ? [] : ["--instructions", response.instructions])]
         : ["--action", response.action];
-    return this.run(input.cwd, ["axi", "respond", ...flags, "--wait", this.defaultWait]);
+    return this.run(input, ["axi", "respond", ...flags, "--wait", this.defaultWait]);
   }
 
-  async cancel(input: { cwd: string; runId?: string }): Promise<ValidatorResult<void>> {
-    const result = await this.exec(this.bin, ["axi", "abort", ...(input.runId === undefined ? [] : ["--run", input.runId])], { cwd: input.cwd });
+  async cancel(input: Where & { runId?: string }): Promise<ValidatorResult<void>> {
+    const result = await this.exec(this.bin, ["axi", "abort", ...(input.runId === undefined ? [] : ["--run", input.runId])], { cwd: input.cwd, host: input.host ?? null });
     const failure = this.commandFailure(result);
     return failure ?? parseAbort(result.stdout);
   }
 
-  private async run(cwd: string, args: string[]): Promise<ValidatorResult<RunView>> {
-    const result = await this.exec(this.bin, args, { cwd });
+  private async run(where: Where, args: string[]): Promise<ValidatorResult<RunView>> {
+    const result = await this.exec(this.bin, args, { cwd: where.cwd, host: where.host ?? null });
     const failure = this.commandFailure(result);
     if (failure) return failure;
     return parseRun(result.stdout);
