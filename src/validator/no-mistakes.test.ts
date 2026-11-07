@@ -102,4 +102,23 @@ describe("NoMistakesValidator", () => {
     const result = await validator.status({ cwd: "/w" });
     expect(result).toEqual({ ok: false, error: { kind: "command_failed", message: expect.stringContaining("spawn no-mistakes ENOENT") } });
   });
+
+  it("[U835] passes the host option to every no-mistakes command", async () => {
+    const hosts: Array<string | null | undefined> = [];
+    const exec: Exec = async (_command, _args, options) => {
+      hosts.push(options?.host);
+      return { code: 0, stdout: recordedNoMistakes("gate-review.toon"), stderr: "" };
+    };
+    const validator = new NoMistakesValidator(exec, { wait: "4m" });
+    const host = "host_gpu";
+    await validator.start({ cwd: "/w", intent: "x", host });
+    await validator.status({ cwd: "/w", host });
+    await validator.findings({ cwd: "/w", host });
+    await validator.answer({ cwd: "/w", response: { action: "approve" }, host });
+    await validator.cancel({ cwd: "/w", host });
+    expect(hosts).toEqual([host, host, host, host, host]);
+    hosts.length = 0;
+    await validator.status({ cwd: "/w" });
+    expect(hosts[0] ?? null).toBeNull();
+  });
 });

@@ -5,6 +5,7 @@ import type { ExecResult } from "../../src/exec";
 import { defaultProjectConfig } from "../../src/store/store";
 import { openSqliteStore } from "../../src/store/sqlite";
 import type { ProjectConfig } from "../../src/store/types";
+import { frame } from "./frame";
 import type { DispatchResolver } from "../../src/dispatch/types";
 
 /** A provider as `bb.sdk.providers.list` returns it, cut to the fields the plugin reads. */
@@ -31,6 +32,22 @@ export interface SourceFixture {
   isDefault?: boolean;
 }
 
+/** One command that the plugin ran on a remote host through a terminal. */
+export interface RemoteRun {
+  hostId: string;
+  cwd: string | null;
+  command: string;
+  args: string[];
+}
+
+export interface RemoteFake {
+  runs: RemoteRun[];
+  /** Decide the result of a remote command. `hang` never exits, and `truncate` returns truncated output. */
+  handler: (run: RemoteRun) => ExecResult | "hang" | "truncate";
+  /** Make `terminals.create` fail. */
+  createError: Error | null;
+}
+
 export interface FakeThread {
   id: string;
   projectId: string;
@@ -49,6 +66,8 @@ export interface World {
   paths: Map<string, string>;
   /** The machines `hosts.list` returns. Tests change it to take a machine offline. */
   machines: HostFixture[];
+  /** The fake terminals behind `bb.sdk.terminals`, which stand in for remote machines. */
+  remote: RemoteFake;
   metadata: Map<string, Record<string, unknown>>;
   execCalls: Array<{ command: string; args: readonly string[]; cwd?: string }>;
   /** Override to script git and gh. The default is a successful empty run. */
@@ -108,6 +127,8 @@ export async function loadWorld(options: WorldOptions = {}): Promise<World> {
   const metadata = new Map<string, Record<string, unknown>>();
   const machines: HostFixture[] = options.machines ?? [hostFixture("host_local", "local-box")];
   const sources = () => (options.sources ?? [{ hostId: "host_local", path: options.checkout ?? "/work/repo", isDefault: true }]).map((source, index) => ({ type: "local_path", isDefault: source.isDefault ?? index === 0, ...source }));
+  const remote: RemoteFake = { runs: [], handler: () => ({ code: 0, stdout: "", stderr: "" }), createError: null };
+  const terminals = new Map<string, { status: string; exitCode: number | null; output: string; truncated: boolean }>();
   const sent = new Map<string, string[]>();
   let spawned = 0;
 
@@ -163,6 +184,32 @@ export async function loadWorld(options: WorldOptions = {}): Promise<World> {
       hosts: {
         list: async () => machines,
       },
+      terminals: {
+        create: async (args: { scope: { hostId: string; cwd: string | null }; start: { argv: string[] } }) => {
+          if (remote.createError) throw remote.createError;
+          // The runner starts `sh -c <wrapper> sh <command> <args>`, so the real command starts at index 4.
+          const [, , , , command = "", ...rest] = args.start.argv;
+          const run: RemoteRun = { hostId: args.scope.hostId, cwd: args.scope.cwd, command, args: rest };
+          remote.runs.push(run);
+          const id = `term_${remote.runs.length}`;
+          const result = remote.handler(run);
+          terminals.set(
+            id,
+            result === "hang"
+              ? { status: "running", exitCode: null, output: "", truncated: false }
+              : result === "truncate"
+                ? { status: "exited", exitCode: 0, output: frame(0, "x"), truncated: true }
+                : { status: "exited", exitCode: 0, output: frame(result.code ?? 1, result.stdout, result.stderr), truncated: false },
+          );
+          return { id };
+        },
+        output: async ({ terminalId }: { terminalId: string }) => {
+          const session = terminals.get(terminalId);
+          if (!session) throw new NotFound("HTTP 404: terminal not found");
+          return { status: session.status, exitCode: session.exitCode, truncated: session.truncated, closeReason: null, nextSeq: 1, chunks: [{ seq: 0, dataBase64: Buffer.from(session.output, "utf8").toString("base64") }] };
+        },
+        close: async () => ({}),
+      },
     },
   });
 
@@ -171,6 +218,7 @@ export async function loadWorld(options: WorldOptions = {}): Promise<World> {
     threads,
     paths,
     machines,
+    remote,
     metadata,
     execCalls: [],
     execHandler: () => ({ code: 0, stdout: "", stderr: "" }),
@@ -220,6 +268,7 @@ export async function loadWorld(options: WorldOptions = {}): Promise<World> {
     validator: options.validator,
     resolver: options.resolver,
     pollMs: 1,
+    remote: { pollMs: 1, timeoutMs: 30 },
   });
   await factory(host.bb);
   world.store = openSqliteStore(host.bb.storage.database());

@@ -61,6 +61,10 @@ export interface BbPort {
   listMachines(): Promise<MachineInfo[]>;
   /** The project's sources: the hosts that hold a copy of it. */
   getProjectSources(projectId: string): Promise<ProjectSource[]>;
+  /** Start `argv` in a new terminal on a host, with no shell and no input. */
+  startTerminal(hostId: string, cwd: string | null, argv: string[]): Promise<{ terminalId: string }>;
+  readTerminal(terminalId: string): Promise<TerminalRead>;
+  closeTerminal(terminalId: string): Promise<void>;
 }
 
 /** One provider as bb reports it, cut to the fields that the dispatch check reads (spike item 29). */
@@ -89,4 +93,14 @@ export interface ProjectSource {
   hostId: string;
   path: string;
   isDefault: boolean;
+}
+
+/** What one read of a host terminal returns (spike item 8). */
+export interface TerminalRead {
+  /** bb's terminal status: `starting`, `running`, `exited`, or `disconnected`. */
+  status: string;
+  exitCode: number | null;
+  /** The output so far, decoded to text. */
+  output: string;
+  truncated: boolean;
 }

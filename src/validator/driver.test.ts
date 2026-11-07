@@ -335,6 +335,24 @@ describe("ValidationDriver loops", () => {
     await settle(() => !driver.isRunning("t1"));
     expect(driver.isRunning("t1")).toBe(false);
   });
+
+  it("[U836] passes the task's remote host to the validator, and none for a task on the clone host", async () => {
+    const t = await withDispatchedTask();
+    t.bb.machines.push({ id: "host_gpu", name: "gpu-box", status: "connected", phase: "active", online: true });
+    t.bb.sources.push({ hostId: "host_gpu", path: "/work/gpu", isDefault: false });
+    t.bb.envPaths.set("env-thr-w1", "/work/tree");
+    t.bb.envPaths.set("env-thr-w2", "/work/gpu/tree");
+    await t.runtime.apply("t1", { type: "handoff", actor: "worker", evidence: "Committed." });
+    const remote = await dispatch(t.runtime, SUPERVISOR, { ...DISPATCH_ARGS, machine: "gpu-box" });
+    expect(remote.ok).toBe(true);
+    await t.runtime.apply("t2", { type: "handoff", actor: "worker", evidence: "Committed." });
+    const { driver, validator } = driverFor(t);
+    validator.script("start", [ok(view())]);
+    await driver.step("t1");
+    await driver.step("t2");
+    const hosts = validator.calls.map((call) => (call.input as { host?: string | null }).host ?? null);
+    expect(hosts).toEqual([null, "host_gpu"]);
+  });
 });
 
 /** The same runtime with a sleep that yields a macrotask, so a loop cannot starve the test. */

@@ -13,6 +13,8 @@ export interface ExecOptions {
   cwd?: string;
   timeoutMs?: number;
   signal?: AbortSignal;
+  /** Run on this host ID through a host terminal. Absent or null runs on the server. */
+  host?: string | null;
 }
 
 /** Runs one command with literal arguments. It never throws for an expected failure. */

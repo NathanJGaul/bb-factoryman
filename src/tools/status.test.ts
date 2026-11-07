@@ -77,4 +77,15 @@ describe("factoryman_status", () => {
     const queued = (await status(t.runtime, SUPERVISOR, { taskId: "t7" })).text;
     expect(queued).toBe("Task t7: ship, no-mistakes, state queued");
   });
+
+  it("[U855] shows the machine of a task that has one, and no machine line for a task without one", async () => {
+    const t = await withDispatchedTask();
+    t.bb.machines.push({ id: "host_gpu", name: "gpu-box", status: "connected", phase: "active", online: true });
+    t.bb.sources.push({ hostId: "host_gpu", path: "/work/gpu", isDefault: false });
+    const { dispatch } = await import("./dispatch");
+    const { DISPATCH_ARGS } = await import("../../test/fixtures/runtime");
+    await dispatch(t.runtime, SUPERVISOR, { ...DISPATCH_ARGS, machine: "gpu-box" });
+    expect((await status(t.runtime, SUPERVISOR, { taskId: "t2" })).text).toContain("  machine: host_gpu");
+    expect((await status(t.runtime, SUPERVISOR, { taskId: "t1" })).text).not.toContain("machine:");
+  });
 });

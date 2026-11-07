@@ -29,6 +29,8 @@ export interface PluginOptions {
   files?: Files;
   /** Replaces the rules-table dispatch resolver (D-051 style injection). */
   resolver?: DispatchResolver;
+  /** Polling for commands on remote machines. */
+  remote?: { pollMs?: number; timeoutMs?: number };
 }
 
 const MERGE_METHODS = ["squash", "merge", "rebase"] as const;

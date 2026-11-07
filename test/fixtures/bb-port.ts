@@ -1,4 +1,4 @@
-import type { BbPort, InputRequest, InputResult, MachineInfo, ProjectSource, ProviderAvailability, SpawnWorkerRequest, ThreadInfo } from "../../src/bb/port";
+import type { BbPort, InputRequest, InputResult, MachineInfo, ProjectSource, ProviderAvailability, SpawnWorkerRequest, TerminalRead, ThreadInfo } from "../../src/bb/port";
 
 export interface RecordedCall {
   method: string;
@@ -24,6 +24,13 @@ export class FakeBbPort implements BbPort {
   /** What `listProviders` returns for a given host ID, instead of `providers`. */
   providersByHost = new Map<string, ProviderAvailability[]>();
   providersError: Error | null = null;
+  /** Every terminal that `startTerminal` opened. */
+  terminalRuns: Array<{ hostId: string; cwd: string | null; argv: string[] }> = [];
+  /** The reads `readTerminal` returns, in order. The last one repeats. */
+  terminalReads: TerminalRead[] = [];
+  terminalClosed: string[] = [];
+  terminalStartError: Error | null = null;
+  terminalReadError: Error | null = null;
   /** What `listMachines` returns. The default is one online host, `host_local`. */
   machines: MachineInfo[] = [{ id: "host_local", name: "local-box", status: "connected", phase: "active", online: true }];
   machinesError: Error | null = null;
@@ -103,6 +110,25 @@ export class FakeBbPort implements BbPort {
   async requestInput(request: InputRequest): Promise<InputResult> {
     this.calls.push({ method: "requestInput", args: [request] });
     return this.inputHandler(request);
+  }
+
+  async startTerminal(hostId: string, cwd: string | null, argv: string[]): Promise<{ terminalId: string }> {
+    this.calls.push({ method: "startTerminal", args: [hostId, cwd, argv] });
+    if (this.terminalStartError) throw this.terminalStartError;
+    this.terminalRuns.push({ hostId, cwd, argv });
+    return { terminalId: `term-${this.terminalRuns.length}` };
+  }
+
+  async readTerminal(terminalId: string): Promise<TerminalRead> {
+    this.calls.push({ method: "readTerminal", args: [terminalId] });
+    if (this.terminalReadError) throw this.terminalReadError;
+    const next = this.terminalReads.length > 1 ? this.terminalReads.shift() : this.terminalReads[0];
+    return next ?? { status: "exited", exitCode: 0, output: "", truncated: false };
+  }
+
+  async closeTerminal(terminalId: string): Promise<void> {
+    this.calls.push({ method: "closeTerminal", args: [terminalId] });
+    this.terminalClosed.push(terminalId);
   }
 
   async listProviders(hostId?: string): Promise<ProviderAvailability[]> {

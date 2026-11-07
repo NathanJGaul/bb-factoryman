@@ -1,5 +1,5 @@
 import type { BbPluginApi } from "@get-bb/plugin-sdk";
-import type { BbPort, InputResult, Json, MachineInfo, ProjectSource } from "./port";
+import type { BbPort, InputResult, Json, MachineInfo, ProjectSource, TerminalRead } from "./port";
 
 const PERMISSION_MODES = ["accept-edits", "auto", "full"] as const;
 type PermissionMode = (typeof PERMISSION_MODES)[number];
@@ -118,6 +118,18 @@ export function createBbPort(bb: BbPluginApi): BbPort {
     async getProjectSources(projectId): Promise<ProjectSource[]> {
       const project = await bb.sdk.projects.get({ projectId });
       return project.sources.map((source) => ({ hostId: source.hostId, path: source.path, isDefault: source.isDefault }));
+    },
+
+    async startTerminal(): Promise<{ terminalId: string }> {
+      throw new Error("not implemented");
+    },
+
+    async readTerminal(): Promise<TerminalRead> {
+      throw new Error("not implemented");
+    },
+
+    async closeTerminal(): Promise<void> {
+      throw new Error("not implemented");
     },
 
     async listProviders(hostId) {

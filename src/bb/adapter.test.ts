@@ -246,4 +246,31 @@ describe("createBbPort", () => {
     expect(hosts).toEqual(["host_2", "host_1", "host_1"]);
     await expect(port.spawnWorker({ ...base, hostId: "host_9" })).rejects.toThrow(/host_9/);
   });
+
+  it("[U823] starts a host_path terminal in argv mode, reads decoded output, and closes it", async () => {
+    const created: unknown[] = [];
+    const { port, sdk } = setup({
+      terminals: {
+        create: async (args: unknown) => {
+          created.push(args);
+          return { id: "term_1" };
+        },
+        output: async () => ({
+          status: "exited",
+          exitCode: 3,
+          truncated: false,
+          chunks: [
+            { seq: 1, dataBase64: Buffer.from("world\n").toString("base64") },
+            { seq: 0, dataBase64: Buffer.from("hello ").toString("base64") },
+          ],
+        }),
+        close: async () => ({}),
+      },
+    } as FakeSdkOverrides);
+    expect(await port.startTerminal("host_gpu", "/work/gpu", ["sh", "-c", "true"])).toEqual({ terminalId: "term_1" });
+    expect(created).toEqual([{ cols: 200, rows: 50, scope: { kind: "host_path", hostId: "host_gpu", cwd: "/work/gpu" }, start: { mode: "argv", argv: ["sh", "-c", "true"] } }]);
+    expect(await port.readTerminal("term_1")).toEqual({ status: "exited", exitCode: 3, output: "hello world\n", truncated: false });
+    await port.closeTerminal("term_1");
+    expect(sdk.callsTo("terminals.close")).toEqual([[{ terminalId: "term_1", mode: "force" }]]);
+  });
 });
