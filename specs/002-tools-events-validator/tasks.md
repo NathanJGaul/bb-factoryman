@@ -41,7 +41,7 @@ description: "Task list for tools and approval, event wiring, and the validator"
 - [X] T010 [P] [U1] [U2] [U3] [U4] [U5] Exec runner test in `src/exec.test.ts` (captures stdout, stderr, exit code; honors `cwd`; runs without a shell; reports a missing binary as a result and not a throw)
 - [X] T011 [P] [U6] [U7] [U8] [U9] Runtime test in `src/runtime.test.ts` (apply records the event, calls listeners once per applied event and never for a refused one, a throwing listener does not undo the event)
 - [X] T012 [P] [U10] [U11] [U12] [U13] [U14] [U15] [U16] [U17] [U18] Adapter test in `src/bb/adapter.test.ts` through the fake host (spawn arguments, parent notifications off, plugin metadata, thread read maps a missing thread to null, send uses mode `auto`, retire archives then deletes, input form passes through)
-- [ ] T013 [P] [U19] [U20] [U21] [U22] Access test in `src/tools/access.test.ts` (worker by recorded thread ID, other for everything else, project check)
+- [X] T013 [P] [U19] [U20] [U21] [U22] Access test in `src/tools/access.test.ts` (worker by recorded thread ID, other for everything else, project check)
 - [ ] T014 [P] [U23] [U24] [U25] Preview test in `src/tools/preview.test.ts` (would-accept and would-refuse for a `merge` event, no row written)
 - [ ] T022 [P] [U26] [U27] [U28] Results test in `src/tools/results.test.ts` (refusal text, success text, cut at the limit and at limit minus one and plus one)
 
@@ -51,7 +51,7 @@ description: "Task list for tools and approval, event wiring, and the validator"
 - [ ] T016 [P] Define `BbPort` and its data types in `src/bb/port.ts`
 - [X] T017 [U10] [U11] [U12] [U13] [U14] [U15] [U16] [U17] [U18] Implement `BbPort` over `BbPluginApi` in `src/bb/adapter.ts`
 - [X] T018 [U6] [U7] [U8] [U9] Implement `Runtime` and the one apply path in `src/runtime.ts`
-- [ ] T019 [P] [U19] [U20] [U21] [U22] Implement `identify` in `src/tools/access.ts`
+- [X] T019 [P] [U19] [U20] [U21] [U22] Implement `identify` in `src/tools/access.ts`
 - [ ] T020 [P] [U23] [U24] [U25] Implement `wouldAccept` in `src/tools/preview.ts`
 - [ ] T021 [P] [U26] [U27] [U28] Implement `ToolOutcome` helpers and refusal formatting in `src/tools/results.ts`
 

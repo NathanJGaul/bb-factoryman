@@ -67,3 +67,18 @@ Each behavior in a batch still has its own test, and each entry records the fail
 - refactor: none needed
 - note: `getThread` reads either a thread or `{ thread }` and maps a `status: 404` error or an `HTTP 404` message to null.
   The real bb 404 shape is not recorded, so U12 covers both forms. The live smoke test in the close-out checks the real one.
+
+## Cycle C4: U19 to U22 caller identity (`src/tools/access.ts`)
+
+- tests: `src/tools/access.test.ts` `[U19]` to `[U22]` (new)
+- red: a stub `identify` that always returns `{ role: "other" }` and a `sameProject` that always returns true, then `pnpm vitest run src/tools/access.test.ts`
+  -> `U19 AssertionError: expected 'other' to be 'worker'`
+  -> `U21 AssertionError: expected 'other' to be 'worker'`
+  -> `U22 AssertionError: expected true to be false` (3 failed, 1 passed)
+- U20 passed on the first run because the stub already returns `other`.
+  Deliberate mutant: `identify` returns a worker for every thread
+  -> `U20 AssertionError: expected { role: 'worker', task: undefined } to deeply equal { role: 'other' }` (1 failed).
+  Restored the code exactly, then 4 passed.
+- green: `identify` finds the task whose `workerThreadId` equals the thread ID, and `sameProject` compares project IDs.
+  Suite `pnpm test` -> 24 files, 378 passed, 0 failed. Lint and type-check clean.
+- refactor: none needed

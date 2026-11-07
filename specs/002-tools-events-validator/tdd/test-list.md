@@ -105,10 +105,10 @@ Boundaries have both sides, and error paths name the failure.
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| U19 | A thread recorded as a task's worker is a worker with that task | FR-103 | example | PENDING | |
-| U20 | A thread that no task records is `other` | FR-103 | example | PENDING | |
-| U21 | The worker thread of a `torn_down` task is still a worker | FR-104 | example | PENDING | |
-| U22 | A task in another project is outside the caller's reach | FR-103, edge cases | example | PENDING | |
+| U19 | A thread recorded as a task's worker is a worker with that task | FR-103 | example | DONE | `src/tools/access.test.ts::[U19] reads a thread recorded as a task` |
+| U20 | A thread that no task records is `other` | FR-103 | example | DONE | `src/tools/access.test.ts::[U20] reads a thread that no task records as other` |
+| U21 | The worker thread of a `torn_down` task is still a worker | FR-104 | example | DONE | `src/tools/access.test.ts::[U21] still reads the worker thread of a torn down task as a worker` |
+| U22 | A task in another project is outside the caller's reach | FR-103, edge cases | example | DONE | `src/tools/access.test.ts::[U22] keeps a task out of reach of a caller in another project` |
 
 ### `src/tools/preview.ts`
 
