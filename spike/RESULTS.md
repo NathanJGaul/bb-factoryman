@@ -29,10 +29,8 @@ Recorded real payloads live in `test/fixtures/recorded/`.
 Each contract test pins one of these facts to the versions in the Environment table:
 
 - `test/acceptance/contract-versions.test.ts` fails when the pinned SDK version differs from this table, so an upgrade forces a new spike.
-- The tests that replay the recorded bb event payloads and the recorded no-mistakes output against the plugin code arrive with the code that reads them.
-  The event wiring tests replay `bb-0.48.1/thread-events.json`.
-  The validator tests replay `no-mistakes-1.84.0/*.toon`.
-  A shape change in either tool then fails a test.
+- `test/acceptance/wiring-recorded.test.ts` replays the recorded bb event payloads in `bb-0.48.1/thread-events.json` through the plugin factory, and `test/acceptance/validator-recorded.test.ts` and `src/validator/toon.test.ts` replay the recorded no-mistakes files in `no-mistakes-1.84.0/`.
+  A shape change in either tool then fails a named test.
 
 ## 1. Out-of-tree install
 

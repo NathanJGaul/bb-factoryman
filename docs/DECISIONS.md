@@ -388,3 +388,31 @@ If bb answers 404, the supervisor cannot be found, the plugin logs a warning, an
 The start-up service therefore runs the live-state comparison and then waits.
 Milestone 6 resumes the validator driver in the same service.
 
+## Milestone 6: validator
+
+### D-049: The `checks-passed` outcome is a derived fixture, not a recording (Limit)
+
+The spike had no forge, so no run ever reached `checks-passed`.
+The acceptance test for the real adapter derives that output from the recorded status of a run that opened a pull request: it changes the outcome line from `cancelled` to the value the CLI's own documentation lists and drops the error line.
+The test names the derivation.
+The owner's live check in milestone 11 is the first time a real `checks-passed` output reaches the adapter.
+
+### D-050: Findings travel as the evidence of the `finding` event (Gap)
+
+The machine's `finding` event carries no payload.
+The driver writes the gate's findings into the event's evidence, one line each, with the fields exactly as no-mistakes wrote them.
+The wake message for a `needs_decision` task keeps that evidence whole, up to 8000 characters, and every other wake message cuts evidence to 600.
+
+### D-051: The validator is injected at the composition root (Gap)
+
+`createPlugin` takes an optional `validator` and `pollMs`.
+The default is the no-mistakes adapter over the real command runner.
+Tests inject a scripted fake.
+Nothing else in the plugin chooses a validator, so a second implementation (for example a multi-model audit) needs one line in `server.ts`.
+
+### D-052: The loop follows a run with `axi run`, and the run ID is not stored (Gap)
+
+`axi run` reattaches to the run for the current commit, so the driver never needs a run ID.
+A restart resumes every task in `validating` or `needs_decision`, asks again from the worktree, and starts no second run.
+The run ID appears in the evidence of the events that the driver records.
+

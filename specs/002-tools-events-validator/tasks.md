@@ -145,10 +145,10 @@ description: "Task list for tools and approval, event wiring, and the validator"
 - [X] T081 [P] [US3] [U164] [U165] [U166] [U167] [U168] [U169] [U170] [U171] [U172] [U173] [U174] [U175] TOON decode tests in `src/validator/toon.test.ts` over every recorded file (gate, findings columns from the header, outcome, error, `other_branch_run`, unreadable and empty output; AC-3.8)
 - [X] T082 [P] [US3] [U176] [U177] [U178] [U179] [U180] [U181] [U182] [U183] [U184] Adapter tests in `src/validator/no-mistakes.test.ts` with a fake runner (command lines, `cwd`, stdout only, never `--yes`, exit codes, unknown outcome; AC-3.8)
 - [X] T083 [P] [US3] [U161] [U162] [U163] Fake validator tests in `src/validator/fake.test.ts` (scripted views, recorded calls)
-- [ ] T084 [P] [US3] [A30] [A31] [A32] [A33] [A34] [A35] [A37] [A38] [U185] [U186] [U187] [U188] [U189] [U190] [U191] [U192] [U193] [U194] [U195] [U196] [U197] [U198] [U199] [U200] [U201] [U202] [U203] [U204] [U205] [U206] [U207] Driver tests in `src/validator/driver.test.ts` (handoff starts a run, gate to `needs_decision`, answer to `validating`, external answer observed, `checks-passed` to `review_ready`, failed and cancelled to `failed`, override and skips and no PR to `needs_decision`, unreadable five times, no second run, no run for other modes, resume; AC-3.2 to AC-3.7, AC-3.9, AC-3.10)
-- [ ] T085 [P] [US3] [A29] [A30] [A31] [A32] [A33] [A34] [A35] [A37] [A38] Acceptance test with the fake validator in `test/acceptance/validator-fake.test.ts` (dispatch, report done, validating, finding, answer, validated, review ready, wake messages; SC-005)
-- [ ] T086 [P] [US3] [A36] Acceptance test with recorded output in `test/acceptance/validator-recorded.test.ts` (the real adapter over replayed recorded stdout; SC-005, SC-006)
-- [ ] T087 [P] [US3] [A29] Interface test in `src/validator/types.test.ts` (five operations exist on the fake and the adapter; AC-3.1)
+- [X] T084 [P] [US3] [A30] [A31] [A32] [A33] [A34] [A35] [A37] [A38] [U185] [U186] [U187] [U188] [U189] [U190] [U191] [U192] [U193] [U194] [U195] [U196] [U197] [U198] [U199] [U200] [U201] [U202] [U203] [U204] [U205] [U206] [U207] Driver tests in `src/validator/driver.test.ts` (handoff starts a run, gate to `needs_decision`, answer to `validating`, external answer observed, `checks-passed` to `review_ready`, failed and cancelled to `failed`, override and skips and no PR to `needs_decision`, unreadable five times, no second run, no run for other modes, resume; AC-3.2 to AC-3.7, AC-3.9, AC-3.10)
+- [X] T085 [P] [US3] [A29] [A30] [A31] [A32] [A33] [A34] [A35] [A37] [A38] Acceptance test with the fake validator in `test/acceptance/validator-fake.test.ts` (dispatch, report done, validating, finding, answer, validated, review ready, wake messages; SC-005)
+- [X] T086 [P] [US3] [A36] Acceptance test with recorded output in `test/acceptance/validator-recorded.test.ts` (the real adapter over replayed recorded stdout; SC-005, SC-006)
+- [X] T087 [P] [US3] [A29] Interface test in `src/validator/types.test.ts` (five operations exist on the fake and the adapter; AC-3.1)
 
 ### Implementation for user story 3
 
@@ -157,9 +157,9 @@ description: "Task list for tools and approval, event wiring, and the validator"
 - [X] T090 [US3] [U164] [U165] [U166] [U167] [U168] [U169] [U170] [U171] [U172] [U173] [U174] [U175] Implement the decoder in `src/validator/toon.ts`
 - [X] T091 [US3] [U176] [U177] [U178] [U179] [U180] [U181] [U182] [U183] [U184] Implement the adapter in `src/validator/no-mistakes.ts`
 - [X] T092 [US3] [U185] [U186] [U187] [U188] [U189] [U190] [U191] [U192] [U193] [U194] [U195] [U196] [U197] [U198] [U199] [U200] [U201] [U202] [U203] [U204] [U205] [U206] [U207] Implement the driver in `src/validator/driver.ts`
-- [ ] T093 [US3] Register the driver listener, resume on start-up, and dispose in `src/server.ts`
-- [ ] T094 [US3] Update `docs/DECISIONS.md` with the milestone 6 findings and commit milestone 6
-- [ ] T095 [US3] [A29] [A30] [A31] [A32] [A33] [A34] [A35] [A36] [A37] [A38] Outer-loop gate: A29 to A38 are green through the plugin factory before milestone 6 is committed
+- [X] T093 [US3] Register the driver listener, resume on start-up, and dispose in `src/server.ts`
+- [X] T094 [US3] Update `docs/DECISIONS.md` with the milestone 6 findings and commit milestone 6
+- [X] T095 [US3] [A29] [A30] [A31] [A32] [A33] [A34] [A35] [A36] [A37] [A38] Outer-loop gate: A29 to A38 are green through the plugin factory before milestone 6 is committed
 
 **Checkpoint**: User story 3 passes on its own. A `no-mistakes` task reaches `review_ready` through the validator, and a gate pauses it.
 

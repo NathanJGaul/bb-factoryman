@@ -7,6 +7,9 @@ import { Runtime, type Settings } from "./runtime";
 import { recover } from "./store/replay";
 import { openSqliteStore } from "./store/sqlite";
 import { registerTools } from "./tools/register";
+import { NoMistakesValidator } from "./validator/no-mistakes";
+import { ValidationDriver } from "./validator/driver";
+import type { Validator } from "./validator/types";
 import { EventHandlers, registerHandlers } from "./wiring/handlers";
 import { reconcileOnStart } from "./wiring/startup";
 import { Notifier } from "./wiring/wake";
@@ -17,6 +20,8 @@ export interface PluginOptions {
   now?: () => string;
   newId?: () => string;
   sleep?: (ms: number) => Promise<void>;
+  validator?: Validator;
+  pollMs?: number;
 }
 
 const MERGE_METHODS = ["squash", "merge", "rebase"] as const;
@@ -78,6 +83,11 @@ export function createPlugin(options: PluginOptions = {}): (bb: BbPluginApi) => 
 
     const notifier = new Notifier(rt);
     rt.onApplied((applied) => notifier.onApplied(applied));
+    const driver = new ValidationDriver(rt, options.validator ?? new NoMistakesValidator(exec), { pollMs: options.pollMs });
+    rt.onApplied(({ task }) => {
+      if (task.state === "validating") driver.ensure(task.taskId);
+    });
+    bb.onDispose(() => driver.dispose());
     registerHandlers(bb, new EventHandlers(rt, notifier, bb.pluginId));
     registerTools(bb, rt, createMergeExecutor(exec));
 
@@ -85,6 +95,7 @@ export function createPlugin(options: PluginOptions = {}): (bb: BbPluginApi) => 
     bb.background.service("factoryman-startup", {
       async start(signal) {
         await reconcileOnStart(rt, notifier);
+        driver.resumeAll();
         if (!signal.aborted) await new Promise<void>((resolve) => signal.addEventListener("abort", () => resolve(), { once: true }));
       },
     });

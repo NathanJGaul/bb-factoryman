@@ -386,3 +386,20 @@ Each behavior in a batch still has its own test, and each entry records the fail
   U203 has no mutant: the machine makes `validating` unreachable outside `no-mistakes` mode, so the driver has no mode check of its own to break.
 - refactor: none needed
 - note: `answer` does not start a loop, because the running loop already polls `status` in `needs_decision`.
+
+## Cycle H2: A29 to A38 acceptance through the plugin factory, and the driver wiring in `src/server.ts` (milestone 6)
+
+- tests: `test/acceptance/validator-fake.test.ts` (A29 to A35, A37, A38) with the scripted fake, and `test/acceptance/validator-recorded.test.ts` (A36) with the real adapter over recorded stdout.
+  The world fixture gained a `validator` option, a 1 ms default sleep so that loops cannot starve a test, and `settle`.
+- red (acceptance, written before the wiring): with the driver not registered, `pnpm vitest run test/acceptance/validator-fake.test.ts test/acceptance/validator-recorded.test.ts`
+  -> A30, A31, A32, A33, A34, A35, A36, and A37 failed because no loop ever called the validator and no task left `validating` (8 failed, 2 passed)
+- A29 and A38 passed on the first run: A29 checks that the interface exists, and A38 expects the validator never to be called, which holds with no driver.
+- green: `createPlugin` builds a `ValidationDriver` over the injected or default validator, calls `ensure` for every task that enters `validating`, resumes live tasks in the start-up service, and stops the loops on dispose.
+  `pnpm vitest run test/acceptance/validator-fake.test.ts test/acceptance/validator-recorded.test.ts` -> 10 passed, three runs in a row with no failure.
+  Suite `pnpm test` -> 57 files, 603 passed, 0 failed. Lint and type-check clean.
+- deliberate mutants, each restored exactly:
+  - the driver never starts on `validating` -> A30, A31, A32, A33, A34, A35, and A36 failed (7 failed, 3 passed)
+  - no resume at start-up -> A37 failed (1 failed, 9 passed)
+  A29 and A38 have no wiring mutant: the machine makes `validating` unreachable outside `no-mistakes` mode, and the interface test checks only that the functions exist.
+- note: A36 uses a derived `checks-passed` output (D-049) because the spike could not record one.
+- refactor: none needed

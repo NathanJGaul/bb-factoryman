@@ -1,5 +1,6 @@
 import { createFakePluginHost, makeThreadResponse, type FakePluginHost } from "@get-bb/plugin-sdk/testing";
 import { createPlugin } from "../../src/server";
+import type { Validator } from "../../src/validator/types";
 import type { ExecResult } from "../../src/exec";
 import { defaultProjectConfig } from "../../src/store/store";
 import { openSqliteStore } from "../../src/store/sqlite";
@@ -51,6 +52,8 @@ export interface WorldOptions {
   threadIds?: string[];
   /** Make `threads.send` fail. */
   sendError?: Error;
+  /** Replace the no-mistakes validator. */
+  validator?: Validator;
 }
 
 /** Load the real plugin factory into the fake host, with a small in-memory bb behind `bb.sdk`. */
@@ -149,7 +152,9 @@ export async function loadWorld(options: WorldOptions = {}): Promise<World> {
     },
     now: ((tick = 0) => () => new Date(Date.parse("2026-11-06T12:00:00.000Z") + tick++ * 1000).toISOString())(),
     newId: () => `t${++next}`,
-    sleep: async (ms) => world.sleepHook?.(ms),
+    sleep: async (ms) => (world.sleepHook ? world.sleepHook(ms) : new Promise<void>((resolve) => setTimeout(resolve, 1))),
+    validator: options.validator,
+    pollMs: 1,
   });
   await factory(host.bb);
   world.store = openSqliteStore(host.bb.storage.database());
@@ -168,4 +173,9 @@ export async function nextForm(world: World): Promise<string> {
     await new Promise((resolve) => setTimeout(resolve, 0));
   }
   throw new Error("no approval form opened");
+}
+
+/** Poll until `until` holds, so a background loop has time to run. */
+export async function settle(until: () => boolean, limit = 500): Promise<void> {
+  for (let i = 0; i < limit && !until(); i += 1) await new Promise((resolve) => setTimeout(resolve, 2));
 }
