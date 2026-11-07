@@ -214,3 +214,16 @@ Each behavior in a batch still has its own test, and each entry records the fail
   Suite `pnpm test` -> 35 files, 468 passed, 0 failed. Lint and type-check clean.
 - deliberate mutant: skip the worker check -> U118 failed (1 failed, 2 passed). Restored exactly.
 - refactor: none needed
+
+## Cycle C15: U33 to U39 tool registration (`src/tools/register.ts`)
+
+- tests: `src/tools/register.test.ts` `[U33]` to `[U39]` (new), through `createFakePluginHost`, `resolveAgentConfiguration`, and `callAgentTool`
+- red: a stub `registerTools` that registers nothing, then `pnpm vitest run src/tools/register.test.ts`
+  -> `U33`, `U34`, `U36`, `U37`, `U38`, and `U39` failed on the offered tool names, the registered tools, the advertised schema, or the call result (6 failed, 1 passed)
+- U35 passed on the first run because the stub offers no tool to any role.
+  Deliberate mutant: any role string other than `worker` gets the supervisor tools
+  -> `U35` failed (1 failed, 6 passed). Restored exactly, then 7 passed.
+- green: `registerTools` registers the five tools with raw JSON schemas from `z.toJSONSchema`, so a bad call reaches the tool and gets its own refusal text, and `bb.agents.configure` picks tools from the metadata role.
+  Suite `pnpm test` -> 36 files, 475 passed, 0 failed. Lint and type-check clean.
+- refactor: none needed
+- note: U40 (no `bb.sdk.plugins` call in a full flow) needs the factory and moves to the server cycle.

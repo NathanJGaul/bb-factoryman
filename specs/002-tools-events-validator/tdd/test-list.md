@@ -139,13 +139,13 @@ Boundaries have both sides, and error paths name the failure.
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| U33 | `configure` returns the four supervisor tools for role `supervisor` | FR-102 | example | PENDING | |
-| U34 | `configure` returns only `factoryman_report` for role `worker` | FR-102 | example | PENDING | |
-| U35 | `configure` returns no tool for a missing role, an unknown role, or a role that is not a string | FR-102 | example | PENDING | |
-| U36 | The plugin registers exactly the five tool names and no sixth | FR-101, FR-404 | example | PENDING | |
-| U37 | The dispatch schema rejects an extra field | FR-106 | example | PENDING | |
-| U38 | The dispatch schema rejects a blank profile field and a permission mode outside the three modes | FR-106 | example | PENDING | |
-| U39 | A tool outcome that is not ok reaches bb as an error result | FR-105 | example | PENDING | |
+| U33 | `configure` returns the four supervisor tools for role `supervisor` | FR-102 | example | DONE | `src/tools/register.test.ts::[U33] offers the four supervisor tools to role supervisor` |
+| U34 | `configure` returns only `factoryman_report` for role `worker` | FR-102 | example | DONE | `src/tools/register.test.ts::[U34] offers only factoryman_report to role worker` |
+| U35 | `configure` returns no tool for a missing role, an unknown role, or a role that is not a string | FR-102 | example | DONE | `src/tools/register.test.ts::[U35] offers no tool for a missing role, an unknown role, or a role that is not a string` |
+| U36 | The plugin registers exactly the five tool names and no sixth | FR-101, FR-404 | example | DONE | `src/tools/register.test.ts::[U36] registers exactly the five tool names and no sixth` |
+| U37 | The dispatch schema rejects an extra field | FR-106 | example | DONE | `src/tools/register.test.ts::[U37] advertises a dispatch schema that forbids extra fields and lists the three permission modes` |
+| U38 | The dispatch schema rejects a blank profile field and a permission mode outside the three modes | FR-106 | example | DONE | `src/tools/register.test.ts::[U38] refuses a call with a bad argument through the tool` |
+| U39 | A tool outcome that is not ok reaches bb as an error result | FR-105 | example | DONE | `src/tools/register.test.ts::[U39] returns an ok outcome as plain text and a failed outcome as an error result` |
 | U40 | A full dispatch, report, merge, and teardown flow makes no `bb.sdk.plugins` call | FR-402 | example | PENDING | |
 
 ### `src/tools/dispatch.ts`
