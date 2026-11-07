@@ -23,10 +23,10 @@ description: "Task list for machine placement"
 
 ## Phase 4: Group 3, the machine monitor
 
-- [ ] T830 Tests and stubs: `src/machines/monitor.test.ts` and `test/acceptance/machine-monitor.test.ts` (A809 to A813)
-- [ ] T831 Implement `monitor.ts`, the `machinePollSeconds` setting, the service, and the `experimental_host.deleted` handler
+- [X] T830 Tests and stubs: `src/machines/monitor.test.ts` and `test/acceptance/machine-monitor.test.ts` (A809 to A813)
+- [X] T831 Implement `monitor.ts`, the `machinePollSeconds` setting, the service, and the `experimental_host.deleted` handler
 
 ## Phase 5: Close-out
 
-- [ ] T840 Record D-069 to D-074 in `docs/DECISIONS.md`, update `spike/RESULTS.md` (Not checked table), and update the profile helpers
+- [X] T840 Record D-069 to D-074 in `docs/DECISIONS.md`, update `spike/RESULTS.md` (Not checked table), and update the profile helpers
 - [ ] T841 `/speckit.tdd.verify`, remediation, `/speckit.checklist`, `/speckit.analyze`, `/speckit.converge`

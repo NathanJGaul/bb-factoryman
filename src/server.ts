@@ -5,6 +5,7 @@ import { RulesTableResolver } from "./dispatch/resolver";
 import type { DispatchResolver } from "./dispatch/types";
 import { runCommand, type Exec } from "./exec";
 import { nodeFiles, type Files } from "./files";
+import { MachineMonitor } from "./machines/monitor";
 import { createRemoteRunner, routeExec } from "./machines/remote-exec";
 import { createMergeExecutor } from "./git/merge";
 import { Runtime, type Settings } from "./runtime";
@@ -65,6 +66,12 @@ export function createPlugin(options: PluginOptions = {}): (bb: BbPluginApi) => 
         description: "How long the approval form waits for the owner before it counts as not answered.",
         default: 10,
       },
+      machinePollSeconds: {
+        type: "number",
+        label: "Machine check interval (seconds)",
+        description: "How often the plugin checks that the machines with running workers are still online.",
+        default: 30,
+      },
     });
     let values = await handle.get();
     handle.onChange((next) => {
@@ -73,6 +80,7 @@ export function createPlugin(options: PluginOptions = {}): (bb: BbPluginApi) => 
     const settings = (): Settings => ({
       mergeMethod: mergeMethod(values.mergeMethod),
       approvalTimeoutMs: Math.max(1, Math.round(values.approvalTimeoutMinutes * 60_000)),
+      machinePollMs: options.machinePollMs ?? Math.max(1000, Math.round(values.machinePollSeconds * 1000)),
     });
 
     const store = openSqliteStore(bb.storage.database());
@@ -114,6 +122,29 @@ export function createPlugin(options: PluginOptions = {}): (bb: BbPluginApi) => 
         await reconcileOnStart(rt, notifier);
         driver.resumeAll();
         if (!signal.aborted) await new Promise<void>((resolve) => signal.addEventListener("abort", () => resolve(), { once: true }));
+      },
+    });
+    const monitor = new MachineMonitor(rt);
+    bb.events.on("experimental_host.deleted", async (payload) => {
+      try {
+        await monitor.hostDeleted(payload.host.id, payload.host.name);
+      } catch (error) {
+        bb.log.error(`The experimental_host.deleted handler failed: ${error instanceof Error ? error.message : String(error)}`);
+      }
+    });
+    bb.background.service("factoryman-machines", {
+      async start(signal) {
+        while (!signal.aborted) {
+          try {
+            await monitor.tick();
+          } catch (error) {
+            bb.log.error(`The machine monitor failed: ${error instanceof Error ? error.message : String(error)}`);
+          }
+          await new Promise<void>((resolve) => {
+            const timer = setTimeout(resolve, rt.deps.settings().machinePollMs);
+            signal.addEventListener("abort", () => (clearTimeout(timer), resolve()), { once: true });
+          });
+        }
       },
     });
     bb.cli.register({

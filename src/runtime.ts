@@ -16,6 +16,8 @@ export interface Logger {
 export interface Settings {
   mergeMethod: "squash" | "merge" | "rebase";
   approvalTimeoutMs: number;
+  /** How often the machine monitor reads the machines. */
+  machinePollMs: number;
 }
 
 export interface AppliedEvent {

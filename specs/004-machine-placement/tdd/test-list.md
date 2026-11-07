@@ -27,11 +27,11 @@ The suite baseline was 63 files and 708 tests, all passing.
 | A806 | A host with no source of the project blocks dispatch | AC-1.6, FR-803 | example | DONE | `test/acceptance/machine-placement.test.ts::[A806]` |
 | A807 | Two matching rules with equal profiles and different machines are `ambiguous` | AC-1.7, FR-811 | example | DONE | `test/acceptance/machine-placement.test.ts::[A807]` |
 | A808 | A pinned machine that is disconnected or not active blocks with `machine_offline`, tries no other machine, and creates no task | AC-2.1, FR-803, FR-804, SC-802 | example | DONE | `test/acceptance/machine-placement.test.ts::[A808]` |
-| A809 | A `working` task whose machine goes offline becomes `blocked` with system evidence, and the supervisor gets one wake message | AC-2.2, FR-806, SC-801 | example | TODO | `test/acceptance/machine-monitor.test.ts::[A809]` |
-| A810 | A task that the monitor blocked returns to `working` when its machine is back, and a task that its worker blocked does not | AC-2.3, FR-806 | example | TODO | `test/acceptance/machine-monitor.test.ts::[A810]` |
-| A811 | A deleted machine blocks its `working` tasks at once, and nothing unblocks them | AC-2.4, FR-807 | example | TODO | `test/acceptance/machine-monitor.test.ts::[A811]` |
+| A809 | A `working` task whose machine goes offline becomes `blocked` with system evidence, and the supervisor gets one wake message | AC-2.2, FR-806, SC-801 | example | DONE | `test/acceptance/machine-monitor.test.ts::[A809]` |
+| A810 | A task that the monitor blocked returns to `working` when its machine is back, and a task that its worker blocked does not | AC-2.3, FR-806 | example | DONE | `test/acceptance/machine-monitor.test.ts::[A810]` |
+| A811 | A deleted machine blocks its `working` tasks at once, and nothing unblocks them | AC-2.4, FR-807 | example | DONE | `test/acceptance/machine-monitor.test.ts::[A811]` |
 | A812 | After `start`, no event type changes the task's machine | AC-2.5, FR-804 | example | DONE | `test/acceptance/machine-placement-gates.test.ts::[A812]` |
-| A813 | A task in a state other than `working` on an offline machine only logs a warning | AC-2.6, FR-806 | example | TODO | `test/acceptance/machine-monitor.test.ts::[A813]` |
+| A813 | A task in a state other than `working` on an offline machine only logs a warning | AC-2.6, FR-806 | example | DONE | `test/acceptance/machine-monitor.test.ts::[A813]` |
 | A814 | A `local-only` dispatch to a machine other than the clone host is refused by the state machine, spawns nothing, and creates no task | AC-3.1, FR-805 | example | DONE | `test/acceptance/machine-placement.test.ts::[A814]` |
 | A815 | A `local-only` dispatch to the clone host succeeds | AC-3.2, FR-805 | example | DONE | `test/acceptance/machine-placement.test.ts::[A815]` |
 | A816 | A `local-only` dispatch with no machine succeeds on the clone host | AC-3.3, FR-805 | example | DONE | `test/acceptance/machine-placement.test.ts::[A816]` |
@@ -135,15 +135,15 @@ The suite baseline was 63 files and 708 tests, all passing.
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| U846 | `tick` blocks a `working` task whose host is offline, with evidence that starts `machine offline:` | FR-806 | example | TODO | `src/machines/monitor.test.ts::[U846]` |
-| U847 | A second `tick` with the same host state applies nothing more | FR-806 | example | TODO | `src/machines/monitor.test.ts::[U847]` |
-| U848 | `tick` unblocks a task whose latest applied row is the monitor's own block, once the host is online | FR-806 | example | TODO | `src/machines/monitor.test.ts::[U848]` |
-| U849 | `tick` leaves a worker's own block alone | FR-806 | example | TODO | `src/machines/monitor.test.ts::[U849]` |
-| U850 | `tick` ignores tasks with no machine, terminal tasks, and tasks on online hosts | FR-806 | example | TODO | `src/machines/monitor.test.ts::[U850]` |
-| U851 | A host that `listMachines` omits counts as offline | FR-806 | boundary | TODO | `src/machines/monitor.test.ts::[U851]` |
-| U852 | A tick that cannot list machines logs and changes nothing | FR-806 | error | TODO | `src/machines/monitor.test.ts::[U852]` |
-| U853 | `hostDeleted` blocks `working` tasks on that host and never unblocks them | FR-807 | example | TODO | `src/machines/monitor.test.ts::[U853]` |
-| U854 | A task in `validating`, `review_ready`, or another state on an offline host logs a warning and applies nothing | FR-806 | example | TODO | `src/machines/monitor.test.ts::[U854]` |
+| U846 | `tick` blocks a `working` task whose host is offline, with evidence that starts `machine offline:` | FR-806 | example | DONE | `src/machines/monitor.test.ts::[U846]` |
+| U847 | A second `tick` with the same host state applies nothing more | FR-806 | example | DONE | `src/machines/monitor.test.ts::[U847]` |
+| U848 | `tick` unblocks a task whose latest applied row is the monitor's own block, once the host is online | FR-806 | example | DONE | `src/machines/monitor.test.ts::[U848]` |
+| U849 | `tick` leaves a worker's own block alone | FR-806 | example | DONE | `src/machines/monitor.test.ts::[U849]` |
+| U850 | `tick` ignores tasks with no machine, terminal tasks, and tasks on online hosts | FR-806 | example | DONE | `src/machines/monitor.test.ts::[U850]` |
+| U851 | A host that `listMachines` omits counts as offline | FR-806 | boundary | DONE | `src/machines/monitor.test.ts::[U851]` |
+| U852 | A tick that cannot list machines logs and changes nothing | FR-806 | error | DONE | `src/machines/monitor.test.ts::[U852]` |
+| U853 | `hostDeleted` blocks `working` tasks on that host and never unblocks them | FR-807 | example | DONE | `src/machines/monitor.test.ts::[U853]` |
+| U854 | A task in `validating`, `review_ready`, or another state on an offline host logs a warning and applies nothing | FR-806 | example | DONE | `src/machines/monitor.test.ts::[U854]` |
 
 ### `src/tools/status.ts`, `src/tools/supervisor-command.ts`
 

@@ -1,4 +1,4 @@
-# Milestone 0: spike results for milestones 4 to 6
+# Milestone 0: spike results for milestones 4 to 11
 
 This file records the bb and no-mistakes facts that milestones 4 to 6 depend on.
 It follows the format in `spike/SPIKE.md`.
@@ -372,7 +372,6 @@ These items belong to milestones 7 to 11, or to the owner's live install, and th
 | 3. Read-only supervisor | Not needed for milestones 4 to 6. |
 | 4. Worktree removal veto | Not needed for milestones 4 to 6. |
 | 5. Dispatch hook ordering | Capacity is milestone 10. |
-| 6 to 8. Machines | Machine placement is milestone 8. |
 | 9 to 11. Extension surface | Milestone 9. |
 | 12 to 13. Cost and notifications | Milestone 10. |
 | 18. Branch protection | Needs a forge. It is the owner's setup step. |

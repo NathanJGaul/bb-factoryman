@@ -68,3 +68,22 @@ Red commit: `48c2e3d` (`test: add remote command, preflight, and host routing te
   - "any provider" instead of the named provider survived `[U839]`. The test gained a case with another provider available. The same mutant then failed `[U839]`. Reverted.
 - green: `remote-exec.ts` (the `FMX1` wrapper, polling by count with the injected sleep, the frame decoder), `route.ts`, `preflight.ts`, the adapter terminal methods, the `host` field on the validator inputs, the report, the driver, teardown, the routed `exec` in `server.ts`, the status line, the `preflight` command, and the dispatch preflight step.
   `pnpm run check` -> 70 files, 788 passed, 0 failed. Type check and lint clean.
+
+## Group 3: the machine monitor
+
+Red commit: the commit before this group's implementation (`test: add machine monitor tests and a stub, group 3 (red)`). It holds the tests and a stub monitor whose `tick` and `hostDeleted` do nothing.
+
+- red: `pnpm vitest run src/machines/monitor.test.ts test/acceptance/machine-monitor.test.ts`
+  - `[U846]`, `[U848]`, `[U851]`, `[U853]`: `AssertionError: expected 'working' to be 'blocked'`
+  - `[U852]`: `expected false to be true` (no warning logged)
+  - `[U854]`: `expected [] to have a length of 1 but got +0`
+  - `[A809]` to `[A813]`: `Error: no background service "factoryman-machines" is registered`, and `expected 'working' to be 'blocked'` (10 failed)
+- Passed against the stub: `[U847]`, `[U849]`, `[U850]` (the stub changes nothing). Deliberate mutants after the implementation:
+  - block again on every tick -> `[U847]` and `[U853]` failed
+  - unblock any block -> `[U849]` and `[A810]` failed
+  - act on a task with no machine -> `[U850]` failed
+  - act on ended tasks: this survived. The warning path ran instead of an event. `[U850]` gained an assertion that no warning names the failed task, and the mutant then failed it.
+- More mutants, all killed: drop the `machine offline:` prefix -> `[U846]`, `[U848]`, `[U853]`; ignore the host-deleted event -> `[A811]`; block in any state -> `[U854]`, `[A813]`.
+- `[U123]` changed with the requirement: two services and seven event handlers (D-077).
+- green: `monitor.ts` (`tick`, `hostDeleted`, the warn-once set, and unblock only for the monitor's own latest block), the `machinePollSeconds` setting, the `factoryman-machines` service, and the `experimental_host.deleted` handler.
+  `pnpm run check` -> 72 files, 801 passed, 0 failed. Type check and lint clean.

@@ -549,3 +549,78 @@ Test U37 asserted the old `required` list, so it changed with this requirement (
 The success text gains a `Profile: ...` line only when the resolver chose the profile, so the milestone 4 text for an explicit profile is unchanged.
 The `start` event does not record the profile source, because the machine's event is closed and changing it edits the merged milestone 2 machine.
 The result text and the plugin log name the source.
+
+## Milestone 8: machine placement
+
+### D-069: A pinned machine that is offline at dispatch blocks the dispatch and creates no task (Gap, resolves D-008)
+
+D-008 left open how a task that is offline at dispatch can go `blocked`, because `block` is legal only from `working`.
+A task has no worker before `start`, and `unblock` returns to `working`, so a blocked-before-start task would skip the `start` gates.
+The dispatch tool therefore blocks with `machine_offline`, creates no task, spawns nothing, and tries no other machine.
+That keeps hard rule 5: the work never falls back.
+A task that is already running when its machine goes offline does go `blocked` (D-072).
+The owner may prefer a visible `blocked` task at dispatch time, which needs a change to the state machine.
+
+### D-070: The clone host is the project's default source host (Gap)
+
+The design says "the machine that holds the clone".
+bb's project has sources, each on a host, and one is the default (`BbPort.getProjectSources`).
+The default source's host is the clone host.
+The `start` event records `machine` (the chosen host ID, or null for the default host) and `cloneMachine` (the default source's host ID).
+A machine given by name is stored as its host ID, also when it is the clone host.
+
+### D-071: Remote commands run in host terminals with a framed result (Gap)
+
+The design says "the gate runs where the worktree lives" and does not say how the plugin runs a command on another machine.
+bb offers no command API for plugins, so the plugin starts a `host_path` terminal in `argv` mode (spike item 8).
+A terminal is a PTY, so the command runs inside a small `sh` wrapper that prints `FMX1 <exit code> <stdout base64> <stderr base64>`.
+Any other result (no frame, truncated output, a disconnected terminal, a timeout, a terminal that cannot start) is a failed command, so teardown and the preflight fail closed.
+The wrapper needs `sh`, `mktemp`, `base64`, and `tr` on the remote machine.
+The tests use a fake terminal, and the one real check ran on the local host of a throwaway server (spike item 8).
+A real remote machine is the owner's live check.
+
+### D-072: The monitor blocks only working tasks and unblocks only its own blocks (Gap)
+
+`block` is legal only from `working`.
+A task in `validating`, `needs_decision`, `review_ready`, or `awaiting_approval` on an offline machine gets one warning in the plugin log and no event.
+The monitor marks its own blocks with the evidence prefix `machine offline: `, and it unblocks a task only when the latest applied row is a system `block` with that prefix.
+A block that the worker reported stays until a person acts.
+A removed machine (`experimental_host.deleted`) blocks its working tasks at once, and its tasks never return, because the host is gone from the list.
+bb sends no disconnect event (spike item 7), so the monitor reads `hosts.list()` every `machinePollSeconds` seconds (default 30, at least 1).
+
+### D-073: The `start` event carries `cloneMachine`, and a guard enforces hard rule 6 (Deviation from milestone 2)
+
+Hard rule 6 needs two facts the machine cannot read: the task's machine and the clone host.
+The caller gathers both and passes them in the `start` event (D-015).
+The new guard `localOnlyStaysOnClone` runs on `start` in both lanes.
+It refuses a `local-only` start whose `machine` is set and is not equal to `cloneMachine`, with the new reason code `machine_mismatch`.
+A `local-only` start with no machine passes, because the worker then runs on the default host.
+The dispatch tool previews the `start` event with the pure machine before it creates a task or spawns a worker, so a refused start leaves nothing behind.
+`test/fixtures/legal-set.ts` lists the new guard.
+
+### D-074: The remote preflight checks six things and runs before the first dispatch to a machine (Gap)
+
+The design says the preflight reports "what's missing".
+It checks: the agent CLI (a provider is available on that host), `git`, for `no-mistakes` mode the `no-mistakes` command and a `no-mistakes` git remote in the project's source on that host, and for the two pull request modes `gh auth status`.
+`gh auth status` shows that credentials exist and not that they are scoped, so the scope stays the owner's check.
+Dispatch runs it for a remote machine and caches a pass per host, project, mode, and provider until restart.
+The host that holds the clone skips it.
+`bb factoryman preflight <machine> --project <id> [--provider <id>]` runs it on demand, never caches, and changes nothing.
+
+### D-075: Rules differ by machine as well as by profile (Gap)
+
+D-065 made `ambiguous` depend on distinct profiles.
+A rule now also names an optional `machine`, so two matching rules with the same profile and different machines are ambiguous too.
+
+### D-076: The project's default machine has no writer until milestone 9 (Limit)
+
+`project_config.defaultMachine` already exists in the store.
+Nothing sets it yet (D-037), and milestone 9 loads the workflow config that can.
+Until then only tests set it, and a call or a rule names the machine.
+
+### D-077: Two existing tests changed with the new registrations (Deviation)
+
+`[U123]` now expects the `factoryman-machines` service and the `experimental_host.deleted` handler.
+`[U186]` and `[U192]` expect `host: null` in the validator input.
+`[U45]` expects `machine` and `cloneMachine` in the `start` payload, and `[U710]` to `[U717]` expect `machine: null`.
+Each change follows a changed requirement and none hides a failure.

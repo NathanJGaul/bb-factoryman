@@ -89,6 +89,7 @@ describe("MachineMonitor.tick", () => {
     await monitor.tick();
     expect(rows(t).length + rows(t, "t2").length).toBe(before);
     expect(state(t, "t2")).toBe("working");
+    expect(t.lines.filter((line) => line.level === "warn" && line.message.includes("Task t1"))).toEqual([]);
   });
 
   it("[U851] counts a host that listMachines omits as offline", async () => {

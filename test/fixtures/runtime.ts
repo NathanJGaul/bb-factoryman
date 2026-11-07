@@ -42,7 +42,7 @@ export function testRuntime(overrides: Partial<RuntimeDeps> = {}): TestRuntime {
     execCalls.push({ command, args, cwd: options?.cwd });
     return state.execHandler(command, args);
   };
-  const settings: Settings = { mergeMethod: "squash", approvalTimeoutMs: 600_000 };
+  const settings: Settings = { mergeMethod: "squash", approvalTimeoutMs: 600_000, machinePollMs: 30_000 };
   const clock = fakeClock();
   const sleeps: number[] = [];
   let next = 1;
