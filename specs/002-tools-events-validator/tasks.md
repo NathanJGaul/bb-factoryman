@@ -9,9 +9,12 @@ description: "Task list for tools and approval, event wiring, and the validator"
 
 **Prerequisites**: plan.md, spec.md, research.md, data-model.md, contracts/, quickstart.md
 
-**Tests**: Tests are mandatory (constitution principle V). Every test task precedes the implementation task it drives, and every test must be seen failing first.
+**Tests**: Tests are mandatory (constitution principle V).
+Every test task precedes the implementation task it drives, and every test must be seen failing first.
 
-**Organization**: Tasks group by user story. User story 1 is milestone 4 (tools and approval), user story 2 is milestone 5 (event wiring), and user story 3 is milestone 6 (validator). The spike (milestone 0 for these milestones) is already committed.
+**Organization**: Tasks group by user story.
+User story 1 is milestone 4 (tools and approval), user story 2 is milestone 5 (event wiring), and user story 3 is milestone 6 (validator).
+The spike (milestone 0 for these milestones) is already committed.
 
 ## Format: `[ID] [P?] [Story] Description`
 
@@ -21,7 +24,8 @@ description: "Task list for tools and approval, event wiring, and the validator"
 
 ## Phase 1: Setup (shared test infrastructure, no behavior)
 
-**Purpose**: Give every story the same fakes and loaders. These tasks add test helpers and no production behavior.
+**Purpose**: Give every story the same fakes and loaders.
+These tasks add test helpers and no production behavior.
 
 - [X] T001 [P] Add the recorded-fixture loader in `test/fixtures/recorded.ts` (read `test/fixtures/recorded/bb-0.48.1/*.json` and `no-mistakes-1.84.0/*.toon`)
 - [X] T002 [P] Add temporary git repository builders in `test/fixtures/git-repo.ts` (init, commit, bare remote, branch, dirty tree)
@@ -98,7 +102,8 @@ description: "Task list for tools and approval, event wiring, and the validator"
 - [X] T054 [US1] Update `docs/DECISIONS.md` with the milestone 4 findings and commit milestone 4
 - [X] T056 [US1] [A1] [A2] [A3] [A4] [A5] [A6] [A7] [A8] [A9] [A10] [A11] [A12] [A13] [A14] [A15] [A16] [A17] [A18] Outer-loop gate: A1 to A18 are green through the plugin factory before milestone 4 is committed
 
-**Checkpoint**: User story 1 passes on its own. The tools run through the fake host with no wake messages and no validator.
+**Checkpoint**: User story 1 passes on its own.
+The tools run through the fake host with no wake messages and no validator.
 
 ---
 
@@ -126,7 +131,8 @@ description: "Task list for tools and approval, event wiring, and the validator"
 - [X] T070 [US2] Update `docs/DECISIONS.md` with the milestone 5 findings and commit milestone 5
 - [X] T071 [US2] [A19] [A20] [A21] [A22] [A23] [A24] [A25] [A26] [A27] [A28] Outer-loop gate: A19 to A28 are green through the plugin factory before milestone 5 is committed
 
-**Checkpoint**: User story 2 passes on its own. A report that reaches `review_ready` now wakes the supervisor.
+**Checkpoint**: User story 2 passes on its own.
+A report that reaches `review_ready` now wakes the supervisor.
 
 ---
 
@@ -161,7 +167,8 @@ description: "Task list for tools and approval, event wiring, and the validator"
 - [X] T094 [US3] Update `docs/DECISIONS.md` with the milestone 6 findings and commit milestone 6
 - [X] T095 [US3] [A29] [A30] [A31] [A32] [A33] [A34] [A35] [A36] [A37] [A38] Outer-loop gate: A29 to A38 are green through the plugin factory before milestone 6 is committed
 
-**Checkpoint**: User story 3 passes on its own. A `no-mistakes` task reaches `review_ready` through the validator, and a gate pauses it.
+**Checkpoint**: User story 3 passes on its own.
+A `no-mistakes` task reaches `review_ready` through the validator, and a gate pauses it.
 
 ---
 
@@ -177,15 +184,19 @@ description: "Task list for tools and approval, event wiring, and the validator"
 
 ## Dependencies and order
 
-- Phase 1 comes first. Phase 2 blocks every story.
-- User story 1 needs Phase 2. User story 2 needs Phase 2 and the runtime of story 1 (`server.ts` registration). User story 3 needs stories 1 and 2, because the driver applies events through the runtime and wakes through the notifier.
+- Phase 1 comes first.
+  Phase 2 blocks every story.
+- User story 1 needs Phase 2.
+  User story 2 needs Phase 2 and the runtime of story 1 (`server.ts` registration).
+  User story 3 needs stories 1 and 2, because the driver applies events through the runtime and wakes through the notifier.
 - Inside a story, tests come before implementation, and implementation files that import each other follow import order.
 - The tasks marked `[P]` touch different files and can run in either order.
 
 ## Implementation strategy
 
 1. Finish Phase 1 and Phase 2, then commit.
-2. Deliver story 1 and commit milestone 4. This alone gives a usable plugin: the owner can dispatch, merge with approval, and tear down, with no wake messages.
+2. Deliver story 1 and commit milestone 4.
+   This alone gives a usable plugin: the owner can dispatch, merge with approval, and tear down, with no wake messages.
 3. Deliver story 2 and commit milestone 5.
 4. Deliver story 3 and commit milestone 6.
 5. Close out with the verification, checklist, analysis, and convergence artifacts.
@@ -195,7 +206,8 @@ description: "Task list for tools and approval, event wiring, and the validator"
 ## Phase 7: TDD remediation
 
 The cold-context audit in `tdd/verification.md` returned FAIL for the state at commit `495c1cb`.
-These tasks answer its findings. Behavior ids U209 to U217 are new.
+These tasks answer its findings.
+Behavior ids U209 to U217 are new.
 
 - [X] R001 [US1] [U209] Cross-project teardown refusal: unit test in `src/tools/teardown.test.ts` and acceptance test in `test/acceptance/tools-teardown.test.ts`
 - [X] R002 [US1] [U210] Blank and dash-led base branch for the local-only report in `src/git/report.test.ts`

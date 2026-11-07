@@ -7,7 +7,8 @@ Contracts: [tools](contracts/tools.md), [events](contracts/events.md), [validato
 
 - Node 26 and `pnpm` 12.
 - `pnpm install`.
-- `git` on the path. The git tests build temporary repositories and need no network.
+- `git` on the path.
+  The git tests build temporary repositories and need no network.
 - Optional, for the build check: `bb` 0.48.1 on the path.
 
 ## Run the whole suite

@@ -233,9 +233,12 @@ Result: confirmed (after the fix in item 26)
 Evidence: `pnpm run build` produced `dist/server.js`, and `bb plugin install <worktree> --yes` loaded it into the throwaway bb 0.48.1 server (`bb-factoryman running`, service `factoryman-startup running`, command `bb factoryman`).
 `bb factoryman supervisor <thread>` stamped a haiku thread, and the thread then saw the four supervisor tools.
 
-- Scout task: the supervisor called `factoryman_dispatch`. bb created a worker in a managed worktree on the project's host with the planned branch `fm/<task-id>`. The worker called `factoryman_report`, the task became `report_ready`, and the plugin woke the supervisor with a `[factoryman] Task ... is now report_ready` message.
-- Ship task through the real pipeline: the worker committed on its branch and reported `done`. The plugin recorded `handoff`, started `no-mistakes axi run` in the worker's worktree, and received a real review gate with two `ask-user` findings.
-  The task became `needs_decision`, and the supervisor received both findings verbatim in a wake message. It then asked its owner to decide, which is the intended flow.
+- Scout task: the supervisor called `factoryman_dispatch`. bb created a worker in a managed worktree on the project's host with the planned branch `fm/<task-id>`.
+  The worker called `factoryman_report`, the task became `report_ready`, and the plugin woke the supervisor with a `[factoryman] Task ... is now report_ready` message.
+- Ship task through the real pipeline: the worker committed on its branch and reported `done`.
+  The plugin recorded `handoff`, started `no-mistakes axi run` in the worker's worktree, and received a real review gate with two `ask-user` findings.
+  The task became `needs_decision`, and the supervisor received both findings verbatim in a wake message.
+  It then asked its owner to decide, which is the intended flow.
 - I then disabled the plugin so that the driver would not start a second run, and aborted the run with `no-mistakes axi abort`.
 - The plugin's SQLite store ran on `bb.storage.database()` with the schema from milestone 3 (`user_version` 1).
 

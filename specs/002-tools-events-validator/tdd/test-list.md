@@ -429,8 +429,10 @@ Every edge case in `spec.md` maps to a numbered behavior above.
 
 - The dispatch resolver, machine placement, the extension surface, limits and budgets, the webhook, the firstmate import, and skills (milestones 7 to 11).
 - Hard rules 5, 6, and 7 (D-009).
-- Running a real merge against a real forge, a real bb server, or a real no-mistakes pipeline inside the suite. The spike covers the real tools, and the recorded fixtures keep their shapes under test.
-- Coverage numbers and automated mutation runs. The tools are not installed, so `/speckit.tdd.verify` uses deliberate mutants.
+- Running a real merge against a real forge, a real bb server, or a real no-mistakes pipeline inside the suite.
+  The spike covers the real tools, and the recorded fixtures keep their shapes under test.
+- Coverage numbers and automated mutation runs.
+  The tools are not installed, so `/speckit.tdd.verify` uses deliberate mutants.
 - A tool to answer a pipeline finding (D-031).
 - Scout report export to `.bb/factoryman/<task-id>/report.md`.
 

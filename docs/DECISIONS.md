@@ -235,7 +235,8 @@ The rules that carry it:
   Replay still reaches `working` with no merge decision, and a rebuilt cache matches.
 - The worker, thread, branch, machine, and pull request URL stay, because the rework happens on the same branch.
   The worker then hands off again, and the delivery mode's review-ready check runs again.
-- The `yolo` flag is untouched. `request_changes` is legal under `yolo` too.
+- The `yolo` flag is untouched.
+  `request_changes` is legal under `yolo` too.
 
 ## Milestones 4 to 6: spike
 
