@@ -482,3 +482,70 @@ The first is the exact race window of the concurrent merge guard, which two mode
 The second is the reconcile message for a deleted worker thread, because bb answers 404, so the parent is unknown.
 No production code was added to make them drivable.
 Unit and acceptance tests cover both.
+
+## Milestones 7 to 11: scope
+
+### D-068: Constitution principle VI and the scope text follow the captain's intent (Deviation, resolved)
+
+The captain's intent for this task asks for milestones 7 to 11.
+Constitution 1.1.0 and the "Current scope" text in `CLAUDE.md` kept those milestones out until their own spike results exist.
+Constitution 1.2.0 puts milestones 1 to 11 in scope and keeps the rule that each milestone's bb-dependent code waits for the spike results it needs, which `spike/RESULTS.md` now records milestone by milestone.
+The `CLAUDE.md` scope text and the layout comments carry the same correction and nothing else.
+`factoryman_decide` stays out (D-057), and the live install stays the owner's step.
+
+## Milestone 7: dispatch resolver
+
+### D-062: The dispatch config lives at `<checkout>/.bb/factoryman/dispatch.json` on the server (Gap, Limit)
+
+The design says "a JSON file under the project's `.bb/` directory" and `CLAUDE.md` names `.bb/factoryman/` as the config directory.
+Milestone 7 reads only `dispatch.json` there.
+Milestone 9 adds the rest of the workflow config and reuses the same directory.
+The checkout is the project's default `local_path` source (`BbPort.getProjectCheckout`).
+bb does not say whether that source sits on the server machine.
+If it sits on a remote machine, the path will not exist on the server, the file reads as absent, and the built-in default applies.
+That fallback is silent for the owner, so the dispatch result names the profile source ("from the built-in default").
+The live check in milestone 11 confirms the path on a real project.
+
+### D-063: The built-in default profile is `claude-code`, `claude-sonnet-5-5`, `high`, `auto` (Gap)
+
+The design lists "the plugin's built-in default" as the last rung and does not name one.
+The profile is the last resort and is not an owner declaration, so it sets no reasoning floor (D-064).
+The owner replaces it with `default` in `dispatch.json`.
+If the built-in provider is unavailable, dispatch blocks (FR-708).
+It never falls back to another provider.
+
+### D-064: The reasoning floor compares an explicit profile with the owner's declarations (Gap)
+
+firstmate never lowers the reasoning level to save quota without standing permission.
+The resolver has no quota data, so the only way it can lower a level is an explicit override that sits below what the owner declared.
+The baseline is the profiles of the matching rules, or else the configured default.
+The built-in default sets none.
+A level below any baseline profile blocks with `reasoning_lowered`, unless `standingPermission.lowerReasoning` is true in the file.
+Reasoning level IDs are provider-specific (spike item 29), so the ladder lives in the config and defaults to `none, low, medium, high, xhigh, max`.
+When two levels differ and either one is off the ladder, the check blocks, because it cannot rank them.
+Choosing a rule with `rule` takes the profile from the owner's file, so it needs no check.
+
+### D-065: Ambiguity needs distinct profiles, and conditions are exact (Gap)
+
+The design says the resolver returns `ambiguous` "when several rules fit".
+The code returns `ambiguous` only when the matching rules name profiles that differ in at least one of the four fields.
+Matching rules with equal profiles resolve clear, because the supervisor has nothing to choose.
+A rule's `when` supports `kind`, `mode`, `tags` (all required, case-insensitive), and `keywords` (any, whole word, case-insensitive).
+A rule needs at least one condition, so no rule matches everything: the owner uses `default` for that.
+The supervisor chooses by calling again with `rule` set to a matching rule ID, or with an explicit `profile`.
+
+### D-066: A blocker or an ambiguous result creates no task (Gap)
+
+Hard rule 8 says illegal transitions are refused and logged.
+A dispatch blocker is not a transition, because no task exists yet.
+The tool returns an error result that names the reason and logs nothing to the event log.
+Creating a task only to fail it would clutter the log and would give the state machine a `queued` to `failed` path for a configuration problem.
+
+### D-067: `factoryman_dispatch` takes an optional profile, `rule`, and `tags` (Deviation from milestone 4)
+
+The milestone 4 tool required a complete profile.
+The resolver makes it optional, and adds `rule` and `tags`.
+Test U37 asserted the old `required` list, so it changed with this requirement (cycle L1 in the cycle log).
+The success text gains a `Profile: ...` line only when the resolver chose the profile, so the milestone 4 text for an explicit profile is unchanged.
+The `start` event does not record the profile source, because the machine's event is closed and changing it edits the merged milestone 2 machine.
+The result text and the plugin log name the source.

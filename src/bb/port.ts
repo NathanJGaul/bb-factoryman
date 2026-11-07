@@ -53,4 +53,15 @@ export interface BbPort {
   getProjectRemote(projectId: string): Promise<string | null>;
   requestInput(request: InputRequest): Promise<InputResult>;
   setThreadMetadata(threadId: string, metadata: Record<string, Json>): Promise<void>;
+  /** Every provider bb knows, with its availability. */
+  listProviders(): Promise<ProviderAvailability[]>;
+}
+
+/** One provider as bb reports it, cut to the fields that the dispatch check reads (spike item 29). */
+export interface ProviderAvailability {
+  id: string;
+  available: boolean;
+  permissionModes: string[];
+  /** Reasoning level IDs. An empty list means bb reported none. */
+  reasoningLevels: string[];
 }

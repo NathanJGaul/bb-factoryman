@@ -175,4 +175,18 @@ describe("createBbPort", () => {
     const none = setup({ projects: { get: async () => ({ id: "proj-1", gitRemoteUrl: null, sources: [] }) } });
     expect(await none.port.getProjectRemote("proj-1")).toBeNull();
   });
+  it("[U742] lists providers as ID, availability, permission modes, and reasoning level IDs", async () => {
+    const { port } = setup({
+      providers: {
+        list: async () => [
+          { id: "claude-code", available: true, capabilities: { permissionModes: ["accept-edits", "auto", "full"] }, reasoningLevels: [{ id: "low", label: "Low" }, { id: "high", label: "High" }] },
+          { id: "pi", available: false, capabilities: { permissionModes: ["full"] }, reasoningLevels: [] },
+        ],
+      },
+    } as FakeSdkOverrides);
+    expect(await port.listProviders()).toEqual([
+      { id: "claude-code", available: true, permissionModes: ["accept-edits", "auto", "full"], reasoningLevels: ["low", "high"] },
+      { id: "pi", available: false, permissionModes: ["full"], reasoningLevels: [] },
+    ]);
+  });
 });

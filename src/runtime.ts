@@ -1,5 +1,7 @@
 import type { BbPort } from "./bb/port";
+import type { DispatchResolver } from "./dispatch/types";
 import type { Exec } from "./exec";
+import type { Files } from "./files";
 import { TaskLog, type LogOutcome } from "./store/task-log";
 import type { Store } from "./store/store";
 import type { TaskEventRow, TaskRow } from "./store/types";
@@ -27,6 +29,10 @@ export interface RuntimeDeps {
   store: Store;
   bb: BbPort;
   exec: Exec;
+  /** Reads the project's `.bb/factoryman/` files. */
+  files: Files;
+  /** Turns task facts and the dispatch config into a profile. */
+  resolver: DispatchResolver;
   log: Logger;
   now: () => string;
   newId: () => string;

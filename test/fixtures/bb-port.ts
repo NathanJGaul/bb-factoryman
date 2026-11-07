@@ -1,4 +1,4 @@
-import type { BbPort, InputRequest, InputResult, SpawnWorkerRequest, ThreadInfo } from "../../src/bb/port";
+import type { BbPort, InputRequest, InputResult, ProviderAvailability, SpawnWorkerRequest, ThreadInfo } from "../../src/bb/port";
 
 export interface RecordedCall {
   method: string;
@@ -14,6 +14,14 @@ export class FakeBbPort implements BbPort {
   /** A project missing from this map has the default remote. Set null for an unreadable remote. */
   remotes = new Map<string, string | null>();
   metadata = new Map<string, Record<string, unknown>>();
+  /** What `listProviders` returns. The default lists `claude` and `claude-code`, each with every mode and the usual levels. */
+  providers: ProviderAvailability[] = ["claude", "claude-code"].map((id) => ({
+    id,
+    available: true,
+    permissionModes: ["accept-edits", "auto", "full"],
+    reasoningLevels: ["low", "medium", "high", "xhigh", "max"],
+  }));
+  providersError: Error | null = null;
   spawnError: Error | null = null;
   sendError: Error | null = null;
   retireError: Error | null = null;
@@ -88,6 +96,12 @@ export class FakeBbPort implements BbPort {
   async requestInput(request: InputRequest): Promise<InputResult> {
     this.calls.push({ method: "requestInput", args: [request] });
     return this.inputHandler(request);
+  }
+
+  async listProviders(): Promise<ProviderAvailability[]> {
+    this.calls.push({ method: "listProviders", args: [] });
+    if (this.providersError) throw this.providersError;
+    return this.providers;
   }
 
   async setThreadMetadata(threadId: string, metadata: Record<string, unknown>): Promise<void> {

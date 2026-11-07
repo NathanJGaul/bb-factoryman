@@ -9,22 +9,22 @@ description: "Task list for the dispatch resolver"
 
 ## Phase 1: Setup
 
-- [ ] T701 Add `FakeFiles` in `test/fixtures/files.ts` and a `providers` list on `FakeBbPort` (no production code)
+- [X] T701 Add `FakeFiles` in `test/fixtures/files.ts` and a `providers` list on `FakeBbPort` (no production code)
 
 ## Phase 2: Pure core (tests first)
 
-- [ ] T710 [P] Config schema test `src/dispatch/config.test.ts` (valid config, unknown key, unknown profile name, empty `when`, bad ladder)
-- [ ] T711 [P] Resolver test `src/dispatch/resolver.test.ts` (precedence table, ambiguity, `rule` choice, equal profiles, lowering check)
-- [ ] T712 [P] Availability test `src/dispatch/availability.test.ts`
-- [ ] T713 [P] Loader test `src/dispatch/load.test.ts`
-- [ ] T720 Implement `types.ts`, `config.ts`, `builtin.ts`, `resolver.ts`, `availability.ts`, `load.ts`, `src/files.ts`
+- [X] T710 [P] Config schema test `src/dispatch/config.test.ts` (valid config, unknown key, unknown profile name, empty `when`, bad ladder)
+- [X] T711 [P] Resolver test `src/dispatch/resolver.test.ts` (precedence table, ambiguity, `rule` choice, equal profiles, lowering check)
+- [X] T712 [P] Availability test `src/dispatch/availability.test.ts`
+- [X] T713 [P] Loader test `src/dispatch/load.test.ts`
+- [X] T720 Implement `types.ts`, `config.ts`, `builtin.ts`, `resolver.ts`, `availability.ts`, `load.ts`, `src/files.ts`
 
 ## Phase 3: Wire into the tool (tests first)
 
-- [ ] T730 Port and adapter test for `listProviders` in `src/bb/adapter.test.ts`
-- [ ] T731 Dispatch tool test in `src/tools/dispatch.test.ts` (resolver flow, blockers create nothing)
-- [ ] T732 Acceptance tests `test/acceptance/dispatch-resolver.test.ts` (A-701 to A-709)
-- [ ] T740 Implement `listProviders`, the `Files` dep, the factory `resolver` option, and the new `dispatch` flow
+- [X] T730 Port and adapter test for `listProviders` in `src/bb/adapter.test.ts`
+- [X] T731 Dispatch tool test in `src/tools/dispatch.test.ts` (resolver flow, blockers create nothing)
+- [X] T732 Acceptance tests `test/acceptance/dispatch-resolver.test.ts` (A-701 to A-709)
+- [X] T740 Implement `listProviders`, the `Files` dep, the factory `resolver` option, and the new `dispatch` flow
 
 ## Phase 4: Close-out
 

@@ -53,7 +53,9 @@ describe("registerTools", () => {
     const schema = dispatchTool?.inputSchema as { type: string; additionalProperties: boolean; required: string[]; properties: { profile: { properties: { permissionMode: { enum: string[] } } } } };
     expect(schema.type).toBe("object");
     expect(schema.additionalProperties).toBe(false);
-    expect(schema.required).toEqual(["kind", "description", "profile"]);
+    // Milestone 7 made the profile optional: the dispatch rules choose it when the caller gives none (D-067).
+    expect(schema.required).toEqual(["kind", "description"]);
+    expect(Object.keys(schema.properties)).toEqual(expect.arrayContaining(["tags", "profile", "rule"]));
     expect(schema.properties.profile.properties.permissionMode.enum).toEqual(["accept-edits", "auto", "full"]);
   });
 

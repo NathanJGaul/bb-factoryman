@@ -1,7 +1,10 @@
 import { randomBytes } from "node:crypto";
 import type { BbPluginApi } from "@get-bb/plugin-sdk";
 import { createBbPort } from "./bb/adapter";
+import { RulesTableResolver } from "./dispatch/resolver";
+import type { DispatchResolver } from "./dispatch/types";
 import { runCommand, type Exec } from "./exec";
+import { nodeFiles, type Files } from "./files";
 import { createMergeExecutor } from "./git/merge";
 import { Runtime, type Settings } from "./runtime";
 import { recover } from "./store/replay";
@@ -22,6 +25,10 @@ export interface PluginOptions {
   sleep?: (ms: number) => Promise<void>;
   validator?: Validator;
   pollMs?: number;
+  /** Replaces the project file reader. */
+  files?: Files;
+  /** Replaces the rules-table dispatch resolver (D-051 style injection). */
+  resolver?: DispatchResolver;
 }
 
 const MERGE_METHODS = ["squash", "merge", "rebase"] as const;
@@ -74,6 +81,8 @@ export function createPlugin(options: PluginOptions = {}): (bb: BbPluginApi) => 
       store,
       bb: createBbPort(bb),
       exec,
+      files: options.files ?? nodeFiles,
+      resolver: options.resolver ?? new RulesTableResolver(),
       log: bb.log,
       now: options.now ?? (() => new Date().toISOString()),
       newId: options.newId ?? (() => `t-${randomBytes(4).toString("hex")}`),

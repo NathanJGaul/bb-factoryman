@@ -102,6 +102,16 @@ export function createBbPort(bb: BbPluginApi): BbPort {
       return result as InputResult;
     },
 
+    async listProviders() {
+      const providers = await bb.sdk.providers.list();
+      return providers.map((provider) => ({
+        id: provider.id,
+        available: provider.available,
+        permissionModes: [...provider.capabilities.permissionModes],
+        reasoningLevels: (provider.reasoningLevels ?? []).map((level) => level.id),
+      }));
+    },
+
     async setThreadMetadata(threadId, metadata: Record<string, Json>) {
       await bb.sdk.threads.updatePluginMetadata({ threadId, pluginId: bb.pluginId, set: metadata });
     },

@@ -51,9 +51,10 @@ Both implementations MUST pass the same contract test suite.
 
 ### VI. Scope discipline
 
-Milestones 1 to 6 (scaffold, state machine, storage, tools and approval, event wiring, and the validator) are in scope.
-`spike/RESULTS.md` records the bb and no-mistakes assumptions that milestones 4 to 6 depend on.
-Milestones 7 to 11 (dispatch resolver, machine placement, extension surface, limits, and skills) stay out of scope until `spike/RESULTS.md` also confirms the assumptions they need.
+Milestones 1 to 11 (scaffold, state machine, storage, tools and approval, event wiring, validator, dispatch resolver, machine placement, extension surface, limits and cutover, and skills) are in scope.
+`spike/RESULTS.md` records the bb and no-mistakes assumptions that each milestone depends on.
+A milestone's bb-dependent code waits for its own spike results.
+The live install into the owner's bb stays the owner's step, and `factoryman_decide` stays out of scope (D-057).
 Features from the design's non-goals list need approval first.
 Every deviation from `docs/DESIGN.md` is recorded in `docs/DECISIONS.md` with the reason.
 If a spike result contradicts the design, the conflict is recorded and the owner decides.
@@ -82,4 +83,4 @@ An amendment needs a written reason in `docs/DECISIONS.md` and a version bump he
 Version bumps follow semantic versioning: major for removed or redefined principles, minor for added principles or materially expanded guidance, patch for wording fixes.
 Every plan includes a constitution check, and every review verifies compliance.
 
-**Version**: 1.1.0 | **Ratified**: 2026-11-05 | **Last amended**: 2026-11-06
+**Version**: 1.2.0 | **Ratified**: 2026-11-05 | **Last amended**: 2026-11-07
