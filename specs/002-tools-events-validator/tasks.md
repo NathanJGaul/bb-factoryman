@@ -222,4 +222,5 @@ Behavior ids U209 to U217 are new.
 - [X] R011 Task text corrected, cycle naming note added, dead `void` lines and needless casts removed
 - [X] R012 [US1] [U216] Teardown against a real temporary git repository
 - [X] R013 [US3] [U217] Disposing the plugin stops the validation loops
+- [X] R014 [U208] The layout rule follows the scope amendment (cycle L0, D-032, D-045)
 

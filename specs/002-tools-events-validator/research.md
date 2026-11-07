@@ -139,7 +139,8 @@ Handlers must be cheap and silent for threads that are not workers.
 The wake rule follows states, so duplicate events produce no duplicate messages: the second event meets an illegal transition and the machine refuses it.
 
 **Alternatives considered**: Subscribe to `message.*` and `turn.failed` for richer state.
-`turn.failed` is only needed for evidence text, and the plugin reads it by remembering the last category per thread in memory.
+`turn.failed` is only needed for evidence text, and the plugin remembers the last category per thread in memory.
+Because the real server sends `turn.failed` after `thread.failed`, a `thread.failed` with an empty error waits 500 ms before it reads that memory (D-047).
 
 ## R11. Decoding no-mistakes output
 

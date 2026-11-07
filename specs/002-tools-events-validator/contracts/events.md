@@ -7,7 +7,7 @@ It returns without a change or a message when there is none, when the task is `t
 
 | bb event | Applies when the task is | Action | Wake |
 | --- | --- | --- | --- |
-| `thread.failed` | `working` or `blocked` | Apply `fail` (actor `system`) with evidence from `error`, or from the last `turn.failed` category and status code, or the fixed text `worker thread entered the error state` | by state (`failed`) |
+| `thread.failed` | `working` or `blocked` | Apply `fail` (actor `system`) with evidence from `error`; when `error` is empty, wait 500 ms for the `turn.failed` that follows (spike item 21) and use its category and status code; else the fixed text `worker thread entered the error state` | by state (`failed`) |
 | `thread.deleted` | any state before `torn_down` | Apply `fail` (actor `system`) with evidence `worker thread was deleted` | by state (`failed`) |
 | `thread.idle` | `working` | none | "worker finished a turn without reporting" |
 | `thread.archived` | any state before `torn_down` | none | "worker thread was archived and its worktree may be removed" |

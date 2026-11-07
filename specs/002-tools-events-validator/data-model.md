@@ -30,7 +30,8 @@ The calls the plugin makes to bb, as plain data.
 | `requestInput` | `threadId`, `rendererId`, `title`, `payload`, `timeoutMs`, `signal` | `InputResult` |
 | `setThreadMetadata` | `threadId`, `metadata` | nothing |
 
-`ThreadInfo`: `id`, `projectId`, `status`, `parentThreadId`, `environmentId`.
+`ThreadInfo`: `id`, `projectId`, `status`, `parentThreadId`, `environmentId`, and `deleted`.
+`deleted` is true when bb still serves a soft-deleted thread, so the parent stays known (D-047).
 `InputResult`: `{ outcome: "submitted", value }` or `{ outcome: "cancelled", reason }`, as in `spike/RESULTS.md` item 20.
 
 ## Caller
@@ -54,7 +55,7 @@ The calls the plugin makes to bb, as plain data.
 
 ## MergeExecutor
 
-`merge(input: { task: TaskRow; config: ProjectConfig; worktreePath: string | null }): Promise<MergeResult>`.
+`merge(input: { task: TaskRow; config: ProjectConfig; checkoutPath: string | null; method: "squash" | "merge" | "rebase" }): Promise<MergeResult>`.
 `preflight(input): Promise<null | string>` returns a refusal message or `null`.
 `MergeResult`: `{ ok: true } | { ok: false; message: string }`.
 

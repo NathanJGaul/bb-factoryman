@@ -193,7 +193,7 @@ Check that a finding pauses the task.
 - **FR-103**: Every tool MUST decide the caller's authority at call time from the store and the thread ID of the call, and MUST NOT trust the thread's plugin metadata or any argument that names a role.
 - **FR-104**: A thread that the store records as a worker MUST be refused on every supervisor tool.
 - **FR-105**: Every tool call MUST turn into events for the existing `TaskLog`, and a refusal MUST be logged and MUST come back to the agent as an error result.
-- **FR-106**: `factoryman_dispatch` MUST validate the whole task contract (kind, description, and a complete profile) before it creates a task or spawns a thread.
+- **FR-106**: `factoryman_dispatch` MUST validate the whole task contract (kind, description, and a complete profile, whose permission mode is `accept-edits`, `auto`, or `full`) before it creates a task or spawns a thread.
 - **FR-107**: `factoryman_dispatch` MUST spawn the worker as a child of the calling supervisor thread with bb's automatic parent notifications off, so the plugin sends the only wake messages.
 - **FR-108**: `factoryman_dispatch` MUST stamp the worker thread with the plugin's role metadata and the task ID, and MUST record the worker thread and a planned branch name in the `start` event.
 - **FR-109**: `factoryman_dispatch` MUST NOT resolve a profile, choose a machine, or enforce caps.
@@ -220,7 +220,7 @@ Check that a finding pauses the task.
 
 - **FR-201**: The plugin MUST handle the bb thread events `thread.failed`, `thread.idle`, `thread.deleted`, `thread.archived`, and `interaction.pending`, and MUST ignore the other thread events.
 - **FR-202**: The plugin MUST handle an event only when its thread is the recorded worker of a task that has not reached `torn_down`.
-- **FR-203**: A `thread.failed` event MUST fail a task that is `working` or `blocked`, with evidence built from the thread's error text or, when that is empty, from the last turn-failure category and status code.
+- **FR-203**: A `thread.failed` event MUST fail a task that is `working` or `blocked`, with evidence built from the thread's error text or, when that is empty, from the category and status code of the turn failure that follows it (the handler waits briefly for it).
 - **FR-204**: A `thread.deleted` event MUST fail a task in any state before `torn_down`, with evidence.
 - **FR-205**: A `thread.idle` event on a `working` task MUST wake the supervisor and MUST NOT change the state.
 - **FR-206**: A `thread.archived` event MUST wake the supervisor with a warning that the worktree may be removed, and MUST NOT change the state.
@@ -231,7 +231,7 @@ Check that a finding pauses the task.
 - **FR-210**: A wake message MUST be one plain-text message that names the task, its kind, its new state, and its evidence cut to a fixed length.
 - **FR-211**: A failed wake send MUST be logged and MUST NOT undo or block a transition.
 - **FR-212**: At start-up, after recovery, the plugin MUST observe the worker thread of every non-terminal task, MUST write one `reconcile` row per mismatch through the existing `reconcile` function, and MUST message the supervisor for each row it wrote.
-- **FR-213**: Observing a thread MUST report `missing` for a deleted or unknown thread, `failed` for a thread in `error`, and the logged state otherwise.
+- **FR-213**: Observing a thread MUST report `missing` for a deleted or unknown thread (when bb answers 404 for an unknown thread, the parent is unknown, so the plugin writes the `reconcile` row and logs a warning but sends no message, D-047), `failed` for a thread in `error`, and the logged state otherwise.
 - **FR-214**: Event handlers MUST NOT throw.
   A handler error MUST be logged and MUST leave the log and the cache as they were.
 
@@ -281,7 +281,7 @@ Check that a finding pauses the task.
 - **SC-002**: The merge approval has three tests, for a submitted approval, a cancelled form, and a timed-out form, and each asserts the count of merge executions and the final task state.
 - **SC-003**: Hard rules 1, 2, 3, and 8 each have a test through a tool that shows the refusal and a test that shows the permitted path.
 - **SC-004**: A replayed sequence of at least ten thread events yields exactly the expected list of wake messages and no others.
-- **SC-005**: A fake validator and the recorded no-mistakes output each drive a task from handoff to review ready, and a finding pauses the task in both.
+- **SC-005**: A fake validator and the recorded no-mistakes output each drive a task from handoff to review ready, and a finding pauses the task in both. The review-ready output is derived from a recorded run, because the spike could not record `checks-passed` (D-049).
 - **SC-006**: The recorded bb and no-mistakes files all parse and replay, and a changed shape fails a named test.
 - **SC-007**: The full suite, lint, and type-check finish in under 90 seconds on a developer laptop.
 - **SC-008**: `pnpm run build` produces the plugin bundle with the new modules.

@@ -78,7 +78,7 @@ The decisions that shape the code:
    Plugin metadata only decides which tools bb offers.
 3. **Tools build events, nothing else.**
    Each tool is a plain async function from a context and parsed arguments to a text result.
-   `src/tools/register.ts` binds them to `bb.agents.registerTool` and `bb.agents.configure`.
+   `src/tools/register.ts` binds them to `bb.agents.registerTool` and `bb.agents.configure`, with JSON schemas made from the `zod` schemas so that a bad call reaches the tool and gets its refusal text (D-044).
 4. **One apply path.**
    `Runtime.apply(taskId, event)` calls `TaskLog.apply`, then the notifier, then the driver hook.
    The tools, the event handlers, and the driver all use it, so a wake message follows every attention state exactly once.
