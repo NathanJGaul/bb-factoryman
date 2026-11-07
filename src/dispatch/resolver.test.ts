@@ -40,6 +40,16 @@ describe("RulesTableResolver precedence", () => {
     });
   });
 
+  it.each([
+    ["provider", { ...steady, provider: "other" }],
+    ["model", { ...steady, model: "other" }],
+    ["reasoning level", { ...steady, reasoningLevel: "low" }],
+    ["permission mode", { ...steady, permissionMode: "full" as const }],
+  ])("[U712] is ambiguous when two matching rules differ only in the %s", (_field, variant) => {
+    const cfg = config([rule("a", { kind: "ship" }, "steady"), rule("b", { mode: "no-mistakes" }, "variant")], { profiles: { steady, variant } });
+    expect(resolve(cfg).status).toBe("ambiguous");
+  });
+
   it("[U713] is clear when two matching rules name equal profiles", () => {
     const cfg = config([rule("a", { kind: "ship" }, "deep"), rule("b", { mode: "no-mistakes" }, "deep")]);
     expect(resolve(cfg)).toMatchObject({ status: "clear", profile: deep, source: "rule", ruleId: "a" });
@@ -50,11 +60,9 @@ describe("RulesTableResolver precedence", () => {
     expect(resolve(cfg, {}, { rule: "b" })).toEqual({ status: "clear", profile: deep, source: "rule", ruleId: "b" });
   });
 
-  it("[U715] blocks a rule that does not exist or does not match the task", () => {
+  it.each(["scouting", "ghost"])("[U715] blocks the rule `%s`, which does not exist or does not match the task", (id) => {
     const cfg = config([rule("scouting", { kind: "scout" }, "fast")]);
-    for (const id of ["scouting", "ghost"]) {
-      expect(resolve(cfg, {}, { rule: id })).toMatchObject({ status: "blocked", code: "rule_not_applicable" });
-    }
+    expect(resolve(cfg, {}, { rule: id })).toMatchObject({ status: "blocked", code: "rule_not_applicable" });
   });
 
   it("[U716] applies the configured default when no rule matches", () => {
@@ -90,9 +98,11 @@ describe("RulesTableResolver matching", () => {
     expect(matches({ tags: ["Docs"] }, { tags: ["docs"] })).toBe(true);
   });
 
-  it("[U721] matches a keyword as a whole word in any case and not as a substring", () => {
+  it("[U721] matches a keyword as a whole word in any case, and not as a prefix or a suffix of another word", () => {
     expect(matches({ keywords: ["refactor"] }, { description: "Please REFACTOR the store." })).toBe(true);
     expect(matches({ keywords: ["refactor"] }, { description: "Do a prefactoring pass." })).toBe(false);
+    expect(matches({ keywords: ["refactor"] }, { description: "Do a prerefactor pass." })).toBe(false);
+    expect(matches({ keywords: ["refactor"] }, { description: "Keep refactoring the store." })).toBe(false);
     expect(matches({ keywords: ["fix", "bug"] }, { description: "A bug in the parser." })).toBe(true);
     expect(matches({ keywords: ["a.b"] }, { description: "uses axb here" })).toBe(false);
   });
@@ -141,6 +151,13 @@ describe("RulesTableResolver reasoning floor", () => {
   it("[U728] takes the baseline from the configured default when no rule matches", () => {
     const cfg = config([], { default: "deep" });
     expect(resolve(cfg, {}, { profile: lowered })).toMatchObject({ status: "blocked", code: "reasoning_lowered" });
+  });
+
+  it("[U744] takes the baseline from the matched rule and not from the default when both exist", () => {
+    const cfg = config([rule("r", { kind: "ship" }, "deep")], { default: "fast" });
+    expect(resolve(cfg, {}, { profile: { ...deep, reasoningLevel: "medium" } })).toMatchObject({ status: "blocked", code: "reasoning_lowered" });
+    const lowRule = config([rule("r", { kind: "ship" }, "fast")], { default: "deep" });
+    expect(resolve(lowRule, {}, { profile: { ...deep, reasoningLevel: "medium" } }).status).toBe("clear");
   });
 
   it("[U729] blocks a choice that sets both a profile and a rule", () => {

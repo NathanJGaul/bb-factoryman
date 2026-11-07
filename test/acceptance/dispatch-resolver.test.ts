@@ -111,37 +111,44 @@ describe("dispatch profile resolution through the plugin factory", () => {
     expect(spawned(allowed.world)).toMatchObject({ reasoningLevel: "medium" });
   });
 
-  it("[A709] blocks dispatch for bad JSON, an unknown key, or an undefined profile, and uses no default in its place", async () => {
-    for (const bad of ["{ not json", config({ surprise: true }), config({ rules: [{ id: "x", when: { kind: "ship" }, profile: "missing" }] })]) {
-      const { world, result } = await dispatchWith(bad, TASK);
-      expect(result.isError).toBe(true);
-      expect(result.text).toContain("dispatch.json");
-      expect(world.sdkCalls("threads.spawn")).toEqual([]);
-      expect(world.store.listTasks()).toEqual([]);
-    }
+  it.each([
+    ["bad JSON", "{ not json"],
+    ["an unknown key", config({ surprise: true })],
+    ["an undefined profile", config({ rules: [{ id: "x", when: { kind: "ship" }, profile: "missing" }] })],
+  ])("[A709] blocks dispatch for %s, and uses no default in its place", async (_label, bad) => {
+    const { world, result } = await dispatchWith(bad, TASK);
+    expect(result.isError).toBe(true);
+    expect(result.text).toContain("dispatch.json");
+    expect(world.sdkCalls("threads.spawn")).toEqual([]);
+    expect(world.store.listTasks()).toEqual([]);
   });
 
-  it("[A710] blocks a provider that bb reports unavailable or does not list, and a mode or level it does not list", async () => {
-    const cases: Array<[unknown[], string]> = [
-      [[providerFixture("claude", { available: false })], "not available"],
-      [[providerFixture("codex")], "not available"],
-      [[providerFixture("claude", { capabilities: { permissionModes: ["accept-edits"] } })], "permission mode"],
-      [[providerFixture("claude", { reasoningLevels: [{ id: "low", label: "low" }] })], "reasoning level"],
-    ];
-    for (const [providers, text] of cases) {
-      const { world, result } = await dispatchWith(config(), { ...TASK, profile: EXPLICIT }, { providers });
-      expect(result.isError).toBe(true);
-      expect(result.text).toContain(text);
-      expect(world.sdkCalls("threads.spawn")).toEqual([]);
-    }
+  it.each<[string, unknown[], string]>([
+    ["unavailable", [providerFixture("claude", { available: false })], "not available"],
+    ["not listed", [providerFixture("codex")], "not available"],
+    ["a permission mode it does not list", [providerFixture("claude", { capabilities: { permissionModes: ["accept-edits"] } })], "permission mode"],
+    ["a reasoning level it does not list", [providerFixture("claude", { reasoningLevels: [{ id: "low", label: "low" }] })], "reasoning level"],
+  ])("[A710] blocks a provider that bb reports as %s", async (_label, providers, text) => {
+    const { world, result } = await dispatchWith(config(), { ...TASK, profile: EXPLICIT }, { providers });
+    expect(result.isError).toBe(true);
+    expect(result.text).toContain(text);
+    expect(world.sdkCalls("threads.spawn")).toEqual([]);
   });
 
-  it("[A711] leaves the event log and the spawn calls unchanged for every blocked or ambiguous result", async () => {
-    const world = await loadWorld({ checkout: makeCheckout({ dispatch: config({ rules: [{ id: "a", when: { kind: "ship" }, profile: "steady" }, { id: "b", when: { kind: "ship" }, profile: "deep" }] }) }) });
+  const TWO_RULES = config({ rules: [{ id: "a", when: { kind: "ship" }, profile: "steady" }, { id: "b", when: { kind: "ship" }, profile: "deep" }] });
+  it.each<[string, unknown, Record<string, unknown>, Parameters<typeof loadWorld>[0]]>([
+    ["ambiguous", TWO_RULES, TASK, {}],
+    ["rule_not_applicable", TWO_RULES, { ...TASK, rule: "nope" }, {}],
+    ["reasoning_lowered", config(), { ...TASK, description: "Refactor the store.", profile: { ...EXPLICIT, reasoningLevel: "medium" } }, {}],
+    ["config_invalid", "{ not json", TASK, {}],
+    ["provider_unavailable", config(), { ...TASK, profile: EXPLICIT }, { providers: [providerFixture("claude", { available: false })] }],
+  ])("[A711] leaves the event log, the task list, and the spawn calls unchanged for a %s result", async (_code, dispatch, args, options) => {
+    const world = await loadWorld({ checkout: makeCheckout({ dispatch }), ...options });
     const before = world.store.listEvents().length;
-    await world.call("factoryman_dispatch", TASK);
-    await world.call("factoryman_dispatch", { ...TASK, rule: "nope" });
+    const result = await world.call("factoryman_dispatch", args);
+    expect(result.isError).toBe(true);
     expect(world.store.listEvents().length).toBe(before);
+    expect(world.store.listTasks()).toEqual([]);
     expect(world.sdkCalls("threads.spawn")).toEqual([]);
   });
 
@@ -159,5 +166,47 @@ describe("dispatch profile resolution through the plugin factory", () => {
     const result = await world.call("factoryman_dispatch", TASK);
     expect(result.isError).toBe(false);
     expect(spawned(world)).toMatchObject({ providerId: "claude-code", model: "claude-sonnet-5-5" });
+  });
+  it("[A715] fails closed when bb's provider list cannot be read", async () => {
+    const world = await loadWorld({ checkout: makeCheckout({ dispatch: config() }), providersError: new Error("bb is down") });
+    const result = await world.call("factoryman_dispatch", { ...TASK, profile: EXPLICIT });
+    expect(result.isError).toBe(true);
+    expect(result.text).toContain("could not read bb's providers");
+    expect(result.text).toContain("No task was created");
+    expect(world.sdkCalls("threads.spawn")).toEqual([]);
+    expect(world.store.listTasks()).toEqual([]);
+  });
+
+  it.each<[string, Parameters<typeof loadWorld>[0]]>([
+    ["the project cannot be read", { projectError: new Error("bb is down") }],
+    ["the injected resolver throws", { resolver: { resolve: () => { throw new Error("classifier crashed"); } } }],
+  ])("[A716] fails closed when %s", async (_label, options) => {
+    const world = await loadWorld({ checkout: makeCheckout({ dispatch: config() }), ...options });
+    const result = await world.call("factoryman_dispatch", TASK);
+    expect(result.isError).toBe(true);
+    expect(result.text).toContain("could not read the dispatch rules");
+    expect(result.text).toContain("No task was created");
+    expect(world.sdkCalls("threads.spawn")).toEqual([]);
+    expect(world.store.listTasks()).toEqual([]);
+  });
+
+  it("[A717] passes the task kind, the project's mode, and the tags to the rules", async () => {
+    const rules = [
+      { id: "scouts", when: { kind: "scout" }, profile: "fast" },
+      { id: "pr-work", when: { kind: "ship", mode: "direct-PR" }, profile: "deep" },
+      { id: "docs", when: { kind: "ship", mode: "no-mistakes", tags: ["docs"] }, profile: "steady" },
+    ];
+    const scout = await dispatchWith(config({ rules }), { kind: "scout", description: "Look around." });
+    expect(spawned(scout.world)).toMatchObject({ model: "haiku" });
+
+    const prWorld = await loadWorld({ checkout: makeCheckout({ dispatch: config({ rules }) }) });
+    prWorld.setProject({ deliveryMode: "direct-PR" });
+    await prWorld.call("factoryman_dispatch", TASK);
+    expect(spawned(prWorld)).toMatchObject({ model: "opus" });
+
+    const tagged = await dispatchWith(config({ rules }), { ...TASK, tags: ["docs"] });
+    expect(spawned(tagged.world)).toMatchObject({ model: "sonnet" });
+    const untagged = await dispatchWith(config({ rules }), TASK);
+    expect(spawned(untagged.world)).toMatchObject({ providerId: "claude-code" });
   });
 });

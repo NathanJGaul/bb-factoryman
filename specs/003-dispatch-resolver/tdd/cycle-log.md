@@ -89,3 +89,29 @@ Every entry's `red` block is the evidence that the test existed and failed befor
   That is a requirement change (D-067): the profile is optional now. The assertion changed to `["kind", "description"]` plus the three optional properties. It is not weakened to hide a failure.
 - suite: `pnpm run check` -> 63 files, 682 passed, 0 failed. Type check and lint clean.
 - refactor: none needed
+
+## Cycle R1: audit remediation (tests added to kill surviving mutants)
+
+The cold audit (`tdd/verification.md`, commit `8ec714b`) returned FAIL with 17 surviving mutants, 15 of them real gaps.
+No production code changed in this cycle. Every new test passed at once, because the code was already right, so each one was proven by re-running its mutant.
+
+- R1 `[A715]` (new): `providers.list` rejects -> `isError`, no spawn, no task.
+  Mutant: swallow the `catch` at `src/tools/dispatch.ts` -> `[A715]` failed (1 failed, 25 passed). Reverted.
+- R2 `[A711]` (extended to five blockers with `it.each`): the log, the task list, and the spawns stay unchanged.
+  Mutant: create a task before the availability check -> `[A711] ... provider_unavailable` and `[A715]` failed (2 failed). Reverted.
+- R3 `[A717]` (new): a scout, a `direct-PR` project, and tags reach the rules.
+  Mutants: hard-code `kind`, hard-code `mode`, drop `tags` -> `[A717]` failed each time (1 failed). Reverted.
+- R4 `[U744]` (new): the matched rule sets the floor before the default.
+  Mutant: never use the matching rules for the baseline -> `[U722]`, `[U725]`, `[U727]`, `[U744]` failed (4 failed). Reverted.
+- R5 `[U712]` (four cases): each profile field alone.
+  Mutants: drop provider, model, reasoning level, or permission mode from `sameProfile` -> the matching case failed each time (1 failed). Reverted.
+- R6 `[U702]` (four cases): an unknown key in `when`, a rule, a profile, and the standing permissions.
+  Mutants: replace `strictObject` with `object` in each place -> the matching case failed each time (1 failed). Reverted.
+- R7 `[U721]` (extended) and `[A716]` (new): keyword prefix and suffix, a project read that throws, and a resolver that throws.
+  Mutants: remove the lookbehind, remove the lookahead -> `[U721]` failed each time. Remove the `catch` return around the resolve step -> both `[A716]` cases failed (2 failed). Reverted.
+- R8: `[A709]`, `[A710]`, `[A711]`, `[U715]` became `it.each`, `[U743]` became three tests, and the bookkeeping drift was fixed (criteria count, `plan.md`, task IDs, helpers in the profile).
+- Equivalent mutants (accepted by the audit): `<` to `<=` in the reasoning floor, and the wording of the unavailable-provider message.
+- suite: `pnpm run check` -> see the close-out entry below.
+- Added after the trace check (`analyze.md` F1): `[A718]` pins FR-701 (the resolver imports only types and the machine vocabulary).
+  It passed at once. Mutant: import `node:fs` into `resolver.ts` -> `[A718]` failed (1 failed, 2 passed). Reverted.
+- suite: `pnpm run check` -> 63 files, 708 passed, 0 failed. Type check and lint clean.

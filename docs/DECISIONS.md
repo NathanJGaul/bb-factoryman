@@ -545,7 +545,7 @@ Creating a task only to fail it would clutter the log and would give the state m
 
 The milestone 4 tool required a complete profile.
 The resolver makes it optional, and adds `rule` and `tags`.
-Test U37 asserted the old `required` list, so it changed with this requirement (cycle L1 in the cycle log).
+Test U37 asserted the old `required` list, so it changed with this requirement (cycle C5 in the cycle log).
 The success text gains a `Profile: ...` line only when the resolver chose the profile, so the milestone 4 text for an explicit profile is unchanged.
 The `start` event does not record the profile source, because the machine's event is closed and changing it edits the merged milestone 2 machine.
 The result text and the plugin log name the source.

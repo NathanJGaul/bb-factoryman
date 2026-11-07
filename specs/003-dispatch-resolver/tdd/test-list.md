@@ -2,9 +2,9 @@
 feature: 003-dispatch-resolver
 loop: outside-in
 profile: .specify/memory/tdd-profile.md
-spec_criteria: 13
+spec_criteria: 14
 planned_at: bf5f79b
-updated_at: 44b4ee2
+updated_at: 8ec714b
 suite_baseline: green
 ---
 
@@ -35,6 +35,10 @@ Each stays red until the feature works through the plugin factory.
 | A712 | A resolver injected into the factory replaces the rules table | AC-3.1, FR-710 | example | DONE | `test/acceptance/dispatch-resolver.test.ts::[A712]` |
 | A713 | An absent `dispatch.json` gives the built-in default | AC-4.1, FR-707 | example | DONE | `test/acceptance/dispatch-resolver.test.ts::[A713]` |
 | A714 | No file in `src/machine/` imports from `src/dispatch/` | FR-711, SC-703 | example | DONE | `test/acceptance/layout.test.ts::[A714]` |
+| A718 | The resolver and its types import only the machine vocabulary and each other, so they cannot call bb or read a file | FR-701 | example | DONE | `test/acceptance/layout.test.ts::[A718]` |
+| A715 | A provider list that bb cannot return blocks dispatch and creates no task | AC-2.3, FR-708, FR-709 | error | DONE | `test/acceptance/dispatch-resolver.test.ts::[A715]` |
+| A716 | A project read or a resolver that throws blocks dispatch and creates no task | AC-2.5, FR-709, FR-710 | error | DONE | `test/acceptance/dispatch-resolver.test.ts::[A716]` |
+| A717 | The tool passes the task kind, the project's mode, and the tags to the rules | AC-1.2, FR-703 | example | DONE | `test/acceptance/dispatch-resolver.test.ts::[A717]` |
 
 ## Inner loop: unit behaviors
 
@@ -99,6 +103,18 @@ Each stays red until the feature works through the plugin factory.
 | U740 | A read error that is not "missing" is blocked | FR-707 | error | DONE | `src/dispatch/load.test.ts::[U740]` |
 | U741 | The loader reads `<checkout>/.bb/factoryman/dispatch.json` | FR-712 | example | DONE | `src/dispatch/load.test.ts::[U741]` |
 | U743 | `readText` returns the content, returns null for a missing file, and throws for another failure | FR-707 | example | DONE | `src/files.test.ts::[U743]` |
+
+### Added by the audit (cycle R1)
+
+| id | behavior | traces | kind | state | test |
+| --- | --- | --- | --- | --- | --- |
+| U744 | The matched rule's profile sets the reasoning floor, and the default sets it only when no rule matches | FR-706 | example | DONE | `src/dispatch/resolver.test.ts::[U744]` |
+
+`[U702]` now covers an unknown key in `when`, a rule, a profile, and the standing permissions.
+`[U712]` now covers a difference in each of the four profile fields alone.
+`[U721]` now covers a keyword as a prefix and as a suffix of another word.
+`[A709]`, `[A710]`, `[A711]`, `[U715]` run as `it.each` cases, and `[A711]` covers all five blockers.
+`[U743]` is three tests.
 
 ### `src/bb/adapter.ts`
 

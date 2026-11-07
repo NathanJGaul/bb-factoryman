@@ -24,4 +24,13 @@ describe("repository layout", () => {
       expect(readFileSync(new URL(name, dir), "utf8"), `${name} must not import from dispatch`).not.toMatch(/(?:from|import\()\s*["'][^"']*dispatch/);
     }
   });
+  it("[A718] keeps the resolver pure: it imports only types and the machine vocabulary", () => {
+    for (const file of ["src/dispatch/resolver.ts", "src/dispatch/types.ts"]) {
+      const text = readFileSync(new URL(file, root), "utf8");
+      const imports = [...text.matchAll(/from\s+["']([^"']+)["']/g)].map((match) => match[1] as string);
+      for (const target of imports) {
+        expect(["../machine/types", "./types"], `${file} imports ${target}`).toContain(target);
+      }
+    }
+  });
 });

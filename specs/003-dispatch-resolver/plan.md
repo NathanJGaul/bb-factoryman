@@ -31,9 +31,8 @@ Wire them into `factoryman_dispatch`, which now takes an optional profile, an op
 ```text
 src/dispatch/
   types.ts         # Rule, DispatchConfig, TaskFacts, Resolution, DispatchResolver
-  config.ts        # zod schema and parseDispatchConfig
-  builtin.ts       # BUILTIN_PROFILE and the default reasoning ladder
-  resolver.ts      # RulesTableResolver
+  config.ts        # zod schema, the default ladder, and parseDispatchConfig
+  resolver.ts      # RulesTableResolver and BUILTIN_PROFILE
   availability.ts  # checkProfile against ProviderInfo[]
   load.ts          # loadDispatchConfig(files, checkout)
 src/files.ts       # the Files port: readText, with a node:fs implementation

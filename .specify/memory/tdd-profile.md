@@ -31,6 +31,8 @@ stacks:
       - test/fixtures/git-repo.ts
       - test/fixtures/plugin-host.ts
       - test/fixtures/recorded.ts
+      - test/fixtures/checkout.ts
+      - test/fixtures/files.ts
 verified: [single, file, suite]
 suite_baseline: green
 suite_seconds: 13
@@ -53,6 +55,7 @@ suite_seconds: 13
 - Reuse the builders in `test/fixtures/` (`machine.ts` for events and snapshots, `legal-set.ts` for the hand-written legal set, `store.ts` for the fake clock and event paths, `history.ts` for hand-written log rows) and the shared store suite in `test/store-contract.ts`.
 - Refreshed by hand after milestone 3 (the commands are unchanged and were all re-run): the suite took about 21 seconds, 336 tests.
 - Refreshed by hand after milestone 6 (the commands are unchanged and `pnpm run check` re-ran): 57 files, 604 tests, about 13 seconds of wall time.
+- Milestone 7 adds `test/fixtures/checkout.ts` (temporary project checkouts with a `dispatch.json`) and `test/fixtures/files.ts` (an in-memory `Files`).
 - Milestones 4 to 6 add five fixtures. `test/fixtures/runtime.ts` builds a runtime over the memory store and the fake `BbPort` (`test/fixtures/bb-port.ts`). `test/fixtures/plugin-host.ts` loads the real plugin factory into the fake host with a small in-memory bb behind `bb.sdk`. `test/fixtures/git-repo.ts` builds temporary git repositories. `test/fixtures/recorded.ts` loads the real bb and no-mistakes recordings.
 
 ## Verification notes

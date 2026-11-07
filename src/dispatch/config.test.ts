@@ -31,6 +31,15 @@ describe("parseDispatchConfig", () => {
     expect(failure(valid({ surprise: 1 }))).toMatch(/surprise/);
   });
 
+  it.each([
+    ["when", valid({ rules: [{ id: "r", when: { kind: "ship", keyword: ["x"] }, profile: "deep" }] }), /keyword/],
+    ["a rule", valid({ rules: [{ id: "r", when: { kind: "ship" }, profile: "deep", machine: "m" }] }), /machine/],
+    ["a profile", valid({ profiles: { deep: { ...PROFILE, effort: "max" } } }), /effort/],
+    ["the standing permissions", valid({ standingPermission: { lowerReasoning: false, other: true } }), /other/],
+  ])("[U702] rejects an unknown key in %s", (_where, raw, pattern) => {
+    expect(failure(raw)).toMatch(pattern);
+  });
+
   it("[U703] rejects a rule that names an undefined profile", () => {
     expect(failure(valid({ rules: [{ id: "r", when: { kind: "ship" }, profile: "ghost" }] }))).toMatch(/ghost/);
   });

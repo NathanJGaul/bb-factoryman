@@ -70,6 +70,10 @@ export interface WorldOptions {
   checkout?: string;
   /** What `providers.list` returns. The default lists `claude` and `claude-code`. */
   providers?: unknown[];
+  /** Make `providers.list` fail. */
+  providersError?: Error;
+  /** Make `projects.get` fail. */
+  projectError?: Error;
   /** Replace the rules-table resolver. */
   resolver?: DispatchResolver;
   /** Run some commands for real. Return undefined to fall back to the scripted handler. */
@@ -118,10 +122,16 @@ export async function loadWorld(options: WorldOptions = {}): Promise<World> {
         delete: async () => ({ ok: true }),
       },
       projects: {
-        get: async ({ projectId }: { projectId: string }) => ({ id: projectId, gitRemoteUrl: "git@github.com:acme/widgets.git", sources: [{ type: "local_path", isDefault: true, hostId: "host_local", path: options.checkout ?? "/work/repo" }] }),
+        get: async ({ projectId }: { projectId: string }) => {
+          if (options.projectError) throw options.projectError;
+          return { id: projectId, gitRemoteUrl: "git@github.com:acme/widgets.git", sources: [{ type: "local_path", isDefault: true, hostId: "host_local", path: options.checkout ?? "/work/repo" }] };
+        },
       },
       providers: {
-        list: async () => options.providers ?? [providerFixture("claude"), providerFixture("claude-code")],
+        list: async () => {
+          if (options.providersError) throw options.providersError;
+          return options.providers ?? [providerFixture("claude"), providerFixture("claude-code")];
+        },
       },
     },
   });

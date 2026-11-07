@@ -10,13 +10,24 @@ afterEach(() => {
 });
 
 describe("nodeFiles.readText", () => {
-  it("[U743] returns the text of a file, null for a missing file, and throws for another failure", async () => {
+  function setup(): string {
     const dir = mkdtempSync(join(tmpdir(), "factoryman-files-"));
     dirs.push(dir);
     writeFileSync(join(dir, "a.json"), '{"a":1}');
-    expect(await nodeFiles.readText(join(dir, "a.json"))).toBe('{"a":1}');
+    return dir;
+  }
+
+  it("[U743] returns the text of a file", async () => {
+    expect(await nodeFiles.readText(join(setup(), "a.json"))).toBe('{"a":1}');
+  });
+
+  it("[U743] returns null for a missing file, and for a path below a file", async () => {
+    const dir = setup();
     expect(await nodeFiles.readText(join(dir, "missing.json"))).toBeNull();
     expect(await nodeFiles.readText(join(dir, "a.json", "below.json"))).toBeNull();
-    await expect(nodeFiles.readText(dir)).rejects.toThrow();
+  });
+
+  it("[U743] throws for a failure that is not a missing file", async () => {
+    await expect(nodeFiles.readText(setup())).rejects.toThrow();
   });
 });
