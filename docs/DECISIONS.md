@@ -212,6 +212,8 @@ The design gives no default for them, so the store invents none.
 `openSqliteStore` accepts a file path, `:memory:`, or an open `better-sqlite3` database, and closes only what it opened.
 How the plugin gets its per-plugin database from bb is unverified, so milestone 0 settles it.
 Wiring the store into the plugin factory waits for those results, as `CLAUDE.md` requires.
+**Resolved**: spike item 23 in `spike/RESULTS.md` confirmed that `bb.storage.database()` returns a `better-sqlite3` handle on the plugin's own `data.db`.
+Milestone 4 passes that handle to `openSqliteStore`.
 
 ## Captain decisions of 2026-11-06
 
@@ -233,5 +235,250 @@ The rules that carry it:
   Replay still reaches `working` with no merge decision, and a rebuilt cache matches.
 - The worker, thread, branch, machine, and pull request URL stay, because the rework happens on the same branch.
   The worker then hands off again, and the delivery mode's review-ready check runs again.
-- The `yolo` flag is untouched. `request_changes` is legal under `yolo` too.
+- The `yolo` flag is untouched.
+  `request_changes` is legal under `yolo` too.
 
+## Milestones 4 to 6: spike
+
+### D-029: The spike ran up front, on an isolated bb server (Deviation)
+
+The task brief asks for the bb checks "before each milestone".
+The checks for milestones 4, 5, and 6 ran together before the specification, and each is limited to the assumptions that its milestone needs.
+The plan for milestone 5 depends on what milestone 4 learned about tool and thread identity, and a refutation found late would waste built work.
+The checks ran against a bb 0.48.1 server that `bb-app` started on a throwaway data directory and non-default ports, so the owner's `~/.bb` and its plugins stayed untouched.
+The results, with the bb and no-mistakes versions, are in `spike/RESULTS.md`.
+No result refuted the architecture, so no `needs-decision` was needed.
+
+### D-030: A submitted approval form is not proof of a human (Gap, owner should know)
+
+`bb.ui.requestInput` returns `submitted` with whatever JSON reached `bb thread interactions respond`.
+The interaction row does not record who submitted it.
+An agent with a shell can therefore answer the owner's merge form.
+The design already lists a worker with shell access as a known gap on the merge gate, and names branch protection and scoped tokens as the backstop.
+The plugin validates the submitted value with a strict schema, treats everything except an exact approval as no approval, and says in its tool result that the approval came from a form.
+The plugin cannot close this gap on its own.
+
+## Milestones 4 to 6: plan
+
+### D-031: No tool answers a pipeline finding (Open, the owner decides)
+
+The design lists five tools, and none of them answers a no-mistakes finding.
+The validator interface has an `answer` operation, and the driver exposes it, but no tool calls it.
+A task in `needs_decision` therefore waits until someone answers in no-mistakes directly, which the driver observes, and then it returns to `validating`.
+A run that finishes with an override, with skipped steps, or without a pull request also parks the task in `needs_decision` until someone starts a new run.
+Adding a sixth tool, for example `factoryman_decide`, would give the supervisor a path.
+It changes a design table, so the owner decides.
+The firstmate rule that an `ask-user` finding belongs to the owner is a reason to route the answer through a form, as the merge approval does.
+
+### D-032: The constitution's scope principle and the project scope text are amended (Deviation, resolved)
+
+Principle VI limited the work to milestones 1 to 3.
+The captain's intent for this task widens it to milestones 4 to 6 and asks for the spike checks that those milestones need.
+Constitution version 1.1.0 now names milestones 1 to 6 as in scope and keeps milestones 7 to 11 out until their own spike results exist.
+The "Current scope" text in `CLAUDE.md` and the `src/tools/` layout comment said the opposite, so they carry the same correction and nothing else.
+
+### D-033: The dispatch description is the `start` event's evidence (Gap)
+
+The machine's `create` and `start` events carry no description, and changing them edits the merged milestone 2 machine.
+Every event may carry optional `evidence`, and the log stores it.
+The plugin writes the description there, reads it back as the no-mistakes intent, and shows its first line in `factoryman_status`.
+Evidence on `start` is not a gate, so this loosens nothing.
+
+### D-034: The plugin plans the branch name (Gap)
+
+bb names a worktree branch `bb/<slug>-<thread-id>` and a plugin cannot choose it (spike item 14).
+`start` needs a branch, and D-026 left the prefix empty with no default.
+Dispatch plans `<branchPrefix>` or `fm/`, followed by the task ID, records that name, and tells the worker to create the branch first.
+If the worker uses another name, the record is wrong, and teardown still checks the worktree, which does not depend on the name.
+
+### D-035: Authority comes from the store, not from plugin metadata (Gap)
+
+Plugin metadata is writable by the thread's own agent.
+It only decides which tools bb offers.
+Each tool decides the caller from the store: a recorded worker thread is a worker, and every other thread is a supervisor, in its own project only.
+
+### D-036: Every merge call asks the owner again (Gap)
+
+A stored approval does not skip the form on a retry.
+The worker keeps running during `awaiting_approval`, so the pull request can change after an approval, and a retry should not merge commits the owner never saw.
+
+### D-037: Nothing writes a project config yet (Limit)
+
+`.bb/factoryman/` config loading is milestone 9, and the design lists no tool or command that sets a project's mode or `yolo` flag.
+Until then every project resolves to `no-mistakes` with `yolo` off, which is the safe default, and the other two modes are reachable only through tests.
+
+### D-038: `@toon-format/toon` is a runtime dependency (Gap)
+
+The no-mistakes CLI prints TOON.
+A hand parser would have to get quoting and escaping right for finding text.
+The library 4.4.0 decodes every recorded output, is MIT-licensed, and has no dependencies.
+It is pinned to an exact version, as the SDK is.
+
+### D-039: What a validator result does to a task (Gap)
+
+The design says `needs_decision` holds when the pipeline stops on a finding that needs a human call, and `validating` ends when the pipeline has opened a pull request and CI is green.
+The driver reads a gate as `needs_decision`, because a pipeline never passes a gate on its own.
+It reads `checks-passed` with a pull request as `validated`, `failed` and `cancelled` as `fail`, and every other outcome as `needs_decision`.
+Output it cannot read advances nothing, and five failures in a row park the task for a human.
+
+### D-040: A failed worker thread fails the task at once (Limit)
+
+bb's `provider-retry` plugin can retry a failed turn, so a worker thread can recover after `thread.failed`.
+The plugin fails closed: it records `failed` and tells the supervisor.
+A recovered thread's later events find a failed task and do nothing.
+The supervisor can dispatch the work again.
+
+### D-041: One command stamps the supervisor role (Gap)
+
+Nothing in the design sets the supervisor role that makes bb offer the four supervisor tools.
+`bb factoryman supervisor <thread-id>` does it, and it refuses a recorded worker thread.
+The command grants visibility only, because authority comes from the store (D-035).
+
+### D-042: The real merge and git commands are not run against a real forge (Limit)
+
+The merge executors run `gh pr merge` for the pull request modes and `git merge` in the project checkout for `local-only`.
+Tests cover the command lines with a fake runner and cover the git facts and the local merge with temporary repositories.
+No test merges a real pull request, so the owner's live check in milestone 11 covers the `gh` path.
+The merge method comes from a `mergeMethod` plugin setting (`squash`, `merge`, or `rebase`) that defaults to `squash`.
+
+### D-043: Workers spawn with bb's parent notifications off (Deviation from bb's default)
+
+Spike item 22 shows that bb wakes a parent after every child outcome unless notifications are off.
+The design says the plugin, not the agent, wakes the supervisor.
+Dispatch therefore spawns every worker with `parentNotifications: "off"` and a parent thread, and the plugin sends the only wake messages.
+
+## Milestone 4: tools and approval
+
+### D-044: Tool arguments are checked by the tool, not by bb (Gap)
+
+`bb.agents.registerTool` can take a `zod` schema, and bb then rejects a bad call with its own error before the tool runs.
+The plugin registers each tool with the JSON schema that `z.toJSONSchema` makes from the same schema, so bb advertises the shape to the model and the tool checks the arguments itself.
+A bad call then gets the tool's refusal text, with a reason code, as a normal error result, and the tool's tests cover it.
+
+### D-045: Two milestone 1 tests changed with the scope amendment (Deviation)
+
+The layout test asserted that `src/tools` must not exist, and the plugin load test asserted that the factory registers nothing.
+Both rules ended with the captain's widening of scope (D-032).
+The layout test now forbids only `src/dispatch` and `skills`, and it still requires the milestone 1 to 3 directories.
+The plugin test now asserts the five tools, the command, the store on the host database, and a clean dispose.
+Neither change hides a failure: each follows a changed requirement, and the cycle log records both as their own steps.
+
+### D-046: A default empty `git` output fails teardown closed (Gap)
+
+The worktree report refuses an unreadable commit count.
+A fake runner that returns an empty string for `git rev-list --count` therefore blocks teardown, which is the intended behavior.
+Tests that want a landed worktree script the count as `0`.
+
+## Milestone 5: event wiring
+
+### D-047: A failure waits briefly for its cause, and a deleted thread keeps its parent (Gap)
+
+The spike recorded `thread.failed` with `error: null`, and the cause arrives in `turn.failed` about twenty milliseconds later.
+A handler that read the last turn failure at once would never see it.
+When the error text is empty, the handler waits 500 ms through the injected `sleep`, then reads the remembered category and status code.
+Without either, the evidence is the fixed text `worker thread entered the error state`.
+
+`ThreadInfo` also carries `deleted`.
+bb soft-deletes a thread and may still serve it, with its parent.
+The notifier needs that parent to tell the supervisor, so `getThread` returns `null` only for a 404, and a deleted thread observes as `missing`.
+If bb answers 404, the supervisor cannot be found, the plugin logs a warning, and it writes the `reconcile` row anyway.
+
+### D-048: The start-up service waits for the abort signal (Gap)
+
+`bb.background.service` expects `start` to resolve when the signal aborts.
+The start-up service therefore runs the live-state comparison and then waits.
+Milestone 6 resumes the validator driver in the same service.
+
+## Milestone 6: validator
+
+### D-049: The `checks-passed` outcome is a derived fixture, not a recording (Limit)
+
+The spike had no forge, so no run ever reached `checks-passed`.
+The acceptance test for the real adapter derives that output from the recorded status of a run that opened a pull request: it changes the outcome line from `cancelled` to the value the CLI's own documentation lists and drops the error line.
+The test names the derivation.
+The owner's live check in milestone 11 is the first time a real `checks-passed` output reaches the adapter.
+
+### D-050: Findings travel as the evidence of the `finding` event (Gap)
+
+The machine's `finding` event carries no payload.
+The driver writes the gate's findings into the event's evidence, one line each, with the fields exactly as no-mistakes wrote them.
+The wake message for a `needs_decision` task keeps that evidence whole, up to 8000 characters, and every other wake message cuts evidence to 600.
+
+### D-051: The validator is injected at the composition root (Gap)
+
+`createPlugin` takes an optional `validator` and `pollMs`.
+The default is the no-mistakes adapter over the real command runner.
+Tests inject a scripted fake.
+Nothing else in the plugin chooses a validator, so a second implementation (for example a multi-model audit) needs one line in `server.ts`.
+
+### D-052: The loop follows a run with `axi run`, and the run ID is not stored (Gap)
+
+`axi run` reattaches to the run for the current commit, so the driver never needs a run ID.
+A restart resumes every task in `validating` or `needs_decision`, asks again from the worktree, and starts no second run.
+The run ID appears in the evidence of the events that the driver records.
+
+## Live smoke test on the throwaway bb server
+
+### D-053: The fake plugin host accepted a spawn that real bb rejects (Gap, fixed)
+
+The first live dispatch failed with `HTTP 400: hostId is required unless workspace.type is personal`.
+The adapter now sends the project's default host ID and refuses to spawn when bb reports none (`spike/RESULTS.md` item 26).
+The fake host does not check this rule, so the fix is covered by an adapter test that asserts the host ID.
+The live smoke test stays part of the close-out, because it finds contract differences that the fake host cannot.
+
+## Audit remediation
+
+### D-054: The dispose wiring has an equivalent mutant under the fake host (Limit)
+
+`bb.onDispose(() => driver.dispose())` stops the validation loops when the plugin unloads.
+Under the fake host, `dispose` poisons the plugin's handle, so a loop stops by itself on its first bb call.
+A mutant that removes the wiring therefore survives U217, and no fake-host test can tell the two apart.
+Real bb unloads the plugin the same way, so the line matters in practice only when a plugin's handle stays usable after unload.
+The loops also stop when the task leaves its two states, and a stopped loop never cancels a run.
+
+### D-055: The cold-context audit found that the first random walk was too shallow (Gap, fixed)
+
+The first walk stayed in `working` and `blocked`, so it could not catch a cache that skips `fail` or `teardown` events.
+The walk now picks a mostly legal action for each task's state, reaches every state the tools can reach, and asserts that it applied `merge`, `teardown`, `block`, `fail`, and `ready` rows.
+
+## Captain decisions of 2026-11-07
+
+### D-056: The test-after waiver for six behaviors is accepted (Decided)
+
+The captain accepts the test-after waiver for U40, U120, U121, U122, U123, and U124 (`analyze.md` F1).
+Cycle R1 re-derived a red for each with a deliberate mutant.
+
+### D-057: D-031 is accepted for this PR, and `factoryman_decide` is a follow-up (Decided)
+
+No tool answers a pipeline finding in this PR.
+A sixth tool, `factoryman_decide`, comes in a follow-up PR.
+
+### D-058: D-030 is a known gap until milestone 10 (Decided)
+
+An approval form is not proof of a human.
+The captain accepts this gap until the branch protection work in milestone 10.
+
+### D-059: A pull request must belong to the project's own repository (Decided)
+
+A worker reports the pull request URL, so the URL is not trusted.
+The pull request executor refuses at preflight unless the URL is `https://<host>/<owner>/<repo>/pull/<number>` in the project's own repository.
+Host, owner, and repo compare case-insensitively.
+The project's remote comes from `bb.sdk.projects.get` through `BbPort.getProjectRemote`, in the forms `git@host:owner/repo(.git)` and `https://host/owner/repo(.git)`.
+A remote that is missing or unreadable also refuses, so the check fails closed.
+The check runs before the approval form and before `request_approval`, and it runs when `yolo` is on.
+`local-only` mode is not affected.
+
+### D-060: A deleted worker thread leaves a merged task alone (Decided)
+
+`thread.deleted` fails a task in any state before `merged`.
+A task that is `merged`, `torn_down`, or `failed` gets no `fail` event and no wake message, so the merged record stays true until teardown.
+
+### D-061: Live validation of the review fixes: two scenarios stay inconclusive in part (Decided)
+
+The captain chose Fix for finding test-1, and the fix is to record live evidence only (spike item 28).
+Three scenarios were confirmed live: a pull request URL outside the project's repository, a merged task that survives thread deletion, and the wiring and validator parts of the fourth.
+Two could not be driven live.
+The first is the exact race window of the concurrent merge guard, which two model-driven threads cannot hit on demand.
+The second is the reconcile message for a deleted worker thread, because bb answers 404, so the parent is unknown.
+No production code was added to make them drivable.
+Unit and acceptance tests cover both.

@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@toon-format/toon':
+        specifier: 4.4.0
+        version: 4.4.0
       better-sqlite3:
         specifier: 12.10.0
         version: 12.10.0
@@ -277,6 +280,9 @@ packages:
     peerDependenciesMeta:
       '@types/react':
         optional: true
+
+  '@toon-format/toon@4.4.0':
+    resolution: {integrity: sha512-A6UcsVoWbNdhdLNhJbe6JpRlocmf/DZGG57fur3bd8oQtsjBaKWo2hHbOU2zTuy+byUmLIOyP1xJeitopCZzpQ==}
 
   '@types/better-sqlite3@7.6.13':
     resolution: {integrity: sha512-NMv9ASNARoKksWtsq/SHakpYAYnhBrQgGD8zkLYk/jaK8jUGn08CfEdTRgYhMypUQAfzSP8W6gNLe0q19/t4VA==}
@@ -1171,6 +1177,8 @@ snapshots:
     dependencies:
       '@tanstack/query-core': 5.106.0
       react: 19.3.1
+
+  '@toon-format/toon@4.4.0': {}
 
   '@types/better-sqlite3@7.6.13':
     dependencies:

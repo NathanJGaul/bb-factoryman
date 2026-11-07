@@ -1,0 +1,52 @@
+run:
+  id: "01M6SKG1YZY54AJVFKK02MVXWH"
+  branch: bb/spike-check-do-not-read-or-edit-any-files-first-thr_n5rjcahnfk
+  status: cancelled
+  head: 6e3928ec
+  head_sha: 6e3928ecf9164dc00b2b5e8c11c16be1776ff9e2
+  verification_plan: none
+  findings: 1 auto-fix
+  steps[9]{step,status,findings,duration_ms}:
+    intent,completed,0,6
+    rebase,completed,0,68
+    review,failed,1,22802
+    test,pending,0,0
+    document,pending,0,0
+    lint,pending,0,0
+    push,pending,0,0
+    pr,pending,0,0
+    ci,pending,0,0
+branch_sync:
+  state: pipeline_owned
+  changed: false
+  local:
+    branch: bb/spike-check-do-not-read-or-edit-any-files-first-thr_n5rjcahnfk
+    head: db76f3091c2894a7f0e03426005e373ff89a8899
+    clean: true
+  pipeline:
+    run: "01M6SKG1YZY54AJVFKK02MVXWH"
+    status: cancelled
+    phase: pre_push
+    submitted_head: db76f3091c2894a7f0e03426005e373ff89a8899
+    current_head: 6e3928ecf9164dc00b2b5e8c11c16be1776ff9e2
+    pushed_head: ""
+    pushed_at: 0
+    push_generation: 0
+  target:
+    kind: ""
+    remote: origin
+    url: /tmp/throwaway/nm-origin.git
+    ref: ""
+  remote:
+    observed_head: ""
+    freshness: pipeline_push
+    observed_at: 0
+  relation: unknown
+  safety: blocked_pipeline_owned_recoverable
+  pr_state: none
+  note: the run finished cancelled with unpublished pipeline commits preserved in the local gate; recover custody before any local follow-up commit
+  next_action:
+    code: recover_custody
+    command: no-mistakes axi sync --recover
+outcome: cancelled
+error: "cancelled: aborted by user"

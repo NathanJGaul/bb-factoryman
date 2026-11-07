@@ -1,0 +1,156 @@
+{
+  "bbVersion": "0.48.1",
+  "sdk": "0.6.104",
+  "note": "Recorded from an isolated throwaway bb server. Ids are real but the server is gone.",
+  "events": {
+    "thread.idle": {
+      "thread": {
+        "id": "thr_pm7rkfcgwn",
+        "projectId": "proj_ftznnp9hhc",
+        "environmentId": "env_9kbzufnziq",
+        "providerId": "claude-code",
+        "title": null,
+        "titleFallback": "Spike check. Call probe_merge with note 'fixture'. Then reply with the single...",
+        "sectionId": null,
+        "status": "idle",
+        "parentThreadId": null,
+        "sourceThreadId": null,
+        "lifecycleOwnerThreadId": null,
+        "originKind": null,
+        "originPluginId": "probe",
+        "visibility": "visible",
+        "parentNotifications": "auto",
+        "archivedAt": null,
+        "pinnedAt": null,
+        "deletedAt": null,
+        "lastReadAt": 1794008328071,
+        "latestAttentionAt": 1794008339124,
+        "createdAt": 1794008328057,
+        "updatedAt": 1794008339124,
+        "runtime": {
+          "displayStatus": "idle"
+        },
+        "activeBackgroundAgentCount": 0,
+        "canRestoreEnvironment": false,
+        "canEditMessages": true,
+        "canSpawnChild": true,
+        "queuedMessageCount": 0
+      },
+      "lastAssistantText": "done"
+    },
+    "thread.failed": {
+      "thread": {
+        "id": "thr_b4qbvsr8fi",
+        "projectId": "proj_ftznnp9hhc",
+        "environmentId": "env_t65m4kv45d",
+        "providerId": "claude-code",
+        "title": "failcase2",
+        "titleFallback": "say OK",
+        "sectionId": null,
+        "status": "error",
+        "parentThreadId": null,
+        "sourceThreadId": null,
+        "lifecycleOwnerThreadId": null,
+        "originKind": null,
+        "originPluginId": null,
+        "visibility": "visible",
+        "parentNotifications": "auto",
+        "archivedAt": null,
+        "pinnedAt": null,
+        "deletedAt": null,
+        "lastReadAt": 1794008327218,
+        "latestAttentionAt": 1794008331344,
+        "createdAt": 1794008327207,
+        "updatedAt": 1794008331344,
+        "runtime": {
+          "displayStatus": "error"
+        },
+        "activeBackgroundAgentCount": 0,
+        "canRestoreEnvironment": false,
+        "canEditMessages": true,
+        "canSpawnChild": true,
+        "queuedMessageCount": 0
+      },
+      "error": null
+    },
+    "turn.failed": {
+      "threadId": "thr_b4qbvsr8fi",
+      "requestId": "creq_sq5kvu5pyr",
+      "turnId": "da53da591f-t1",
+      "errorInfo": {
+        "category": "bad-request",
+        "providerCode": null,
+        "httpStatusCode": 404
+      },
+      "inputAccepted": true,
+      "rateLimits": null,
+      "attemptNumber": 1
+    },
+    "interaction.pending": {
+      "thread": {
+        "id": "thr_pm7rkfcgwn",
+        "projectId": "proj_ftznnp9hhc",
+        "environmentId": "env_9kbzufnziq",
+        "providerId": "claude-code",
+        "title": null,
+        "titleFallback": "Spike check. Call probe_merge with note 'fixture'. Then reply with the single...",
+        "sectionId": null,
+        "status": "active",
+        "parentThreadId": null,
+        "sourceThreadId": null,
+        "lifecycleOwnerThreadId": null,
+        "originKind": null,
+        "originPluginId": "probe",
+        "visibility": "visible",
+        "parentNotifications": "auto",
+        "archivedAt": null,
+        "pinnedAt": null,
+        "deletedAt": null,
+        "lastReadAt": 1794008328071,
+        "latestAttentionAt": 1794008328057,
+        "createdAt": 1794008328057,
+        "updatedAt": 1794008329515,
+        "runtime": {
+          "displayStatus": "active"
+        },
+        "activeBackgroundAgentCount": 0,
+        "canRestoreEnvironment": false,
+        "canEditMessages": true,
+        "canSpawnChild": true,
+        "queuedMessageCount": 0
+      },
+      "interaction": {
+        "id": "pint_vhqe2mqqpn",
+        "threadId": "thr_pm7rkfcgwn",
+        "status": "pending",
+        "statusReason": null,
+        "createdAt": 1794008335480,
+        "expiresAt": 1794008365480,
+        "resolvedAt": null,
+        "turnId": null,
+        "origin": {
+          "kind": "plugin",
+          "pluginId": "probe",
+          "rendererId": "approval"
+        },
+        "payload": {
+          "kind": "plugin",
+          "title": "Approve merge (probe)",
+          "data": {
+            "note": "fixture"
+          },
+          "presentation": {
+            "label": {
+              "pending": "Waiting for Approve merge (probe)",
+              "completed": "Submitted Approve merge (probe)"
+            },
+            "icon": {
+              "glyph": "ListTodo"
+            }
+          }
+        },
+        "resolution": null
+      }
+    }
+  }
+}

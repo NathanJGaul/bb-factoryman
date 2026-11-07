@@ -1,0 +1,24 @@
+current_branch: fm/bb-factoryman-milestones-4-6
+other_branch_run:
+  id: "01M6RB7JXA4SDHNQDR11DKA39W"
+  branch: fm/bb-factoryman-milestones-1-3
+  status: cancelled
+  head: 5c0762ca
+  head_sha: 5c0762cae06e0d554c434eb0110db68364dc5387
+  verification_plan: none
+  pr: "https://github.com/NathanJGaul/bb-factoryman/pull/1"
+  findings: none
+  steps[9]{step,status,findings,duration_ms}:
+    intent,completed,0,5
+    rebase,completed,0,1291
+    review,completed,0,19596
+    test,completed,0,34222
+    document,completed,0,18507
+    lint,completed,0,673
+    push,completed,0,3633
+    pr,completed,0,13085
+    ci,failed,0,442334
+  shared_work[1]{attributed_to,scope,duration_ms}:
+    document,document+lint housekeeping,18507
+outcome: cancelled
+error: "cancelled: aborted by user"
