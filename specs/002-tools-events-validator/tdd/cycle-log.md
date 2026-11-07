@@ -434,7 +434,7 @@ Each behavior in a batch still has its own test, and each entry records the fail
   - M8 findings limit 1000, and also 8001 -> U214 failed both times (1 failed, 10 passed each)
   - M9 refused start rows counted -> U215 failed (1 failed, 7 passed)
   - teardown ignores the git report -> U216 and the first A15 failed (2 failed, 2 passed)
-  - the driver never starts on `validating` -> A30 to A36 failed (A38's control is among the waits); the driver `ensure` made a no-op -> U185, U194, U201, U202, and U203 failed
+  - the driver never starts on `validating` -> A30 to A34 and A38 failed (A38 run on its own: 1 failed); the driver `ensure` made a no-op -> U185, U194, U201, U202, and U203 failed
 - test-after set (audit finding 3): the reds for the tests written after the factory were re-derived with mutants.
   - U122 setting default 10 changed to 5 -> U122 failed (1 failed, 5 passed)
   - U123 service registration removed -> U123 failed (1 failed, 5 passed)

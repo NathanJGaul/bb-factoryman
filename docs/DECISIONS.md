@@ -425,3 +425,18 @@ The adapter now sends the project's default host ID and refuses to spawn when bb
 The fake host does not check this rule, so the fix is covered by an adapter test that asserts the host ID.
 The live smoke test stays part of the close-out, because it finds contract differences that the fake host cannot.
 
+## Audit remediation
+
+### D-054: The dispose wiring has an equivalent mutant under the fake host (Limit)
+
+`bb.onDispose(() => driver.dispose())` stops the validation loops when the plugin unloads.
+Under the fake host, `dispose` poisons the plugin's handle, so a loop stops by itself on its first bb call.
+A mutant that removes the wiring therefore survives U217, and no fake-host test can tell the two apart.
+Real bb unloads the plugin the same way, so the line matters in practice only when a plugin's handle stays usable after unload.
+The loops also stop when the task leaves its two states, and a stopped loop never cancels a run.
+
+### D-055: The cold-context audit found that the first random walk was too shallow (Gap, fixed)
+
+The first walk stayed in `working` and `blocked`, so it could not catch a cache that skips `fail` or `teardown` events.
+The walk now picks a mostly legal action for each task's state, reaches every state the tools can reach, and asserts that it applied `merge`, `teardown`, `block`, `fail`, and `ready` rows.
+

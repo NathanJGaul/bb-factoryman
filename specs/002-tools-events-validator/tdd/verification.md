@@ -263,3 +263,33 @@ Recorded after the last mutant was restored:
 - `git diff --stat` is empty for all source and test files.
 - `pnpm test`: 57 files, 604 passed, 0 failed.
 - `git status --short`: only `specs/002-tools-events-validator/tdd/verification.md` is new.
+
+## Remediation after the audit
+
+The audit above judged the tree at commit `495c1cb`.
+The implementer then answered every finding in the commit "test: close the gaps found by the cold-context audit".
+This section was written by the implementer, and no second audit has run on it.
+
+| Finding | Answer | Evidence |
+| --- | --- | --- |
+| 1 Cross-project teardown | Tests U209 and a second A15 test; mutant M13 now fails both | cycle log R1 |
+| 2 Local-only base branch | U210 covers blank and dash-led bases; mutant M7 now fails | cycle log R1 |
+| 3 Test-after behaviors | Reds re-derived with mutants for U40, U120 to U124. The random walk was rebuilt, because the audit was right to distrust it (D-055). The class stays `TEST_AFTER` in the cycle log. | cycle logs H0, H1, R1 |
+| 4 Behaviors without a red | A29 asserts five different command lines. A38 and U203 carry a positive control and fail when the driver is not wired. U149 has a positive control. U155 stays covered by the mutant that returns `failed` for every status. | cycle log R1 |
+| 5 `mergeMethod` setting | U211 and an extra A8 test; mutant M18 now fails both | cycle log R1 |
+| 6 Gate with no step | U212; mutant M12 now fails | cycle log R1 |
+| 7 `findLast` | U213; mutant M10 now fails | cycle log R1 |
+| 8 Fixed sleeps | Replaced by waits on a positive condition. The two absence checks (U217 and the dispose check in U204) keep a 25 ms wait on a loop that polls every millisecond. | tests |
+| 9 and 16 No real git or `gh` in acceptance | U216 runs the landed-work check against a real temporary repository. `gh` stays scripted (D-042). | `test/acceptance/tools-teardown.test.ts` |
+| 10 Hooks assertion | Restored in `plugin.test.ts` | test |
+| 11 and 12 Findings limit, refused start | U214 and U215; mutants M8 and M9 now fail | cycle log R1 |
+| 13 and 14 Text drift, dead lines | Task text corrected, the cycle naming note added, `void` lines and needless casts removed | `tasks.md`, tests |
+| 15 Unrestored mutant in C19 | Recorded in cycle log C19. No mutated code was committed. | cycle log |
+
+Still open after the remediation:
+
+- Mutant M14, M15, and M19 stay equivalent today (the scout guard in the merge tool, the dash check in the local merge executor, and the `ensure` state check in the driver).
+- The `onDispose` wiring has an equivalent mutant under the fake host (D-054).
+- The audit sampled 19 mutants. Files it did not mutate (`handlers.ts` beyond the log, `startup.ts`, `register.ts`, `supervisor-command.ts`, `fake.ts`, `runtime.ts`) have the mutants of their own cycles and no more.
+- The `gh pr merge` path and a real `checks-passed` output are unproven live (D-042, D-049).
+
