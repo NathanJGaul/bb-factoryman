@@ -37,6 +37,8 @@ export interface PluginOptions {
   remote?: { pollMs?: number; timeoutMs?: number };
   /** How often the machine monitor reads the machines, in milliseconds. The default comes from the `machinePollSeconds` setting. */
   machinePollMs?: number;
+  /** Replaces `fetch` for the webhook. */
+  fetch?: (url: string, init: { method: string; headers: Record<string, string>; body: string; signal: AbortSignal }) => Promise<{ ok: boolean; status: number }>;
 }
 
 const MERGE_METHODS = ["squash", "merge", "rebase"] as const;
@@ -68,6 +70,18 @@ export function createPlugin(options: PluginOptions = {}): (bb: BbPluginApi) => 
         description: "How long the approval form waits for the owner before it counts as not answered.",
         default: 10,
       },
+      maxWorkers: {
+        type: "number",
+        label: "Maximum running workers",
+        description: "The most workers that run at once across all projects. Dispatches beyond it wait in a queue. 0 means no cap.",
+        default: 0,
+      },
+      webhookUrl: {
+        type: "string",
+        label: "Webhook URL",
+        description: "The plugin posts a JSON message here when a task needs attention. Leave it empty to turn it off. Treat the URL as a secret.",
+        default: "",
+      },
       machinePollSeconds: {
         type: "number",
         label: "Machine check interval (seconds)",
@@ -83,6 +97,7 @@ export function createPlugin(options: PluginOptions = {}): (bb: BbPluginApi) => 
       mergeMethod: mergeMethod(values.mergeMethod),
       approvalTimeoutMs: Math.max(1, Math.round(values.approvalTimeoutMinutes * 60_000)),
       machinePollMs: options.machinePollMs ?? pollMsFrom(values.machinePollSeconds),
+      maxWorkers: Math.max(0, Math.floor(values.maxWorkers)),
     });
 
     const store = openSqliteStore(bb.storage.database());

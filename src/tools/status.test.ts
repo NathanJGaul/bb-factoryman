@@ -88,4 +88,21 @@ describe("factoryman_status", () => {
     expect((await status(t.runtime, SUPERVISOR, { taskId: "t2" })).text).toContain("  machine: host_gpu");
     expect((await status(t.runtime, SUPERVISOR, { taskId: "t1" })).text).not.toContain("machine:");
   });
+  it("[U1031] shows a queued task with the description from its stored request", async () => {
+    const t = await withDispatchedTask();
+    const queued = t.runtime.log.create({
+      type: "create",
+      actor: "supervisor",
+      taskId: "q1",
+      projectId: "proj-1",
+      kind: "ship",
+      mode: "no-mistakes",
+      request: { v: 1, description: "Queued work.\nWith details.", tags: [], profile: { provider: "claude", model: "opus", reasoningLevel: "high", permissionMode: "auto" }, machine: null, cloneHost: null, parentThreadId: "thr-sup", branchPrefix: null, baseBranch: null },
+    });
+    expect(queued.ok).toBe(true);
+    const text = (await status(t.runtime, SUPERVISOR, { taskId: "q1" })).text;
+    expect(text).toContain("Task q1: ship, no-mistakes, state queued");
+    expect(text).toContain("  description: Queued work.");
+    expect(text).not.toContain("With details");
+  });
 });

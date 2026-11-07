@@ -50,6 +50,12 @@ export interface RemoteFake {
   createError: Error | null;
 }
 
+/** What the plugin posted to the webhook, and what the fake receiver answers. */
+export interface WebhookFake {
+  calls: Array<{ url: string; init: { method: string; headers: Record<string, string>; body: string; signal: AbortSignal } }>;
+  result: { ok: boolean; status: number } | Error;
+}
+
 export interface FakeThread {
   id: string;
   projectId: string;
@@ -72,6 +78,12 @@ export interface World {
   remote: RemoteFake;
   /** Make `threads.updatePluginMetadata` fail. */
   failMetadata: Error | null;
+  /** The cost that `threads.context` reports per thread. A thread that is missing reports no cost. */
+  costs: Map<string, { amount: number; currency: string }>;
+  /** The webhook receiver. */
+  webhook: WebhookFake;
+  /** Move the plugin's clock forward by `ms`. */
+  skewClock(ms: number): void;
   metadata: Map<string, Record<string, unknown>>;
   execCalls: Array<{ command: string; args: readonly string[]; cwd?: string }>;
   /** Override to script git and gh. The default is a successful empty run. */
@@ -122,6 +134,8 @@ export interface WorldOptions {
   projectError?: Error;
   /** Make `hosts.list` fail. */
   hostsError?: Error;
+  /** What `projects.list` returns. */
+  projectList?: Array<{ id: string; name: string }>;
   /** Replace the rules-table resolver. */
   resolver?: DispatchResolver;
   /** Run some commands for real. Return undefined to fall back to the scripted handler. */
@@ -137,6 +151,9 @@ export async function loadWorld(options: WorldOptions = {}): Promise<World> {
   const sources = () => (options.sources ?? [{ hostId: "host_local", path: options.checkout ?? "/work/repo", isDefault: true }]).map((source, index) => ({ type: "local_path", isDefault: source.isDefault ?? index === 0, ...source }));
   const remote: RemoteFake = { runs: [], handler: () => ({ code: 0, stdout: "", stderr: "" }), truncate: false, createError: null };
   const terminals = new Map<string, { status: string; exitCode: number | null; output: string; truncated: boolean }>();
+  const costs = new Map<string, { amount: number; currency: string }>();
+  const webhook: WebhookFake = { calls: [], result: { ok: true, status: 200 } };
+  let skew = 0;
   const sent = new Map<string, string[]>();
   let spawned = 0;
 
@@ -167,6 +184,10 @@ export async function loadWorld(options: WorldOptions = {}): Promise<World> {
           return { ok: true, delivery: "sent" };
         },
         archive: async () => ({}),
+        context: async ({ threadId }: { threadId: string }) => {
+          const cost = costs.get(threadId);
+          return { usage: cost === undefined ? null : { cost, estimated: true, modelContextWindow: 200000 } };
+        },
         updatePluginMetadata: async ({ threadId, set }: { threadId: string; set?: Record<string, unknown> }) => {
           if (world.failMetadata) throw world.failMetadata;
           metadata.set(threadId, { ...(metadata.get(threadId) ?? {}), ...set });
@@ -178,6 +199,7 @@ export async function loadWorld(options: WorldOptions = {}): Promise<World> {
         delete: async () => ({ ok: true }),
       },
       projects: {
+        list: async () => options.projectList ?? [],
         get: async ({ projectId }: { projectId: string }) => {
           if (options.projectError) throw options.projectError;
           return { id: projectId, gitRemoteUrl: "git@github.com:acme/widgets.git", sources: sources() };
@@ -231,6 +253,11 @@ export async function loadWorld(options: WorldOptions = {}): Promise<World> {
     machines,
     remote,
     failMetadata: null,
+    costs,
+    webhook,
+    skewClock(ms) {
+      skew += ms;
+    },
     metadata,
     execCalls: [],
     execHandler: () => ({ code: 0, stdout: "", stderr: "" }),
@@ -283,11 +310,16 @@ export async function loadWorld(options: WorldOptions = {}): Promise<World> {
       world.execCalls.push({ command, args, cwd: execOptions?.cwd });
       return (await options.exec?.(command, args, execOptions?.cwd)) ?? world.execHandler(command, args);
     },
-    now: ((tick = 0) => () => new Date(Date.parse("2026-11-06T12:00:00.000Z") + tick++ * 1000).toISOString())(),
+    now: ((tick = 0) => () => new Date(Date.parse("2026-11-06T12:00:00.000Z") + skew + tick++ * 1000).toISOString())(),
     newId: () => `t${++next}`,
     sleep: async (ms) => (world.sleepHook ? world.sleepHook(ms) : new Promise<void>((resolve) => setTimeout(resolve, 1))),
     validator: options.validator,
     resolver: options.resolver,
+    fetch: async (url, init) => {
+      webhook.calls.push({ url, init });
+      if (webhook.result instanceof Error) throw webhook.result;
+      return webhook.result;
+    },
     pollMs: 1,
     remote: { pollMs: 1, timeoutMs: 30 },
     machinePollMs: 1,

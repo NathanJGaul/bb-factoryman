@@ -59,6 +59,10 @@ export interface BbPort {
   listProviders(hostId?: string): Promise<ProviderAvailability[]>;
   /** Every machine bb knows. */
   listMachines(): Promise<MachineInfo[]>;
+  /** The cost bb recorded for a thread, or null when the provider reports none. */
+  getThreadCost(threadId: string): Promise<{ amount: number; currency: string } | null>;
+  /** Every project bb knows, by ID and name. */
+  listProjects(): Promise<Array<{ id: string; name: string }>>;
   /** The project's sources: the hosts that hold a copy of it. */
   getProjectSources(projectId: string): Promise<ProjectSource[]>;
   /** Start `argv` in a new terminal on a host, with no shell and no input. */

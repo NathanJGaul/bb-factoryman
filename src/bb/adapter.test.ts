@@ -273,4 +273,18 @@ describe("createBbPort", () => {
     await port.closeTerminal("term_1");
     expect(sdk.callsTo("terminals.close")).toEqual([[{ terminalId: "term_1", mode: "force" }]]);
   });
+  it("[U1028] reads the cost of a thread, and gives null for no cost or for a failure", async () => {
+    const context = (usage: unknown) => ({ threads: { context: async () => ({ usage }) } }) as FakeSdkOverrides;
+    expect(await setup(context({ cost: { amount: 1.25, currency: "USD" }, estimated: true })).port.getThreadCost("thr-1")).toEqual({ amount: 1.25, currency: "USD" });
+    expect(await setup(context({ estimated: true })).port.getThreadCost("thr-1")).toBeNull();
+    expect(await setup(context({ cost: null })).port.getThreadCost("thr-1")).toBeNull();
+    expect(await setup(context(null)).port.getThreadCost("thr-1")).toBeNull();
+    const broken = setup({ threads: { context: async () => { throw new Error("bb is down"); } } } as FakeSdkOverrides);
+    await expect(broken.port.getThreadCost("thr-1")).rejects.toThrow("bb is down");
+  });
+
+  it("[U1029] lists projects as ID and name", async () => {
+    const { port } = setup({ projects: { list: async () => [{ id: "proj-1", name: "widgets", extra: 1 }, { id: "proj-2", name: "Gadgets" }] } } as FakeSdkOverrides);
+    expect(await port.listProjects()).toEqual([{ id: "proj-1", name: "widgets" }, { id: "proj-2", name: "Gadgets" }]);
+  });
 });

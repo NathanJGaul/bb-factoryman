@@ -120,6 +120,14 @@ export function createBbPort(bb: BbPluginApi): BbPort {
       return project.sources.map((source) => ({ hostId: source.hostId, path: source.path, isDefault: source.isDefault }));
     },
 
+    async getThreadCost(): Promise<{ amount: number; currency: string } | null> {
+      throw new Error("not implemented");
+    },
+
+    async listProjects(): Promise<Array<{ id: string; name: string }>> {
+      throw new Error("not implemented");
+    },
+
     async startTerminal(hostId, cwd, argv) {
       const session = await bb.sdk.terminals.create({ cols: 200, rows: 50, scope: { kind: "host_path", hostId, cwd }, start: { mode: "argv", argv } });
       return { terminalId: session.id };

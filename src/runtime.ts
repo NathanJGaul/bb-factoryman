@@ -18,6 +18,8 @@ export interface Settings {
   approvalTimeoutMs: number;
   /** How often the machine monitor reads the machines. */
   machinePollMs: number;
+  /** The global cap on running workers. 0 means no cap. */
+  maxWorkers: number;
 }
 
 export interface AppliedEvent {
@@ -52,6 +54,8 @@ export class Runtime {
   readonly log: TaskLog;
   /** Task IDs whose merge approval form is open right now. */
   readonly openMergeForms = new Set<string>();
+  /** Task IDs whose worker is starting right now. They count as running before `start` is recorded. */
+  readonly launching = new Set<string>();
   /** Passed preflights, by host, project, mode, and provider. A restart clears it. */
   readonly preflightPassed = new Set<string>();
   private readonly listeners: AppliedListener[] = [];

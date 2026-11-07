@@ -31,6 +31,11 @@ export class FakeBbPort implements BbPort {
   terminalClosed: string[] = [];
   terminalStartError: Error | null = null;
   setMetadataError: Error | null = null;
+  /** What `getThreadCost` returns per thread. A thread that is missing has no cost data. */
+  costs = new Map<string, { amount: number; currency: string } | null>();
+  costError: Error | null = null;
+  /** What `listProjects` returns. */
+  projectList: Array<{ id: string; name: string }> = [];
   terminalReadError: Error | null = null;
   /** What `listMachines` returns. The default is one online host, `host_local`. */
   machines: MachineInfo[] = [{ id: "host_local", name: "local-box", status: "connected", phase: "active", online: true }];
@@ -116,6 +121,17 @@ export class FakeBbPort implements BbPort {
   async requestInput(request: InputRequest): Promise<InputResult> {
     this.calls.push({ method: "requestInput", args: [request] });
     return this.inputHandler(request);
+  }
+
+  async getThreadCost(threadId: string): Promise<{ amount: number; currency: string } | null> {
+    this.calls.push({ method: "getThreadCost", args: [threadId] });
+    if (this.costError) throw this.costError;
+    return this.costs.get(threadId) ?? null;
+  }
+
+  async listProjects(): Promise<Array<{ id: string; name: string }>> {
+    this.calls.push({ method: "listProjects", args: [] });
+    return this.projectList;
   }
 
   async startTerminal(hostId: string, cwd: string | null, argv: string[]): Promise<{ terminalId: string }> {

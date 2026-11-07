@@ -15,8 +15,8 @@ function failure(raw: unknown): string {
 
 describe("parseWorkflowConfig", () => {
   it("[U901] parses a minimal file and fills an empty project and no checks", () => {
-    expect(parseWorkflowConfig(valid())).toEqual({ ok: true, config: { version: 1, project: {}, checks: {} } });
-    expect(emptyWorkflowConfig()).toEqual({ version: 1, project: {}, checks: {} });
+    expect(parseWorkflowConfig(valid())).toEqual({ ok: true, config: { version: 1, project: {}, checks: {}, limits: { budgetCurrency: "USD" } } });
+    expect(emptyWorkflowConfig()).toEqual({ version: 1, project: {}, checks: {}, limits: { budgetCurrency: "USD" } });
     const full = parseWorkflowConfig(valid({ project: { deliveryMode: "direct-PR", branchPrefix: "wip/", defaultMachine: "gpu-box" }, checks: { "direct-PR": [{ ...CHECK, timeoutSeconds: 60 }] } }));
     expect(full).toMatchObject({ ok: true, config: { project: { deliveryMode: "direct-PR", branchPrefix: "wip/", defaultMachine: "gpu-box" }, checks: { "direct-PR": [{ name: "lint", argv: ["pnpm", "run", "lint"], timeoutSeconds: 60 }] } } });
   });
@@ -75,5 +75,18 @@ describe("parseWorkflowConfig", () => {
     expect(failure(valid({ version: 2 }))).toMatch(/version/);
     expect(failure("text")).toMatch(/object/);
     expect(failure(null)).toMatch(/object/);
+  });
+  it("[U1001] accepts the five limit fields, and rejects non-positive numbers, fractions for counts, and unknown keys", () => {
+    const limits = { maxWorkers: 3, perTaskBudget: 5.5, perDayBudget: 20, maxTasksPerDay: 15, budgetCurrency: "EUR" };
+    expect(parseWorkflowConfig(valid({ limits }))).toMatchObject({ ok: true, config: { limits } });
+    expect(parseWorkflowConfig(valid({ limits: { maxWorkers: 1 } }))).toMatchObject({ ok: true, config: { limits: { maxWorkers: 1, budgetCurrency: "USD" } } });
+    for (const bad of [{ maxWorkers: 0 }, { maxWorkers: -1 }, { maxWorkers: 1.5 }, { maxTasksPerDay: 0 }, { maxTasksPerDay: 2.5 }, { perDayBudget: 0 }, { perDayBudget: -1 }, { perTaskBudget: 0 }, { budgetCurrency: "" }, { burst: 2 }]) {
+      expect(failure(valid({ limits: bad })), JSON.stringify(bad)).toMatch(/limits/);
+    }
+  });
+
+  it("[U1002] gives no limits but the default currency when the file has no limits section", () => {
+    const parsed = parseWorkflowConfig(valid({ checks: { "direct-PR": [CHECK] } }));
+    expect(parsed.ok && parsed.config.limits).toEqual({ budgetCurrency: "USD" });
   });
 });
