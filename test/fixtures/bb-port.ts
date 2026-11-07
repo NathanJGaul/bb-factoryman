@@ -42,6 +42,8 @@ export class FakeBbPort implements BbPort {
   sendError: Error | null = null;
   retireError: Error | null = null;
   getThreadError: Error | null = null;
+  checkoutError: Error | null = null;
+  envPathError: Error | null = null;
   /** Called for each form. Defaults to a timeout cancellation. */
   inputHandler: (request: InputRequest) => Promise<InputResult> = async () => ({ outcome: "cancelled", reason: "timeout" });
   private nextThread = 1;
@@ -91,6 +93,7 @@ export class FakeBbPort implements BbPort {
 
   async getEnvironmentPath(environmentId: string): Promise<string | null> {
     this.calls.push({ method: "getEnvironmentPath", args: [environmentId] });
+    if (this.envPathError) throw this.envPathError;
     return this.envPaths.get(environmentId) ?? null;
   }
 
@@ -101,6 +104,7 @@ export class FakeBbPort implements BbPort {
 
   async getProjectCheckout(projectId: string): Promise<string | null> {
     this.calls.push({ method: "getProjectCheckout", args: [projectId] });
+    if (this.checkoutError) throw this.checkoutError;
     return this.checkouts.get(projectId) ?? null;
   }
 

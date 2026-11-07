@@ -22,7 +22,7 @@ describe("runChecks", () => {
     const { exec, calls } = setup();
     await runChecks(exec, [lint, test], { cwd: "/work/gpu/tree", host: "host_gpu" });
     expect(calls).toEqual([
-      { line: "pnpm run lint", cwd: "/work/gpu/tree", host: "host_gpu", timeoutMs: undefined },
+      { line: "pnpm run lint", cwd: "/work/gpu/tree", host: "host_gpu", timeoutMs: 600_000 },
       { line: "pnpm test", cwd: "/work/gpu/tree", host: "host_gpu", timeoutMs: 90_000 },
     ]);
   });

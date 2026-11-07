@@ -4,6 +4,9 @@ import { GATE_KEYS, emptyWorkflowConfig, parseWorkflowConfig } from "./config";
 const valid = (extra: Record<string, unknown> = {}) => ({ version: 1, ...extra });
 const CHECK = { name: "lint", argv: ["pnpm", "run", "lint"] };
 
+/** The keys that the plan lists, written out by hand so that removing one from the code fails a test. */
+const EXPECTED_GATE_KEYS = ["yolo", "gates", "gate", "skip", "skipGates", "skipChecks", "approval", "approvals", "requireApproval", "disable", "disabled", "teardown", "evidence", "merge", "bypass", "override"];
+
 function failure(raw: unknown): string {
   const result = parseWorkflowConfig(raw);
   if (result.ok) throw new Error("expected the file to be rejected");
@@ -18,14 +21,14 @@ describe("parseWorkflowConfig", () => {
     expect(full).toMatchObject({ ok: true, config: { project: { deliveryMode: "direct-PR", branchPrefix: "wip/", defaultMachine: "gpu-box" }, checks: { "direct-PR": [{ name: "lint", argv: ["pnpm", "run", "lint"], timeoutSeconds: 60 }] } } });
   });
 
-  it.each(GATE_KEYS)("[U902] rejects the gate-like key `%s` and names hard rule 7", (key) => {
+  it.each(EXPECTED_GATE_KEYS)("[U902] rejects the gate-like key `%s` and names hard rule 7", (key) => {
     expect(failure(valid({ [key]: true }))).toMatch(/never remove a gate/);
     expect(failure(valid({ project: { [key]: true } }))).toMatch(/never remove a gate/);
     expect(failure(valid({ checks: { "direct-PR": [{ ...CHECK, [key]: true }] } }))).toMatch(/never remove a gate/);
   });
 
-  it("[U902] has a list of gate-like keys that includes yolo, gates, skip, and approval", () => {
-    expect(GATE_KEYS).toEqual(expect.arrayContaining(["yolo", "gates", "skip", "approval", "requireApproval", "disable", "teardown", "evidence", "merge"]));
+  it("[U936] pins the whole list of gate-like keys", () => {
+    expect([...GATE_KEYS]).toEqual(EXPECTED_GATE_KEYS);
   });
 
   it("[U903] rejects project.baseBranch with a message about the landed-work check", () => {
@@ -41,19 +44,25 @@ describe("parseWorkflowConfig", () => {
     expect(failure(raw)).toMatch(/Unrecognized key|unknown/i);
   });
 
-  it("[U905] needs a name and a non-empty argv, unique names per mode, at most 20 checks, and a timeout of 1 to 3600 seconds", () => {
+  it("[U905] needs a name and a non-empty argv for each check", () => {
     expect(failure(valid({ checks: { "direct-PR": [{ name: "", argv: ["x"] }] } }))).toMatch(/name/);
     expect(failure(valid({ checks: { "direct-PR": [{ name: "a", argv: [] }] } }))).toMatch(/argv/);
     expect(failure(valid({ checks: { "direct-PR": [{ name: "a", argv: [" "] }] } }))).toMatch(/argv/);
+  });
+
+  it("[U905] allows each check name once per mode and at most 20 checks per mode", () => {
     expect(failure(valid({ checks: { "direct-PR": [CHECK, CHECK] } }))).toMatch(/duplicate/i);
     const many = Array.from({ length: 21 }, (_, i) => ({ name: `c${i}`, argv: ["true"] }));
     expect(failure(valid({ checks: { "direct-PR": many } }))).toMatch(/at most 20/);
     expect(parseWorkflowConfig(valid({ checks: { "direct-PR": many.slice(0, 20) } })).ok).toBe(true);
+    expect(parseWorkflowConfig(valid({ checks: { "direct-PR": [CHECK], "local-only": [CHECK] } })).ok).toBe(true);
+  });
+
+  it("[U905] takes a timeout of 1 to 3600 whole seconds", () => {
     for (const timeoutSeconds of [0, 3601, 1.5, -1]) {
       expect(failure(valid({ checks: { "direct-PR": [{ ...CHECK, timeoutSeconds }] } })), String(timeoutSeconds)).toMatch(/timeoutSeconds/);
     }
     expect(parseWorkflowConfig(valid({ checks: { "direct-PR": [{ ...CHECK, timeoutSeconds: 1 }, { name: "b", argv: ["x"], timeoutSeconds: 3600 }] } })).ok).toBe(true);
-    expect(parseWorkflowConfig(valid({ checks: { "direct-PR": [CHECK], "local-only": [CHECK] } })).ok).toBe(true);
   });
 
   it("[U906] accepts the three delivery modes and nothing else, and only modes as check keys", () => {
@@ -62,7 +71,7 @@ describe("parseWorkflowConfig", () => {
     expect(failure(valid({ checks: { everything: [CHECK] } }))).toMatch(/Unrecognized key|everything/);
   });
 
-  it("rejects a version other than 1 and input that is not an object", () => {
+  it("[U942] rejects a version other than 1 and input that is not an object", () => {
     expect(failure(valid({ version: 2 }))).toMatch(/version/);
     expect(failure("text")).toMatch(/object/);
     expect(failure(null)).toMatch(/object/);

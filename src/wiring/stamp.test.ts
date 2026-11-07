@@ -46,7 +46,7 @@ describe("registerStamper", () => {
     for (const [, metadata] of stamps(t)) expect(Object.keys(metadata)).not.toContain("role");
   });
 
-  it("does not write after a refused event", async () => {
+  it("[U941] does not write after a refused event", async () => {
     const t = setup();
     await dispatch(t.runtime, SUPERVISOR, DISPATCH_ARGS);
     const before = stamps(t).length;

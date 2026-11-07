@@ -13,6 +13,8 @@ export interface CheckRun {
 }
 
 const TAIL_CHARS = 600;
+/** A check with no timeout of its own still ends, so a hung command cannot hang a report (D-079). */
+export const DEFAULT_CHECK_TIMEOUT_MS = 600_000;
 
 function detail(result: ExecResult): string {
   if (result.code === null) return result.error ?? "the command could not run";
@@ -32,7 +34,7 @@ export async function runChecks(exec: Exec, checks: readonly Check[], where: { c
     const result = await exec(command, args, {
       cwd: where.cwd,
       host: where.host,
-      timeoutMs: check.timeoutSeconds === undefined ? undefined : check.timeoutSeconds * 1000,
+      timeoutMs: check.timeoutSeconds === undefined ? DEFAULT_CHECK_TIMEOUT_MS : check.timeoutSeconds * 1000,
     });
     const passed = result.code === 0;
     run.facts.push({ name: check.name, passed });

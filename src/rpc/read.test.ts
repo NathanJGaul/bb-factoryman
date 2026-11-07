@@ -116,4 +116,15 @@ describe("the read RPC", () => {
     await expect(call("getTask", {})).rejects.toThrow();
     await expect(call("listTasks", { states: ["nope"] })).rejects.toThrow();
   });
+
+  it("[U940] returns at most 200 events by default, and takes a limit of 1000", async () => {
+    const { call, make, store } = setup();
+    for (let i = 0; i < 201; i += 1) make(`task-${String(i).padStart(3, "0")}`);
+    expect(store.listEvents()).toHaveLength(201);
+    const byDefault = (await call("listEvents", {})) as { events: unknown[] };
+    expect(byDefault.events).toHaveLength(200);
+    const wide = (await call("listEvents", { limit: 1000 })) as { events: unknown[] };
+    expect(wide.events).toHaveLength(201);
+    await expect(call("listEvents", { limit: 1001 })).rejects.toThrow();
+  });
 });

@@ -22,8 +22,9 @@ Red commit: the commit before this group's implementation (`test: add workflow c
   - `[U917]`, `[U918]`, and the table-order test: the table lacked the guard
   - `[U919]` to `[U923]`: the stub ran nothing
   - `[A902]` to `[A911]`: the tools ignored the file
-- Passed against the stubs: `[A901]`, `[A912]`, the `[U905]` timeout half, and `[U924]`. They describe behavior that already held (no file, a scout, no checks). Deliberate mutants after the implementation:
+- Passed against the stubs: `[A901]`, `[A910]`, `[A912]`, `[U924]`, and the three equal-mode cases of `[U911]` (the stub returned the stored config). They describe behavior that already held or that a stub gives by accident (no file, a refused empty evidence, a scout, no checks). `[U905]` failed as a whole test. Deliberate mutants after the implementation:
   - a scout runs the checks -> `[A912]` failed
+  - empty evidence accepted -> `[A910]` failed
 - Mutants on the new gates, all killed:
   - the guard always passes -> `[U915]`, `[A909]`, `[A911]`
   - the report skips the checks -> `[A908]`, `[A909]`, `[A911]`
@@ -61,4 +62,21 @@ Red commit: the commit before this group's implementation (`test: add thread met
   - `registerReadRpc` or `registerStamper` removed from `server.ts` -> `[A915]` to `[A917]`, `[A913]`, `[A914]`
 - Existing tests that changed with the requirement: `[A17]` expects the four RPC methods, `[A18]` expects the stamped metadata, and `[A908]` (remote) counts only the `pnpm` runs, because the validator also runs on the machine.
 - green: `src/wiring/stamp.ts`, `src/rpc/read.ts`, and their registration in `server.ts`.
-  `pnpm run check` -> 80 files, 960 passed, 0 failed. Type check and lint clean.
+  `pnpm run check` -> 80 files, 960 passed, 0 failed, then 961 with `[A918]`. Type check and lint clean.
+
+- `[A918]` (added after the group, FR-910): no file in `src/machine/` imports from a layer above it. It passed at once. Mutant: import `../workflow/types` into `guards.ts` -> `[A918]` failed. Reverted.
+
+## Cycle R1: audit remediation (tests added to kill surviving mutants)
+
+The cold audit (`tdd/verification.md`, commit `4bad48e`) returned FAIL: 105 mutants, 18 survived, 11 of them real gaps. The product was right in each case, so the new tests passed at once except `[U943]` (the default check timeout, finding 10), which was red.
+
+- R1 `[U902]` runs over a hand-written list of the 16 keys, and `[U936]` pins the whole list. `[A905]` requires the hard rule 7 message.
+  Mutants: remove `skipGates` (M04), `approvals` (M05), or `disabled` (M06) from `GATE_KEYS` -> `[U902]` for that key and `[U936]` failed. Weaken the message (M103) -> six `[A905]` cases failed. Reverted.
+- R2 `[U937]`: a project read that fails blocks a done report. Mutant: return the empty config from that catch (M27) -> `[U937]` failed. Reverted.
+- R3 `[U938]`: a worker thread read or a worktree path read that fails blocks a done report. Mutant: return "no checks" from that catch (M58) -> both cases failed. Reverted.
+- R4 `[A919]` (three tests): the `direct-PR` and `local-only` checks run on `ready`, a failing check gives `check_failed`, and another mode's check does not run. Mutant: hard-code the `no-mistakes` lookup (M56) -> two cases failed. Reverted.
+- R5 `[U939]`: `blocked` and `failed` reports pass with failing checks and with an invalid file, and run no check. Mutant: run checks for any outcome (M54) -> both cases failed. Reverted.
+- R6 `[A920]`: the resolver gets the effective mode. Mutant: pass the stored mode (M66) -> failed. `[U940]`: the default limit of 200 and the maximum of 1000. Mutants M76 and M78 -> `[U940]` failed (M78 also `[U935]`). Reverted.
+- R7 bookkeeping: the entries above for `[A910]` and `[U911]`, the 960 and 961 counts, and the `[A918]` entry. `test-list.md` lists A917 before A918. `[A908]` and `[A911]` no longer share an ID (`[A921]`, `[A922]`), `[U905]` and `[U915]` are split, and the two untagged tests have IDs (`[U941]`, `[U942]`).
+- finding 10: a check with no `timeoutSeconds` now gets a default of 600 seconds (`DEFAULT_CHECK_TIMEOUT_MS`), so a hung command cannot hang a report. `[U919]` and `[U943]` were red first. Mutant: remove the default -> both failed. Reverted. D-079 says so.
+- suite: `pnpm run check` -> 80 files, 975 passed, 0 failed. Type check and lint clean.

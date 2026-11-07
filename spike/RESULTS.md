@@ -401,6 +401,58 @@ The plugin cannot tell from that data whether the path is on the server's own ma
 
 Fallback: an absent file reads as empty config, and an unreadable or invalid file blocks the call that needs it.
 
+## Milestone 10: limits, backstop, and cutover
+
+These checks ran on 2026-11-07 against the same throwaway bb 0.48.1 server.
+
+## 12. Cost data
+
+Result: partial
+
+Evidence: `bb.sdk.threads.context({ threadId })` (CLI: `bb thread context`) returns `usage`, which holds an optional `cost` of `{ amount, currency }`, an `estimated` flag, and the model's context window.
+A `claude-code` thread on the throwaway server returned `cost: null` and `estimated: true`.
+The SDK documents `cost` as optional, so a provider that reports it fills it, and this one did not.
+The thread events also carry token counts (`thread/tokenUsage/updated`) with no price.
+
+Not driven: a provider that reports cost.
+
+Fallback: the design's own: a budget that needs cost data is not enforced when the data is missing, and a cap on tasks per day stays in force.
+The dispatch result says which budgets could not be checked.
+
+## 13. Push notifications
+
+Result: confirmed, with a decision
+
+Evidence: the built-in `push-notifications` plugin has a command, `bb push-notifications send`, that "sends a notification to every enabled channel".
+It exposes no RPC method for another plugin in what the CLI lists.
+The plugin calls no other plugin (the design's standalone rule), so a plugin-to-plugin call is out.
+
+Decision: the plugin posts to a webhook URL that the owner sets.
+Delivery works: the plugin process has a global `fetch`, and a probe plugin on the throwaway server posted JSON to a local receiver, which saw the body and answered 200.
+Not driven: a real receiver beyond localhost.
+
+Fallback: none needed.
+
+## 18. Branch protection
+
+Result: not driven (needs a forge)
+
+Evidence: the checklist and the `gh api` commands are written in `docs/BRANCH-PROTECTION.md`, and `bb factoryman protection` prints them.
+Nothing here changes a GitHub setting, and nothing was run against a forge.
+
+Fallback: the owner runs the steps on a throwaway repository first (`docs/LIVE-CHECK.md`).
+
+## 19. firstmate registry
+
+Result: confirmed
+
+Evidence: firstmate keeps its registry at `data/projects.md` in its home.
+The header of `bin/fm-project-mode.sh` documents the line format: `- <name> [<mode> +yolo branch=<prefix> forge=<value>] - <description> (added <date>)`, with the bracket optional and its tokens in any order.
+The modes are `no-mistakes`, `direct-PR`, `local-only`, and `no-mistakes-prod-only`, which firstmate maps to `no-mistakes`.
+I read both files and wrote to neither.
+
+Fallback: the import is a dry run that reads one file and prints a table.
+
 ## Not checked
 
 These items belong to milestones 7 to 11, or to the owner's live install, and the task brief excludes them.
@@ -410,6 +462,3 @@ These items belong to milestones 7 to 11, or to the owner's live install, and th
 | 3. Read-only supervisor | Not needed for milestones 4 to 6. |
 | 4. Worktree removal veto | Not needed for milestones 4 to 6. |
 | 5. Dispatch hook ordering | Capacity is milestone 10. |
-| 12 to 13. Cost and notifications | Milestone 10. |
-| 18. Branch protection | Needs a forge. It is the owner's setup step. |
-| 19. firstmate registry | Cutover is milestone 10. |

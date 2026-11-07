@@ -24,4 +24,14 @@ description: "Task list for the extension surface"
 ## Phase 4: Close-out
 
 - [X] T930 Record D-078 to D-083, update the Not checked table, and the profile helpers
-- [ ] T931 `/speckit.tdd.verify`, remediation, `/speckit.checklist`, `/speckit.analyze`, `/speckit.converge`
+- [X] T931 `/speckit.tdd.verify`, remediation, `/speckit.checklist`, `/speckit.analyze`, `/speckit.converge`
+
+## Phase 5: Audit remediation (from `tdd/verification.md`)
+
+- [X] R1 `[U902]` over a hand-written list, `[U936]`, and the message in `[A905]`
+- [X] R2 `[U937]`: a project read that fails blocks a done report
+- [X] R3 `[U938]`: a worktree lookup that fails blocks a done report
+- [X] R4 `[A919]`: the `ready` path runs its checks
+- [X] R5 `[U939]`: only `done` reports run checks
+- [X] R6 `[A920]`, `[U940]`: the effective mode and the read limits
+- [X] R7 the bookkeeping, the split tests, and the default check timeout (`[U943]`)

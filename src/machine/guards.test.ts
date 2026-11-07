@@ -204,14 +204,12 @@ describe("localOnlyStaysOnClone", () => {
 describe("customChecksPassed", () => {
   const check = (type: "handoff" | "ready", checks: unknown) => GUARDS.customChecksPassed(context(), parsedEvent(type, { checks }));
 
-  it("[U915] refuses any check with passed false and names every failure", () => {
-    for (const type of ["handoff", "ready"] as const) {
-      const refusal = check(type, [{ name: "lint", passed: true }, { name: "test", passed: false }, { name: "docs", passed: false }]);
-      expect(refusal?.code, type).toBe("check_failed");
-      expect(refusal?.message).toContain("test");
-      expect(refusal?.message).toContain("docs");
-      expect(refusal?.message).not.toContain("lint");
-    }
+  it.each(["handoff", "ready"] as const)("[U915] refuses any check with passed false on %s, and names every failure and no passing check", (type) => {
+    const refusal = check(type, [{ name: "lint", passed: true }, { name: "test", passed: false }, { name: "docs", passed: false }]);
+    expect(refusal?.code).toBe("check_failed");
+    expect(refusal?.message).toContain("test");
+    expect(refusal?.message).toContain("docs");
+    expect(refusal?.message).not.toContain("lint");
   });
 
   it("[U916] passes with no checks, an empty list, or all checks passed", () => {

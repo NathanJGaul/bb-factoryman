@@ -649,6 +649,7 @@ It selects among the three modes only.
 
 A check is an `argv` list that the plugin runs with `exec`, in the worker's worktree, on the machine of the task, with an optional timeout of 1 to 3600 seconds.
 A check passes on exit code 0 only. A timeout, a missing command, or a failed terminal counts as failed.
+A check with no `timeoutSeconds` gets a default of 600 seconds, so a hung command cannot hang a report.
 Every check runs, so the worker sees all the failures.
 The commands come from a file in the server's checkout, so whoever can change that file can run commands as the plugin's user in worktrees.
 The worker already has a shell there, and a remote worktree runs the command through a host terminal as the daemon's user, so the plugin adds no new reach on that machine.

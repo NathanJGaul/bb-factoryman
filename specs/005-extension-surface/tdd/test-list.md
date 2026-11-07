@@ -35,8 +35,27 @@ The suite baseline was 72 files and 873 tests, all passing.
 | A914 | A failed metadata write leaves the transition in place and logs a warning | AC-4.2, FR-908 | error | DONE | `test/acceptance/extension-surface.test.ts::[A914]` |
 | A915 | A sibling plugin reads tasks and events through `callRpc`, with `since`, and every answer carries `apiVersion` 1 | AC-5.1, FR-909, SC-901 | example | DONE | `test/acceptance/extension-surface.test.ts::[A915]` |
 | A916 | No RPC call changes the log, and a write-shaped method does not exist | AC-5.2, FR-909, SC-901 | example | DONE | `test/acceptance/extension-surface.test.ts::[A916]` |
-| A918 | `src/machine/` imports nothing from the layers above it, so the event field, the guard, and the reason code are the only additions | FR-910 | example | DONE | `test/acceptance/layout.test.ts::[A918]` |
 | A917 | The registered methods are exactly the four read methods, each discoverable with a description | AC-5.3, FR-909 | example | DONE | `test/acceptance/extension-surface.test.ts::[A917]` |
+| A918 | `src/machine/` imports nothing from the layers above it, so the event field, the guard, and the reason code are the only additions | FR-910 | example | DONE | `test/acceptance/layout.test.ts::[A918]` |
+
+## Added by the audit (cycle R1)
+
+| id | behavior | traces | kind | state | test |
+| --- | --- | --- | --- | --- | --- |
+| A919 | The `direct-PR` and `local-only` checks run on `ready`, a failing check refuses with `check_failed`, and another mode's check does not run | AC-3.1, AC-3.2 | example | DONE | `test/acceptance/extension-workflow.test.ts::[A919]` |
+| A920 | The dispatch resolver gets the effective mode | AC-1.4 | example | DONE | `test/acceptance/extension-workflow.test.ts::[A920]` |
+| A921 | The checks of a remote task run on its machine | AC-3.1 | example | DONE | `test/acceptance/extension-workflow.test.ts::[A921]` |
+| A922 | A report with checks to run and no worktree path is refused | AC-3.4 | error | DONE | `test/acceptance/extension-workflow.test.ts::[A922]` |
+| U936 | The list of gate-like keys is pinned by hand | FR-903 | example | DONE | `src/workflow/config.test.ts::[U936]` |
+| U937 | A project read that fails blocks a done report | FR-902 | error | DONE | `src/tools/report.test.ts::[U937]` |
+| U938 | A worker thread or worktree path read that fails blocks a done report | FR-906 | error | DONE | `src/tools/report.test.ts::[U938]` |
+| U939 | A `blocked` or `failed` report passes with failing checks or an invalid file, and runs no check | FR-906 | example | DONE | `src/tools/report.test.ts::[U939]` |
+| U940 | `listEvents` returns 200 rows by default and takes a limit of 1000 | FR-909 | boundary | DONE | `src/rpc/read.test.ts::[U940]` |
+| U941 | The stamper writes nothing after a refused event | FR-908 | example | DONE | `src/wiring/stamp.test.ts::[U941]` |
+| U942 | A version other than 1 and input that is not an object are rejected | FR-901 | example | DONE | `src/workflow/config.test.ts::[U942]` |
+| U943 | A check with no timeout of its own gets the 600 second default | FR-907 | boundary | DONE | `src/tools/report.test.ts::[U943]` |
+
+`[U905]` and `[U915]` are split into one behavior per test.
 
 ## Inner loop: unit behaviors
 

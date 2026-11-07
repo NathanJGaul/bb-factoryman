@@ -92,7 +92,7 @@ describe("workflow.json through the plugin factory", () => {
     const { world } = await setup({ version: 1, ...extra });
     const result = await world.call("factoryman_dispatch", TASK);
     expect(result.isError).toBe(true);
-    expect(result.text).toMatch(/never remove a gate|Unrecognized key/);
+    expect(result.text).toContain("never remove a gate");
     expect(world.store.listTasks()).toEqual([]);
     expect(world.sdkCalls("threads.spawn")).toEqual([]);
   });
@@ -126,7 +126,7 @@ describe("custom checks through factoryman_report", () => {
     expect(ran).toEqual([{ line: "pnpm run lint", cwd: "/work/tree" }, { line: "pnpm test", cwd: "/work/tree" }]);
   });
 
-  it("[A908] runs the checks of a remote task on its machine", async () => {
+  it("[A921] runs the checks of a remote task on its machine", async () => {
     const checkout = makeCheckout({ workflow: WORKFLOW });
     const world = await loadWorld({
       checkout,
@@ -184,7 +184,7 @@ describe("custom checks through factoryman_report", () => {
     expect(result.text).toContain("ENOENT");
   });
 
-  it("[A911] refuses a report that has checks to run and no worktree path", async () => {
+  it("[A922] refuses a report that has checks to run and no worktree path", async () => {
     const { world } = await setup(WORKFLOW);
     await world.call("factoryman_dispatch", TASK);
     const result = await report(world);
@@ -200,5 +200,61 @@ describe("custom checks through factoryman_report", () => {
     expect((await report(world, "Findings.")).isError).toBe(false);
     expect(world.store.getTask("t1")?.state).toBe("report_ready");
     expect(world.execCalls.filter((call) => call.command === "pnpm")).toEqual([]);
+  });
+});
+
+describe("custom checks on the ready path", () => {
+  const WORKFLOW = { version: 1, checks: { "direct-PR": [LINT], "local-only": [TEST], "no-mistakes": [{ name: "never", argv: ["never-run"] }] } };
+  const PR = "https://github.com/acme/widgets/pull/7";
+  const ready = (world: World, extra: Record<string, unknown>) => world.call("factoryman_report", { outcome: "done", evidence: "Pushed.", ...extra }, { threadId: "thr-w1" });
+  const readyRow = (world: World) => world.store.listEvents({ taskId: "t1" }).find((row) => row.event === "ready");
+
+  it("[A919] records the direct-PR checks in the ready event, and runs no other mode's check", async () => {
+    const { world } = await setup(WORKFLOW);
+    world.setProject({ deliveryMode: "direct-PR" });
+    await world.call("factoryman_dispatch", TASK);
+    world.paths.set("env-thr-w1", "/work/tree");
+    expect((await ready(world, { prUrl: PR })).isError).toBe(false);
+    expect(readyRow(world)?.payload).toMatchObject({ checks: [{ name: "lint", passed: true }] });
+    expect(world.execCalls.filter((call) => ["pnpm", "never-run"].includes(call.command)).map((call) => [call.command, ...call.args].join(" "))).toEqual(["pnpm run lint"]);
+  });
+
+  it("[A919] refuses a direct-PR ready event with check_failed when a check fails", async () => {
+    const { world } = await setup(WORKFLOW);
+    world.setProject({ deliveryMode: "direct-PR" });
+    await world.call("factoryman_dispatch", TASK);
+    world.paths.set("env-thr-w1", "/work/tree");
+    world.execHandler = () => ({ code: 1, stdout: "", stderr: "lint is red" });
+    const result = await ready(world, { prUrl: PR });
+    expect(result.isError).toBe(true);
+    expect(result.text).toContain("check_failed");
+    expect(result.text).toContain("lint is red");
+    expect(world.store.getTask("t1")?.state).toBe("working");
+  });
+
+  it("[A919] runs the local-only checks and records them in the ready event", async () => {
+    const { world } = await setup(WORKFLOW);
+    world.setProject({ deliveryMode: "local-only" });
+    await world.call("factoryman_dispatch", TASK);
+    world.paths.set("env-thr-w1", "/work/tree");
+    expect((await ready(world, { landedCommits: 2 })).isError).toBe(false);
+    expect(readyRow(world)?.payload).toMatchObject({ landedCommits: 2, checks: [{ name: "test", passed: true }] });
+  });
+
+  it("[A920] gives the dispatch resolver the effective mode and not the stored one", async () => {
+    const checkout = makeCheckout({
+      workflow: { version: 1, project: { deliveryMode: "no-mistakes" } },
+      dispatch: {
+        version: 1,
+        profiles: { strict: { provider: "claude", model: "opus", reasoningLevel: "xhigh", permissionMode: "auto" } },
+        rules: [{ id: "strict-mode", when: { mode: "no-mistakes" }, profile: "strict" }],
+      },
+    });
+    const world = await loadWorld({ checkout });
+    world.setProject({ deliveryMode: "direct-PR" });
+    expect((await world.call("factoryman_dispatch", TASK)).isError).toBe(false);
+    expect(world.store.getTask("t1")?.mode).toBe("no-mistakes");
+    const [[spawn]] = world.sdkCalls("threads.spawn") as [[{ model: string }]];
+    expect(spawn.model).toBe("opus");
   });
 });
