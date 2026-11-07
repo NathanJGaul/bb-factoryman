@@ -178,7 +178,7 @@ A `no-mistakes` task reaches `review_ready` through the validator, and a gate pa
 - [X] T101 Run `pnpm run check` and confirm no skipped test and a total time under 90 seconds (SC-007)
 - [X] T102 Run the deliberate-mutant pass on the gate-bearing functions and record it (SC-009)
 - [X] T103 Update `.specify/memory/tdd-profile.md` with the new helpers and suite time
-- [ ] T104 Run `/speckit.tdd.verify`, `/speckit.checklist`, `/speckit.analyze`, and `/speckit.converge`, and commit the artifacts
+- [X] T104 Run `/speckit.tdd.verify`, `/speckit.checklist`, `/speckit.analyze`, and `/speckit.converge`, and commit the artifacts
 
 ---
 

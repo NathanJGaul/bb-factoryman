@@ -54,7 +54,7 @@ The reviewer-owned requirements-quality list is `checklists/requirements.md`.
 
 - [x] CHK040 Every behavior has a recorded red, a recorded deliberate-mutant red, or an admitted test-after record. Evidence: `tdd/cycle-log.md` (27 cycles) and `tdd/verification.md`.
 - [x] CHK041 No test was weakened, skipped, deleted, or filtered to reach green. Evidence: the audit in `tdd/verification.md`. Two milestone 1 tests changed because a requirement changed (D-045), each as its own step.
-- [x] CHK042 Commits are small, one concern each, and carry no agent co-author line. Evidence: 32 commits since the merge base, and `git log cd761f4..HEAD --format=%B | grep -ci co-authored` prints 0.
+- [x] CHK042 Commits are small, one concern each, and carry no agent co-author line. Evidence: `git log cd761f4..HEAD` shows one concern per commit, and `git log cd761f4..HEAD --format=%B | grep -ci co-authored` prints 0.
 - [x] CHK043 No generated file or `CHANGELOG.md` was edited by hand. Evidence: no `CHANGELOG.md` exists, and `pnpm-lock.yaml` came from `pnpm add`.
 - [x] CHK044 Prose docs put each sentence on its own line, and no em dash appears in files I wrote. Evidence: a splitter pass over the 002 docs (text unchanged, line breaks only), and a grep for the em dash character in the changed files. The append-only cycle log and the audit report keep their original line breaks.
 - [x] CHK045 A cold-context audit ran, its findings were answered, and the answers are recorded. Evidence: `tdd/verification.md` (verdict FAIL for commit `495c1cb`, then the remediation section) and cycle R1.
