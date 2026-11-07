@@ -15,6 +15,7 @@ interface ThreadFields {
   status: string;
   parentThreadId: string | null;
   environmentId: string | null;
+  deletedAt?: number | null;
 }
 
 /** True for the error that bb's SDK raises for an HTTP 404. */
@@ -55,8 +56,8 @@ export function createBbPort(bb: BbPluginApi): BbPort {
     async getThread(threadId) {
       try {
         const found = (await bb.sdk.threads.get({ threadId })) as ThreadFields | { thread: ThreadFields };
-        const { id, projectId, status, parentThreadId, environmentId } = "thread" in found ? found.thread : found;
-        return { id, projectId, status, parentThreadId, environmentId };
+        const { id, projectId, status, parentThreadId, environmentId, deletedAt } = "thread" in found ? found.thread : found;
+        return { id, projectId, status, parentThreadId, environmentId, deleted: deletedAt !== null && deletedAt !== undefined };
       } catch (error) {
         if (isNotFound(error)) return null;
         throw error;

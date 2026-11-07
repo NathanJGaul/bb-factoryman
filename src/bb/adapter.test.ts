@@ -62,7 +62,7 @@ describe("createBbPort", () => {
   it("[U11] reads a thread as id, project, status, parent, and environment", async () => {
     const { port } = setup({
       threads: {
-        get: async () => ({ id: "thr-1", projectId: "proj-1", status: "error", parentThreadId: "thr-sup", environmentId: "env-1", extra: true }),
+        get: async () => ({ id: "thr-1", projectId: "proj-1", status: "error", parentThreadId: "thr-sup", environmentId: "env-1", deletedAt: null, extra: true }),
       },
     });
     expect(await port.getThread("thr-1")).toEqual({
@@ -71,7 +71,13 @@ describe("createBbPort", () => {
       status: "error",
       parentThreadId: "thr-sup",
       environmentId: "env-1",
+      deleted: false,
     });
+  });
+
+  it("[U11] flags a soft-deleted thread and keeps its parent", async () => {
+    const { port } = setup({ threads: { get: async () => ({ id: "thr-1", projectId: "proj-1", status: "idle", parentThreadId: "thr-sup", environmentId: null, deletedAt: 1794000000000 }) } });
+    expect(await port.getThread("thr-1")).toMatchObject({ deleted: true, parentThreadId: "thr-sup" });
   });
 
   it("[U12] reads an unknown thread as null, and rethrows other failures", async () => {

@@ -31,6 +31,7 @@ export class FakeBbPort implements BbPort {
       status: "idle",
       parentThreadId: null,
       environmentId: null,
+      deleted: false,
       ...info,
     };
     this.threads.set(thread.id, thread);

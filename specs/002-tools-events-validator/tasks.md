@@ -115,13 +115,13 @@ description: "Task list for tools and approval, event wiring, and the validator"
 - [ ] T062 [P] [US2] [A25] Replay test in `test/acceptance/wiring-events.test.ts` (a sequence of at least ten thread events, duplicate failure, exact message list; AC-2.7, SC-004)
 - [ ] T063 [P] [US2] [A28] Recorded payload test in `test/acceptance/wiring-recorded.test.ts` (the real `thread.failed`, `turn.failed`, `thread.idle`, and `interaction.pending` payloads; AC-2.10)
 - [ ] T064 [P] [US2] [A27] Start-up test in `test/acceptance/wiring-startup.test.ts` (missing thread, errored thread, matching thread, second restart sends nothing; AC-2.9)
-- [ ] T065 [P] [US2] [U153] [U154] [U155] [U156] [U157] [U158] [U159] [U160] Observation tests in `src/wiring/startup.test.ts` (missing, failed, and logged-state mapping)
+- [X] T065 [P] [US2] [U153] [U154] [U155] [U156] [U157] [U158] [U159] [U160] Observation tests in `src/wiring/startup.test.ts` (missing, failed, and logged-state mapping)
 
 ### Implementation for user story 2
 
 - [X] T066 [P] [US2] [U125] [U126] [U127] [U128] [U129] [U130] [U131] [U132] [U133] [U134] Implement the notifier and message text in `src/wiring/wake.ts`
 - [X] T067 [US2] [U135] [U136] [U137] [U138] [U139] [U140] [U141] [U142] [U143] [U144] [U145] [U146] [U147] [U148] [U149] [U150] [U151] [U152] Implement the thread-event handlers in `src/wiring/handlers.ts`
-- [ ] T068 [US2] [U153] [U154] [U155] [U156] [U157] [U158] [U159] [U160] Implement observation, reconcile, and resume in `src/wiring/startup.ts`
+- [X] T068 [US2] [U153] [U154] [U155] [U156] [U157] [U158] [U159] [U160] Implement observation, reconcile, and resume in `src/wiring/startup.ts`
 - [ ] T069 [US2] Register the handlers, the notifier listener, and the start-up service in `src/server.ts`
 - [ ] T070 [US2] Update `docs/DECISIONS.md` with the milestone 5 findings and commit milestone 5
 - [ ] T071 [US2] [A19] [A20] [A21] [A22] [A23] [A24] [A25] [A26] [A27] [A28] Outer-loop gate: A19 to A28 are green through the plugin factory before milestone 5 is committed

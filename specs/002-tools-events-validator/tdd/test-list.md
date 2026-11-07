@@ -92,7 +92,7 @@ Boundaries have both sides, and error paths name the failure.
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
 | U10 | `spawnWorker` sends project, parent thread, off parent notifications, role metadata, profile, and a managed worktree, and returns the thread ID | FR-107, FR-108 | example | DONE | `src/bb/adapter.test.ts::[U10] spawns a worker with the project, parent, off notifications, role metadata, profile, and a managed worktree`, `src/bb/adapter.test.ts::[U10] uses the default base branch when none is set` |
-| U11 | `getThread` returns ID, project, status, parent, and environment | FR-209, FR-213 | example | DONE | `src/bb/adapter.test.ts::[U11] reads a thread as id, project, status, parent, and environment` |
+| U11 | `getThread` returns ID, project, status, parent, and environment | FR-209, FR-213 | example | DONE | `src/bb/adapter.test.ts::[U11] reads a thread as id, project, status, parent, and environment`, `src/bb/adapter.test.ts::[U11] flags a soft-deleted thread and keeps its parent` |
 | U12 | `getThread` returns null when bb does not know the thread | FR-213 | example | DONE | `src/bb/adapter.test.ts::[U12] reads an unknown thread as null, and rethrows other failures` |
 | U13 | `sendMessage` sends one text input in `auto` mode | FR-209 | example | DONE | `src/bb/adapter.test.ts::[U13] sends one text input in auto mode` |
 | U14 | `retireWorker` archives the thread and then deletes the environment, in that order | FR-120 | example | DONE | `src/bb/adapter.test.ts::[U14] retires a worker by archiving the thread and then deleting the environment` |
@@ -319,14 +319,14 @@ Boundaries have both sides, and error paths name the failure.
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| U153 | A deleted or unknown worker thread observes as `missing` | FR-213 | example | PENDING | |
-| U154 | A worker thread in `error` observes as `failed` unless the log already says `failed` | FR-213 | example | PENDING | |
-| U155 | Any other worker thread observes as the logged state | FR-213 | example | PENDING | |
-| U156 | A task with no worker thread is not observed | FR-212 | example | PENDING | |
-| U157 | Each written `reconcile` row sends one message | FR-212 | example | PENDING | |
-| U158 | A second start-up with the same mismatch writes and sends nothing | FR-212 | example | PENDING | |
-| U159 | Corrupt tasks are logged and not observed, and terminal tasks are skipped | FR-212, constitution III | example | PENDING | |
-| U160 | A thread read that fails for one task is logged and does not stop the others | FR-214 | example | PENDING | |
+| U153 | A deleted or unknown worker thread observes as `missing` | FR-213 | example | DONE | `src/wiring/startup.test.ts::[U153] observes a deleted or unknown worker thread as missing` |
+| U154 | A worker thread in `error` observes as `failed` unless the log already says `failed` | FR-213 | example | DONE | `src/wiring/startup.test.ts::[U154] observes a worker thread in error as failed unless the log already says failed` |
+| U155 | Any other worker thread observes as the logged state | FR-213 | example | DONE | `src/wiring/startup.test.ts::[U155] observes any other worker thread as the logged state` |
+| U156 | A task with no worker thread is not observed | FR-212 | example | DONE | `src/wiring/startup.test.ts::[U156] does not observe a task that has no worker thread` |
+| U157 | Each written `reconcile` row sends one message | FR-212 | example | DONE | `src/wiring/startup.test.ts::[U157] writes one reconcile row and sends one message for each mismatch, and changes no task state` |
+| U158 | A second start-up with the same mismatch writes and sends nothing | FR-212 | example | DONE | `src/wiring/startup.test.ts::[U158] writes and sends nothing on a second start-up with the same mismatch` |
+| U159 | Corrupt tasks are logged and not observed, and terminal tasks are skipped | FR-212, constitution III | example | DONE | `src/wiring/startup.test.ts::[U159] logs a corrupt task and does not observe it, and skips a torn_down task`, `src/wiring/startup.test.ts::[U159] skips a torn_down task even when its worker thread is gone` |
+| U160 | A thread read that fails for one task is logged and does not stop the others | FR-214 | example | DONE | `src/wiring/startup.test.ts::[U160] logs a thread read that fails for one task and still reconciles the others` |
 
 ### `src/validator/types.ts` and `src/validator/fake.ts`
 

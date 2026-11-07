@@ -278,3 +278,26 @@ Each behavior in a batch still has its own test, and each entry records the fail
   Suite `pnpm test` -> 47 files, 524 passed, 0 failed. Lint and type-check clean.
 - refactor: none needed
 - note: the recorded order (`thread.failed` before `turn.failed`) changed the design from "read the last turn failure" to "wait briefly for it". D-047 records it.
+
+## Cycle C19: U153 to U160 start-up observation and reconcile (`src/wiring/startup.ts`), with the `deleted` flag on `ThreadInfo`
+
+- tests: `src/wiring/startup.test.ts` `[U153]` to `[U160]` (new), and a changed `[U11]` plus a new second `[U11]` case in `src/bb/adapter.test.ts`
+- design change found while writing the tests: a deleted worker thread must still reveal its parent, or the supervisor cannot be told.
+  `ThreadInfo` gained `deleted`, set from the thread's `deletedAt`, and `getThread` returns `null` only for a 404 (D-047).
+  The adapter tests were changed first, then the code.
+- red: stubs for `observe` and `reconcileOnStart`, then `pnpm vitest run src/bb/adapter.test.ts src/wiring/startup.test.ts`
+  -> `U11` (both cases), `U153`, `U154`, `U156`, `U157`, `U158`, `U159`, and `U160` failed on the thread info, the observed state, the reconcile rows, or the messages (9 failed, 11 passed)
+- U155 passed on the first run because the stub returns the logged state.
+- green: `observe` maps a missing or deleted thread to `missing` and a thread in `error` to `failed`.
+  `reconcileOnStart` replays each live task, logs a corrupt one, reads the worker thread (logging a read failure and moving on), calls `reconcile`, and wakes the supervisor once per written row.
+  First green run: 18 passed, 2 failed.
+  - U156 expected `getThread` once per task, but the notifier reads the thread again to find the parent. The test now checks the set of IDs read.
+  - U159 expected the start-up pass to log a corrupt task, which the first implementation did not do. The implementation now logs it.
+- deliberate mutants, each restored exactly:
+  - an errored thread observes as the logged state -> U154, U158, and U160 failed (3 failed, 5 passed)
+  - no wake for a written row -> U157 failed (1 failed, 7 passed)
+  - terminal tasks are observed -> no test failed (8 passed), so a second `[U159]` test was added for a `torn_down` task whose thread is gone; with that test the mutant fails U159 (1 failed, 8 passed)
+- suite `pnpm test` -> 48 files, 534 passed, 0 failed. Lint and type-check clean.
+- refactor: none needed
+- note: an earlier mutant run with a mistyped path applied three mutants without restoring them.
+  I rewrote `src/wiring/startup.ts` from the intended implementation and re-ran the tests before this cycle counted. No mutated code was committed.

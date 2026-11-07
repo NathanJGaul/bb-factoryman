@@ -21,6 +21,8 @@ export interface ThreadInfo {
   status: string;
   parentThreadId: string | null;
   environmentId: string | null;
+  /** True when bb still serves the thread but has soft-deleted it. */
+  deleted: boolean;
 }
 
 export interface InputRequest {
