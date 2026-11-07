@@ -54,6 +54,8 @@ export interface WorldOptions {
   sendError?: Error;
   /** Replace the no-mistakes validator. */
   validator?: Validator;
+  /** Run some commands for real. Return undefined to fall back to the scripted handler. */
+  exec?: (command: string, args: readonly string[], cwd: string | undefined) => Promise<ExecResult> | undefined;
 }
 
 /** Load the real plugin factory into the fake host, with a small in-memory bb behind `bb.sdk`. */
@@ -148,7 +150,7 @@ export async function loadWorld(options: WorldOptions = {}): Promise<World> {
   const factory = createPlugin({
     exec: async (command, args, execOptions) => {
       world.execCalls.push({ command, args, cwd: execOptions?.cwd });
-      return world.execHandler(command, args);
+      return (await options.exec?.(command, args, execOptions?.cwd)) ?? world.execHandler(command, args);
     },
     now: ((tick = 0) => () => new Date(Date.parse("2026-11-06T12:00:00.000Z") + tick++ * 1000).toISOString())(),
     newId: () => `t${++next}`,

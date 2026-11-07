@@ -21,6 +21,7 @@ describe("plugin factory", () => {
     expect(registrations.rpcMethods).toEqual([]);
     expect(registrations.httpRoutes).toEqual([]);
     expect(registrations.schedules).toEqual([]);
+    expect(Object.values(registrations.hooks).every((hook) => hook === null)).toBe(true);
     const tables = host.bb.storage.database().prepare("select name from sqlite_master where type = 'table'").all() as Array<{ name: string }>;
     expect(tables.map((row) => row.name)).toEqual(expect.arrayContaining(["task", "task_event", "approval", "project_config"]));
     expect(host.bb.storage.database().pragma("user_version", { simple: true })).toBe(1);

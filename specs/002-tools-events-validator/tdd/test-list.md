@@ -403,6 +403,23 @@ Added mid-loop: the milestone 1 layout test said `src/tools` must not exist, whi
 | --- | --- | --- | --- | --- | --- |
 | U208 | The repository keeps the milestone 1 to 3 directories and has no `src/dispatch` or `skills` directory | FR-401, D-032 | example | DONE | `test/acceptance/layout.test.ts::[U208] has the milestone 1 to 3 directories and none for milestones 7 to 11` |
 
+### Added after the cold-context audit (`tdd/verification.md`, findings 1, 2, 5, 6, 7, 11, 12, and 9)
+
+Each behavior already held in the code, and the audit showed that no test pinned it.
+Each test was written, and then a deliberate mutant proved that it bites.
+
+| id | behavior | traces | kind | state | test |
+| --- | --- | --- | --- | --- | --- |
+| U209 | A supervisor in another project cannot tear down a task: the call is refused, no event is recorded, and no worker is retired | FR-103, spec edge cases | example | DONE | `src/tools/teardown.test.ts::[U209] refuses a supervisor in another project, records no event, and retires no worker` |
+| U210 | A blank or dash-led base branch makes the local-only worktree report an error before any git command runs | FR-117, FR-119, hard rule 2 | example | DONE | `src/git/report.test.ts::[U210] refuses a blank or dash-led base branch before running any git command` |
+| U211 | The `mergeMethod` setting reaches the merge executor | FR-117, D-042 | example | DONE | `src/tools/merge.test.ts::[U211] passes the mergeMethod setting to the executor` |
+| U212 | A gate with no step name is unreadable | FR-304 | example | DONE | `src/validator/toon.test.ts::[U212] reads a gate with no step name as unreadable` |
+| U213 | The approval form shows the latest evidence that put the task in review, after a rework loop | FR-112 | example | DONE | `src/tools/merge.test.ts::[U213] shows the latest evidence that put the task in review after a rework loop` |
+| U214 | A needs_decision message keeps findings evidence of 8000 characters whole and cuts evidence of 8001 | FR-210, D-050 | example | DONE | `src/wiring/wake.test.ts::[U214] keeps needs_decision evidence of 8000 characters whole and cuts evidence of 8001` |
+| U215 | The description in `factoryman_status` comes from an applied `start` row and never from a refused one | D-033 | example | DONE | `src/tools/status.test.ts::[U215] takes the description from an applied start row and never from a refused one` |
+| U217 | Disposing the plugin stops the validation loops | FR-313, FR-314 | example | DONE | `test/acceptance/validator-fake.test.ts::[U217] stops the validation loops when the plugin is disposed, and cancels no run` |
+| U216 | Teardown against a real git repository refuses an unpushed commit and succeeds once the commit is pushed | FR-118, FR-119, hard rule 2 | example | DONE | `test/acceptance/tools-teardown.test.ts::[U216] runs the landed-work check against a real git repository: refuses an unpushed commit and succeeds once it is pushed` |
+
 ## Invariants and edge cases still to place
 
 None.
@@ -418,6 +435,9 @@ Every edge case in `spec.md` maps to a numbered behavior above.
 - Scout report export to `.bb/factoryman/<task-id>/report.md`.
 
 ## Cycle plan
+
+The cycle log numbers cycles in the order they ran (`C1` to `C23`, `H0` to `H2`, `L0` and `L1`, `R1`).
+The group names in this table are plan names, and the behavior ids are the stable link between the two files.
 
 Behaviors on one function or file batch into one cycle.
 Each behavior in a batch still needs its own failing test, and the cycle log records the failing output for each id.

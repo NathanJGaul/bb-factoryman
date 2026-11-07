@@ -35,10 +35,10 @@ describe("factoryman_report", () => {
 
   it("[U56] records ready for a local-only ship done with one landed commit, and refuses zero", async () => {
     const one = await withDispatchedTask({ mode: "local-only" });
-    await report(one.runtime, WORKER, { outcome: "done", evidence: "Landed.", landedCommits: 1 } as never);
+    await report(one.runtime, WORKER, { outcome: "done", evidence: "Landed.", landedCommits: 1 });
     expect(one.runtime.deps.store.getTask("t1")?.state).toBe("review_ready");
     const none = await withDispatchedTask({ mode: "local-only" });
-    const outcome = await report(none.runtime, WORKER, { outcome: "done", evidence: "Nothing.", landedCommits: 0 } as never);
+    const outcome = await report(none.runtime, WORKER, { outcome: "done", evidence: "Nothing.", landedCommits: 0 });
     expect(outcome.ok).toBe(false);
     expect(none.runtime.deps.store.getTask("t1")?.state).toBe("working");
   });

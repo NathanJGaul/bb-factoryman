@@ -418,3 +418,32 @@ Each behavior in a batch still has its own test, and each entry records the fail
 - green: `spawnWorker` reads the project's default source, sends its `hostId`, and throws when there is none.
   `pnpm vitest run src/bb/adapter.test.ts test/acceptance` -> 161 passed. Suite `pnpm test` -> 57 files, 604 passed, 0 failed. Lint and type-check clean.
 - refactor: none needed
+
+## Cycle R1: remediation of the cold-context audit (U209 to U217, A29, A38, U203, and the test-after set)
+
+- source: `tdd/verification.md`, verdict FAIL for commit `495c1cb`, with seven mutants that no test caught (M7, M8, M9, M10, M12, M13, M18) and five behaviors without a red.
+- tests added: `[U209]` (unit and acceptance), `[U210]`, `[U211]` (unit, plus an extra acceptance `[A8]`), `[U212]`, `[U213]`, `[U214]`, `[U215]`, `[U216]` (real temporary git repository), and `[U217]`.
+  A29 now runs the five operations on the adapter and checks five different command lines. A38 and U203 now hand off a no-mistakes task in the same world and require the validator to start for it alone.
+  The fixed sleeps in the driver tests and A38 became waits on a positive condition. The "registers no hooks" assertion is back in `plugin.test.ts`.
+- red: each new test passed on the first run, because the code already held. A new test counts only when a mutant breaks it, and each of these did:
+  - M13 teardown without the project check -> U209 and the second A15 failed (2 failed, 12 passed)
+  - M7 local-only base check reduced to `=== null` -> U210 failed (1 failed, 9 passed)
+  - M18 merge method fixed to squash -> U211 failed (1 failed, 20 passed), and the extra A8 failed (1 failed, 7 passed)
+  - M12 gate step check dropped -> U212 failed (1 failed, 12 passed)
+  - M10 `findLast` replaced by `find` -> U213 failed (1 failed, 20 passed)
+  - M8 findings limit 1000, and also 8001 -> U214 failed both times (1 failed, 10 passed each)
+  - M9 refused start rows counted -> U215 failed (1 failed, 7 passed)
+  - teardown ignores the git report -> U216 and the first A15 failed (2 failed, 2 passed)
+  - the driver never starts on `validating` -> A30 to A36 failed (A38's control is among the waits); the driver `ensure` made a no-op -> U185, U194, U201, U202, and U203 failed
+- test-after set (audit finding 3): the reds for the tests written after the factory were re-derived with mutants.
+  - U122 setting default 10 changed to 5 -> U122 failed (1 failed, 5 passed)
+  - U123 service registration removed -> U123 failed (1 failed, 5 passed)
+  - U40 an extra `bb.sdk.plugins.list()` call in the adapter -> U40 failed (1 failed, 5 passed)
+  - U120 and U121 were mutated in cycle H0 (no `recover`, no corrupt log).
+  - U124 passed with the old walk even when the cache skipped `fail` events, because the walk stayed in shallow states (the audit's finding 3 was right to distrust it).
+    The walk now picks a mostly legal action for each task's state. It reaches merge, teardown, block, fail, report, and ready, and the test asserts that.
+    With the new walk, a cache that skips `fail` events -> U124 failed (1 failed, 5 passed), and one that skips `teardown` events -> U40 failed (1 failed, 5 passed).
+- limit found: U217 cannot detect a missing `bb.onDispose(() => driver.dispose())`. After `dispose`, the fake host poisons the handle, so the loop stops by itself on its first bb call.
+  The mutant that removes the wiring survives (10 passed). D-054 records it as an equivalent mutant under the fake host.
+- suite `pnpm test` -> 57 files, 615 passed, 0 failed. Lint and type-check clean.
+- refactor: none needed

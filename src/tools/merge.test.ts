@@ -45,6 +45,16 @@ describe("factoryman_merge", () => {
     expect(request.title).toContain("t1");
   });
 
+  it("[U213] shows the latest evidence that put the task in review after a rework loop", async () => {
+    const t = await ready();
+    await t.runtime.apply("t1", { type: "request_approval", actor: "supervisor" });
+    await t.runtime.apply("t1", { type: "request_changes", actor: "user", evidence: "Rework." });
+    await t.runtime.apply("t1", { type: "handoff", actor: "worker", evidence: "Second commit." });
+    await t.runtime.apply("t1", { type: "validated", actor: "system", evidence: "Second pipeline run finished.", prUrl: "https://github.com/acme/widgets/pull/7", pipelineFinished: true });
+    await merge(t.runtime, fakeExecutor().executor, SUPERVISOR, { taskId: "t1" });
+    expect((t.bb.callsTo("requestInput")[0]?.[0] as InputRequest).payload).toMatchObject({ evidence: "Second pipeline run finished." });
+  });
+
   it("[U90] takes the form timeout from the approval timeout setting", async () => {
     const t = await ready();
     t.settings.approvalTimeoutMs = 4321;
@@ -64,6 +74,17 @@ describe("factoryman_merge", () => {
     const approval = t.runtime.deps.store.listEvents({ taskId: "t1" }).find((row) => row.event === "record_approval");
     expect(approval).toMatchObject({ actor: "user", payload: { scope: "merge", decision: "approved" } });
     expect(t.runtime.deps.store.listApprovals("t1")).toMatchObject([{ scope: "merge", decision: "approved" }]);
+  });
+
+  it("[U211] passes the mergeMethod setting to the executor", async () => {
+    for (const method of ["squash", "merge", "rebase"] as const) {
+      const t = await ready();
+      t.settings.mergeMethod = method;
+      answer(t, { decision: "approved" });
+      const { executor, merges } = fakeExecutor();
+      await merge(t.runtime, executor, SUPERVISOR, { taskId: "t1" });
+      expect(merges.map((m) => m.method), method).toEqual([method]);
+    }
   });
 
   it("[U92] records the approval comment as the approval event's evidence", async () => {

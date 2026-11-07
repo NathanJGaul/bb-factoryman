@@ -59,6 +59,13 @@ describe("parseRun on other shapes", () => {
     }
   });
 
+  it("[U212] reads a gate with no step name as unreadable", () => {
+    const text = ["run:", '  id: "r1"', "gate:", "  status: awaiting_approval"].join("\n");
+    const result = parseRun(text);
+    expect(result.ok).toBe(false);
+    expect(!result.ok && result.error.kind).toBe("unreadable");
+  });
+
   it("[U171] reads an outcome outside the six known values as unreadable", () => {
     const text = recordedNoMistakes("status-cancelled.toon").replace("outcome: cancelled", "outcome: merged-by-magic");
     const result = parseRun(text);

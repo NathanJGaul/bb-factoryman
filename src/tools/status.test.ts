@@ -59,6 +59,17 @@ describe("factoryman_status", () => {
     expect(t.runtime.deps.store.listEvents().length).toBe(before);
   });
 
+  it("[U215] takes the description from an applied start row and never from a refused one", async () => {
+    const t = await withDispatchedTask();
+    t.runtime.log.create({ type: "create", actor: "supervisor", taskId: "t7", projectId: "proj-1", kind: "ship", mode: "no-mistakes" });
+    const refused = await t.runtime.apply("t7", { type: "start", actor: "supervisor", profile: null, threadId: "thr-x", branch: "fm/t7", evidence: "REFUSED start text" });
+    expect(refused.ok).toBe(false);
+    await t.runtime.apply("t7", { type: "start", actor: "supervisor", profile: { provider: "claude", model: "opus", reasoningLevel: "high", permissionMode: "auto" }, threadId: "thr-x", branch: "fm/t7", evidence: "Real description." });
+    const text = (await status(t.runtime, SUPERVISOR, { taskId: "t7" })).text;
+    expect(text).toContain("description: Real description.");
+    expect(text).not.toContain("REFUSED");
+  });
+
   it("[U68] shows the first line of the start evidence as the description, and none before start", async () => {
     const t = await withDispatchedTask();
     expect((await status(t.runtime, SUPERVISOR, { taskId: "t1" })).text).toContain("description: Add a --json flag to the status command.");

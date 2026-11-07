@@ -5,7 +5,7 @@ const PR = "https://github.com/acme/widgets/pull/7";
 const worker = { threadId: "thr-w1" };
 
 /** A direct-PR task at review_ready. The pull request modes need no validator. */
-async function readyWorld(options: { yolo?: boolean; settings?: Record<string, number> } = {}): Promise<World> {
+async function readyWorld(options: { yolo?: boolean; settings?: Record<string, string | number> } = {}): Promise<World> {
   const world = await loadWorld({ settings: options.settings });
   world.setProject({ deliveryMode: "direct-PR", yolo: options.yolo ?? false });
   await world.call("factoryman_dispatch", DISPATCH);
@@ -33,6 +33,12 @@ describe("factoryman_merge through the plugin factory", () => {
     expect(state(world)).toBe("merged");
     expect(rows(world).slice(-3)).toEqual(["request_approval:applied", "record_approval:applied", "merge:applied"]);
     expect(world.store.listApprovals("t1")).toMatchObject([{ scope: "merge", decision: "approved" }]);
+  });
+
+  it("[A8] merges with the method from the mergeMethod setting", async () => {
+    const world = await readyWorld({ settings: { mergeMethod: "rebase" } });
+    await answer(world, { decision: "approved" });
+    expect(merges(world)[0]?.args).toEqual(["pr", "merge", PR, "--rebase"]);
   });
 
   it("[A9] records a denial, merges nothing, and leaves the task awaiting approval", async () => {

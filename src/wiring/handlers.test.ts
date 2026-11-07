@@ -170,15 +170,17 @@ describe("matching and robustness", () => {
     await handlers.threadDeleted({ thread: { id: "null" } });
     await handlers.threadDeleted({ thread: { id: "" } });
     expect(t.runtime.deps.store.getTask("t9")?.state).toBe("queued");
+    // Control: the same event for the started task's worker does match.
+    await handlers.threadDeleted({ thread: { id: "thr-w1" } });
+    expect(t.runtime.deps.store.getTask("t1")?.state).toBe("failed");
   });
 
   it("[U150] remembers a turn failure per thread and keeps the memory bounded", async () => {
-    const { t, handlers } = await inState("working");
+    const { handlers } = await inState("working");
     for (let i = 0; i < 150; i += 1) await handlers.turnFailed({ threadId: `thr-x${i}`, errorInfo: { category: "rate-limit", httpStatusCode: 429 } });
     expect(handlers.turnFailures.size).toBeLessThanOrEqual(100);
     expect(handlers.turnFailures.has("thr-x149")).toBe(true);
     expect(handlers.turnFailures.has("thr-x0")).toBe(false);
-    void t;
   });
 
   it("[U151] registers only the five thread events and turn.failed, and ignores the rest", async () => {

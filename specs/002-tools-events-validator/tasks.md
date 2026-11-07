@@ -68,7 +68,7 @@ description: "Task list for tools and approval, event wiring, and the validator"
 ### Tests for user story 1 (write first, watch fail)
 
 - [X] T030 [P] [US1] [A1] Visibility test in `test/acceptance/tools-visibility.test.ts` (supervisor, worker, and no-role threads; AC-1.1)
-- [X] T031 [P] [US1] [A2] Authority test in `test/acceptance/tools-authority.test.ts` (a recorded worker refused on supervisor tools, a non-worker refused on report, a task in another project refused; AC-1.2)
+- [X] T031 [P] [US1] [A2] Authority test in `test/acceptance/tools-authority.test.ts` (a recorded worker refused on supervisor tools and a non-worker refused on report; AC-1.2; the cross-project refusal is covered by U209 and the second A15 test)
 - [X] T032 [P] [US1] [A3] [A4] [A5] [U41] [U42] [U43] [U44] [U45] [U46] [U47] [U48] [U49] [U50] [U51] Dispatch tests in `test/acceptance/tools-dispatch.test.ts` and `src/tools/dispatch.test.ts` (success, incomplete profile, empty description, unknown kind, spawn failure, thread already failed after start; AC-1.3 to AC-1.5)
 - [X] T033 [P] [US1] [A6] [U52] [U53] [U54] [U55] [U56] [U57] [U58] [U59] [U60] [U61] Report tests in `test/acceptance/tools-report.test.ts` and `src/tools/report.test.ts` (scout, `no-mistakes`, `direct-PR`, `local-only`, blocked, failed, empty evidence; AC-1.6)
 - [X] T034 [P] [US1] [A7] [U62] [U63] [U64] [U65] [U66] [U67] [U68] Status tests in `test/acceptance/tools-status.test.ts` and `src/tools/status.test.ts` (one task, project list, state filter, writes nothing; AC-1.7)
@@ -148,7 +148,7 @@ description: "Task list for tools and approval, event wiring, and the validator"
 - [X] T084 [P] [US3] [A30] [A31] [A32] [A33] [A34] [A35] [A37] [A38] [U185] [U186] [U187] [U188] [U189] [U190] [U191] [U192] [U193] [U194] [U195] [U196] [U197] [U198] [U199] [U200] [U201] [U202] [U203] [U204] [U205] [U206] [U207] Driver tests in `src/validator/driver.test.ts` (handoff starts a run, gate to `needs_decision`, answer to `validating`, external answer observed, `checks-passed` to `review_ready`, failed and cancelled to `failed`, override and skips and no PR to `needs_decision`, unreadable five times, no second run, no run for other modes, resume; AC-3.2 to AC-3.7, AC-3.9, AC-3.10)
 - [X] T085 [P] [US3] [A29] [A30] [A31] [A32] [A33] [A34] [A35] [A37] [A38] Acceptance test with the fake validator in `test/acceptance/validator-fake.test.ts` (dispatch, report done, validating, finding, answer, validated, review ready, wake messages; SC-005)
 - [X] T086 [P] [US3] [A36] Acceptance test with recorded output in `test/acceptance/validator-recorded.test.ts` (the real adapter over replayed recorded stdout; SC-005, SC-006)
-- [X] T087 [P] [US3] [A29] Interface test in `src/validator/types.test.ts` (five operations exist on the fake and the adapter; AC-3.1)
+- [X] T087 [P] [US3] [A29] Interface test in `test/acceptance/validator-fake.test.ts` (the five operations run a different command on the adapter and are recorded on the fake; AC-3.1)
 
 ### Implementation for user story 3
 
@@ -189,3 +189,25 @@ description: "Task list for tools and approval, event wiring, and the validator"
 3. Deliver story 2 and commit milestone 5.
 4. Deliver story 3 and commit milestone 6.
 5. Close out with the verification, checklist, analysis, and convergence artifacts.
+
+---
+
+## Phase 7: TDD remediation
+
+The cold-context audit in `tdd/verification.md` returned FAIL for the state at commit `495c1cb`.
+These tasks answer its findings. Behavior ids U209 to U217 are new.
+
+- [X] R001 [US1] [U209] Cross-project teardown refusal: unit test in `src/tools/teardown.test.ts` and acceptance test in `test/acceptance/tools-teardown.test.ts`
+- [X] R002 [US1] [U210] Blank and dash-led base branch for the local-only report in `src/git/report.test.ts`
+- [X] R003 Test-after behaviors U40, U120 to U124: reds re-derived with deliberate mutants and recorded in cycle R1 of `tdd/cycle-log.md`
+- [X] R004 [US3] A29 now asserts behavior, and A38 and U203 carry a positive control
+- [X] R005 [US1] [U211] The `mergeMethod` setting reaches the executor: `src/tools/merge.test.ts` and the extra A8 test
+- [X] R006 [US3] [U212] A gate with no step name is unreadable in `src/validator/toon.test.ts`
+- [X] R007 [US1] [U213] The approval form shows the latest review evidence after a rework loop
+- [X] R008 [US3] Fixed sleeps in the driver and A38 tests replaced by waits on a positive condition
+- [X] R009 [US1] The "registers no hooks" assertion is back in `test/acceptance/plugin.test.ts`
+- [X] R010 [US2] [U214] [U215] The findings limit and the refused-start description are pinned
+- [X] R011 Task text corrected, cycle naming note added, dead `void` lines and needless casts removed
+- [X] R012 [US1] [U216] Teardown against a real temporary git repository
+- [X] R013 [US3] [U217] Disposing the plugin stops the validation loops
+

@@ -70,6 +70,19 @@ describe("worktreeReport", () => {
     expect(!result.ok && result.message).toMatch(/base branch/i);
   });
 
+  it("[U210] refuses a blank or dash-led base branch before running any git command", async () => {
+    for (const baseBranch of ["", "   ", "-x", "--all"]) {
+      const calls: string[] = [];
+      const exec = async (command: string, args: readonly string[]) => {
+        calls.push([command, ...args].join(" "));
+        return { code: 0, stdout: "0\n", stderr: "" };
+      };
+      const result = await worktreeReport(exec, { path: "/work/tree", mode: "local-only", baseBranch });
+      expect(result.ok, JSON.stringify(baseBranch)).toBe(false);
+      expect(calls, JSON.stringify(baseBranch)).toEqual([]);
+    }
+  });
+
   it("[U77] is an error and never an empty report when git fails", async () => {
     const result = await worktreeReport(runCommand, prMode(tmpDir()));
     expect(result.ok).toBe(false);

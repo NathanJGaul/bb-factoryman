@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { DISPATCH_ARGS, SUPERVISOR, testRuntime, withDispatchedTask, type TestRuntime } from "../../test/fixtures/runtime";
+import { DISPATCH_ARGS, SUPERVISOR, withDispatchedTask, type TestRuntime } from "../../test/fixtures/runtime";
 import { defaultProjectConfig } from "../store/store";
 import { dispatch } from "../tools/dispatch";
 import { ValidationDriver } from "./driver";
@@ -32,6 +32,7 @@ function driverFor(t: TestRuntime, validator = new FakeValidator(), options: { m
 }
 
 const state = (t: TestRuntime) => t.runtime.deps.store.getTask("t1")?.state;
+const state2 = (t: TestRuntime) => t.runtime.deps.store.getTask("t2")?.state;
 const lastEvent = (t: TestRuntime) => t.runtime.deps.store.listEvents({ taskId: "t1" }).findLast((row) => row.outcome === "applied")!;
 const calls = (v: FakeValidator, op: string) => v.calls.filter((call) => call.operation === op);
 const slowSleep = () => new Promise<void>((resolve) => setTimeout(resolve, 1));
@@ -260,10 +261,9 @@ describe("ValidationDriver loops", () => {
     const t = await withDispatchedTask();
     t.bb.envPaths.set("env-thr-w1", "/work/tree");
     await t.runtime.apply("t1", { type: "handoff", actor: "worker", evidence: "Committed." });
-    for (const id of ["t2", "t3", "t4"]) {
+    for (let n = 2; n <= 4; n += 1) {
       const made = await dispatch(t.runtime, SUPERVISOR, DISPATCH_ARGS);
       expect(made.ok).toBe(true);
-      void id;
     }
     t.bb.envPaths.set("env-thr-w2", "/work/tree2");
     t.bb.envPaths.set("env-thr-w3", "/work/tree3");
@@ -282,17 +282,25 @@ describe("ValidationDriver loops", () => {
     expect(state(slow)).toBe("failed");
   });
 
-  it("[U203] never starts a loop for a task in a delivery mode without the validator", async () => {
+  it("[U203] never starts a loop for a task in a delivery mode without the validator, while a no-mistakes task in the same runtime does", async () => {
     const t = await withDispatchedTask({ mode: "direct-PR" });
+    t.bb.envPaths.set("env-thr-w1", "/work/direct");
     const { driver, validator } = driverFor(t);
     validator.script("start", [ok(done("checks-passed", { prUrl: PR }))]);
     await t.runtime.apply("t1", { type: "ready", actor: "worker", evidence: "PR open.", prUrl: PR });
     driver.ensure("t1");
-    driver.resumeAll();
-    await new Promise((resolve) => setTimeout(resolve, 10));
-    expect(validator.calls).toEqual([]);
     expect(driver.isRunning("t1")).toBe(false);
-    void defaultProjectConfig;
+
+    // Positive control: a no-mistakes task handed off in the same runtime is followed.
+    t.runtime.deps.store.putProjectConfig({ ...defaultProjectConfig("proj-1"), deliveryMode: "no-mistakes" });
+    expect((await dispatch(t.runtime, SUPERVISOR, DISPATCH_ARGS)).ok).toBe(true);
+    t.bb.envPaths.set("env-thr-w2", "/work/validated");
+    await t.runtime.apply("t2", { type: "handoff", actor: "worker", evidence: "Committed." });
+    driver.resumeAll();
+    await settle(() => state2(t) === "review_ready");
+    expect(state2(t)).toBe("review_ready");
+    const cwds = calls(validator, "start").map((call) => (call.input as { cwd: string }).cwd);
+    expect(cwds).toEqual(["/work/validated"]);
   });
 
   it("[U204] dispose stops every loop and cancels no run", async () => {
@@ -305,12 +313,13 @@ describe("ValidationDriver loops", () => {
     driver.ensure("t1");
     await settle(() => calls(validator, "start").length >= 2);
     driver.dispose();
-    await new Promise((resolve) => setTimeout(resolve, 15));
+    await settle(() => !driver.isRunning("t1"));
+    expect(driver.isRunning("t1")).toBe(false);
     const seen = validator.calls.length;
-    await new Promise((resolve) => setTimeout(resolve, 15));
+    driver.ensure("t1");
+    expect(driver.isRunning("t1")).toBe(false);
     expect(validator.calls).toHaveLength(seen);
     expect(calls(validator, "cancel")).toEqual([]);
-    expect(driver.isRunning("t1")).toBe(false);
   });
 
   it("[U205] ends the loop when the task leaves its two states", async () => {
@@ -336,4 +345,3 @@ function testRuntimeWithSleep(t: TestRuntime): TestRuntime {
   return { ...t, runtime, sleeps };
 }
 
-void testRuntime;

@@ -103,6 +103,15 @@ describe("Notifier", () => {
     expect(sent(t)[0]).toContain(findings);
   });
 
+  it("[U214] keeps needs_decision evidence of 8000 characters whole and cuts evidence of 8001", async () => {
+    for (const [length, expected] of [[8000, "a".repeat(8000)], [8001, `${"a".repeat(7999)}…`]] as const) {
+      const { t } = await wired();
+      await t.runtime.apply("t1", { type: "handoff", actor: "worker", evidence: "Done." });
+      await t.runtime.apply("t1", { type: "finding", actor: "system", evidence: "a".repeat(length) });
+      expect(sent(t)[0], String(length)).toContain(`Evidence: ${expected}\n`);
+    }
+  });
+
   it("[U133] uses the same first line with a reason in place of the state for a wake that is not a transition", async () => {
     const { t, notifier } = await wired();
     await notifier.wake(t.runtime.deps.store.getTask("t1")!, "reports: the worker finished a turn without reporting", null);

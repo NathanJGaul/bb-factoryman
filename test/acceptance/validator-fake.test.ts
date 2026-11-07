@@ -31,11 +31,32 @@ const state = (world: World) => world.store.getTask("t1")?.state;
 const startCalls = (v: FakeValidator) => v.calls.filter((call) => call.operation === "start");
 
 describe("validator through the plugin factory", () => {
-  it("[A29] offers start, status, findings, answer, and cancel on the fake and on the no-mistakes adapter", () => {
-    const real: Validator = new NoMistakesValidator(async () => ({ code: 0, stdout: "", stderr: "" }));
-    for (const validator of [new FakeValidator(), real]) {
-      for (const operation of ["start", "status", "findings", "answer", "cancel"] as const) expect(typeof validator[operation]).toBe("function");
-    }
+  it("[A29] runs a different command for each of the five operations on the no-mistakes adapter, and records each call on the fake", async () => {
+    const lines: string[] = [];
+    const real: Validator = new NoMistakesValidator(async (command, args) => {
+      lines.push([command, ...args].join(" "));
+      return { code: 0, stdout: "aborted: true\nrun: r1\n", stderr: "" };
+    });
+    await real.start({ cwd: "/w", intent: "i", wait: "1m" });
+    await real.status({ cwd: "/w" });
+    await real.findings({ cwd: "/w" });
+    await real.answer({ cwd: "/w", response: { action: "approve" } });
+    await real.cancel({ cwd: "/w" });
+    expect(lines).toEqual([
+      "no-mistakes axi run --intent i --wait 1m",
+      "no-mistakes axi status",
+      "no-mistakes axi status",
+      "no-mistakes axi respond --action approve --wait 4m",
+      "no-mistakes axi abort",
+    ]);
+
+    const fake = new FakeValidator();
+    await fake.start({ cwd: "/w", intent: "i" });
+    await fake.status({ cwd: "/w" });
+    await fake.findings({ cwd: "/w" });
+    await fake.answer({ cwd: "/w", response: { action: "skip" } });
+    await fake.cancel({ cwd: "/w" });
+    expect(fake.calls.map((call) => call.operation)).toEqual(["start", "status", "findings", "answer", "cancel"]);
   });
 
   it("[A30] makes the task validating on handoff and starts the validator in the worktree with the task's intent", async () => {
@@ -133,15 +154,35 @@ describe("validator through the plugin factory", () => {
     expect(validator.calls.filter((call) => call.operation === "cancel")).toEqual([]);
   });
 
-  it("[A38] never starts the validator for a direct-PR or local-only task", async () => {
+  it("[U217] stops the validation loops when the plugin is disposed, and cancels no run", async () => {
+    const validator = new FakeValidator();
+    validator.script("start", [ok(view())]);
+    const world = await handedOff(validator);
+    await handoff(world);
+    await settle(() => startCalls(validator).length >= 2);
+    await world.host.harness.lifecycle.dispose();
+    const seen = validator.calls.length;
+    await new Promise((resolve) => setTimeout(resolve, 25));
+    expect(validator.calls).toHaveLength(seen);
+    expect(validator.calls.filter((call) => call.operation === "cancel")).toEqual([]);
+  });
+
+  it("[A38] never starts the validator for a direct-PR or local-only task, while a no-mistakes task in the same world does", async () => {
     for (const mode of ["direct-PR", "local-only"] as const) {
       const validator = new FakeValidator();
       validator.script("start", [ok(finished("checks-passed", { prUrl: PR }))]);
       const world = await handedOff(validator, mode);
       await world.call("factoryman_report", { outcome: "done", evidence: "Ready.", prUrl: PR, landedCommits: 1 }, w1);
-      await new Promise((resolve) => setTimeout(resolve, 20));
       expect(state(world), mode).toBe("review_ready");
-      expect(validator.calls, mode).toEqual([]);
+
+      // Positive control: a no-mistakes task handed off in the same world is followed, and only that task is.
+      world.setProject({ deliveryMode: "no-mistakes" });
+      world.paths.set("env-thr-w2", "/work/validated");
+      await world.call("factoryman_dispatch", DISPATCH);
+      await world.call("factoryman_report", { outcome: "done", evidence: "Committed." }, { threadId: "thr-w2" });
+      await settle(() => startCalls(validator).length > 0);
+      expect(startCalls(validator).map((call) => (call.input as { cwd: string }).cwd), mode).toEqual(["/work/validated"]);
+      expect(state(world), mode).toBe("review_ready");
     }
   });
 });

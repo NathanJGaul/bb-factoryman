@@ -98,16 +98,19 @@ describe("createPlugin", () => {
     };
     const pick = <T,>(items: readonly T[]): T => items[Math.floor(random() * items.length)]!;
     const pr = "https://github.com/acme/widgets/pull/7";
-    for (let step = 0; step < 300; step += 1) {
-      const task = `t${1 + Math.floor(random() * 6)}`;
+    const act = async (action: string, task: string) => {
       const worker = { threadId: `thr-w${task.slice(1)}` };
       world.paths.set(`env-${worker.threadId}`, "/work/tree");
-      switch (pick(["dispatch", "report", "report", "status", "merge", "teardown", "event", "event"] as const)) {
+      switch (action) {
         case "dispatch":
-          await world.call("factoryman_dispatch", { ...DISPATCH, kind: pick(["ship", "scout"] as const) });
+          await world.call("factoryman_dispatch", { ...DISPATCH, kind: pick(["ship", "ship", "scout"] as const) });
           break;
-        case "report":
-          await world.call("factoryman_report", { outcome: pick(["done", "done", "blocked", "failed"] as const), evidence: pick(["Evidence.", "", "  "]), prUrl: pick([pr, undefined]), landedCommits: 1 }, worker);
+        case "done":
+          await world.call("factoryman_report", { outcome: "done", evidence: pick(["Evidence.", "Evidence.", "Evidence.", ""]), prUrl: pr, landedCommits: 1 }, worker);
+          break;
+        case "blocked":
+        case "failed":
+          await world.call("factoryman_report", { outcome: action, evidence: "Reason." }, worker);
           break;
         case "status":
           await world.call("factoryman_status", pick([{}, { taskId: task }] as const));
@@ -118,14 +121,38 @@ describe("createPlugin", () => {
         case "teardown":
           await world.call("factoryman_teardown", { taskId: task });
           break;
-        case "event":
-          await world.emit(pick(["thread.failed", "thread.idle", "thread.deleted", "thread.archived"] as const), worker.threadId, { error: pick(["boom", null]) });
-          break;
+        default:
+          await world.emit(action as "thread.failed", worker.threadId, { error: pick(["boom", null]) });
       }
+    };
+    // Pick a mostly legal action for the task's state, with some noise, so the walk reaches the deep states.
+    const legal: Record<string, readonly string[]> = {
+      working: ["done", "done", "done", "blocked", "failed", "thread.failed", "thread.deleted", "thread.idle"],
+      blocked: ["thread.failed", "thread.archived", "status"],
+      review_ready: ["merge", "merge", "merge", "thread.archived"],
+      merged: ["teardown", "teardown", "thread.deleted"],
+      failed: ["teardown", "teardown"],
+      report_ready: ["teardown", "teardown", "status"],
+      validating: ["thread.failed", "status"],
+    };
+    const noise = ["dispatch", "done", "merge", "teardown", "status", "thread.failed", "thread.deleted", "thread.idle", "thread.archived"] as const;
+    for (let step = 0; step < 400; step += 1) {
+      const tasks = world.store.listTasks();
+      if (tasks.length === 0 || random() < 0.12) {
+        await act("dispatch", "t1");
+        continue;
+      }
+      const task = pick(tasks);
+      const options = random() < 0.15 ? noise : (legal[task.state] ?? noise);
+      await act(pick(options), task.taskId);
     }
     expect(world.store.listTasks().length).toBeGreaterThan(2);
     const events = world.store.listEvents();
-    expect(events.filter((row) => row.outcome === "applied").length).toBeGreaterThan(40);
+    const applied = new Set(events.filter((row) => row.outcome === "applied").map((row) => row.event));
+    for (const event of ["create", "start", "handoff", "ready", "report", "block", "fail", "request_approval", "merge", "teardown"]) {
+      if (event === "handoff") continue; // the walk runs a direct-PR project
+      expect(applied.has(event), event).toBe(true);
+    }
     expect(events.filter((row) => row.outcome === "refused").length).toBeGreaterThan(10);
     const report = recover(world.store);
     expect(report.corrupt).toEqual([]);

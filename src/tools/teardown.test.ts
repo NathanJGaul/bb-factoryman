@@ -103,6 +103,16 @@ describe("factoryman_teardown", () => {
     expect(rows(t)).toHaveLength(before);
   });
 
+  it("[U209] refuses a supervisor in another project, records no event, and retires no worker", async () => {
+    const t = await merged();
+    const before = rows(t).length;
+    const outcome = await teardown(t.runtime, { threadId: "thr-sup2", projectId: "proj-2" }, { taskId: "t1" });
+    expect(outcome).toEqual({ ok: false, text: "No task t1 exists in this project." });
+    expect(rows(t)).toHaveLength(before);
+    expect(state(t)).toBe("merged");
+    expect(t.bb.callsTo("retireWorker")).toEqual([]);
+  });
+
   it("[U115] refuses a worker caller", async () => {
     const t = await merged();
     const outcome = await teardown(t.runtime, WORKER, { taskId: "t1" });
