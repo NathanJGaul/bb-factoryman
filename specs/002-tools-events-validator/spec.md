@@ -103,7 +103,7 @@ It depends on the tools of story 1, because a tool call and a thread event are t
    (AC-2.1, hard rule 3)
 2. **Given** a `working` task, **When** its worker thread goes idle without a report, **Then** the supervisor receives one message and the task state is unchanged.
    (AC-2.2)
-3. **Given** a task that has not reached `torn_down`, **When** its worker thread is deleted, **Then** the task becomes `failed` with evidence and the supervisor is told.
+3. **Given** a task that has not reached `merged`, **When** its worker thread is deleted, **Then** the task becomes `failed` with evidence and the supervisor is told.
    When the thread is archived instead, the supervisor is told that the worktree may be removed and the task state is unchanged.
    (AC-2.3)
 4. **Given** a worker thread, **When** an interaction that another source raised becomes pending on it, **Then** the supervisor receives one message with the interaction's title.
@@ -206,6 +206,7 @@ Check that a finding pauses the task.
   It MUST record nothing when the form is cancelled, times out, or returns a value that matches neither schema.
 - **FR-115**: `factoryman_merge` MUST run the merge only after the machine would accept the `merge` event, and MUST record the `merge` event only after the merge succeeds.
 - **FR-116**: A project with `yolo` on MUST skip the form, MUST still pass through `awaiting_approval` (D-012), and MUST record the `yolo` flag on the merge event.
+- **FR-117a**: A pull request executor MUST refuse, at preflight and also when `yolo` is on, a pull request URL that is not `https://<host>/<owner>/<repo>/pull/<number>` in the project's own repository (D-059).
 - **FR-117**: The merge MUST run behind an executor interface.
   The pull request modes MUST merge the pull request with the GitHub command-line tool.
   The `local-only` mode MUST merge the branch into the configured base branch of the project checkout and MUST refuse when the checkout is dirty, off the base branch, or has no base branch configured.
@@ -221,7 +222,7 @@ Check that a finding pauses the task.
 - **FR-201**: The plugin MUST handle the bb thread events `thread.failed`, `thread.idle`, `thread.deleted`, `thread.archived`, and `interaction.pending`, and MUST ignore the other thread events.
 - **FR-202**: The plugin MUST handle an event only when its thread is the recorded worker of a task that has not reached `torn_down`.
 - **FR-203**: A `thread.failed` event MUST fail a task that is `working` or `blocked`, with evidence built from the thread's error text or, when that is empty, from the category and status code of the turn failure that follows it (the handler waits briefly for it).
-- **FR-204**: A `thread.deleted` event MUST fail a task in any state before `torn_down`, with evidence.
+- **FR-204**: A `thread.deleted` event MUST fail a task in any state before `merged`, with evidence, and MUST leave a `merged` task unchanged without a message (D-060).
 - **FR-205**: A `thread.idle` event on a `working` task MUST wake the supervisor and MUST NOT change the state.
 - **FR-206**: A `thread.archived` event MUST wake the supervisor with a warning that the worktree may be removed, and MUST NOT change the state.
 - **FR-207**: An `interaction.pending` event on a worker thread MUST wake the supervisor unless the interaction came from this plugin.

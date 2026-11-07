@@ -98,6 +98,7 @@ Arguments: `taskId`.
 1. Refuse a worker caller, an unknown task, a task in another project, a scout, and a state other than `review_ready` or `awaiting_approval`.
 2. Refuse when another merge call for the task is waiting for the owner.
 3. Run the executor preflight (for example, a `local-only` project needs a base branch).
+   A pull request executor also refuses a pull request URL outside the project's own repository (D-059).
    Refuse on failure, before any form.
 4. From `review_ready`, apply `request_approval` (actor `supervisor`).
 5. If `yolo` is off, open the form and wait:
