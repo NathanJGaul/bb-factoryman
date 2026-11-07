@@ -101,3 +101,26 @@ export async function toReviewReady(t: TestRuntime): Promise<void> {
     if (!outcome.ok) throw new Error(`fixture ${event.type} refused: ${outcome.refusal.message}`);
   }
 }
+
+/** Move task `t1` from `review_ready` to `merged` by the yolo path, which needs no form. */
+export async function toMerged(t: TestRuntime): Promise<void> {
+  await toReviewReady(t);
+  for (const event of [
+    { type: "request_approval", actor: "supervisor" },
+    { type: "merge", actor: "supervisor", yolo: true },
+  ]) {
+    const outcome = await t.runtime.apply("t1", event);
+    if (!outcome.ok) throw new Error(`fixture ${event.type} refused: ${outcome.refusal.message}`);
+  }
+}
+
+/** Script `git status` and `git rev-list --count` for the worktree report. */
+export function scriptGit(t: TestRuntime, facts: { status?: string; count?: string; code?: number } = {}): void {
+  t.bb.envPaths.set("env-thr-w1", "/work/tree");
+  t.execHandler = (command, args) => {
+    if (facts.code !== undefined && facts.code !== 0) return { code: facts.code, stdout: "", stderr: "fatal: not a git repository" };
+    if (command === "git" && args[0] === "status") return { code: 0, stdout: facts.status ?? "", stderr: "" };
+    if (command === "git" && args[0] === "rev-list") return { code: 0, stdout: facts.count ?? "0\n", stderr: "" };
+    return { code: 0, stdout: "", stderr: "" };
+  };
+}

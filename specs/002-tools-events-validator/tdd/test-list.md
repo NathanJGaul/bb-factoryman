@@ -248,16 +248,16 @@ Boundaries have both sides, and error paths name the failure.
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| U107 | A merged task with a landed worktree records `teardown` and then retires the worker, in that order | FR-120 | example | PENDING | |
-| U108 | A dirty worktree is refused with a logged refusal, and the worker is not retired | FR-118 | example | PENDING | |
-| U109 | Unpushed commits are refused with a logged refusal, and the worker is not retired | FR-118 | example | PENDING | |
-| U110 | A worktree report that cannot be read refuses teardown and records no event | FR-118, hard rule 8 | example | PENDING | |
-| U111 | A failed task can be torn down through the same check | D-011 | example | PENDING | |
-| U112 | A task whose state does not allow `teardown` is refused by the machine | FR-105 | example | PENDING | |
-| U113 | A retire failure after the event is reported and does not undo `torn_down` | FR-120 | example | PENDING | |
-| U114 | A task whose environment has no path is refused | FR-118 | example | PENDING | |
-| U115 | A worker caller is refused | FR-104 | example | PENDING | |
-| U116 | A `local-only` teardown uses the project's base branch for the report | FR-119 | example | PENDING | |
+| U107 | A merged task with a landed worktree records `teardown` and then retires the worker, in that order | FR-120 | example | DONE | `src/tools/teardown.test.ts::[U107] records teardown for a landed worktree and then retires the worker, in that order` |
+| U108 | A dirty worktree is refused with a logged refusal, and the worker is not retired | FR-118 | example | DONE | `src/tools/teardown.test.ts::[U108] refuses a dirty worktree with a logged refusal and does not retire the worker` |
+| U109 | Unpushed commits are refused with a logged refusal, and the worker is not retired | FR-118 | example | DONE | `src/tools/teardown.test.ts::[U109] refuses unpushed commits with a logged refusal and does not retire the worker` |
+| U110 | A worktree report that cannot be read refuses teardown and records no event | FR-118, hard rule 8 | example | DONE | `src/tools/teardown.test.ts::[U110] refuses when the worktree report cannot be read, and records no event` |
+| U111 | A failed task can be torn down through the same check | D-011 | example | DONE | `src/tools/teardown.test.ts::[U111] tears down a failed task through the same check` |
+| U112 | A task whose state does not allow `teardown` is refused by the machine | FR-105 | example | DONE | `src/tools/teardown.test.ts::[U112] refuses a task whose state does not allow teardown` |
+| U113 | A retire failure after the event is reported and does not undo `torn_down` | FR-120 | example | DONE | `src/tools/teardown.test.ts::[U113] reports a retire failure after the event and keeps the task torn down` |
+| U114 | A task whose environment has no path is refused | FR-118 | example | DONE | `src/tools/teardown.test.ts::[U114] refuses a task whose environment has no path, and records no event` |
+| U115 | A worker caller is refused | FR-104 | example | DONE | `src/tools/teardown.test.ts::[U115] refuses a worker caller` |
+| U116 | A `local-only` teardown uses the project's base branch for the report | FR-119 | example | DONE | `src/tools/teardown.test.ts::[U116] uses the project` |
 
 ### `src/tools/supervisor-command.ts`
 

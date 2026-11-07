@@ -192,3 +192,15 @@ Each behavior in a batch still has its own test, and each entry records the fail
   - the form is always asked, even under `yolo` -> U98 failed (1 failed, 18 passed)
   - the merge event always records `yolo: false` -> U98 failed (1 failed, 18 passed)
 - refactor: none needed
+
+## Cycle C13: U107 to U116 teardown (`src/tools/teardown.ts`)
+
+- tests: `src/tools/teardown.test.ts` `[U107]` to `[U116]` (new), with the `toMerged` and `scriptGit` fixtures in `test/fixtures/runtime.ts`
+- red: a stub `teardown` that returns `{ ok: false, text: "not implemented" }`, then `pnpm vitest run src/tools/teardown.test.ts`
+  -> all 10 tests failed on assertions about the recorded events, the task state, the retire call, or the result text (10 failed)
+- green: `teardown` reads the worker's environment path, reads the worktree report from git, applies `teardown` as actor `supervisor`, and only then retires the worker.
+  Suite `pnpm test` -> 34 files, 465 passed, 0 failed. Lint and type-check clean.
+- deliberate mutants on the gate (hard rule 2), each restored exactly:
+  - retire the worker before recording the event -> U107, U108, U109, U112, U113 failed (5 failed, 5 passed)
+  - ignore the git report and send a clean one -> U108, U109, U111 failed (3 failed, 7 passed)
+- refactor: none needed
