@@ -146,3 +146,65 @@ describe("drain", () => {
     expect([state(t, a), state(t, b), state(t, c)]).toEqual(["working", "queued", "working"]);
   });
 });
+
+describe("drain re-checks and bookkeeping", () => {
+  it("[U1057] leaves a task queued, and does not spawn, when the preflight of its remote machine fails at the drain", async () => {
+    const t = setup();
+    t.bb.machines.push({ id: "host_gpu", name: "gpu-box", status: "connected", phase: "active", online: true });
+    t.bb.sources.push({ hostId: "host_gpu", path: "/work/gpu", isDefault: false });
+    t.execHandler = (command) => (command === "gh" ? { code: 1, stdout: "", stderr: "not logged in" } : { code: 0, stdout: "", stderr: "" });
+    const id = queue(t, { ...REQUEST, machine: "host_gpu" });
+    await drain(t.runtime);
+    expect(state(t, id)).toBe("queued");
+    expect(t.bb.callsTo("spawnWorker")).toEqual([]);
+    expect(t.lines.some((line) => line.level === "warn" && line.message.includes(id) && /preflight/.test(line.message))).toBe(true);
+    t.execHandler = () => ({ code: 0, stdout: "", stderr: "" });
+    await drain(t.runtime);
+    expect(state(t, id)).toBe("working");
+  });
+
+  it("[U1058] scans again when a drain was asked for during a drain, so a slot freed meanwhile is used", async () => {
+    const t = setup();
+    t.settings.maxWorkers = 2;
+    let release: () => void = () => undefined;
+    const gate = new Promise<void>((resolve) => void (release = resolve));
+    const spawn = t.bb.spawnWorker.bind(t.bb);
+    let first = true;
+    t.bb.spawnWorker = async (request) => {
+      if (first) {
+        first = false;
+        await gate;
+      }
+      return spawn(request);
+    };
+    const one = queue(t);
+    const running = drain(t.runtime);
+    const two = queue(t);
+    expect(await drain(t.runtime)).toBe(0);
+    release();
+    expect(await running).toBe(2);
+    expect([state(t, one), state(t, two)]).toEqual(["working", "working"]);
+  });
+
+  it("[U1059] leaves a queued task that has no stored request alone, without a warning", async () => {
+    const t = setup();
+    t.runtime.log.create({ type: "create", actor: "supervisor", taskId: "promoted", projectId: "proj-1", kind: "ship", mode: "no-mistakes" });
+    const before = t.runtime.deps.store.listEvents().length;
+    expect(await drain(t.runtime)).toBe(0);
+    expect(state(t, "promoted")).toBe("queued");
+    expect(t.runtime.deps.store.listEvents()).toHaveLength(before);
+    expect(t.lines.filter((line) => line.level === "warn" || line.level === "error")).toEqual([]);
+  });
+
+  it("[U1060] clears the launching entry after a worker starts and after a spawn fails", async () => {
+    const t = setup();
+    queue(t);
+    await drain(t.runtime);
+    expect(t.runtime.launching.size).toBe(0);
+    t.bb.spawnError = new Error("host is gone");
+    const failing = queue(t);
+    await drain(t.runtime);
+    expect(state(t, failing)).toBe("failed");
+    expect(t.runtime.launching.size).toBe(0);
+  });
+});

@@ -36,6 +36,7 @@ export class FakeBbPort implements BbPort {
   costError: Error | null = null;
   /** What `listProjects` returns. */
   projectList: Array<{ id: string; name: string }> = [];
+  projectsError: Error | null = null;
   terminalReadError: Error | null = null;
   /** What `listMachines` returns. The default is one online host, `host_local`. */
   machines: MachineInfo[] = [{ id: "host_local", name: "local-box", status: "connected", phase: "active", online: true }];
@@ -131,6 +132,7 @@ export class FakeBbPort implements BbPort {
 
   async listProjects(): Promise<Array<{ id: string; name: string }>> {
     this.calls.push({ method: "listProjects", args: [] });
+    if (this.projectsError) throw this.projectsError;
     return this.projectList;
   }
 

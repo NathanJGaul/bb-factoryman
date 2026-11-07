@@ -54,11 +54,14 @@ export class WebhookNotifier {
       },
       evidence: event.evidence === null ? null : clip(event.evidence, EVIDENCE_LIMIT),
     };
+    // A thrown error can repeat the URL, and the URL is a secret: strip it and its parts from the message.
+    const secrets = [target, parsed.username, parsed.password, parsed.search, parsed.pathname].filter((part) => part.length > 3);
+    const redact = (text: string) => secrets.reduce((out, secret) => out.split(secret).join("<url>"), text).replace(/\b[a-z][a-z0-9+.-]*:\/\/\S+/gi, "<url>");
     try {
       const answer = await this.fetch(target, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body), signal: AbortSignal.timeout(this.timeoutMs) });
       if (!answer.ok) this.log.warn(`The webhook at ${parsed.host} answered HTTP ${answer.status} for task ${task.taskId}.`);
     } catch (error) {
-      this.log.warn(`The webhook at ${parsed.host} could not be reached for task ${task.taskId}: ${error instanceof Error ? error.message : String(error)}`);
+      this.log.warn(`The webhook at ${parsed.host} could not be reached for task ${task.taskId}: ${redact(error instanceof Error ? error.message : String(error))}`);
     }
   }
 }

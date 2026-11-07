@@ -130,6 +130,27 @@ describe("bb factoryman supervisor", () => {
       expect(t.runtime.deps.store.getProjectConfig("proj-9").yolo).toBe(false);
     });
 
+    it("[U1065] says that the bb projects could not be listed, and still prints the table", async () => {
+      const t = testRuntime();
+      t.files.files.set("/reg/projects.md", registry);
+      t.bb.projectsError = new Error("bb is down");
+      const result = await runFactorymanCommand(t.runtime, ["import-registry", "--file", "/reg/projects.md"]);
+      expect(result.exitCode).toBe(0);
+      expect(result.stdout).toContain("could not be listed");
+      expect(result.stdout).toContain("bb is down");
+      expect(result.stdout).toContain("gadgets | direct-PR | direct-PR | on | wip/ | none | not found in bb");
+    });
+
+    it("[U1066] prints usage for an unknown flag next to a good --file, and reads nothing", async () => {
+      const t = testRuntime();
+      t.files.files.set("/reg/projects.md", registry);
+      for (const argv of [["import-registry", "--file", "/reg/projects.md", "--bogus"], ["import-registry", "--bogus", "--file", "/reg/projects.md"], ["import-registry", "--file", "/reg/projects.md", "extra"]]) {
+        const bad = await runFactorymanCommand(t.runtime, argv);
+        expect(bad.exitCode, argv.join(" ")).toBe(2);
+      }
+      expect(t.files.reads).toEqual([]);
+    });
+
     it("[U1030] refuses --apply, prints usage without a file, and reports a file that cannot be read", async () => {
       const t = testRuntime();
       t.files.files.set("/reg/projects.md", registry);

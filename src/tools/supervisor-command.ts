@@ -134,15 +134,18 @@ async function importRegistry(rt: Runtime, args: string[]): Promise<CommandResul
 
   const { entries, skipped } = parseRegistry(text);
   let projects: Array<{ id: string; name: string }> = [];
+  let projectsNote: string | null = null;
   try {
     projects = await rt.deps.bb.listProjects();
   } catch (error) {
+    projectsNote = `The bb projects could not be listed (${errorText(error)}), so no project is matched by name.`;
     rt.deps.log.warn(`Could not list the bb projects for the registry report: ${errorText(error)}`);
   }
   const idOf = (name: string) => projects.find((project) => project.name.toLowerCase() === name.toLowerCase())?.id;
   const lines = [
     `Registry ${file}: ${entries.length} projects, ${skipped} other lines skipped.`,
     "Dry run: nothing was written. A project keeps its stored config (no-mistakes, yolo off) until a person sets it.",
+    ...(projectsNote === null ? [] : [`Note: ${projectsNote}`]),
     "",
     "name | registered mode | plugin mode | yolo | branch prefix | forge | bb project",
     ...entries.map((entry) => reportLine(entry, idOf(entry.name))),

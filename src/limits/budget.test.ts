@@ -100,4 +100,41 @@ describe("checkBudget", () => {
     await checkBudget(t.runtime, "proj-1", { ...LIMITS, maxTasksPerDay: 5 });
     expect(t.bb.callsTo("getThreadCost")).toEqual([]);
   });
+
+  it("[U1061] counts only the project's own tasks for the day cap", async () => {
+    const { t } = setup();
+    task(t, "a", { project: "proj-2" });
+    task(t, "b", { project: "proj-2" });
+    task(t, "c", { project: "proj-2" });
+    expect((await checkBudget(t.runtime, "proj-1", { ...LIMITS, maxTasksPerDay: 2 })).ok).toBe(true);
+    expect((await checkBudget(t.runtime, "proj-2", { ...LIMITS, maxTasksPerDay: 2 })).ok).toBe(false);
+  });
+
+  it("[U1062] reads a running task from an earlier day for the per-task budget, and leaves earlier days out of the day spend", async () => {
+    const { t, now } = setup("2026-11-06");
+    task(t, "old", { cost: { amount: 9, currency: "USD" } });
+    now.value = "2026-11-07T10:00:00.000Z";
+    const refused = await checkBudget(t.runtime, "proj-1", { ...LIMITS, perTaskBudget: 3 });
+    expect(refused.ok).toBe(false);
+    expect(refused.ok ? "" : refused.text).toContain("old");
+    task(t, "new", { cost: { amount: 1, currency: "USD" } });
+    expect((await checkBudget(t.runtime, "proj-1", { ...LIMITS, perDayBudget: 5 })).ok).toBe(true);
+    expect((await checkBudget(t.runtime, "proj-1", { ...LIMITS, perDayBudget: 1 })).ok).toBe(false);
+  });
+
+  it("[U1063] counts a cost read that fails as zero spend and says the cost is unknown", async () => {
+    const { t } = setup();
+    task(t, "a", { cost: { amount: 100, currency: "USD" } });
+    t.bb.costError = new Error("bb is down");
+    const result = await checkBudget(t.runtime, "proj-1", { ...LIMITS, perDayBudget: 5 });
+    expect(result.ok).toBe(true);
+    expect(result.ok ? result.notes.join(" ") : "").toMatch(/unavailable|unknown/i);
+  });
+
+  it("[U1064] reads no cost for a queued task that has no worker thread yet", async () => {
+    const { t } = setup();
+    t.runtime.log.create({ type: "create", actor: "supervisor", taskId: "q", projectId: "proj-1", kind: "ship", mode: "no-mistakes" });
+    await checkBudget(t.runtime, "proj-1", { ...LIMITS, perDayBudget: 5 });
+    expect(t.bb.callsTo("getThreadCost")).toEqual([]);
+  });
 });

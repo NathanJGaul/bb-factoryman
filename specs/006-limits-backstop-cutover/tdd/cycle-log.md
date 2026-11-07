@@ -75,3 +75,31 @@ Red commit: `test: add protection checklist and registry import tests with stubs
 - `[U1045]` (FR-1012) passed at once. Mutant: remove `request` from the `create` schema -> `[U1045]` and six queue tests failed. Reverted.
 - green: `registry.ts`, `protection.ts`, the `protection` and `import-registry` commands in `supervisor-command.ts`, and the two docs. Two tests expected a lowercase "could not read", and the message is capitalized, so the tests match with `/i` (the wording did not change).
   `pnpm run check` -> 90 files, 1062 passed, 0 failed. Type check and lint clean.
+
+## Cycle R1: audit remediation (tests added to kill surviving mutants)
+
+The cold audit (`tdd/verification.md`, commit `8e2ecb0`) returned FAIL: 133 mutants, 46 survived, 33 of them real gaps.
+Four were product bugs, and the tests for them were red first: the webhook log leaked the URL (finding 1), the printed here-document end marker was indented (finding 5), an unclosed bracket was skipped and not flagged (finding 9), and the webhook post ran before the wake (finding 10).
+Mutants below are the audit's IDs. Each was applied by hand, run against the suite, and reverted.
+
+- R1 `[U1048]`: the error text that `fetch` throws repeats the URL and its credentials, and the log holds no part of it. `redact` strips the URL, its parts, and any `scheme://` text.
+  Mutant: log the raw message (W03) -> `[U1048]` failed.
+- R2 `[A1025]`, `[A1026]`: a pinned task at a cap is queued, then drained on its machine with its profile, prefix `wip/`, base branch `trunk`, and parent. The second test takes the machine offline at the drain and brings it back.
+  Mutants: store `baseBranch: null`, a fixed prefix, a fixed parent, or no machine in the drain (D01, D07, D08) -> `[A1025]` failed, and the machine mutant also failed `[U1008]` and `[A1026]`.
+- R3 `[U1054]` (16 characters, each in the repo owner, repo name, branch, and check) and `[U1055]` (a double dot).
+  Mutants: loosen the repo name pattern (P06), loosen the check pattern (P07), drop either `..` guard (P01, P02) -> `[U1054]`, `[U1021]`, `[U1055]` failed.
+- R4 `[A1028]`: a dispatch over budget at a cap is refused and creates no task. `[A1029]`: a queued result keeps the unknown-cost note.
+  Mutants: skip the budget refusal at a cap (D04) -> `[A1028]` failed. Drop the notes from the queued result (D05) -> `[A1029]` failed. D-086 says the drain does not check budgets again.
+- R5 `[U1056]`: the test runs the printed here-document in `bash` with a stub `gh` and checks that the stub receives the whole JSON. The end marker is unindented now.
+  Mutant: indent the marker (P05) -> `[U1056]` failed.
+- R6 `[U1057]` (preflight failure at the drain), `[U1058]` (an overlapping call scans again), `[U1059]` (no stored request), `[U1060]` (the launching set clears).
+  Mutants: skip the preflight check (Q17), reset `again` (Q12), accept any stored value (Q21) -> each failed its test.
+- R7 `[U1061]` to `[U1064]`: a second project for the day cap, an earlier-day running task, an earlier-day cost, a failed read counted as zero with its note, and a queued task with no thread. The adapter test passes a EUR cost through.
+  Mutants: count every project (B03), skip running tasks in the cost read (B07), sum running tasks into the day spend (B08), count a failed read as zero (B09), return `USD` for every cost (S07) -> each failed its tests. `[A1027]` floors a fractional cap. Mutants: `Math.ceil` or no floor (S03) -> `[A1027]` failed.
+- R8 `[U1050]` to `[U1053]`: an unclosed bracket is flagged, a bare `yolo` is an unknown mode, an empty `forge=` is `none` and a token after the mode is flagged, and a dash with a word is skipped.
+  Mutants: read a bare `yolo` as on (R01), keep `forge=` empty (R02), drop the extra-token flag (R05), clear the unclosed flag (R08), keep a separator-less line (R15) -> each failed.
+  `[U1049]` warns on 400, 404, 429, 500, and 503. Mutant: warn only on 5xx (W05) -> failed.
+  `[U1046]`, `[U1047]`: the wake goes first, and the five attention states post. `[U1065]`: a failing `listProjects` adds a note. `[U1066]`: an unknown flag prints usage. Mutants: drop the note (C09), ignore unknown flags (C05) -> each failed.
+  Bookkeeping: the criteria count is 23, `[A1004]` no longer claims that the supervisor can fail a queued task, `[A1030]` and `[A1031]` replaced the second `[A1005]` and `[A1006]`, and `U1029` is in group 1 on the plan.
+- Not changed: the audit's equivalent or unreachable survivors (Q19, Q20, Q23, B14, RQ6, S12, D13, D14).
+- suite: `pnpm run check` -> 90 files, 1107 passed, 0 failed. Type check and lint clean.

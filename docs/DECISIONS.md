@@ -719,13 +719,23 @@ A cost that is missing, in another currency than `budgetCurrency` (default `USD`
 The dispatch result then says which budgets could not be checked, and `maxTasksPerDay` stays the one spend limit in force.
 A refusal creates no task (D-066).
 The plugin never stops or fails a running worker for cost.
+The budget check runs before the cap check, so a dispatch that is over budget is refused even when the project is at a cap, and it never becomes a queued task.
+The drain does not check budgets again.
+A task that was accepted under budget and queued starts when a slot frees, even if the day's spend has reached the budget since.
+That is deliberate: the budget decides whether the plugin accepts new work, and the owner already accepted this task.
+An owner who wants a hard stop sets a cap and lowers it.
+The day count and the day spend cover only the project's own tasks created today.
+The per-task budget reads every running task of the project, whatever day it started.
 
 ### D-087: The webhook posts attention states as JSON (Gap)
 
 The `webhookUrl` setting holds a URL, and the plugin posts `{ event: "task.attention", at, task, evidence }` to it when a task enters `needs_decision`, `review_ready`, `report_ready`, `blocked`, or `failed`.
 Only `http` and `https` URLs post, the call times out after five seconds, and evidence is cut to 600 characters.
 The URL is a secret, so a failure logs the host and never the URL.
+The log text also strips the URL, its parts, and any `scheme://` text from the error message, because the real `fetch` repeats a URL with credentials in its error.
+A 4xx or 5xx answer logs a warning with the host and the status.
 A failure never undoes a transition.
+The supervisor wake goes first and the post second, so a slow hook never delays the wake.
 Spike item 13: bb's push-notifications plugin has a command but the plugin calls no other plugin, so the webhook is the design's fallback.
 
 ### D-088: The registry import is a dry run that only reads (Decided in the task brief)
@@ -733,6 +743,10 @@ Spike item 13: bb's push-notifications plugin has a command but the plugin calls
 `bb factoryman import-registry --file <path>` reads one file through the `Files` port and prints each project's registered mode, the mode this plugin would use, `yolo`, branch prefix, forge, and the bb project with the same name (case-insensitive).
 It follows the format in the header of firstmate's `bin/fm-project-mode.sh`: the name ends at the first ` [` or ` - `, the bracket tokens come in any order, a line with no bracket is `no-mistakes` with `yolo` off, and `no-mistakes-prod-only` maps to `no-mistakes` with a note.
 An unknown mode or token is flagged and not guessed.
+A bare `yolo` token, without the `+`, is an unknown mode or an unexpected token and never turns the bypass on.
+A line with an unclosed bracket is reported as an entry with `unreadable` as its registered mode and a flag, and not skipped.
+An unknown flag prints the usage and reads nothing.
+If bb cannot list its projects, the report says so in a note and still prints every entry.
 `--apply` is refused.
 Nothing writes the stored project config, so a project stays in `no-mistakes` mode with `yolo` off until the owner decides on an apply path.
 That decision is open (D-078).

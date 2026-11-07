@@ -67,7 +67,7 @@ describe("worker caps and the queue through the plugin factory", () => {
     expect([state(world, "t1"), state(world, "t2"), state(world, "t3")]).toEqual(["working", "working", "working"]);
   });
 
-  it("[A1005] queues nothing when the global cap is 0", async () => {
+  it("[A1030] queues nothing when the global cap is 0", async () => {
     const world = await setup({ settings: { maxWorkers: 0 } });
     for (let i = 0; i < 3; i += 1) expect((await world.call("factoryman_dispatch", TASK)).isError).toBe(false);
     expect([state(world, "t1"), state(world, "t2"), state(world, "t3")]).toEqual(["working", "working", "working"]);
@@ -85,7 +85,7 @@ describe("worker caps and the queue through the plugin factory", () => {
     expect(state(world, "t2")).toBe("working");
   });
 
-  it("[A1006] starts queued tasks when the owner raises the global cap", async () => {
+  it("[A1031] starts queued tasks when the owner raises the global cap", async () => {
     const world = await setup({ settings: { maxWorkers: 1 } });
     await world.call("factoryman_dispatch", TASK);
     await world.call("factoryman_dispatch", TASK);
@@ -125,5 +125,63 @@ describe("worker caps and the queue through the plugin factory", () => {
     expect(result.text).toContain("workflow.json");
     expect(world.store.listTasks()).toEqual([]);
     expect(world.sdkCalls("threads.spawn")).toEqual([]);
+  });
+});
+
+describe("a queued task keeps everything it was dispatched with", () => {
+  async function pinned(): Promise<{ world: World }> {
+    const checkout = makeCheckout({
+      workflow: { version: 1, project: { branchPrefix: "wip/" }, limits: { maxWorkers: 1 } },
+      dispatch: {
+        version: 1,
+        profiles: { strict: { provider: "claude", model: "opus-strict", reasoningLevel: "xhigh", permissionMode: "auto" } },
+        rules: [{ id: "tagged", when: { tags: ["deep"] }, profile: "strict" }],
+      },
+    });
+    const world = await loadWorld({
+      checkout,
+      machines: [hostFixture("host_local", "local-box"), hostFixture("host_gpu", "gpu-box")],
+      sources: [{ hostId: "host_local", path: checkout, isDefault: true }, { hostId: "host_gpu", path: "/work/gpu" }],
+    });
+    world.setProject({ baseBranch: "trunk" });
+    return { world };
+  }
+  const spawns = (world: World) => world.sdkCalls("threads.spawn") as Array<[{ providerId: string; model: string; reasoningLevel: string; parentThreadId: string; prompt: string; environment: { hostId: string; workspace: { baseBranch: unknown } } }]>;
+
+  it("[A1025] starts a queued task on its pinned machine, with its profile, branch prefix, base branch, and parent, once a slot frees", async () => {
+    const { world } = await pinned();
+    await world.call("factoryman_dispatch", TASK);
+    const queued = await world.call("factoryman_dispatch", { ...TASK, machine: "gpu-box", tags: ["deep"] });
+    expect(queued.text).toContain("t2 is queued");
+    expect(spawns(world)).toHaveLength(1);
+    await fail(world, "thr-w1");
+    expect(spawns(world)).toHaveLength(2);
+    const second = spawns(world)[1]?.[0];
+    if (second === undefined) throw new Error("the second spawn is missing");
+    expect(second.environment.hostId).toBe("host_gpu");
+    expect(second).toMatchObject({ model: "opus-strict", reasoningLevel: "xhigh", parentThreadId: "thr-sup" });
+    expect(second.environment.workspace.baseBranch).toEqual({ kind: "named", name: "trunk" });
+    expect(second.prompt).toContain("wip/t2");
+    expect(world.store.getTask("t2")).toMatchObject({ state: "working", machine: "host_gpu", branch: "wip/t2" });
+  });
+
+  it("[A1026] keeps a pinned task queued while its machine is offline, and starts it there when the machine is back", async () => {
+    const { world } = await pinned();
+    await world.call("factoryman_dispatch", TASK);
+    await world.call("factoryman_dispatch", { ...TASK, machine: "gpu-box" });
+    world.machines[1] = hostFixture("host_gpu", "gpu-box", { status: "disconnected" });
+    await fail(world, "thr-w1");
+    expect(state(world, "t2")).toBe("queued");
+    expect(spawns(world)).toHaveLength(1);
+    world.machines[1] = hostFixture("host_gpu", "gpu-box");
+    await world.host.harness.behavior.setSettings({ maxWorkers: 5 });
+    await settle(() => state(world, "t2") === "working");
+    expect(spawns(world).at(-1)?.[0].environment.hostId).toBe("host_gpu");
+  });
+
+  it("[A1027] floors a fractional global cap", async () => {
+    const world = await setup({ settings: { maxWorkers: 1.5 } });
+    await world.call("factoryman_dispatch", TASK);
+    expect((await world.call("factoryman_dispatch", TASK)).text).toContain("t2 is queued");
   });
 });

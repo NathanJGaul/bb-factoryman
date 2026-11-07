@@ -74,3 +74,24 @@ describe("budgets through the plugin factory", () => {
     expect(world.sdkCalls("threads.spawn")).toHaveLength(1);
   });
 });
+
+describe("budgets and the queue", () => {
+  it("[A1028] refuses a dispatch that is over budget even at a cap, and creates no queued task", async () => {
+    const world = await setup({ maxWorkers: 1, perDayBudget: 1 });
+    await world.call("factoryman_dispatch", TASK);
+    world.costs.set("thr-w1", { amount: 5, currency: "USD" });
+    const refused = await world.call("factoryman_dispatch", TASK);
+    expect(refused.isError).toBe(true);
+    expect(refused.text).toContain("No task was created");
+    expect(world.store.listTasks()).toHaveLength(1);
+  });
+
+  it("[A1029] puts the unknown-cost note in the result of a queued dispatch", async () => {
+    const world = await setup({ maxWorkers: 1, perDayBudget: 50 });
+    await world.call("factoryman_dispatch", TASK);
+    const queued = await world.call("factoryman_dispatch", TASK);
+    expect(queued.isError).toBe(false);
+    expect(queued.text).toContain("t2 is queued");
+    expect(queued.text).toMatch(/Note:.*could not be checked/s);
+  });
+});

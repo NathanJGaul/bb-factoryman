@@ -276,6 +276,7 @@ describe("createBbPort", () => {
   it("[U1028] reads the cost of a thread, and gives null for no cost or for a failure", async () => {
     const context = (usage: unknown) => ({ threads: { context: async () => ({ usage }) } }) as FakeSdkOverrides;
     expect(await setup(context({ cost: { amount: 1.25, currency: "USD" }, estimated: true })).port.getThreadCost("thr-1")).toEqual({ amount: 1.25, currency: "USD" });
+    expect(await setup(context({ cost: { amount: 3, currency: "EUR" }, estimated: false })).port.getThreadCost("thr-1")).toEqual({ amount: 3, currency: "EUR" });
     expect(await setup(context({ estimated: true })).port.getThreadCost("thr-1")).toBeNull();
     expect(await setup(context({ cost: null })).port.getThreadCost("thr-1")).toBeNull();
     expect(await setup(context(null)).port.getThreadCost("thr-1")).toBeNull();

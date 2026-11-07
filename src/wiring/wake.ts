@@ -24,8 +24,9 @@ export class Notifier {
   /** Runtime listener: wake the supervisor when an applied event leaves the task in an attention state. */
   async onApplied({ task, event }: AppliedEvent): Promise<void> {
     if (!WAKE_STATES.includes(task.state)) return;
-    await this.webhook?.post(task, event);
+    // The supervisor wake comes first, so a slow webhook (up to its timeout) never delays it.
     await this.wake(task, `is now ${task.state}`, event.evidence);
+    await this.webhook?.post(task, event);
   }
 
   /** `phrase` completes the sentence "Task <id> (<kind>, <mode>) ...". */

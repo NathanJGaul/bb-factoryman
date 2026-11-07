@@ -2,9 +2,9 @@
 feature: 006-limits-backstop-cutover
 loop: outside-in
 profile: .specify/memory/tdd-profile.md
-spec_criteria: 24
+spec_criteria: 23
 planned_at: 529574d
-updated_at: 529574d
+updated_at: 8e2ecb0 + remediation
 suite_baseline: green
 ---
 
@@ -22,7 +22,7 @@ The suite baseline was 80 files and 975 tests, all passing.
 | A1001 | A project cap queues the next task: the task is `queued`, no worker spawns, and the result says so | AC-1.1, FR-1002, FR-1003, SC-1001 | example | DONE | `test/acceptance/limits-queue.test.ts::[A1001]` |
 | A1002 | The global cap in the settings queues across projects | AC-1.2, FR-1002 | example | DONE | `test/acceptance/limits-queue.test.ts::[A1002]` |
 | A1003 | When a worker leaves the running states, the oldest queued task starts, in order | AC-1.3, FR-1004, SC-1001 | example | DONE | `test/acceptance/limits-queue.test.ts::[A1003]` |
-| A1004 | `factoryman_status` shows a queued task with its description, and the supervisor can fail it | AC-1.4 | example | DONE | `test/acceptance/limits-queue.test.ts::[A1004]` |
+| A1004 | `factoryman_status` shows a queued task with its description (no tool cancels a queued task) | AC-1.4 | example | DONE | `test/acceptance/limits-queue.test.ts::[A1004]` |
 | A1005 | With no cap, or a cap of 0, nothing queues | AC-1.5, FR-1002 | example | DONE | `test/acceptance/limits-queue.test.ts::[A1005]` |
 | A1006 | A restart with queued tasks and free slots starts them | AC-1.6, FR-1004 | example | DONE | `test/acceptance/limits-queue.test.ts::[A1006]` |
 | A1007 | An unreadable queued request fails the task with evidence, and a task whose machine is offline stays queued | AC-1.7 | error | DONE | `test/acceptance/limits-queue.test.ts::[A1007]` |
@@ -43,6 +43,13 @@ The suite baseline was 80 files and 975 tests, all passing.
 | A1022 | The import changes no project config and the registry file is only read | AC-5.4, FR-1011 | example | DONE | `test/acceptance/limits-cutover.test.ts::[A1022]` |
 | A1023 | `--apply` is refused | AC-5.5, FR-1011 | example | DONE | `test/acceptance/limits-cutover.test.ts::[A1023]` |
 | A1024 | A bad `limits` section blocks dispatch like any bad workflow file | FR-1007 | error | DONE | `test/acceptance/limits-queue.test.ts::[A1024]` |
+| A1025 | A queued task keeps its pinned machine, profile, branch prefix, base branch, and parent, and starts on that machine once a slot frees | AC-1.3, AC-1.7, FR-1003 | example | DONE | `test/acceptance/limits-queue.test.ts::[A1025]` |
+| A1026 | A pinned task stays queued while its machine is offline, and starts there when the machine is back | AC-1.7, hard rule 5 | error | DONE | `test/acceptance/limits-queue.test.ts::[A1026]` |
+| A1027 | A fractional global cap is floored | FR-1002 | example | DONE | `test/acceptance/limits-queue.test.ts::[A1027]` |
+| A1028 | A dispatch over budget is refused even at a cap, and no queued task exists | AC-2.5, FR-1005 | error | DONE | `test/acceptance/limits-budget.test.ts::[A1028]` |
+| A1029 | A queued dispatch result keeps the unknown-cost note | AC-2.4 | example | DONE | `test/acceptance/limits-budget.test.ts::[A1029]` |
+| A1030 | The global cap of 0 queues nothing (second test of the old `A1005` label) | AC-1.5, FR-1002 | example | DONE | `test/acceptance/limits-queue.test.ts::[A1030]` |
+| A1031 | Raising the global cap setting starts queued tasks (second test of the old `A1006` label) | AC-1.6, FR-1004 | example | DONE | `test/acceptance/limits-queue.test.ts::[A1031]` |
 
 ## Inner loop: unit behaviors
 
@@ -75,22 +82,46 @@ The suite baseline was 80 files and 975 tests, all passing.
 | U1025 | An empty `branch=` gives an empty prefix. | FR-1011 | example | DONE | `src/limits/registry.test.ts::[U1025]` |
 | U1026 | A line with an unknown token or mode is flagged, and a non-registry line is skipped with a count. | FR-1011 | example | DONE | `src/limits/registry.test.ts::[U1026]` |
 | U1027 | Names may contain spaces and end at the first ` [` or ` - `. | FR-1011 | example | DONE | `src/limits/registry.test.ts::[U1027]` |
-| U1028 | `getThreadCost` reads `usage.cost` and gives null for none or on error. | FR-1006 | example | DONE | `src/bb/adapter.test.ts::[U1028]` |
+| U1028 | `getThreadCost` reads `usage.cost`, passes the currency through, and gives null for none or on error. | FR-1006 | example | DONE | `src/bb/adapter.test.ts::[U1028]` |
 | U1029 | `listProjects` maps ID and name. | FR-1011 | example | DONE | `src/bb/adapter.test.ts::[U1029]` |
 | U1030 | The commands `protection` and `import-registry` parse their arguments and print usage for a bad call. | FR-1010, FR-1011 | example | DONE | `src/tools/supervisor-command.test.ts::[U1030]` |
 | U1031 | The status of a queued task shows its description. | AC-1.4 | example | DONE | `src/tools/status.test.ts::[U1031]` |
 | U1045 | A `create` event accepts an optional request object and nothing else new | FR-1012 | example | DONE | `src/machine/events.test.ts::[U1045]` |
 | U1044 | The webhook gives up after its timeout and logs the host | FR-1008 | example | DONE | `src/limits/webhook.test.ts::[U1044]` |
+| U1046 | The wake goes to the supervisor before the webhook post | FR-1008 | example | DONE | `src/wiring/wake.test.ts::[U1046]` |
+| U1047 | The webhook posts for the five attention states and no other state | FR-1008 | example | DONE | `src/wiring/wake.test.ts::[U1047]` |
+| U1048 | The webhook log holds no part of the URL, such as its credentials, even when the error message repeats it | FR-1008, FR-1009 | example | DONE | `src/limits/webhook.test.ts::[U1048]` |
+| U1049 | A 4xx or 5xx answer logs a warning | FR-1008 | example | DONE | `src/limits/webhook.test.ts::[U1049]` |
+| U1050 | An unclosed bracket gives an entry with a flag and is not skipped | FR-1011 | error | DONE | `src/limits/registry.test.ts::[U1050]` |
+| U1051 | A bare `yolo` token is an unknown mode and never the bypass flag | FR-1011 | error | DONE | `src/limits/registry.test.ts::[U1051]` |
+| U1052 | An empty `forge=` is `none`, and a token after the mode is flagged | FR-1011 | example | DONE | `src/limits/registry.test.ts::[U1052]` |
+| U1053 | A dash and a word with no separator is skipped | FR-1011 | example | DONE | `src/limits/registry.test.ts::[U1053]` |
+| U1054 | Shell metacharacters are rejected in the repo owner, repo name, branch, and check | FR-1010 | error | DONE | `src/limits/protection.test.ts::[U1054]` |
+| U1055 | A double dot is rejected in the repo and the branch | FR-1010 | error | DONE | `src/limits/protection.test.ts::[U1055]` |
+| U1056 | The printed here-document runs in a shell: the end marker starts its line and `gh` receives the whole JSON | FR-1010 | example | DONE | `src/limits/protection.test.ts::[U1056]` |
+| U1057 | A task stays queued, and nothing spawns, when the preflight of its remote machine fails at the drain | AC-1.7 | error | DONE | `src/limits/queue.test.ts::[U1057]` |
+| U1058 | A drain asked for during a drain scans again | FR-1004 | example | DONE | `src/limits/queue.test.ts::[U1058]` |
+| U1059 | A queued task with no stored request is left alone, with no warning | AC-1.7 | example | DONE | `src/limits/queue.test.ts::[U1059]` |
+| U1060 | The launching entry clears after a start and after a failed spawn | FR-1001 | example | DONE | `src/limits/queue.test.ts::[U1060]` |
+| U1061 | The day cap counts only the project's own tasks | FR-1005 | example | DONE | `src/limits/budget.test.ts::[U1061]` |
+| U1062 | A running task from an earlier day counts for the per-task budget, and earlier days stay out of the day spend | FR-1005 | example | DONE | `src/limits/budget.test.ts::[U1062]` |
+| U1063 | A failed cost read counts as zero spend and the result says the cost is unknown | FR-1006 | error | DONE | `src/limits/budget.test.ts::[U1063]` |
+| U1064 | A queued task with no worker thread has no cost read | FR-1006 | example | DONE | `src/limits/budget.test.ts::[U1064]` |
+| U1065 | A failing `listProjects` shows a note and still prints the table | FR-1011 | error | DONE | `src/tools/supervisor-command.test.ts::[U1065]` |
+| U1066 | An unknown flag next to a good `--file` prints usage and reads nothing | FR-1011 | error | DONE | `src/tools/supervisor-command.test.ts::[U1066]` |
 
-Tests added while closing the group, with IDs in the same range:
+Notes:
 
-- `[A1005]` has two tests, `[A1006]` two, and `[A1019]` to `[A1023]` run on the real command through `runCli`.
+- `[A1019]` to `[A1023]` run on the real command through `runCli`.
+- The audit remediation added `A1025` to `A1031` and `U1046` to `U1066`. See `tdd/cycle-log.md`, entry R1.
+- `A1030` and `A1031` were the second tests under the labels `A1005` and `A1006`. They have their own IDs now.
 
 ## Cycle plan
 
-Group 1: caps, the queue, and budgets (`U1001` to `U1016`, `U1028`, `U1031`, `A1001` to `A1012`, `A1024`).
+Group 1: caps, the queue, and budgets (`U1001` to `U1016`, `U1028`, `U1029`, `U1031`, `A1001` to `A1012`, `A1024`).
+The `listProjects` mapping `U1029` landed with the port stubs in the group 1 red commit.
 Group 2: the webhook (`U1017` to `U1019`, `U1044`, `A1013` to `A1016`).
-Group 3: the protection checklist and the registry import (`U1020` to `U1027`, `U1029`, `U1030`, `A1017` to `A1023`).
+Group 3: the protection checklist and the registry import (`U1020` to `U1027`, `U1030`, `A1017` to `A1023`).
 
 ## Property and mutation notes
 

@@ -75,4 +75,24 @@ describe("WebhookNotifier", () => {
     expect(warnings).toHaveLength(1);
     expect(warnings[0]).toContain("hooks.example.com");
   });
+
+  it("[U1048] logs no part of the URL, such as its credentials, when the error message repeats it", async () => {
+    const url = "https://bot:PASSWORD@hooks.example.com/services/SECRET?token=abc";
+    const warnings: string[] = [];
+    const log: Logger = { debug: () => undefined, info: () => undefined, warn: (m) => void warnings.push(m), error: () => undefined };
+    const fetch: FetchLike = async (target) => {
+      throw new TypeError(`Request cannot be constructed from a URL that includes credentials: ${target}`);
+    };
+    await new WebhookNotifier({ fetch, log, url: () => url }).post(TASK, EVENT);
+    expect(warnings).toHaveLength(1);
+    expect(warnings[0]).toContain("hooks.example.com");
+    for (const secret of ["PASSWORD", "bot:", "SECRET", "token=abc"]) expect(warnings[0], secret).not.toContain(secret);
+  });
+
+  it.each([400, 404, 429, 500, 503])("[U1049] warns about an HTTP %s answer", async (status) => {
+    const { notifier, warnings } = setup("https://hooks.example.com/x", { ok: false, status });
+    await notifier.post(TASK, EVENT);
+    expect(warnings).toHaveLength(1);
+    expect(warnings[0]).toContain(String(status));
+  });
 });

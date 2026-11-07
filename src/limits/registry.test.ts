@@ -47,4 +47,31 @@ describe("parseRegistry", () => {
     expect(entry?.forge).toBe("gerrit");
     expect(entry?.notes.join(" ")).toMatch(/gerrit/);
   });
+
+  it("[U1050] reports a line with an unclosed bracket as an entry with a flag, and does not skip it", () => {
+    const entry = parse("- broken [no-mistakes - Never closed (added 2026-01-01)");
+    expect(entry).toMatchObject({ name: "broken", mode: null });
+    expect(entry?.flags.join(" ")).toMatch(/bracket/);
+    expect(parseRegistry("- broken [no-mistakes - Never closed").skipped).toBe(0);
+  });
+
+  it("[U1051] reads a bare yolo as an unknown mode and not as the approval bypass", () => {
+    const entry = parse("- a [yolo] - d");
+    expect(entry).toMatchObject({ mode: null, yolo: false, registeredMode: "yolo" });
+    expect(entry?.flags.join(" ")).toMatch(/unknown mode `yolo`/);
+    const withMode = parse("- a [direct-PR yolo] - d");
+    expect(withMode).toMatchObject({ mode: "direct-PR", yolo: false });
+    expect(withMode?.flags.join(" ")).toMatch(/unexpected token `yolo`/);
+  });
+
+  it("[U1052] reads an empty forge= as none, and flags a token that follows the mode", () => {
+    expect(parse("- a [no-mistakes forge=] - d")?.forge).toBe("none");
+    expect(parse("- a [local-only odd +yolo] - d")).toMatchObject({ mode: "local-only", yolo: true });
+    expect(parse("- a [local-only odd] - d")?.flags.join(" ")).toMatch(/unexpected token `odd`/);
+  });
+
+  it("[U1053] skips a line that is only a dash and a word, with no separator after the name", () => {
+    expect(parseRegistry("-x - y").skipped).toBe(1);
+    expect(parseRegistry("- justaname").skipped).toBe(1);
+  });
 });

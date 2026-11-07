@@ -29,4 +29,5 @@ description: "Task list for limits, backstop, and cutover"
 ## Phase 5: Close-out
 
 - [X] T1040 Record D-084 to D-089 in `docs/DECISIONS.md` and the profile helpers
-- [ ] T1041 `/speckit.tdd.verify`, remediation, `/speckit.checklist`, `/speckit.analyze`, `/speckit.converge`
+- [X] T1041 `/speckit.tdd.verify`, remediation, `/speckit.checklist`, `/speckit.analyze`, `/speckit.converge`
+- [X] T1042 Remediation R1 to R8 from the audit (cycle R1 in `tdd/cycle-log.md`)

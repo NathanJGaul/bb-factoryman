@@ -125,3 +125,33 @@ describe("Notifier", () => {
     expect(sent(t)).toHaveLength(1);
   });
 });
+
+describe("Notifier and the webhook", () => {
+  it("[U1046] wakes the supervisor before it posts to the webhook, so a slow hook never delays the wake", async () => {
+    const t = await withDispatchedTask();
+    const order: string[] = [];
+    const sendMessage = t.bb.sendMessage.bind(t.bb);
+    t.bb.sendMessage = async (threadId, text) => {
+      order.push("wake");
+      await sendMessage(threadId, text);
+    };
+    const webhook = { post: async () => void order.push("webhook") } as unknown as ConstructorParameters<typeof Notifier>[1];
+    const notifier = new Notifier(t.runtime, webhook);
+    t.runtime.onApplied((applied) => notifier.onApplied(applied));
+    await t.runtime.apply("t1", { type: "fail", actor: "system", evidence: "Died." });
+    expect(order).toEqual(["wake", "webhook"]);
+  });
+
+  it("[U1047] posts to the webhook for the five attention states and for no other state", async () => {
+    const posted: string[] = [];
+    const webhook = { post: async (task: { state: string }) => void posted.push(task.state) } as unknown as ConstructorParameters<typeof Notifier>[1];
+    const t = await withDispatchedTask();
+    const notifier = new Notifier(t.runtime, webhook);
+    const base = t.runtime.deps.store.getTask("t1")!;
+    const event = { seq: 1, taskId: "t1", at: "2026-11-07T00:00:00.000Z", fromState: null, toState: null, event: "x", actor: "system" as const, evidence: null, payload: {}, outcome: "applied" as const, reasonCode: null, reasonMessage: null };
+    for (const state of ["queued", "working", "validating", "awaiting_approval", "merged", "torn_down", "needs_decision", "review_ready", "report_ready", "blocked", "failed"] as const) {
+      await notifier.onApplied({ task: { ...base, state }, event });
+    }
+    expect(posted).toEqual(["needs_decision", "review_ready", "report_ready", "blocked", "failed"]);
+  });
+});

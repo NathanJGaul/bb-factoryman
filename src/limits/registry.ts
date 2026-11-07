@@ -28,14 +28,14 @@ const MODES: Record<string, DeliveryMode | undefined> = {
 const DEFAULT_PREFIX = "fm/";
 
 /** The first ` [` or ` - ` after the name ends the name. */
-function split(line: string): { name: string; bracket: string | null; description: string } | null {
+function split(line: string): { name: string; bracket: string | null; description: string; unclosed?: boolean } | null {
   const body = line.slice(2);
   const bracketAt = body.indexOf(" [");
   const dashAt = body.indexOf(" - ");
   if (dashAt === -1 && bracketAt === -1) return null;
   if (bracketAt !== -1 && (dashAt === -1 || bracketAt < dashAt)) {
     const close = body.indexOf("]", bracketAt);
-    if (close === -1) return null;
+    if (close === -1) return { name: body.slice(0, bracketAt).trim(), bracket: null, description: body.slice(bracketAt + 2), unclosed: true };
     const after = body.slice(close + 1);
     const description = after.startsWith(" - ") ? after.slice(3) : after.trim();
     return { name: body.slice(0, bracketAt).trim(), bracket: body.slice(bracketAt + 2, close), description };
@@ -43,7 +43,7 @@ function split(line: string): { name: string; bracket: string | null; descriptio
   return { name: body.slice(0, dashAt).trim(), bracket: null, description: body.slice(dashAt + 3) };
 }
 
-function entryOf(parts: { name: string; bracket: string | null; description: string }): RegistryEntry {
+function entryOf(parts: { name: string; bracket: string | null; description: string; unclosed?: boolean }): RegistryEntry {
   const flags: string[] = [];
   const notes: string[] = [];
   let yolo = false;
@@ -56,9 +56,10 @@ function entryOf(parts: { name: string; bracket: string | null; description: str
     else if (token.startsWith("forge=")) forge = token.slice("forge=".length) || "none";
     else leftover.push(token);
   }
-  const registeredMode = leftover[0] ?? "no-mistakes";
+  const registeredMode = parts.unclosed === true ? "unreadable" : (leftover[0] ?? "no-mistakes");
   const mode = MODES[registeredMode] ?? null;
-  if (mode === null) flags.push(`unknown mode \`${registeredMode}\`: the plugin does not guess a mode`);
+  if (parts.unclosed === true) flags.push("the bracket is never closed, so the mode cannot be read");
+  else if (mode === null) flags.push(`unknown mode \`${registeredMode}\`: the plugin does not guess a mode`);
   for (const extra of leftover.slice(1)) flags.push(`unexpected token \`${extra}\``);
   if (registeredMode === "no-mistakes-prod-only") notes.push("a conditional policy in firstmate; it maps to no-mistakes, the most rigorous leg");
   if (forge === "gerrit") notes.push("forge gerrit: the plugin's merge path uses gh and does not support it");
