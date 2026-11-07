@@ -296,24 +296,24 @@ Boundaries have both sides, and error paths name the failure.
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| U135 | `thread.failed` on a `working` task applies `fail` with the thread's error text | FR-203 | example | PENDING | |
-| U136 | `thread.failed` with no error text uses the remembered turn failure's category and status code | FR-203 | example | PENDING | |
-| U137 | `thread.failed` with neither uses the fixed fallback text | FR-203 | example | PENDING | |
-| U138 | `thread.failed` on a `blocked` task fails it | FR-203 | example | PENDING | |
-| U139 | `thread.failed` on `validating`, `needs_decision`, `review_ready`, `awaiting_approval`, `merged`, or `report_ready` is ignored | FR-202, FR-203 | example | PENDING | |
-| U140 | A second `thread.failed` for the same task sends no second message and adds no second `fail` | AC-2.7 | example | PENDING | |
-| U141 | `thread.deleted` fails a task in any state before `torn_down` | FR-204 | example | PENDING | |
-| U142 | `thread.deleted` on a `torn_down` task is ignored | FR-202, FR-204 | example | PENDING | |
-| U143 | `thread.idle` on a `working` task wakes and changes nothing | FR-205 | example | PENDING | |
-| U144 | `thread.idle` on any other state is ignored | FR-205 | example | PENDING | |
-| U145 | `thread.archived` wakes with the worktree warning and changes nothing, and is ignored on a `torn_down` task | FR-206 | example | PENDING | |
-| U146 | `interaction.pending` from another source wakes with the interaction title | FR-207 | example | PENDING | |
-| U147 | `interaction.pending` raised by this plugin sends nothing | FR-207 | example | PENDING | |
-| U148 | An event for a thread that no task records writes no log row and sends nothing | FR-202 | example | PENDING | |
-| U149 | A queued task has no thread and is never matched | FR-202 | example | PENDING | |
-| U150 | `turn.failed` is remembered per thread, and the memory is bounded | FR-203 | example | PENDING | |
-| U151 | Other thread events are ignored | FR-201 | example | PENDING | |
-| U152 | A handler whose store call throws is logged and does not throw | FR-214 | example | PENDING | |
+| U135 | `thread.failed` on a `working` task applies `fail` with the thread's error text | FR-203 | example | DONE | `src/wiring/handlers.test.ts::[U135] fails a working task with the thread` |
+| U136 | `thread.failed` with no error text uses the remembered turn failure's category and status code | FR-203 | example | DONE | `src/wiring/handlers.test.ts::[U136] uses the remembered turn failure` |
+| U137 | `thread.failed` with neither uses the fixed fallback text | FR-203 | example | DONE | `src/wiring/handlers.test.ts::[U137] uses the fixed fallback text when there is neither an error text nor a turn failure` |
+| U138 | `thread.failed` on a `blocked` task fails it | FR-203 | example | DONE | `src/wiring/handlers.test.ts::[U138] fails a blocked task` |
+| U139 | `thread.failed` on `validating`, `needs_decision`, `review_ready`, `awaiting_approval`, `merged`, or `report_ready` is ignored | FR-202, FR-203 | example | DONE | `src/wiring/handlers.test.ts::[U139] ignores a failure in validating, needs_decision, review_ready, awaiting_approval, merged, and report_ready` |
+| U140 | A second `thread.failed` for the same task sends no second message and adds no second `fail` | AC-2.7 | example | DONE | `src/wiring/handlers.test.ts::[U140] sends no second message and records no second fail for a duplicate failure` |
+| U141 | `thread.deleted` fails a task in any state before `torn_down` | FR-204 | example | DONE | `src/wiring/handlers.test.ts::[U141] fails a task in any state before torn_down when its thread is deleted` |
+| U142 | `thread.deleted` on a `torn_down` task is ignored | FR-202, FR-204 | example | DONE | `src/wiring/handlers.test.ts::[U142] ignores a deletion for a torn_down or an already failed task` |
+| U143 | `thread.idle` on a `working` task wakes and changes nothing | FR-205 | example | DONE | `src/wiring/handlers.test.ts::[U143] wakes the supervisor for an idle worker on a working task and changes nothing` |
+| U144 | `thread.idle` on any other state is ignored | FR-205 | example | DONE | `src/wiring/handlers.test.ts::[U144] ignores an idle worker in every other state` |
+| U145 | `thread.archived` wakes with the worktree warning and changes nothing, and is ignored on a `torn_down` task | FR-206 | example | DONE | `src/wiring/handlers.test.ts::[U145] warns the supervisor about an archived worker without changing state, and ignores a torn_down task` |
+| U146 | `interaction.pending` from another source wakes with the interaction title | FR-207 | example | DONE | `src/wiring/handlers.test.ts::[U146] wakes the supervisor with the title of an interaction that another source raised` |
+| U147 | `interaction.pending` raised by this plugin sends nothing | FR-207 | example | DONE | `src/wiring/handlers.test.ts::[U147] sends nothing for a form that this plugin raised` |
+| U148 | An event for a thread that no task records writes no log row and sends nothing | FR-202 | example | DONE | `src/wiring/handlers.test.ts::[U148] writes no log row and sends nothing for a thread that no task records` |
+| U149 | A queued task has no thread and is never matched | FR-202 | example | DONE | `src/wiring/handlers.test.ts::[U149] never matches a queued task, which has no worker thread` |
+| U150 | `turn.failed` is remembered per thread, and the memory is bounded | FR-203 | example | DONE | `src/wiring/handlers.test.ts::[U150] remembers a turn failure per thread and keeps the memory bounded` |
+| U151 | Other thread events are ignored | FR-201 | example | DONE | `src/wiring/handlers.test.ts::[U151] registers only the five thread events and turn.failed, and ignores the rest` |
+| U152 | A handler whose store call throws is logged and does not throw | FR-214 | example | DONE | `src/wiring/handlers.test.ts::[U152] logs a handler whose store call throws and does not throw` |
 
 ### `src/wiring/startup.ts`
 

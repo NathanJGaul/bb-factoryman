@@ -259,3 +259,22 @@ Each behavior in a batch still has its own test, and each entry records the fail
   - evidence limit 599 -> U128 failed (1 failed, 9 passed)
 - refactor: none needed
 - note: findings reach the supervisor as lines in the `finding` event's evidence, which the validator driver builds (milestone 6).
+
+## Cycle C18: U135 to U152 thread event handlers (`src/wiring/handlers.ts`)
+
+- tests: `src/wiring/handlers.test.ts` `[U135]` to `[U152]` (new), over the memory store, the fake `BbPort`, a `Notifier`, and (for U151) the fake plugin host
+- red: an `EventHandlers` stub whose methods do nothing and a `registerHandlers` that registers nothing, then `pnpm vitest run src/wiring/handlers.test.ts`
+  -> `U135`, `U136`, `U137`, `U138`, `U140`, `U141`, `U143`, `U145`, `U146`, `U150`, `U151`, and `U152` failed on the task state, the evidence text, the messages, the turn-failure memory, the registered events, or the logged error (12 failed, 6 passed)
+- U139, U142, U144, U147, U148, and U149 passed on the first run, because each asserts that nothing happens and the stub does nothing.
+  Deliberate mutants, each restored exactly:
+  - `thread.failed` fails any non-terminal state -> U139 failed (1 failed, 17 passed)
+  - idle wakes in any state -> U144 failed (1 failed, 17 passed)
+  - this plugin's own form wakes -> U147 failed (1 failed, 17 passed)
+  - handlers match any thread -> U148 failed (1 failed, 17 passed)
+  - a deletion also fails a `torn_down` task -> U142 and U145 failed (2 failed, 16 passed)
+  U149 has no mutant: `workerThreadId` is null for a queued task, and no thread ID equals null.
+- green: each handler loads the recorded worker through `identify`, applies the rule in `contracts/events.md`, and runs inside `guarded`, which logs and swallows an error.
+  An empty error text waits 500 ms through the injected `sleep`, because the recorded `turn.failed` follows `thread.failed` by about 20 ms.
+  Suite `pnpm test` -> 47 files, 524 passed, 0 failed. Lint and type-check clean.
+- refactor: none needed
+- note: the recorded order (`thread.failed` before `turn.failed`) changed the design from "read the last turn failure" to "wait briefly for it". D-047 records it.

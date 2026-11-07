@@ -120,7 +120,7 @@ description: "Task list for tools and approval, event wiring, and the validator"
 ### Implementation for user story 2
 
 - [X] T066 [P] [US2] [U125] [U126] [U127] [U128] [U129] [U130] [U131] [U132] [U133] [U134] Implement the notifier and message text in `src/wiring/wake.ts`
-- [ ] T067 [US2] [U135] [U136] [U137] [U138] [U139] [U140] [U141] [U142] [U143] [U144] [U145] [U146] [U147] [U148] [U149] [U150] [U151] [U152] Implement the thread-event handlers in `src/wiring/handlers.ts`
+- [X] T067 [US2] [U135] [U136] [U137] [U138] [U139] [U140] [U141] [U142] [U143] [U144] [U145] [U146] [U147] [U148] [U149] [U150] [U151] [U152] Implement the thread-event handlers in `src/wiring/handlers.ts`
 - [ ] T068 [US2] [U153] [U154] [U155] [U156] [U157] [U158] [U159] [U160] Implement observation, reconcile, and resume in `src/wiring/startup.ts`
 - [ ] T069 [US2] Register the handlers, the notifier listener, and the start-up service in `src/server.ts`
 - [ ] T070 [US2] Update `docs/DECISIONS.md` with the milestone 5 findings and commit milestone 5
