@@ -18,10 +18,10 @@ description: "Task list for the extension surface"
 
 ## Phase 3: Group 2, metadata and the read RPC
 
-- [ ] T920 Tests and stubs: `src/wiring/stamp.test.ts`, `src/rpc/read.test.ts`, and `test/acceptance/extension-surface.test.ts` (A913 to A917)
-- [ ] T921 Implement `stamp.ts`, `read.ts`, and the registrations in `server.ts`
+- [X] T920 Tests and stubs: `src/wiring/stamp.test.ts`, `src/rpc/read.test.ts`, and `test/acceptance/extension-surface.test.ts` (A913 to A917)
+- [X] T921 Implement `stamp.ts`, `read.ts`, and the registrations in `server.ts`
 
 ## Phase 4: Close-out
 
-- [ ] T930 Record D-078 to D-083, update the Not checked table, and the profile helpers
+- [X] T930 Record D-078 to D-083, update the Not checked table, and the profile helpers
 - [ ] T931 `/speckit.tdd.verify`, remediation, `/speckit.checklist`, `/speckit.analyze`, `/speckit.converge`

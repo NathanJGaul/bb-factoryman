@@ -27,16 +27,16 @@ describe("the thread metadata and the read RPC through the plugin factory", () =
     const world = await loadWorld();
     await world.call("factoryman_dispatch", TASK);
     await world.call("factoryman_report", { outcome: "done", evidence: "Committed." }, { threadId: "thr-w1" });
-    const call = (method: string, input?: unknown) => world.host.harness.behavior.callRpc(method, input, SIBLING) as Promise<Record<string, any>>;
+    const call = (method: string, input?: unknown) => world.host.harness.behavior.callRpc(method, input, SIBLING) as Promise<Record<string, unknown> & { events?: Array<{ seq: number }>; tasks?: unknown; task?: unknown }>;
     const tasks = await call("listTasks", { projectId: "proj-1" });
     expect(tasks["apiVersion"]).toBe(1);
     expect(tasks["tasks"]).toEqual(world.store.listTasks({ projectId: "proj-1" }).map((row) => ({ ...row })));
     expect((await call("getTask", { taskId: "t1" }))["task"]).toMatchObject({ taskId: "t1", state: "validating" });
-    const all = await call("listEvents", {});
-    expect(all["events"].map((event: { seq: number }) => event.seq)).toEqual(world.store.listEvents().map((row) => row.seq));
-    const first = all["events"][0].seq;
-    const later = await call("listEvents", { since: first });
-    expect(later["events"]).toHaveLength(all["events"].length - 1);
+    const events = (await call("listEvents", {})).events ?? [];
+    expect(events.map((event) => event.seq)).toEqual(world.store.listEvents().map((row) => row.seq));
+    const first = events[0]?.seq ?? -1;
+    const later = (await call("listEvents", { since: first })).events ?? [];
+    expect(later).toHaveLength(events.length - 1);
     expect(await call("apiVersion", {})).toEqual({ apiVersion: 1 });
   });
 

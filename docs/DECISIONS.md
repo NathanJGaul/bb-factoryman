@@ -625,3 +625,62 @@ Until then only tests set it, and a call or a rule names the machine.
 `[U186]` and `[U192]` expect `host: null` in the validator input.
 `[U45]` expects `machine` and `cloneMachine` in the `start` payload, and `[U710]` to `[U717]` expect `machine: null`.
 Each change follows a changed requirement and none hides a failure.
+
+## Milestone 9: extension surface
+
+### D-078: `workflow.json` can only tighten, and it cannot set `yolo` or `baseBranch` (Gap, limit)
+
+The design says config can add checks and never remove a gate, and it lists "task kinds, delivery modes, dispatch rules, and per-project overrides" as config.
+The plugin reads `<checkout>/.bb/factoryman/workflow.json` with a strict schema.
+It can set:
+
+- `project.deliveryMode`, which applies only if it is at least as strict as the stored mode (`no-mistakes`, then `direct-PR`, then `local-only`). A looser mode blocks the call.
+- `project.branchPrefix` and `project.defaultMachine`, which fill a blank stored value. A stored value wins.
+- `checks`, a list per delivery mode (D-079).
+
+A scan rejects the keys `yolo`, `gates`, `gate`, `skip`, `skipGates`, `skipChecks`, `approval`, `approvals`, `requireApproval`, `disable`, `disabled`, `teardown`, `evidence`, `merge`, `bypass`, and `override` at any depth, with a message that names hard rule 7.
+It rejects `baseBranch` too, because the base branch decides the landed-work check at teardown: a file that an agent wrote could set it to the task's own branch and make unlanded work look landed.
+Every other unknown key fails the strict schema.
+So `yolo` and `baseBranch` come from the stored project config only, and nothing writes them yet (D-037; the registry import in milestone 10 is a dry run).
+Config cannot define new task kinds or delivery modes, because a new mode would add transitions and could loosen a gate.
+It selects among the three modes only.
+
+### D-079: Custom checks run with the plugin's privileges, in the worktree, with no shell (Gap, risk)
+
+A check is an `argv` list that the plugin runs with `exec`, in the worker's worktree, on the machine of the task, with an optional timeout of 1 to 3600 seconds.
+A check passes on exit code 0 only. A timeout, a missing command, or a failed terminal counts as failed.
+Every check runs, so the worker sees all the failures.
+The commands come from a file in the server's checkout, so whoever can change that file can run commands as the plugin's user in worktrees.
+The worker already has a shell there, and a remote worktree runs the command through a host terminal as the daemon's user, so the plugin adds no new reach on that machine.
+The file lives in the server checkout, and a worker's branch changes it only after the owner merges.
+
+### D-080: Check results travel in the `handoff` and `ready` events (Gap, caller-supplied fact)
+
+Following D-015, the report tool runs the checks and passes `checks: [{ name, passed }]` in the event.
+The new guard `customChecksPassed` refuses the event with `check_failed` when any entry has `passed: false`.
+The guard runs after the existing gates, so a passing check never replaces evidence or a mode check.
+A caller that leaves `checks` out skips the gate.
+The report tool is the only caller that sends these two events, and `[A908]` to `[A912]` pin that it always runs the configured checks.
+The log stores the results, so replay re-checks them.
+Log rows from before this milestone have no `checks` field and still replay.
+
+### D-081: The plugin stamps task facts on the worker thread (Gap)
+
+After each applied event, the plugin writes `taskId`, `kind`, `mode`, `state`, and `machine` to the worker thread's plugin metadata.
+It never writes `role`, so tool visibility is unchanged.
+A failed write logs a warning and does not undo the event.
+bb lets any plugin read and write another plugin's metadata (spike item 9), so these values are hints for other plugins and the plugin never trusts them.
+
+### D-082: The read contract has four methods and a version number (Gap)
+
+`apiVersion`, `listTasks`, `getTask`, and `listEvents` are registered as one contract, marked discoverable, with no method that writes.
+Every answer carries `apiVersion: 1`, and a change that breaks a reader bumps it.
+`listEvents` takes `since` (a sequence number), `taskId`, and a `limit` of 1 to 1000 (default 200), and it leaves out the event payload.
+The output schemas are strict, so a field cannot leak by accident.
+bb lets any plugin call any registered method (spike item 10), so the surface itself is the guarantee that a sibling plugin cannot trigger a transition.
+The design's idea of a version in the contract is carried by this field and not by method names.
+
+### D-083: The workflow file is read on every call (Gap)
+
+Dispatch and report read `workflow.json` each time and do not cache it.
+The cost is one small file read, and an edited file takes effect at once, which is what an agent that writes config expects.

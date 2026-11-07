@@ -39,3 +39,26 @@ Red commit: the commit before this group's implementation (`test: add workflow c
 - Existing tests that changed with the requirement: `test/fixtures/legal-set.ts` lists the new guard on `handoff` and `ready`.
 - green: `config.ts` (strict schema, the key scan, `GATE_KEYS`), `load.ts`, `effective.ts`, `checks.ts`, the `checks` event field, the `customChecksPassed` guard and `check_failed` code, the report tool's check step, and the dispatch tool's workflow step.
   `pnpm run check` -> 77 files, 943 passed, 0 failed. Type check and lint clean.
+
+## Group 2: thread metadata and the read RPC
+
+Red commit: the commit before this group's implementation (`test: add thread metadata and read RPC tests with stubs, group 2 (red)`). It holds the tests, a stamper stub that registers nothing, an RPC stub that registers nothing, and the fixtures `FakeBbPort.setMetadataError` and `world.failMetadata`.
+
+- red: `pnpm vitest run src/wiring/stamp.test.ts src/rpc test/acceptance/extension-surface.test.ts` -> 13 failed
+  - `[U925]`, `[U927]`, `[A913]`, `[A914]`: no metadata write
+  - `[U929]` to `[U933]`, `[A915]`: `experimental_PluginRpcCallError: plugin "factoryman" has no rpc method ...`
+  - `[U934]`: no call reached the store
+  - `[A916]`: the `rejects` half passes against the stub because no method exists. The assertion that the log is unchanged holds either way. The test proves its point through `[A917]` and through the mutants below.
+  - `[A917]`: `expected [] to deeply equal [ 'apiVersion', 'getTask', ... ]`
+- Passed against the stubs: `[U926]`, `[U928]`, `[U935]` (a missing method rejects every call). Deliberate mutants after the implementation:
+  - `[U926]`, `[U928]`: the stamper writes `role` -> `[U925]`, `[U928]` failed
+  - `[U935]`: input schemas not strict -> `[U935]` failed
+- Mutants on the new behavior, all killed:
+  - skip `machine` in the stamp -> `[U925]`, `[A913]`; throw on a failed write -> `[U927]`, `[A914]`
+  - not discoverable -> `[U933]`, `[A917]`; `since` ignored -> `[U931]`, `[A915]`; `limit` ignored -> `[U931]`; project filter ignored -> `[U929]`
+  - version 2 -> `[U930]`, `[U932]`, `[A915]`
+  - the payload leaks into an event row -> survived while the output schemas were `z.object`, because the host strips unknown keys. The output schemas are `strictObject` now, and the mutant then failed five tests.
+  - `registerReadRpc` or `registerStamper` removed from `server.ts` -> `[A915]` to `[A917]`, `[A913]`, `[A914]`
+- Existing tests that changed with the requirement: `[A17]` expects the four RPC methods, `[A18]` expects the stamped metadata, and `[A908]` (remote) counts only the `pnpm` runs, because the validator also runs on the machine.
+- green: `src/wiring/stamp.ts`, `src/rpc/read.ts`, and their registration in `server.ts`.
+  `pnpm run check` -> 80 files, 960 passed, 0 failed. Type check and lint clean.

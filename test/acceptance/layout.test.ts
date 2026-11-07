@@ -33,4 +33,15 @@ describe("repository layout", () => {
       }
     }
   });
+  it("[A918] keeps src/machine free of any import from the layers above it", () => {
+    const above = ["bb", "dispatch", "workflow", "machines", "rpc", "wiring", "tools", "limits", "store", "git", "validator", "runtime", "server", "exec", "files"];
+    const dir = new URL("src/machine/", root);
+    for (const name of readdirSync(dir).filter((file) => !file.endsWith(".test.ts"))) {
+      const imports = [...readFileSync(new URL(name, dir), "utf8").matchAll(/from\s+["']([^"']+)["']/g)].map((match) => match[1] as string);
+      for (const target of imports) {
+        const first = target.replace(/^(\.\.\/)+/, "").split("/")[0] ?? "";
+        expect(above, `${name} imports ${target}`).not.toContain(first);
+      }
+    }
+  });
 });

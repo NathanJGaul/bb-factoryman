@@ -18,7 +18,7 @@ describe("plugin factory", () => {
       "factoryman_teardown",
     ]);
     expect(registrations.cli?.name).toBe("factoryman");
-    expect(registrations.rpcMethods).toEqual([]);
+    expect([...registrations.rpcMethods].sort()).toEqual(["apiVersion", "getTask", "listEvents", "listTasks"]);
     expect(registrations.httpRoutes).toEqual([]);
     expect(registrations.schedules).toEqual([]);
     expect(Object.values(registrations.hooks).every((hook) => hook === null)).toBe(true);

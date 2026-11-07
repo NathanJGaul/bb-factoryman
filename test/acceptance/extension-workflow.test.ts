@@ -137,7 +137,8 @@ describe("custom checks through factoryman_report", () => {
     world.remote.runs.length = 0;
     world.paths.set("env-thr-w1", "/work/gpu/tree");
     expect((await report(world)).isError).toBe(false);
-    expect(world.remote.runs.map((run) => `${run.hostId}:${run.cwd}:${run.command} ${run.args.join(" ")}`)).toEqual([
+    // The validator also runs on the machine once the handoff is recorded, so look at the checks only.
+    expect(world.remote.runs.filter((run) => run.command === "pnpm").map((run) => `${run.hostId}:${run.cwd}:${run.command} ${run.args.join(" ")}`)).toEqual([
       "host_gpu:/work/gpu/tree:pnpm run lint",
       "host_gpu:/work/gpu/tree:pnpm test",
     ]);

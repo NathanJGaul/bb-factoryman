@@ -31,11 +31,12 @@ The suite baseline was 72 files and 873 tests, all passing.
 | A910 | Passing checks do not loosen another gate: empty evidence is still refused | AC-3.3, FR-905 | example | DONE | `test/acceptance/extension-workflow.test.ts::[A910]` |
 | A911 | A check that cannot run counts as failed | AC-3.4, FR-907 | error | DONE | `test/acceptance/extension-workflow.test.ts::[A911]` |
 | A912 | A scout task runs no check | AC-3.5, FR-906 | example | DONE | `test/acceptance/extension-workflow.test.ts::[A912]` |
-| A913 | After each applied event the worker thread holds `taskId`, `kind`, `mode`, `state`, and `machine`, and keeps `role` | AC-4.1, FR-908 | example | TODO | `test/acceptance/extension-surface.test.ts::[A913]` |
-| A914 | A failed metadata write leaves the transition in place and logs a warning | AC-4.2, FR-908 | error | TODO | `test/acceptance/extension-surface.test.ts::[A914]` |
-| A915 | A sibling plugin reads tasks and events through `callRpc`, with `since`, and every answer carries `apiVersion` 1 | AC-5.1, FR-909, SC-901 | example | TODO | `test/acceptance/extension-surface.test.ts::[A915]` |
-| A916 | No RPC call changes the log, and a write-shaped method does not exist | AC-5.2, FR-909, SC-901 | example | TODO | `test/acceptance/extension-surface.test.ts::[A916]` |
-| A917 | The registered methods are exactly the four read methods, each discoverable with a description | AC-5.3, FR-909 | example | TODO | `test/acceptance/extension-surface.test.ts::[A917]` |
+| A913 | After each applied event the worker thread holds `taskId`, `kind`, `mode`, `state`, and `machine`, and keeps `role` | AC-4.1, FR-908 | example | DONE | `test/acceptance/extension-surface.test.ts::[A913]` |
+| A914 | A failed metadata write leaves the transition in place and logs a warning | AC-4.2, FR-908 | error | DONE | `test/acceptance/extension-surface.test.ts::[A914]` |
+| A915 | A sibling plugin reads tasks and events through `callRpc`, with `since`, and every answer carries `apiVersion` 1 | AC-5.1, FR-909, SC-901 | example | DONE | `test/acceptance/extension-surface.test.ts::[A915]` |
+| A916 | No RPC call changes the log, and a write-shaped method does not exist | AC-5.2, FR-909, SC-901 | example | DONE | `test/acceptance/extension-surface.test.ts::[A916]` |
+| A918 | `src/machine/` imports nothing from the layers above it, so the event field, the guard, and the reason code are the only additions | FR-910 | example | DONE | `test/acceptance/layout.test.ts::[A918]` |
+| A917 | The registered methods are exactly the four read methods, each discoverable with a description | AC-5.3, FR-909 | example | DONE | `test/acceptance/extension-surface.test.ts::[A917]` |
 
 ## Inner loop: unit behaviors
 
@@ -92,19 +93,19 @@ The suite baseline was 72 files and 873 tests, all passing.
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| U925 | After an applied event the stamper writes taskId, kind, mode, state, and machine to the worker thread | FR-908 | example | TODO | `src/wiring/stamp.test.ts::[U925]` |
-| U926 | A task with no worker thread is skipped | FR-908 | boundary | TODO | `src/wiring/stamp.test.ts::[U926]` |
-| U927 | A failed write is logged as a warning and the event stands | FR-908 | error | TODO | `src/wiring/stamp.test.ts::[U927]` |
-| U928 | The stamper does not write the role | FR-908 | example | TODO | `src/wiring/stamp.test.ts::[U928]` |
+| U925 | After an applied event the stamper writes taskId, kind, mode, state, and machine to the worker thread | FR-908 | example | DONE | `src/wiring/stamp.test.ts::[U925]` |
+| U926 | A task with no worker thread is skipped | FR-908 | boundary | DONE | `src/wiring/stamp.test.ts::[U926]` |
+| U927 | A failed write is logged as a warning and the event stands | FR-908 | error | DONE | `src/wiring/stamp.test.ts::[U927]` |
+| U928 | The stamper does not write the role | FR-908 | example | DONE | `src/wiring/stamp.test.ts::[U928]` |
 
 ### `src/rpc/read.ts`
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| U929 | `listTasks` returns task rows, filtered by project and states | FR-909 | example | TODO | `src/rpc/read.test.ts::[U929]` |
-| U930 | `getTask` returns the row, and null for an unknown task | FR-909 | example | TODO | `src/rpc/read.test.ts::[U930]` |
-| U931 | `listEvents` returns rows after `since`, for one task or all, up to a limit | FR-909 | boundary | TODO | `src/rpc/read.test.ts::[U931]` |
-| U932 | `apiVersion` returns 1, and every answer carries `apiVersion` 1 | FR-909 | example | TODO | `src/rpc/read.test.ts::[U932]` |
-| U933 | The registration has exactly four methods, all discoverable and described | FR-909 | example | TODO | `src/rpc/read.test.ts::[U933]` |
-| U934 | The handlers never call a write method of the store | FR-909 | example | TODO | `src/rpc/read.test.ts::[U934]` |
-| U935 | Input outside the contract (extra keys, a negative limit) is rejected by the schema | FR-909 | boundary | TODO | `src/rpc/read.test.ts::[U935]` |
+| U929 | `listTasks` returns task rows, filtered by project and states | FR-909 | example | DONE | `src/rpc/read.test.ts::[U929]` |
+| U930 | `getTask` returns the row, and null for an unknown task | FR-909 | example | DONE | `src/rpc/read.test.ts::[U930]` |
+| U931 | `listEvents` returns rows after `since`, for one task or all, up to a limit | FR-909 | boundary | DONE | `src/rpc/read.test.ts::[U931]` |
+| U932 | `apiVersion` returns 1, and every answer carries `apiVersion` 1 | FR-909 | example | DONE | `src/rpc/read.test.ts::[U932]` |
+| U933 | The registration has exactly four methods, all discoverable and described | FR-909 | example | DONE | `src/rpc/read.test.ts::[U933]` |
+| U934 | The handlers never call a write method of the store | FR-909 | example | DONE | `src/rpc/read.test.ts::[U934]` |
+| U935 | Input outside the contract (extra keys, a negative limit) is rejected by the schema | FR-909 | boundary | DONE | `src/rpc/read.test.ts::[U935]` |

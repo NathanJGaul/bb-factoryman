@@ -16,7 +16,9 @@ import { NoMistakesValidator } from "./validator/no-mistakes";
 import { ValidationDriver } from "./validator/driver";
 import type { Validator } from "./validator/types";
 import { EventHandlers, registerHandlers } from "./wiring/handlers";
+import { registerReadRpc } from "./rpc/read";
 import { reconcileOnStart } from "./wiring/startup";
+import { registerStamper } from "./wiring/stamp";
 import { Notifier } from "./wiring/wake";
 import { runFactorymanCommand } from "./tools/supervisor-command";
 
@@ -113,6 +115,8 @@ export function createPlugin(options: PluginOptions = {}): (bb: BbPluginApi) => 
       if (task.state === "validating") driver.ensure(task.taskId);
     });
     bb.onDispose(() => driver.dispose());
+    registerStamper(rt);
+    registerReadRpc(bb, store);
     registerHandlers(bb, new EventHandlers(rt, notifier, bb.pluginId));
     registerTools(bb, rt, createMergeExecutor(exec));
 
