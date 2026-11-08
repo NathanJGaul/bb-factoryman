@@ -14,7 +14,7 @@ The cycle log records the red evidence. Tests are never weakened, skipped, or de
 - [X] T1201 Add the dev dependencies `react`, `react-dom`, `@types/react`, `@types/react-dom`, `@testing-library/react`, `@testing-library/dom`, and `jsdom` to `package.json` and `pnpm-lock.yaml` with `pnpm add -D`. Add no runtime dependency.
 - [X] T1202 Add `jsx: "react-jsx"` and the `DOM` lib to `tsconfig.json`, and confirm `pnpm exec tsc6 --noEmit` still passes for the server code. If DOM and Node types clash, split a second configuration for the browser files and record it in `docs/DECISIONS.md`.
 - [X] T1203 [P] Let `vitest.config.ts` run `src/**/*.test.tsx` and `test/**/*.test.tsx` with automatic JSX. Tests opt in to jsdom with `// @vitest-environment jsdom`.
-- [ ] T1204 [P] [A1221] Write the red lint test in `test/acceptance/lint-isolation.test.ts`, then add the browser-side import rule to `eslint.config.js` for `src/app.tsx`, `src/app/**`, and `src/approval/**`: no Node built-ins, `better-sqlite3`, `zod`, `@get-bb/plugin-sdk` (root), or server layers.
+- [X] T1204 [P] [A1221] Write the red lint test in `test/acceptance/lint-isolation.test.ts`, then add the browser-side import rule to `eslint.config.js` for `src/app.tsx`, `src/app/**`, and `src/approval/**`: no Node built-ins, `better-sqlite3`, `zod`, `@get-bb/plugin-sdk` (root), or server layers.
 
 ## Phase 2: Foundational (the contract)
 

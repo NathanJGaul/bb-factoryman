@@ -95,3 +95,50 @@ describe("src/machine purity", () => {
     expect(await importRestrictions("src/machine/probe.ts", code)).toEqual([]);
   });
 });
+
+describe("browser-side isolation from the server", () => {
+  const browserFiles = ["src/app.tsx", "src/app/probe.tsx", "src/approval/probe.ts"];
+  const rejected: Array<[string, string]> = [
+    ["a node: built-in", 'import { readFileSync } from "node:fs";\nexport const read = readFileSync;\n'],
+    ["a bare node built-in", 'import { join } from "path";\nexport const j = join;\n'],
+    ["better-sqlite3", 'import Database from "better-sqlite3";\nexport const db = Database;\n'],
+    ["zod", 'import { z } from "zod";\nexport const s = z;\n'],
+    ["the backend SDK root", 'import type { BbPluginApi } from "@get-bb/plugin-sdk";\nexport type Api = BbPluginApi;\n'],
+    ["the SDK test harness", 'import { createFakePluginHost } from "@get-bb/plugin-sdk/testing";\nexport const host = createFakePluginHost;\n'],
+    ["src/store", 'import { TaskLog } from "../store/task-log";\nexport const log = TaskLog;\n'],
+    ["src/tools", 'import { merge } from "../tools/merge";\nexport const m = merge;\n'],
+    ["src/machine", 'import { transition } from "../machine/transition";\nexport const t = transition;\n'],
+    ["src/runtime", 'import { createRuntime } from "../runtime";\nexport const r = createRuntime;\n'],
+  ];
+  const accepted = [
+    'import { definePluginApp } from "@get-bb/plugin-sdk/app";\nexport const app = definePluginApp;\n',
+    'import { useState } from "react";\nexport const s = useState;\n',
+    'import { MERGE_RENDERER_ID } from "./contract";\nexport const id = MERGE_RENDERER_ID;\n',
+    'import { MERGE_RENDERER_ID } from "../approval/contract";\nexport const id = MERGE_RENDERER_ID;\n',
+  ];
+
+  it("[A1221] fails lint on a server-side import in each browser-side file", async () => {
+    for (const file of browserFiles) {
+      for (const [name, code] of rejected) {
+        expect(await importRestrictions(file, code), `${file} importing ${name}`).toHaveLength(1);
+      }
+    }
+  });
+
+  it("[A1221] passes lint on the imports that the frontend needs", async () => {
+    for (const file of browserFiles) {
+      for (const code of accepted) {
+        expect(await importRestrictions(file, code), `${file}: ${code.split("\n")[0]}`).toEqual([]);
+      }
+    }
+  });
+
+  it("[A1221] passes lint on the same server-side imports outside the browser side, and in the browser side's own tests", async () => {
+    for (const [name, code] of rejected) {
+      expect(await importRestrictions("src/tools/probe.ts", code), `src/tools importing ${name}`).toEqual([]);
+    }
+    const fixtureImport = 'import { loadWorld } from "../../test/fixtures/plugin-host";\nimport { merge } from "../tools/merge";\nimport { z } from "zod";\nexport const t = [loadWorld, merge, z];\n';
+    expect(await importRestrictions("src/app/probe.test.tsx", fixtureImport)).toEqual([]);
+    expect(await importRestrictions("src/approval/probe.test.ts", fixtureImport)).toEqual([]);
+  });
+});

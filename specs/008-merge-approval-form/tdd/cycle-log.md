@@ -32,3 +32,18 @@ To get a real red, the cycle reverted `lib` and `jsx` in `tsconfig.json` to thei
   - `env -i HOME=$HOME PATH=<node bin>:/usr/bin:/bin pnpm run check` -> typecheck, lint, and `vitest` pass: 92 files, 1136 passed, 0 failed.
 - refactor: none needed
 - commit: see git history, "fix: type-check with tsc6 so pnpm run check needs no global tsc"
+
+## Group 2: the browser side imports no server code (A1221, task T1204)
+
+- test: `test/acceptance/lint-isolation.test.ts` `[A1221]` (three tests, new): server imports fail lint in each browser-side file, the frontend's own imports pass, and the same imports pass in server files and in the browser side's tests.
+- red: `pnpm vitest run test/acceptance/lint-isolation.test.ts` -> 1 failed, 13 passed
+  - `[A1221] fails lint on a server-side import in each browser-side file`: `AssertionError: src/app.tsx importing a node: built-in: expected [] to have a length of 1 but got +0`
+  - The other two `[A1221]` tests passed on their first run. They guard against a rule that restricts too much, so there was nothing to fail before the rule existed.
+- deliberate mutants, run after green (the tests must fail with the rule broken, and the rule was restored byte for byte):
+  - allow-list entry for `@get-bb/plugin-sdk/app` removed -> `[A1221] passes lint on the imports that the frontend needs` failed: `src/app.tsx: import { definePluginApp } from "@get-bb/plugin-sdk/app";: expected [ Array(1) ] to deeply equal []`
+  - test-file exemption removed -> `[A1221] passes lint on the same server-side imports outside the browser side, and in the browser side's own tests` failed: `expected [ …(2) ] to deeply equal []`
+- green: `eslint.config.js` gained a browser-side block for `src/app.tsx`, `src/app/**`, and `src/approval/**` (tests excluded). It bans Node built-ins, `better-sqlite3`, `zod`, the backend SDK root and every SDK subpath except `app`, and every other entry of `src/`, read from the directory.
+  - One lint error on the way: `URL` is undefined in the config file, so it uses `import.meta.dirname`.
+  - `pnpm run check` -> 92 files, 1139 passed, 0 failed
+- refactor: none needed
+- commit: see git history, "feat: keep the frontend free of server imports with a lint rule"
