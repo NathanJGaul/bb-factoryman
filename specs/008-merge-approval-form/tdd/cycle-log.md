@@ -132,3 +132,20 @@ User story 3. The tests ran against the group 5 form.
 - green: `src/app/merge-approval-form.tsx` gained `isWebUrl` (only `http:` and `https:` become links), a `try`/`catch` in `run` that shows the failure in a `role="alert"` line and re-enables the controls, the unreadable notice with no Approve, and the expiry line in a `<time>` element. `pnpm run check` exited 0 -> 95 files, 1185 passed, 0 failed.
 - refactor: the pull request cell moved into its own `PullRequest` component and the request list into `Request`, in the same step, to keep `MergeApprovalForm` readable. The suite stayed green.
 - commit: see git history, "feat: make the approval form fail closed on an unreadable request and keep the owner's work on error"
+
+## Group 7: the runbook and the decision log (A1216 to A1218, task T1250 to T1252)
+
+User story 5. One existing test was wrong, and it was fixed as its own step before the docs changed.
+
+- test change with a stated reason: `[A1109]` in `test/acceptance/live-check.test.ts` asserted `expect(text).toMatch(/bb factoryman preflight server --project \$PROJ/)`, which pinned the defect that the live check found (finding 5.3: the lab's machine is named after the host, not `server`). The assertion became `expect(text).not.toMatch(/preflight server\b/)`. This tightens the test: it failed against the old runbook (`AssertionError: expected '# Live check runbook ...' not to match /preflight server\b/`) and passes against the new one. Nothing was loosened, skipped, or deleted.
+- tests: `[A1216]`, `[A1217]`, `[A1218]` (new, in the same file)
+- red: `pnpm vitest run test/acceptance/live-check.test.ts` -> 4 failed, 9 passed
+  - `[A1109]`: `AssertionError: expected '# Live check runbook ...' not to match /preflight server\b/`
+  - `[A1216]`: `AssertionError: a command that reads the machine name: expected [] to have a length of 1 but got +0`
+  - `[A1217]`: `AssertionError: Approve: expected '**Ship task.**\nSend the supervisor: …' to contain 'Approve'`
+  - `[A1218]`: `AssertionError: D-094 should have an entry: expected -1 to be greater than -1`
+- green: `docs/LIVE-CHECK.md` reads the machine name with `MACHINE=$(bblab x bb machine list --json | jq -r '.[0].name')`, the preflight row uses `"$MACHINE"`, the ship task step describes the form and its three buttons (and the Chromium note for a browser tool), and the section 9 bullet says that a browser tool drove the form and that nobody has watched a person use it. `docs/DECISIONS.md` has D-094 to D-098. `.specify/memory/tdd-profile.md` notes the `.tsx` tests, the new fixture, and the `tsc6` type check.
+  - `pnpm run check` exited 0 -> 95 files, 1188 passed, 0 failed.
+- refactor: none needed
+- open: the runbook text and D-094 to D-098 are written from what the plan and the tests know. The lab run (A1219, tasks T1260 to T1264) may change the frame and Cancel decision, and then D-097 and the ship step change with it.
+- commit: see git history, "docs: describe the approval form in the runbook, read the machine name, and record D-094 to D-098"

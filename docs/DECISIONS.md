@@ -800,3 +800,48 @@ No such agent exists, and the shape of `customAgents` is undocumented.
 This release does not build it (milestone 11 is skills and a runbook).
 Until it exists, the tier 2 gate is every tier 0 check plus the captain's recorded decision to go on without tier 1, and the runbook says what that skip costs.
 
+## Merge approval form
+
+### D-094: The merge approval has a frontend renderer in the plugin (Decided by the captain)
+
+The live check found that bb's web UI showed "The plugin form is unavailable. Cancel to continue." for the `factoryman-merge-approval` form, because the plugin shipped no frontend.
+A person could only cancel the form, and the only way to approve was `bb thread interactions respond`.
+The captain chose option 1 of the live check report: add a frontend renderer so the owner can approve and deny in the web UI.
+The manifest declares `bb.app` as `./src/app.tsx`, and `bb plugin build` writes `dist/app.js` and `dist/app.css` beside the server bundle.
+The entry registers one renderer with `app.slots.pendingInteraction`, under the id that `factoryman_merge` passes to bb.
+The form shows the task, branch, pull request, and evidence, takes an optional comment, and offers Approve, Deny, and Cancel.
+It answers with the value that `factoryman_merge` already reads, `{ "decision": "approved" | "denied", "comment"?: string }`.
+The backend, the state machine, the tools, and the approval record did not change.
+
+### D-095: D-030 stays partly open after the renderer (Open, the owner decides)
+
+The renderer lets a person approve in the web UI. It does not stop an agent from answering.
+A worker with a shell can still run `bb thread interactions respond`, and bb records the answer as `plugin_submitted` with no submitter, so D-030 stays partly open.
+In `local-only` mode there is no forge backstop either.
+The owner-typed code (option 2 of the report), which only the renderer would show and the owner would type back, would close most of the gap in the app.
+The captain deferred it, so the approval design is unchanged.
+`factoryman_decide` stays out of scope (D-057).
+D-058 still stands: the captain accepts the gap until branch protection is in place.
+
+### D-096: The contract module has no imports and the browser bundle ships no `zod` (Gap)
+
+The renderer and `factoryman_merge` agree on the request payload and the answer through `src/approval/contract.ts`.
+The module has no imports, so it runs in the browser bundle and on the server without pulling a schema library or server code into the bundle.
+The browser reads the payload with a plain function, and the server keeps its strict `zod` schema for the answer.
+A contract test passes the payload that `factoryman_merge` builds through the reader, and passes every answer the builder makes through the schema, so the two sides cannot drift.
+A lint rule keeps `src/app.tsx`, `src/app/`, and `src/approval/` free of Node built-ins, `zod`, `better-sqlite3`, the backend SDK, and the server layers.
+
+### D-097: The form fails closed, and one `tsconfig.json` covers both sides (Gap)
+
+The form fails closed in the view: a request that it cannot read (a missing field, a field of the wrong type, or an extra field) gets no Approve button, only Deny and Cancel.
+A pull request value that is not an `http` or `https` URL shows as text and never as a link.
+A rejected answer shows the error, re-enables the controls, and keeps the comment.
+This is a second line only. `factoryman_merge` still validates the answer and records the approval.
+One `tsconfig.json` with the `DOM` library and the JSX transform type-checks both sides.
+DOM globals therefore type-check in server code too, and the lint rule in D-096 is what keeps the browser side apart.
+
+### D-098: The type check calls `tsc6` (Gap)
+
+The pinned TypeScript is the alias `npm:@typescript/typescript6`, which installs the binary `tsc6` and no `tsc`.
+The `typecheck` script called `tsc`, so `pnpm run check` passed only on a machine with a global `tsc` on the PATH.
+The script now calls `tsc6`, and a test pins the script and the binary.

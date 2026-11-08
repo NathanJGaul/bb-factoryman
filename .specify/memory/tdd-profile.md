@@ -16,7 +16,7 @@ stacks:
     property: null
     approval: null
     contract: null
-    test_glob: "{src,test}/**/*.test.ts"
+    test_glob: "{src,test}/**/*.test.{ts,tsx}"
     exemplar:
       unit: src/machine/guards.test.ts
       acceptance: test/acceptance/machine-gates.test.ts
@@ -36,6 +36,7 @@ stacks:
       - test/fixtures/frame.ts
       - test/fixtures/queue.ts
       - test/fixtures/registry.ts
+      - test/fixtures/approval-form.ts
 verified: [single, file, suite]
 suite_baseline: green
 suite_seconds: 13
@@ -56,6 +57,8 @@ suite_seconds: 13
 - Use named exports. Use `import type` for type-only imports (`verbatimModuleSyntax` is on).
 - The exemplar for a unit test is `src/machine/guards.test.ts`, and for an acceptance test it is `test/acceptance/machine-gates.test.ts`.
 - Reuse the builders in `test/fixtures/` (`machine.ts` for events and snapshots, `legal-set.ts` for the hand-written legal set, `store.ts` for the fake clock and event paths, `history.ts` for hand-written log rows) and the shared store suite in `test/store-contract.ts`.
+- Feature 008 (the merge approval form) adds frontend tests. Files named `*.test.tsx` run under jsdom with `// @vitest-environment jsdom` on the first line, and mount a registered renderer with `renderSlot` from `@get-bb/plugin-sdk/testing/app`. `test/fixtures/approval-form.ts` builds the renderer's props with spies on `submit` and `cancel`. The dev dependencies `react`, `react-dom`, `@testing-library/react`, `@testing-library/dom`, `jsdom`, `@types/react`, and `@types/react-dom` came with it (plan.md). jsdom has no layout and no styles, so a test cannot see the form's look; the live check in the lab does. Under jsdom the global `URL` is not Node's class, so fixtures that call `fs` build paths from `fileURLToPath(import.meta.url)`.
+- The type check runs as `tsc6 --noEmit`: the pinned TypeScript alias installs `tsc6` and no `tsc`.
 - Refreshed by hand after milestone 3 (the commands are unchanged and were all re-run): the suite took about 21 seconds, 336 tests.
 - Refreshed by hand after milestone 6 (the commands are unchanged and `pnpm run check` re-ran): 57 files, 604 tests, about 13 seconds of wall time.
 - Milestone 10 adds `test/fixtures/queue.ts` and `test/fixtures/registry.ts`, and extends the plugin host fixture with `costs`, `webhook`, `projectList`, and `skewClock`, and `FakeBbPort` with `costs`, `costError`, and `projectList`.

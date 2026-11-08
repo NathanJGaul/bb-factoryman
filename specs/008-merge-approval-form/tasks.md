@@ -67,9 +67,9 @@ The cycle log records the red evidence. Tests are never weakened, skipped, or de
 **Goal**: The runbook and the decision log are right.
 **Independent test**: `test/acceptance/live-check.test.ts` passes.
 
-- [ ] T1250 [US5] [A1216] [A1217] [A1218] Write the red tests in `test/acceptance/live-check.test.ts`: the preflight step reads the machine name and names no machine `server`; the ship step describes the form and keeps the "write down a scripted answer" rule; `docs/DECISIONS.md` holds D-094 to D-098 and says D-030 stays partly open and option 2 is deferred.
-- [ ] T1251 [US5] [A1216] [A1217] [A1218] Edit `docs/LIVE-CHECK.md` (preflight row, the web step, the Chromium note, section 9) and add D-094 to D-098 to `docs/DECISIONS.md`. Note the `.tsx` tests and the new fixtures in `.specify/memory/tdd-profile.md`.
-- [ ] T1252 [US5] [A1216] [A1217] [A1218] Outer loop: the story 5 tests are green and `pnpm test` is green.
+- [X] T1250 [US5] [A1216] [A1217] [A1218] Write the red tests in `test/acceptance/live-check.test.ts`: the preflight step reads the machine name and names no machine `server`; the ship step describes the form and keeps the "write down a scripted answer" rule; `docs/DECISIONS.md` holds D-094 to D-098 and says D-030 stays partly open and option 2 is deferred.
+- [X] T1251 [US5] [A1216] [A1217] [A1218] Edit `docs/LIVE-CHECK.md` (preflight row, the web step, the Chromium note, section 9) and add D-094 to D-098 to `docs/DECISIONS.md`. Note the `.tsx` tests and the new fixtures in `.specify/memory/tdd-profile.md`.
+- [X] T1252 [US5] [A1216] [A1217] [A1218] Outer loop: the story 5 tests are green and `pnpm test` is green.
 
 ## Phase 8: Live check in the lab
 

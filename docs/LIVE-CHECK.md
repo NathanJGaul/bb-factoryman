@@ -156,9 +156,16 @@ The caps in section 7 cover the supervisor.
 
 Run these first. Each must pass before you spend anything.
 
+The lab has one machine, and bb names it after the host, so the name differs from one computer to the next.
+Read the name before the first check:
+
+```sh
+MACHINE=$(bblab x bb machine list --json | jq -r '.[0].name')
+```
+
 | Check | Command | Expect |
 | --- | --- | --- |
-| The plugin's command | `bblab x bb factoryman preflight server --project $PROJ` | the clone host (the lab's one machine is named `server`): "holds the project's clone, so no remote preflight applies" |
+| The plugin's command | `bblab x bb factoryman preflight "$MACHINE" --project $PROJ` | the clone host (the lab's one machine, named in `bb machine list`): "holds the project's clone, so no remote preflight applies" |
 | The protection checklist | `bblab x bb factoryman protection acme/widgets` | prints steps, and says it ran nothing |
 | The import dry run | `bblab x bb factoryman import-registry --file <registry copy>` | a report, and `bb factoryman import-registry --apply` is refused |
 | The read RPC | call `listTasks` and `apiVersion` over the plugin's RPC route | `{ "apiVersion": 1, ... }` |
@@ -287,9 +294,13 @@ Expect: the worker reports `done` with the report as evidence, the task reaches 
 Send the supervisor: "Dispatch a ship task: add a line to README.md."
 Expect: the worker commits on `fm/<task-id>` and reports `done` with `landedCommits`, the task reaches `review_ready`, and the supervisor asks for a merge.
 `factoryman_merge` opens the approval form on the supervisor thread.
-Answer it from the web UI at the lab's loopback address.
-If you answer it with `bb thread interactions respond`, write down in the test log that the approval was scripted.
-Remember D-030: the form is not proof of a human.
+Open that thread in the web UI at the lab's loopback address.
+The form shows the task, branch, pull request, and evidence, a comment field, and three buttons.
+**Approve** records your approval and merges, **Deny** records a denial and merges nothing, and **Cancel** answers nothing and leaves the task in `awaiting_approval`.
+A comment is optional and travels with Approve or Deny.
+A browser tool such as `chrome-devtools-axi` needs `CHROME_DEVTOOLS_AXI_EXECUTABLE_PATH` set to a Chromium binary (for example `/usr/bin/chromium`) when no stable Chrome is installed.
+If you answer the form with `bb thread interactions respond`, write down in the test log that the approval was scripted.
+Remember D-030: the form is not proof of a human, because an agent with a shell can send the same answer.
 After the merge, call `factoryman_teardown`.
 
 Record which skill each session loaded, and whether a worker read the `factoryman-worker` skill (the worker prompt points to it).
@@ -328,7 +339,7 @@ These stay unverified, and each needs something outside the lab:
   Use a throwaway repository on a real forge, and follow `docs/BRANCH-PROTECTION.md` on that repository only.
 - A second enrolled machine: spawn on it, take it offline, and the remote preflight.
   Enroll a second machine into the lab, and not into your own bb.
-- A person answering the merge form in the app, and not a script.
+- A person answering the merge form in the app. The form renders and takes a click (a browser tool drove it in the lab), but nobody has watched a person use it.
 - Cost data from a provider that reports it, and the webhook against a real receiver.
 - Which of a plugin skill and a project skill with the same name a session loads (spike item 11).
 - The tier 1 stub agent, until someone writes it.
