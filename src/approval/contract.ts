@@ -14,10 +14,11 @@ export interface MergeRequestPayload {
 }
 
 /** The only answer that factoryman_merge accepts. The server checks it again with a strict schema. */
-export interface ApprovalAnswer {
+// A type alias, not an interface: bb's submit() takes JSON, and only an alias is assignable to a JSON object type.
+export type ApprovalAnswer = {
   decision: "approved" | "denied";
   comment?: string;
-}
+};
 
 const PAYLOAD_FIELD_COUNT = 4;
 

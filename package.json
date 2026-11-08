@@ -13,7 +13,8 @@
     "branding": {
       "icon": "Factory"
     },
-    "server": "./src/server.ts"
+    "server": "./src/server.ts",
+    "app": "./src/app.tsx"
   },
   "keywords": [
     "bb-plugin"

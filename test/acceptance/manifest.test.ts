@@ -49,4 +49,10 @@ describe("package manifest", () => {
     expect(tsconfig.compilerOptions?.jsx).toBe("react-jsx");
     expect(tsconfig.compilerOptions?.lib).toContain("DOM");
   });
+
+  it("[A1220] declares the frontend entry as ./src/app.tsx, which exists, and builds with bb plugin build", () => {
+    expect(manifest.bb?.app).toBe("./src/app.tsx");
+    expect(existsSync(new URL("../../src/app.tsx", import.meta.url)), "src/app.tsx should exist").toBe(true);
+    expect(manifest.scripts?.build).toBe("bb plugin build");
+  });
 });

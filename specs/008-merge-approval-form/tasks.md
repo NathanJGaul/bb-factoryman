@@ -28,10 +28,10 @@ The cycle log records the red evidence. Tests are never weakened, skipped, or de
 **Independent test**: The acceptance test opens the form through the plugin factory, presses Approve in the registered renderer, and the task ends `merged`.
 
 - [ ] T1210 [US1] [U1220] [U1221] [U1223] [U1224] [U1225] [U1226] [U1229] [U1230] [U1237] Write the red tests in `src/app/merge-approval-form.test.tsx` for the labelled facts, the link, the "None" values, the kept line breaks, Approve with and without a comment, the in-flight state, and the accessible names.
-- [ ] T1211 [US1] [A1201] [A1202] [A1203] [A1204] [A1205] [A1220] Write the red acceptance tests in `test/acceptance/merge-approval-form.test.tsx` (load the app with `loadPluginApp`, open the form through `loadWorld` and `factoryman_merge`, render the registration against the pending request, press Approve) and the `bb.app` manifest test in `test/acceptance/manifest.test.ts`.
+- [X] T1211 [US1] [A1201] [A1202] [A1203] [A1204] [A1205] [A1220] Write the red acceptance tests in `test/acceptance/merge-approval-form.test.tsx` (load the app with `loadPluginApp`, open the form through `loadWorld` and `factoryman_merge`, render the registration against the pending request, press Approve) and the `bb.app` manifest test in `test/acceptance/manifest.test.ts`.
 - [ ] T1212 [US1] [U1220] [U1221] [U1223] [U1224] [U1225] [U1226] [U1229] [U1230] [U1237] Create `src/app/merge-approval-form.tsx` (the labelled list, the evidence block, the comment field, the Approve action, the in-flight state).
-- [ ] T1213 [US1] [A1201] [A1202] [A1203] [A1204] [A1205] [A1220] Create `src/app.tsx` (`definePluginApp` with the `pendingInteraction` slot) and set `bb.app` in `package.json`.
-- [ ] T1214 [US1] [A1201] [A1202] [A1203] [A1204] [A1205] [A1220] Outer loop: the story 1 acceptance tests are green and `pnpm test` is green.
+- [X] T1213 [US1] [A1201] [A1202] [A1203] [A1204] [A1205] [A1220] Create `src/app.tsx` (`definePluginApp` with the `pendingInteraction` slot) and set `bb.app` in `package.json`.
+- [X] T1214 [US1] [A1201] [A1202] [A1203] [A1204] [A1205] [A1220] Outer loop: the story 1 acceptance tests are green and `pnpm test` is green.
 
 ## Phase 4: User story 2 - Deny a merge in the web UI (P1)
 

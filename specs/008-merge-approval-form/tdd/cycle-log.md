@@ -74,3 +74,24 @@ The stub `src/approval/contract.ts` had the real exports with wrong bodies: an e
 - refactor: none needed
 - not done in this group: U1213 stays `BASELINE` and task T1207 (make `src/tools/merge.ts` use the contract module) is left for `/speckit.implement`, because the loop never ticks a task whose behavior is a baseline. `src/tools/merge.ts` keeps its own copy of the id until then, and `[U1211]` pins that both sides agree.
 - commit: see git history, "feat: add the approval contract module shared by the merge tool and the form"
+
+## Group 4: approve in the form (A1201 to A1205, A1220, U1220, U1221, U1223 to U1226, U1229, U1230)
+
+User story 1. The tests came first, against stubs: `src/app/merge-approval-form.tsx` rendered `null`, and `src/app.tsx` registered nothing.
+U1237 (accessible names of Approve, Deny, and Cancel) waits for group 5, because Deny and Cancel do not exist yet.
+
+- tests: `src/app/merge-approval-form.test.tsx` (eight tests, new), `test/acceptance/merge-approval-form.test.tsx` (five tests, new), `[A1220]` in `test/acceptance/manifest.test.ts`, and the fixture `test/fixtures/approval-form.ts`
+- red 1: the acceptance file failed in `loadWorld` with `TypeError: The URL must be of scheme file` (`test/fixtures/skills.ts:13`). Under jsdom the global `URL` is not Node's class, and `fs` rejects it. That is a broken fixture and not a red for the behavior, so the cycle fixed the fixture first (commit "test: read skill names by path so the plugin host loads under jsdom", a structural change: the suite did not change) and ran again.
+- red 2: `pnpm vitest run src/app/merge-approval-form.test.tsx test/acceptance/merge-approval-form.test.tsx test/acceptance/manifest.test.ts` -> 14 failed
+  - the eight component tests, against the `null` stub: `TestingLibraryElementError: Unable to find an element with the text: Task, which matches selector 'dt'`, `Unable to find an accessible element with the role "button" and name "Approve"`, and `... the role "textbox"`
+  - `[A1201]`: `AssertionError: expected [] to deeply equal [ 'factoryman-merge-approval' ]`
+  - `[A1202]` to `[A1205]`: `Error: no renderer is registered for factoryman-merge-approval`
+  - `[A1220]`: `AssertionError: expected undefined to be './src/app.tsx'`
+- green: `src/app/merge-approval-form.tsx` (the request list, the comment field, Approve, the in-flight state), `src/app.tsx` (`definePluginApp` with the `pendingInteraction` slot), and `bb.app` in `package.json`.
+  - A first green attempt showed two things the unit tests could not. The acceptance test mounted the renderer with plain `render`, and `UrlLink` needs the harness: `Error: UrlLink() needs the test slot environment — mount the component via renderSlot(...)`. The test was wrong, and it now mounts through `renderSlot`, as the SDK documents.
+  - `pnpm run check` then failed in `tsc6`: `src/app/merge-approval-form.tsx(56,18): error TS2345: Argument of type 'ApprovalAnswer' is not assignable to parameter of type 'JsonValue'`. vitest does not type-check, so only the gate saw it. `ApprovalAnswer` became a type alias, which is assignable to a JSON object type (an interface is not).
+  - A leftover helper tripped lint (`'Fact' is defined but never used`) and was deleted.
+  - Final: `pnpm run check` exited 0 -> 95 files, 1165 passed, 0 failed.
+- refactor: none beyond deleting the unused helper
+- not done on purpose: the pull request link is not yet guarded against non-`http(s)` values (U1222, group 6 writes that test first), a rejected answer is not caught (U1231, group 6), and the Deny and Cancel buttons come in group 5.
+- commit: see git history, "feat: show the merge approval form in the web UI and approve from it"

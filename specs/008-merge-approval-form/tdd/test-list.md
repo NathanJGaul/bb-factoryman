@@ -20,11 +20,11 @@ The suite baseline was 92 files and 1134 tests, all passing.
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| A1201 | The frontend registers exactly one pending-interaction renderer, under the id that `factoryman_merge` passes when it opens the form | AC-1.1, FR-1201 | example | PENDING | `test/acceptance/merge-approval-form.test.tsx::[A1201]` |
-| A1202 | The renderer, given the request that `factoryman_merge` really opened, shows the task id, branch, pull request, and evidence | AC-1.2, FR-1202 | example | PENDING | `test/acceptance/merge-approval-form.test.tsx::[A1202]` |
-| A1203 | Pressing Approve in the renderer ends the task `merged`, with one `user` approval row that says `approved` | AC-1.3, FR-1203 | example | PENDING | `test/acceptance/merge-approval-form.test.tsx::[A1203]` |
-| A1204 | A typed comment travels with Approve into the approval record, and a blank comment leaves the record without one | AC-1.4, FR-1203 | example | PENDING | `test/acceptance/merge-approval-form.test.tsx::[A1204]` |
-| A1205 | While an answer is in flight every control is disabled, and two presses send one answer | AC-1.5, FR-1206 | example | PENDING | `test/acceptance/merge-approval-form.test.tsx::[A1205]` |
+| A1201 | The frontend registers exactly one pending-interaction renderer, under the id that `factoryman_merge` passes when it opens the form | AC-1.1, FR-1201 | example | DONE | `test/acceptance/merge-approval-form.test.tsx::[A1201]` |
+| A1202 | The renderer, given the request that `factoryman_merge` really opened, shows the task id, branch, pull request, and evidence | AC-1.2, FR-1202 | example | DONE | `test/acceptance/merge-approval-form.test.tsx::[A1202]` |
+| A1203 | Pressing Approve in the renderer ends the task `merged`, with one `user` approval row that says `approved` | AC-1.3, FR-1203 | example | DONE | `test/acceptance/merge-approval-form.test.tsx::[A1203]` |
+| A1204 | A typed comment travels with Approve into the approval record, and a blank comment leaves the record without one | AC-1.4, FR-1203 | example | DONE | `test/acceptance/merge-approval-form.test.tsx::[A1204]` |
+| A1205 | While an answer is in flight every control is disabled, and two presses send one answer | AC-1.5, FR-1206 | example | DONE | `test/acceptance/merge-approval-form.test.tsx::[A1205]` |
 | A1206 | Pressing Deny merges nothing, records a `denied` row, and leaves the task `awaiting_approval` | AC-2.1, FR-1203 | example | PENDING | `test/acceptance/merge-approval-form.test.tsx::[A1206]` |
 | A1207 | A typed comment travels with Deny into the denial record | AC-2.2, FR-1203 | example | PENDING | `test/acceptance/merge-approval-form.test.tsx::[A1207]` |
 | A1208 | Pressing Cancel records no approval, runs no merge, and leaves the task `awaiting_approval`, and a later call opens a new form | AC-2.3, FR-1204 | example | PENDING | `test/acceptance/merge-approval-form.test.tsx::[A1208]` |
@@ -39,7 +39,7 @@ The suite baseline was 92 files and 1134 tests, all passing.
 | A1217 | The runbook's ship step describes the approval form in the web UI and keeps the rule that a scripted answer is written down as scripted | AC-5.2, FR-1211 | example | PENDING | `test/acceptance/live-check.test.ts::[A1217]` |
 | A1218 | The decision log records the renderer (D-094), that D-030 stays partly open (D-095), the dependency-free contract (D-096), the fail-closed view (D-097), and the `tsc6` script (D-098), and says option 2 is deferred | AC-5.3, FR-1212 | example | PENDING | `test/acceptance/live-check.test.ts::[A1218]` |
 | A1219 | In the isolated lab, a click on Approve and a click on Deny in the real web UI record the approval and the denial, and the screenshots are kept | AC-5.4, SC-1201 to SC-1203, SC-1206 | example | PENDING | live check, task T1262; evidence in `cycle-log.md` and under `data/bb-factoryman-approval-form/` |
-| A1220 | The manifest declares `bb.app` as `./src/app.tsx`, the file exists, and the build script is `bb plugin build` | FR-1201, SC-1205 | example | PENDING | `test/acceptance/manifest.test.ts::[A1220]` |
+| A1220 | The manifest declares `bb.app` as `./src/app.tsx`, the file exists, and the build script is `bb plugin build` | FR-1201, SC-1205 | example | DONE | `test/acceptance/manifest.test.ts::[A1220]` |
 | A1221 | Lint rejects a Node built-in, `zod`, a server layer, or the backend SDK in the browser-side files, and accepts the same imports in server files | plan constraint: the frontend carries no server code | example | DONE | `test/acceptance/lint-isolation.test.ts::[A1221]` |
 
 ## Inner loop: unit behaviors
@@ -71,17 +71,17 @@ The suite baseline was 92 files and 1134 tests, all passing.
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| U1220 | Shows the task id and the branch under their labels, in a monospace face | AC-1.2, FR-1202 | example | PENDING | `src/app/merge-approval-form.test.tsx::[U1220]` |
-| U1221 | Shows an `http` pull request URL and an `https` one as links to that URL | AC-1.2, AC-3.3, FR-1207 | example | PENDING | `src/app/merge-approval-form.test.tsx::[U1221]` |
+| U1220 | Shows the task id and the branch under their labels, in a monospace face | AC-1.2, FR-1202 | example | DONE | `src/app/merge-approval-form.test.tsx::[U1220]` |
+| U1221 | Shows an `http` pull request URL and an `https` one as links to that URL | AC-1.2, AC-3.3, FR-1207 | example | DONE | `src/app/merge-approval-form.test.tsx::[U1221]` |
 | U1222 | Shows a `javascript:`, `ftp:`, or non-URL pull request value as plain text with no link | AC-3.3, FR-1207 | example | PENDING | `src/app/merge-approval-form.test.tsx::[U1222]` |
-| U1223 | Shows "None" for an empty pull request and for empty evidence, and still offers Approve | AC-1.2, FR-1202 | example | PENDING | `src/app/merge-approval-form.test.tsx::[U1223]` |
-| U1224 | Shows the evidence with its line breaks kept | AC-1.2, FR-1202 | example | PENDING | `src/app/merge-approval-form.test.tsx::[U1224]` |
-| U1225 | Pressing Approve calls `submit` once with `{ "decision": "approved" }` | AC-1.3, FR-1203 | example | PENDING | `src/app/merge-approval-form.test.tsx::[U1225]` |
-| U1226 | Pressing Approve after typing a comment submits the trimmed comment, and a blank comment is left out | AC-1.4, FR-1203 | example | PENDING | `src/app/merge-approval-form.test.tsx::[U1226]` |
+| U1223 | Shows "None" for an empty pull request and for empty evidence, and still offers Approve | AC-1.2, FR-1202 | example | DONE | `src/app/merge-approval-form.test.tsx::[U1223]` |
+| U1224 | Shows the evidence with its line breaks kept | AC-1.2, FR-1202 | example | DONE | `src/app/merge-approval-form.test.tsx::[U1224]` |
+| U1225 | Pressing Approve calls `submit` once with `{ "decision": "approved" }` | AC-1.3, FR-1203 | example | DONE | `src/app/merge-approval-form.test.tsx::[U1225]` |
+| U1226 | Pressing Approve after typing a comment submits the trimmed comment, and a blank comment is left out | AC-1.4, FR-1203 | example | DONE | `src/app/merge-approval-form.test.tsx::[U1226]` |
 | U1227 | Pressing Deny calls `submit` once with `{ "decision": "denied" }`, with the trimmed comment when typed | AC-2.1, AC-2.2, FR-1203 | example | PENDING | `src/app/merge-approval-form.test.tsx::[U1227]` |
 | U1228 | Pressing Cancel calls `cancel` once and never calls `submit` | AC-2.3, FR-1204 | example | PENDING | `src/app/merge-approval-form.test.tsx::[U1228]` |
-| U1229 | The controls are enabled before a press, disabled while `submit` is pending, and stay disabled after it resolves; the form is `aria-busy` while pending | AC-1.5, FR-1206 | example | PENDING | `src/app/merge-approval-form.test.tsx::[U1229]` |
-| U1230 | A second press while an answer is pending sends no second answer | AC-1.5, FR-1206 | example | PENDING | `src/app/merge-approval-form.test.tsx::[U1230]` |
+| U1229 | The controls are enabled before a press, disabled while `submit` is pending, and stay disabled after it resolves; the form is `aria-busy` while pending | AC-1.5, FR-1206 | example | DONE | `src/app/merge-approval-form.test.tsx::[U1229]` |
+| U1230 | A second press while an answer is pending sends no second answer | AC-1.5, FR-1206 | example | DONE | `src/app/merge-approval-form.test.tsx::[U1230]` |
 | U1231 | A rejected `submit` shows its message in an alert, re-enables the controls, and keeps the typed comment | AC-3.2, FR-1206 | example | PENDING | `src/app/merge-approval-form.test.tsx::[U1231]` |
 | U1232 | A rejected `cancel` shows its message in an alert and re-enables the controls | AC-3.2, FR-1206 | example | PENDING | `src/app/merge-approval-form.test.tsx::[U1232]` |
 | U1233 | A payload that is `null`, lacks a field, has a field of the wrong type, or has an extra field shows the unreadable notice, no Approve, and both Deny and Cancel | AC-3.1, FR-1205 | example | PENDING | `src/app/merge-approval-form.test.tsx::[U1233]` |
