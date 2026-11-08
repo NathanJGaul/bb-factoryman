@@ -40,7 +40,7 @@ The suite baseline was 92 files and 1134 tests, all passing.
 | A1218 | The decision log records the renderer (D-094), that D-030 stays partly open (D-095), the dependency-free contract (D-096), the fail-closed view (D-097), and the `tsc6` script (D-098), and says option 2 is deferred | AC-5.3, FR-1212 | example | DONE | `test/acceptance/live-check.test.ts::[A1218]` |
 | A1219 | In the isolated lab, a click on Approve and a click on Deny in the real web UI record the approval and the denial, and the screenshots are kept | AC-5.4, SC-1201 to SC-1203, SC-1206 | example | DONE | live check, task T1262; evidence in `cycle-log.md` and under `data/bb-factoryman-approval-form/` |
 | A1220 | The manifest declares `bb.app` as `./src/app.tsx`, the file exists, and the build script is `bb plugin build` | FR-1201, SC-1205 | example | DONE | `test/acceptance/manifest.test.ts::[A1220]` |
-| A1221 | Lint rejects a Node built-in, `zod`, a server layer, or the backend SDK in the browser-side files, and accepts the same imports in server files | plan constraint: the frontend carries no server code | example | DONE | `test/acceptance/lint-isolation.test.ts::[A1221]` |
+| A1221 | Lint rejects a Node built-in, `zod`, a server layer, or the backend SDK in the browser-side files, and accepts the same imports in server files | plan constraint: the frontend carries no server code | example | DONE | `test/acceptance/lint-isolation.test.ts::[A1221a]`, `[A1221b]`, `[A1221c]` |
 
 ## Inner loop: unit behaviors
 

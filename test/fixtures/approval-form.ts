@@ -1,3 +1,4 @@
+import { screen } from "@testing-library/react";
 import { vi, type Mock } from "vitest";
 import type { PluginPendingInteractionProps } from "@get-bb/plugin-sdk/app";
 import type { MergeRequestPayload } from "../../src/approval/contract";
@@ -19,7 +20,25 @@ export interface FormHarness {
   cancel: Mock<Cancel>;
 }
 
+/** A fixed instant for the interaction's `createdAt`. The form does not show it. */
+export const CREATED_AT = 1_700_000_000_000;
+
+/** The controls of a readable form, by name. */
+export const ALL_CONTROLS = ["Approve", "Deny", "Cancel", "Comment (optional)"];
+
+/** The names of the controls that are disabled now, so a failure says which control is wrong. */
+export function disabledControls(): string[] {
+  const controls: Array<[string, HTMLElement]> = [
+    ...screen.getAllByRole("button").map((button): [string, HTMLElement] => [button.textContent ?? "", button]),
+    ["Comment (optional)", screen.getByRole("textbox")],
+  ];
+  return controls.filter(([, control]) => control.hasAttribute("disabled")).map(([name]) => name);
+}
+
 export interface FormOptions {
+  id?: string;
+  threadId?: string;
+  title?: string;
   payload?: unknown;
   expiresAt?: number | null;
   submit?: Answer;
@@ -32,11 +51,11 @@ export function formHarness(options: FormOptions = {}): FormHarness {
   const cancel = vi.fn<Cancel>(options.cancel ?? (async () => undefined));
   const props: PluginPendingInteractionProps = {
     interaction: {
-      id: "pint_test",
-      threadId: "thr-sup",
-      title: `Approve merge of task ${REQUEST.taskId}`,
+      id: options.id ?? "pint_test",
+      threadId: options.threadId ?? "thr-sup",
+      title: options.title ?? `Approve merge of task ${REQUEST.taskId}`,
       payload: (options.payload === undefined ? { ...REQUEST } : options.payload) as never,
-      createdAt: 1_700_000_000_000,
+      createdAt: CREATED_AT,
       expiresAt: options.expiresAt === undefined ? null : options.expiresAt,
     },
     submit,

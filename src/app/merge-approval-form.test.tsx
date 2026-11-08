@@ -1,3 +1,21 @@
+  it.each(["text-red-500", "border-t-red-500", "shadow-red-500", "bg-white", "text-[rgb(1,2,3)]", 'style={{ color: "red" }}', "#fff"])(
+    "[U1239] the color check flags %s",
+    (sample) => {
+      expect(NOT_THEME_TOKENS.some((pattern) => pattern.test(sample))).toBe(true);
+    },
+  );
+
+  it.each(["bg-foreground", "text-muted-foreground", "border-border", "hover:bg-state-hover", "whitespace-pre-wrap", "focus-visible:ring-ring"])(
+    "[U1239] the color check accepts the theme token or utility %s",
+    (sample) => {
+      expect(NOT_THEME_TOKENS.some((pattern) => pattern.test(sample))).toBe(false);
+    },
+  );
+
+  it("[U1239] names theme tokens only: the component source has no hex color, fixed palette color, arbitrary color, or inline style", () => {
+    const source = readFileSync(join(dirname(fileURLToPath(import.meta.url)), "merge-approval-form.tsx"), "utf8");
+    expect(NOT_THEME_TOKENS.filter((pattern) => pattern.test(source)).map(String)).toEqual([]);
+  });
 // @vitest-environment jsdom
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -5,7 +23,7 @@ import { fileURLToPath } from "node:url";
 import { act, cleanup, fireEvent, screen, within } from "@testing-library/react";
 import { renderSlot } from "@get-bb/plugin-sdk/testing/app";
 import { afterEach, describe, expect, it } from "vitest";
-import { REQUEST, deferred, formHarness, type FormOptions } from "../../test/fixtures/approval-form";
+import { ALL_CONTROLS, REQUEST, deferred, disabledControls, formHarness, type FormOptions } from "../../test/fixtures/approval-form";
 import { MergeApprovalForm } from "./merge-approval-form";
 
 afterEach(cleanup);
@@ -24,14 +42,31 @@ function valueOf(label: string): HTMLElement {
   return value;
 }
 
+const PALETTE = "red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose|slate|gray|zinc|neutral|stone";
+/** Anything that sets a color outside the host theme's tokens. */
+const NOT_THEME_TOKENS: RegExp[] = [
+  /#[0-9a-fA-F]{3,8}\b/, // a hex color
+  new RegExp(`-(?:${PALETTE})-\\d{2,3}\\b`), // a fixed palette color in any utility: text-red-500, border-t-red-500, shadow-red-500
+  /-(?:white|black)\b/, // bg-white, text-black
+  /\[(?:rgb|rgba|hsl|hsla|oklch|oklab|color-mix|#)/, // an arbitrary color value
+  /\bstyle=\{/, // an inline style
+];
+
 const EXPIRES_AT = Date.UTC(2026, 10, 8, 15, 30);
 const EXPIRES_AT_ISO = "2026-11-08T15:30:00.000Z";
 
 const button = (name: string) => screen.getByRole("button", { name });
 const comment = () => screen.getByRole("textbox");
+const type = (value: string) => fireEvent.change(comment(), { target: { value } });
+/** Press a button and let the answer settle. */
+async function press(name: string) {
+  await act(async () => {
+    fireEvent.click(button(name));
+  });
+}
 
 describe("MergeApprovalForm: the request", () => {
-  it("[U1220] shows the task id and the branch under their labels, in a monospace face", () => {
+  it("[U1220] shows the task id and the branch under their labels, with the font-mono class", () => {
     mount();
     expect(valueOf("Task").textContent).toBe(REQUEST.taskId);
     expect(valueOf("Task").className).toContain("font-mono");
@@ -39,13 +74,10 @@ describe("MergeApprovalForm: the request", () => {
     expect(valueOf("Branch").className).toContain("font-mono");
   });
 
-  it("[U1221] shows an http pull request URL and an https one as links to that URL", () => {
-    for (const url of ["https://github.com/acme/widgets/pull/7", "http://forge.example/acme/widgets/pull/7"]) {
-      cleanup();
-      mount({ payload: { ...REQUEST, prUrl: url } });
-      const link = within(valueOf("Pull request")).getByRole("link", { name: url });
-      expect(link.getAttribute("href")).toBe(url);
-    }
+  it.each(["https://github.com/acme/widgets/pull/7", "http://forge.example/acme/widgets/pull/7"])("[U1221] shows %s as a link to that URL", (url) => {
+    mount({ payload: { ...REQUEST, prUrl: url } });
+    const link = within(valueOf("Pull request")).getByRole("link", { name: url });
+    expect(link.getAttribute("href")).toBe(url);
   });
 
   it("[U1223] shows None for an empty pull request and for empty evidence, and still offers Approve", () => {
@@ -66,28 +98,23 @@ describe("MergeApprovalForm: the request", () => {
 describe("MergeApprovalForm: Approve", () => {
   it("[U1225] submits { decision: approved } once when Approve is pressed", async () => {
     const { submit } = mount();
-    await act(async () => {
-      fireEvent.click(button("Approve"));
-    });
+    await press("Approve");
     expect(submit).toHaveBeenCalledTimes(1);
     expect(submit.mock.calls[0]?.[0]).toStrictEqual({ decision: "approved" });
   });
 
-  it("[U1226] submits the trimmed comment with Approve, and leaves out a blank comment", async () => {
-    const typed = mount();
-    fireEvent.change(comment(), { target: { value: "  Looks good.  " } });
-    await act(async () => {
-      fireEvent.click(button("Approve"));
-    });
-    expect(typed.submit.mock.calls[0]?.[0]).toStrictEqual({ decision: "approved", comment: "Looks good." });
+  it("[U1226] submits the trimmed comment with Approve", async () => {
+    const { submit } = mount();
+    type("  Looks good.  ");
+    await press("Approve");
+    expect(submit.mock.calls[0]?.[0]).toStrictEqual({ decision: "approved", comment: "Looks good." });
+  });
 
-    cleanup();
-    const blank = mount();
-    fireEvent.change(comment(), { target: { value: "   " } });
-    await act(async () => {
-      fireEvent.click(button("Approve"));
-    });
-    expect(blank.submit.mock.calls[0]?.[0]).toStrictEqual({ decision: "approved" });
+  it("[U1226] leaves out a blank comment when Approve is pressed", async () => {
+    const { submit } = mount();
+    type("   ");
+    await press("Approve");
+    expect(submit.mock.calls[0]?.[0]).toStrictEqual({ decision: "approved" });
   });
 });
 
@@ -97,59 +124,47 @@ describe("MergeApprovalForm: an answer in flight", () => {
   it("[U1229] enables the controls before a press, disables them while submit is pending, and keeps them disabled once it resolves", async () => {
     const held = deferred();
     mount({ submit: () => held.promise });
-    const controls = () => [...screen.getAllByRole("button"), comment()];
-    expect(controls().every((control) => !control.hasAttribute("disabled"))).toBe(true);
+    expect(disabledControls()).toEqual([]);
     expect(group().getAttribute("aria-busy")).not.toBe("true");
 
-    await act(async () => {
-      fireEvent.click(button("Approve"));
-    });
-    expect(controls().every((control) => control.hasAttribute("disabled"))).toBe(true);
+    await press("Approve");
+    expect(disabledControls()).toEqual(ALL_CONTROLS);
     expect(group().getAttribute("aria-busy")).toBe("true");
 
     await act(async () => {
       held.resolve();
     });
-    expect(controls().every((control) => control.hasAttribute("disabled"))).toBe(true);
+    expect(disabledControls()).toEqual(ALL_CONTROLS);
   });
 
   it("[U1230] sends no second answer for a second press while the first is pending", async () => {
     const held = deferred();
     const { submit } = mount({ submit: () => held.promise });
-    await act(async () => {
-      fireEvent.click(button("Approve"));
-    });
-    await act(async () => {
-      fireEvent.click(button("Approve"));
-    });
+    await press("Approve");
+    await press("Approve");
     expect(submit).toHaveBeenCalledTimes(1);
   });
 });
 
 describe("MergeApprovalForm: Deny and Cancel", () => {
-  it("[U1227] submits { decision: denied } once when Deny is pressed, with the trimmed comment when one is typed", async () => {
-    const plain = mount();
-    await act(async () => {
-      fireEvent.click(button("Deny"));
-    });
-    expect(plain.submit).toHaveBeenCalledTimes(1);
-    expect(plain.submit.mock.calls[0]?.[0]).toStrictEqual({ decision: "denied" });
+  it("[U1227] submits { decision: denied } once when Deny is pressed", async () => {
+    const { submit } = mount();
+    await press("Deny");
+    expect(submit).toHaveBeenCalledTimes(1);
+    expect(submit.mock.calls[0]?.[0]).toStrictEqual({ decision: "denied" });
+  });
 
-    cleanup();
-    const typed = mount();
-    fireEvent.change(comment(), { target: { value: "  Not yet.  " } });
-    await act(async () => {
-      fireEvent.click(button("Deny"));
-    });
-    expect(typed.submit).toHaveBeenCalledTimes(1);
-    expect(typed.submit.mock.calls[0]?.[0]).toStrictEqual({ decision: "denied", comment: "Not yet." });
+  it("[U1227] submits the trimmed comment with Deny", async () => {
+    const { submit } = mount();
+    type("  Not yet.  ");
+    await press("Deny");
+    expect(submit).toHaveBeenCalledTimes(1);
+    expect(submit.mock.calls[0]?.[0]).toStrictEqual({ decision: "denied", comment: "Not yet." });
   });
 
   it("[U1228] calls cancel once when Cancel is pressed, and never calls submit", async () => {
     const { submit, cancel } = mount();
-    await act(async () => {
-      fireEvent.click(button("Cancel"));
-    });
+    await press("Cancel");
     expect(cancel).toHaveBeenCalledTimes(1);
     expect(submit).not.toHaveBeenCalled();
   });
@@ -175,42 +190,36 @@ describe("MergeApprovalForm: the pull request link", () => {
     expect(slot.inspection.navigateCalls).toEqual([{ method: "openUrl", url: REQUEST.prUrl }]);
   });
 
-  it("[U1222] shows a javascript:, ftp:, data:, or non-URL pull request value as plain text with no link", () => {
-    for (const value of ["javascript:alert(1)", "ftp://forge.example/pull/7", "data:text/html,<b>x</b>", "not a url", "//forge.example/pull/7"]) {
-      cleanup();
+  it.each(["javascript:alert(1)", "ftp://forge.example/pull/7", "data:text/html,<b>x</b>", "not a url", "//forge.example/pull/7"])(
+    "[U1222] shows %s as plain text with no link",
+    (value) => {
       mount({ payload: { ...REQUEST, prUrl: value } });
       const cell = valueOf("Pull request");
-      expect(cell.textContent, value).toBe(value);
-      expect(within(cell).queryByRole("link"), value).toBeNull();
-    }
-  });
+      expect(cell.textContent).toBe(value);
+      expect(within(cell).queryByRole("link")).toBeNull();
+    },
+  );
 });
 
 describe("MergeApprovalForm: a failed answer", () => {
   it("[U1231] shows the rejection in an alert, re-enables the controls, and keeps the typed comment", async () => {
     const { submit } = mount({ submit: async () => { throw new Error("bb said no"); } });
-    fireEvent.change(comment(), { target: { value: "My reason." } });
-    await act(async () => {
-      fireEvent.click(button("Approve"));
-    });
+    type("My reason.");
+    await press("Approve");
     expect(screen.getByRole("alert").textContent).toContain("bb said no");
-    expect([...screen.getAllByRole("button"), comment()].every((control) => !control.hasAttribute("disabled"))).toBe(true);
+    expect(disabledControls()).toEqual([]);
     expect((comment() as HTMLTextAreaElement).value).toBe("My reason.");
     expect(screen.getByRole("group", { name: "Merge approval request" }).getAttribute("aria-busy")).not.toBe("true");
-    await act(async () => {
-      fireEvent.click(button("Deny"));
-    });
+    await press("Deny");
     expect(submit).toHaveBeenCalledTimes(2);
     expect(submit.mock.calls[1]?.[0]).toStrictEqual({ decision: "denied", comment: "My reason." });
   });
 
   it("[U1232] shows a rejected cancel in an alert and re-enables the controls", async () => {
     mount({ cancel: async () => { throw new Error("cancel refused"); } });
-    await act(async () => {
-      fireEvent.click(button("Cancel"));
-    });
+    await press("Cancel");
     expect(screen.getByRole("alert").textContent).toContain("cancel refused");
-    expect(screen.getAllByRole("button").every((control) => !control.hasAttribute("disabled"))).toBe(true);
+    expect(disabledControls()).toEqual([]);
   });
 });
 
@@ -223,68 +232,57 @@ describe("MergeApprovalForm: a retry after a failed answer", () => {
         if (attempts === 1) throw new Error("bb said no");
       },
     });
-    await act(async () => {
-      fireEvent.click(button("Approve"));
-    });
+    await press("Approve");
     expect(screen.getByRole("alert").textContent).toContain("bb said no");
-    await act(async () => {
-      fireEvent.click(button("Approve"));
-    });
+    await press("Approve");
     expect(attempts).toBe(2);
     expect(screen.queryByRole("alert")).toBeNull();
   });
 });
 
 describe("MergeApprovalForm: a request it cannot read", () => {
-  const unreadable: Array<[string, unknown]> = [
+  it.each([
     ["null", null],
-    ["a field missing", { taskId: REQUEST.taskId, branch: REQUEST.branch, prUrl: REQUEST.prUrl }],
+    ["a missing field", { taskId: REQUEST.taskId, branch: REQUEST.branch, prUrl: REQUEST.prUrl }],
     ["a field of the wrong type", { ...REQUEST, taskId: 7 }],
     ["an extra field", { ...REQUEST, extra: "x" }],
     ["a string", "approve everything"],
-  ];
-
-  it("[U1233] shows the unreadable notice, no Approve, and both Deny and Cancel", () => {
-    for (const [name, payload] of unreadable) {
-      cleanup();
-      mount({ payload });
-      expect(screen.getByRole("alert").textContent, name).toMatch(/unreadable/i);
-      expect(screen.queryByRole("button", { name: "Approve" }), name).toBeNull();
-      expect(screen.getByRole("button", { name: "Deny" }).hasAttribute("disabled"), name).toBe(false);
-      expect(screen.getByRole("button", { name: "Cancel" }).hasAttribute("disabled"), name).toBe(false);
-    }
+  ])("[U1233] shows the unreadable notice, no Approve, and both Deny and Cancel for %s", (_name, payload) => {
+    mount({ payload });
+    expect(screen.getByRole("alert").textContent).toMatch(/unreadable/i);
+    expect(screen.queryByRole("button", { name: "Approve" })).toBeNull();
+    expect(button("Deny").hasAttribute("disabled")).toBe(false);
+    expect(button("Cancel").hasAttribute("disabled")).toBe(false);
   });
 
-  it("[U1234] submits a denial from the unreadable notice, and cancel still cancels", async () => {
-    const denied = mount({ payload: null });
-    await act(async () => {
-      fireEvent.click(button("Deny"));
-    });
-    expect(denied.submit.mock.calls.map((call) => call[0])).toStrictEqual([{ decision: "denied" }]);
+  it("[U1234] submits a denial from the unreadable notice", async () => {
+    const { submit } = mount({ payload: null });
+    await press("Deny");
+    expect(submit.mock.calls.map((call) => call[0])).toStrictEqual([{ decision: "denied" }]);
+  });
 
-    cleanup();
-    const cancelled = mount({ payload: null });
-    await act(async () => {
-      fireEvent.click(button("Cancel"));
-    });
-    expect(cancelled.cancel).toHaveBeenCalledTimes(1);
-    expect(cancelled.submit).not.toHaveBeenCalled();
+  it("[U1234] cancels from the unreadable notice without submitting", async () => {
+    const { submit, cancel } = mount({ payload: null });
+    await press("Cancel");
+    expect(cancel).toHaveBeenCalledTimes(1);
+    expect(submit).not.toHaveBeenCalled();
   });
 });
 
 describe("MergeApprovalForm: expiry, keys, and style", () => {
-  it("[U1235] shows the expiry in a time element when expiresAt is set, and no expiry line when it is null", () => {
+  it("[U1235] shows the expiry in a time element when expiresAt is set", () => {
     const { container } = mount({ expiresAt: EXPIRES_AT }).slot;
     const time = container.querySelector("time");
     expect(time?.getAttribute("datetime")).toBe(EXPIRES_AT_ISO);
     expect(time?.parentElement?.textContent).toMatch(/^Expires /);
     // The visible date is locale text, so check only that it names the year.
     expect(time?.textContent).toContain("2026");
+  });
 
-    cleanup();
-    const none = mount({ expiresAt: null }).slot;
-    expect(none.container.querySelector("time")).toBeNull();
-    expect(none.container.textContent).not.toMatch(/Expires/);
+  it("[U1235] shows no expiry line when expiresAt is null", () => {
+    const { container } = mount({ expiresAt: null }).slot;
+    expect(container.querySelector("time")).toBeNull();
+    expect(container.textContent).not.toMatch(/Expires/);
   });
 
   it("[U1236] submits nothing when Enter is pressed in the comment field, which is a multi-line field in no form", () => {
@@ -299,7 +297,7 @@ describe("MergeApprovalForm: expiry, keys, and style", () => {
     expect(cancel).not.toHaveBeenCalled();
   });
 
-  it("[U1238] gives the evidence a height limit with its own scroll, and breaks long task, branch, and evidence text", () => {
+  it("[U1238] carries the height-limit, scroll, and break classes on the evidence, the branch, and the task id (class tokens only: the real fit is the live check)", () => {
     mount({ payload: { ...REQUEST, branch: `fm/${"x".repeat(300)}`, evidence: "y".repeat(5000) } });
     const evidence = valueOf("Evidence");
     expect(evidence.className).toContain("max-h-64");

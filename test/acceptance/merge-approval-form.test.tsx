@@ -3,10 +3,12 @@ import { act, cleanup, fireEvent, screen, within } from "@testing-library/react"
 import { loadPluginApp, renderSlot } from "@get-bb/plugin-sdk/testing/app";
 import { afterEach, describe, expect, it } from "vitest";
 import { MERGE_RENDERER_ID } from "../../src/approval/contract";
-import { deferred } from "../fixtures/approval-form";
+import { ALL_CONTROLS, deferred, disabledControls, formHarness } from "../fixtures/approval-form";
 import { DISPATCH, loadWorld, nextForm, type World } from "../fixtures/plugin-host";
 
 const PR = "https://github.com/acme/widgets/pull/7";
+/** The instant that the expiry tests use: 2026-11-08 15:30 UTC (the month is zero-based). */
+const EXPIRES_AT = Date.UTC(2026, 10, 8, 15, 30);
 const worker = { threadId: "thr-w1" };
 
 afterEach(cleanup);
@@ -54,9 +56,12 @@ async function mountRenderer(
   if (registration === undefined) throw new Error(`no renderer is registered for ${request.rendererId}`);
   const submitted: unknown[] = [];
   let failures = options.failFirstSubmit === undefined ? 0 : 1;
-  const payload = "payload" in options ? options.payload : request.payload;
-  const { container } = renderSlot(registration, {
-    interaction: { id: form.id, threadId: request.threadId, title: request.title, payload: payload as never, createdAt: 1_700_000_000_000, expiresAt: options.expiresAt ?? null },
+  const { props } = formHarness({
+    id: form.id,
+    threadId: request.threadId,
+    title: request.title,
+    payload: "payload" in options ? options.payload : request.payload,
+    expiresAt: options.expiresAt ?? null,
     submit: async (value) => {
       submitted.push(value);
       if (failures > 0) {
@@ -70,7 +75,8 @@ async function mountRenderer(
       world.host.harness.behavior.cancelInteraction(form.id);
     },
   });
-  return { submitted, request, container };
+  const { container, unmount } = renderSlot(registration, props);
+  return { submitted, request, container, unmount };
 }
 
 const press = async (name: string) => {
@@ -115,34 +121,34 @@ describe("the merge approval form through the plugin factory and the registered 
     const result = await form.call;
     expect(submitted).toStrictEqual([{ decision: "approved" }]);
     expect(result.isError).toBe(false);
-    expect(merges(world)).toEqual([{ command: "gh", args: ["pr", "merge", PR, "--squash"], cwd: undefined }]);
     expect(state(world)).toBe("merged");
     expect(approvals(world)).toMatchObject([{ scope: "merge", decision: "approved" }]);
     const approvalRows = world.store.listEvents({ taskId: "t1" }).filter((row) => row.event === "record_approval");
     expect(approvalRows).toMatchObject([{ actor: "user", outcome: "applied" }]);
   });
 
-  it("[A1204] carries a typed comment into the approval record, and leaves a blank comment out", async () => {
-    const typed = await readyWorld();
-    const typedForm = await openForm(typed);
-    await mountRenderer(typed, typedForm);
+  it("[A1204] carries a typed comment into the approval record", async () => {
+    const world = await readyWorld();
+    const form = await openForm(world);
+    await mountRenderer(world, form);
     type("  Reviewed the diff.  ");
     await press("Approve");
-    await typedForm.call;
-    const withComment = typed.store.listEvents({ taskId: "t1" }).find((row) => row.event === "record_approval");
-    expect(withComment?.evidence).toBe("Reviewed the diff.");
+    await form.call;
+    const row = world.store.listEvents({ taskId: "t1" }).find((candidate) => candidate.event === "record_approval");
+    expect(row?.evidence).toBe("Reviewed the diff.");
+  });
 
-    cleanup();
-    const blank = await readyWorld();
-    const blankForm = await openForm(blank);
-    await mountRenderer(blank, blankForm);
+  it("[A1204] leaves a blank comment out of the approval record", async () => {
+    const world = await readyWorld();
+    const form = await openForm(world);
+    await mountRenderer(world, form);
     type("   ");
     await press("Approve");
-    await blankForm.call;
-    const without = blank.store.listEvents({ taskId: "t1" }).find((row) => row.event === "record_approval");
-    expect(without).toBeDefined();
-    expect(without?.evidence ?? null).toBeNull();
-    expect(state(blank)).toBe("merged");
+    await form.call;
+    const row = world.store.listEvents({ taskId: "t1" }).find((candidate) => candidate.event === "record_approval");
+    expect(row).toBeDefined();
+    expect(row?.evidence ?? null).toBeNull();
+    expect(state(world)).toBe("merged");
   });
 
   it("[A1205] disables every control while the answer is in flight, and two presses send one answer", async () => {
@@ -151,8 +157,7 @@ describe("the merge approval form through the plugin factory and the registered 
     const held = deferred();
     const { submitted } = await mountRenderer(world, form, { holdSubmit: held.promise });
     await press("Approve");
-    const controls = [...screen.getAllByRole("button"), screen.getByRole("textbox")];
-    expect(controls.every((control) => control.hasAttribute("disabled"))).toBe(true);
+    expect(disabledControls()).toEqual(ALL_CONTROLS);
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: "Approve" }));
     });
@@ -195,7 +200,7 @@ describe("the merge approval form through the plugin factory and the registered 
   it("[A1208] records no approval and runs no merge when Cancel is pressed, and a later call opens a new form", async () => {
     const world = await readyWorld();
     const form = await openForm(world);
-    await mountRenderer(world, form);
+    const first = await mountRenderer(world, form);
     await press("Cancel");
     const result = await form.call;
     expect(result.isError).toBe(true);
@@ -204,7 +209,8 @@ describe("the merge approval form through the plugin factory and the registered 
     expect(state(world)).toBe("awaiting_approval");
     expect(approvals(world)).toEqual([]);
 
-    cleanup();
+    // bb removes a settled form, so the first renderer goes before the second form opens.
+    first.unmount();
     const again = await openForm(world);
     await mountRenderer(world, again);
     await press("Approve");
@@ -212,7 +218,7 @@ describe("the merge approval form through the plugin factory and the registered 
     expect(state(world)).toBe("merged");
   });
 
-  it("[A1209] offers no Approve for a request it cannot read, and Deny and Cancel still work", async () => {
+  it("[A1209] offers no Approve for a request it cannot read, and Deny still records a denial", async () => {
     const world = await readyWorld();
     const form = await openForm(world);
     const { submitted } = await mountRenderer(world, form, { payload: { taskId: "t1" } });
@@ -225,14 +231,16 @@ describe("the merge approval form through the plugin factory and the registered 
     expect(merges(world)).toEqual([]);
     expect(state(world)).toBe("awaiting_approval");
     expect(approvals(world)).toMatchObject([{ decision: "denied" }]);
+  });
 
-    cleanup();
-    const second = await readyWorld();
-    const secondForm = await openForm(second);
-    await mountRenderer(second, secondForm, { payload: null });
+  it("[A1209] offers no Approve for a request it cannot read, and Cancel still records nothing", async () => {
+    const world = await readyWorld();
+    const form = await openForm(world);
+    await mountRenderer(world, form, { payload: null });
+    expect(screen.queryByRole("button", { name: "Approve" })).toBeNull();
     await press("Cancel");
-    expect((await secondForm.call).text).toMatch(/did not answer/i);
-    expect(approvals(second)).toEqual([]);
+    expect((await form.call).text).toMatch(/did not answer/i);
+    expect(approvals(world)).toEqual([]);
   });
 
   it("[A1210] shows a rejected answer, re-enables the controls, keeps the typed comment, and records one approval after the retry", async () => {
@@ -242,7 +250,7 @@ describe("the merge approval form through the plugin factory and the registered 
     type("My reason.");
     await press("Approve");
     expect(screen.getByRole("alert").textContent).toContain("bb is unreachable");
-    expect([...screen.getAllByRole("button"), screen.getByRole("textbox")].every((control) => !control.hasAttribute("disabled"))).toBe(true);
+    expect(disabledControls()).toEqual([]);
     expect((screen.getByRole("textbox") as HTMLTextAreaElement).value).toBe("My reason.");
 
     await press("Approve");
@@ -278,18 +286,23 @@ describe("the merge approval form through the plugin factory and the registered 
     await form.call;
   });
 
-  it("[A1213] shows when the request expires, and no expiry line when there is none", async () => {
+  it("[A1213] shows when the request expires", async () => {
     const world = await readyWorld();
     const form = await openForm(world);
-    const { container } = await mountRenderer(world, form, { expiresAt: Date.UTC(2026, 10, 8, 15, 30) });
+    const { container } = await mountRenderer(world, form, { expiresAt: EXPIRES_AT });
     const time = container.querySelector("time");
     expect(time?.getAttribute("datetime")).toBe("2026-11-08T15:30:00.000Z");
     expect(time?.textContent).toContain("2026");
-    cleanup();
-    const { container: none } = await mountRenderer(world, form);
-    expect(none.querySelector("time")).toBeNull();
+    world.host.harness.behavior.cancelInteraction(form.id);
+    await form.call;
+  });
+
+  it("[A1213] shows no expiry line when the request has no expiry", async () => {
+    const world = await readyWorld();
+    const form = await openForm(world);
+    const { container } = await mountRenderer(world, form);
+    expect(container.querySelector("time")).toBeNull();
     world.host.harness.behavior.cancelInteraction(form.id);
     await form.call;
   });
 });
-

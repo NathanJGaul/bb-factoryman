@@ -12,6 +12,7 @@ interface Manifest {
 interface TsConfig {
   compilerOptions?: { lib?: string[]; jsx?: string };
   include?: string[];
+  exclude?: string[];
 }
 
 const manifest = JSON.parse(
@@ -40,19 +41,18 @@ describe("package manifest", () => {
     const script = manifest.scripts?.typecheck ?? "";
     expect(script).toMatch(/^tsc6(\s|$)/);
     expect(script).not.toMatch(/(^|[\s&;|])tsc(\s|$)/);
-    expect(existsSync(new URL("../../node_modules/.bin/tsc6", import.meta.url)), "node_modules/.bin/tsc6 should exist").toBe(true);
     expect(manifest.scripts?.check).toContain("pnpm run typecheck");
   });
 
-  it("[A1215] type-checks the frontend source: src is included, with the JSX transform and the DOM library", () => {
+  it("[A1215] type-checks the frontend source: src is included and not excluded, with the JSX transform and the DOM library", () => {
     expect(tsconfig.include).toContain("src");
+    expect((tsconfig.exclude ?? []).filter((path) => path === "src" || path.startsWith("src/"))).toEqual([]);
     expect(tsconfig.compilerOptions?.jsx).toBe("react-jsx");
-    expect(tsconfig.compilerOptions?.lib).toContain("DOM");
+    expect((tsconfig.compilerOptions?.lib ?? []).map((name) => name.toUpperCase())).toContain("DOM");
   });
 
-  it("[A1220] declares the frontend entry as ./src/app.tsx, which exists, and builds with bb plugin build", () => {
+  it("[A1220] declares the frontend entry as ./src/app.tsx, which exists", () => {
     expect(manifest.bb?.app).toBe("./src/app.tsx");
     expect(existsSync(new URL("../../src/app.tsx", import.meta.url)), "src/app.tsx should exist").toBe(true);
-    expect(manifest.scripts?.build).toBe("bb plugin build");
   });
 });

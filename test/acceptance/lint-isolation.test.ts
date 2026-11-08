@@ -117,7 +117,7 @@ describe("browser-side isolation from the server", () => {
     'import { MERGE_RENDERER_ID } from "../approval/contract";\nexport const id = MERGE_RENDERER_ID;\n',
   ];
 
-  it("[A1221] fails lint on a server-side import in each browser-side file", async () => {
+  it("[A1221a] fails lint on a server-side import in each browser-side file", async () => {
     for (const file of browserFiles) {
       for (const [name, code] of rejected) {
         expect(await importRestrictions(file, code), `${file} importing ${name}`).toHaveLength(1);
@@ -125,7 +125,7 @@ describe("browser-side isolation from the server", () => {
     }
   });
 
-  it("[A1221] passes lint on the imports that the frontend needs", async () => {
+  it("[A1221b] passes lint on the imports that the frontend needs", async () => {
     for (const file of browserFiles) {
       for (const code of accepted) {
         expect(await importRestrictions(file, code), `${file}: ${code.split("\n")[0]}`).toEqual([]);
@@ -133,7 +133,7 @@ describe("browser-side isolation from the server", () => {
     }
   });
 
-  it("[A1221] passes lint on the same server-side imports outside the browser side, and in the browser side's own tests", async () => {
+  it("[A1221c] passes lint on the same server-side imports outside the browser side, and in the browser side's own tests", async () => {
     for (const [name, code] of rejected) {
       expect(await importRestrictions("src/tools/probe.ts", code), `src/tools importing ${name}`).toEqual([]);
     }
