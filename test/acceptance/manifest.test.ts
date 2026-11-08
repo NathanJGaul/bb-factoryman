@@ -37,7 +37,7 @@ describe("package manifest", () => {
     expect(manifest.scripts?.build).toBe("bb plugin build");
   });
 
-  it("[A1214] runs the type check with tsc6, the binary that the pinned TypeScript installs, and not with a global tsc", () => {
+  it("[A1214] runs the type check with tsc6 and not with a global tsc, and the check script runs it", () => {
     const script = manifest.scripts?.typecheck ?? "";
     expect(script).toMatch(/^tsc6(\s|$)/);
     expect(script).not.toMatch(/(^|[\s&;|])tsc(\s|$)/);

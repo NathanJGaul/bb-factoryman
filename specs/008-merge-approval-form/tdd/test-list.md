@@ -33,7 +33,7 @@ The suite baseline was 92 files and 1134 tests, all passing.
 | A1211 | A pull request value that is not an `http` or `https` URL shows as plain text | AC-3.3, FR-1207 | example | DONE | `test/acceptance/merge-approval-form.test.tsx::[A1211]` |
 | A1212 | Long evidence and a long branch name sit inside a wrapping or scrolling block (class level only; the real fit is A1219) | AC-3.4, FR-1209 | example | DONE | `test/acceptance/merge-approval-form.test.tsx::[A1212]` |
 | A1213 | A request with an expiry time shows when it expires, and one without shows no expiry line | AC-3.5 | example | DONE | `test/acceptance/merge-approval-form.test.tsx::[A1213]` |
-| A1214 | The `typecheck` script calls `tsc6`, the binary exists in `node_modules/.bin`, and a run with a PATH that holds no `tsc` passes (the run is task T1241; the suite pins the script and the binary) | AC-4.1, FR-1210 | example | DONE | `test/acceptance/manifest.test.ts::[A1214]` |
+| A1214 | The `typecheck` script calls `tsc6` and not `tsc`, and the `check` script runs it. The real run with a PATH that holds no `tsc` is a logged manual run (task T1241) | AC-4.1, FR-1210 | example | DONE | `test/acceptance/manifest.test.ts::[A1214]` |
 | A1215 | The type check covers the frontend source: `tsconfig.json` includes `src`, sets the JSX transform, and has the DOM library | AC-4.2, FR-1210 | example | DONE | `test/acceptance/manifest.test.ts::[A1215]` |
 | A1216 | The runbook's preflight step reads the machine name from `bb machine list` and names no machine called `server` | AC-5.1, FR-1211 | example | DONE | `test/acceptance/live-check.test.ts::[A1216]` |
 | A1217 | The runbook's ship step describes the approval form in the web UI and keeps the rule that a scripted answer is written down as scripted | AC-5.2, FR-1211 | example | DONE | `test/acceptance/live-check.test.ts::[A1217]` |
@@ -57,7 +57,7 @@ The suite baseline was 92 files and 1134 tests, all passing.
 | U1207 | `answerFor("approved")` and `answerFor("denied")` without a comment carry only the decision | FR-1203 | example | DONE | `src/approval/contract.test.ts::[U1207]` |
 | U1208 | `answerFor` trims the comment and keeps the text between | FR-1203 | example | DONE | `src/approval/contract.test.ts::[U1208]` |
 | U1209 | `answerFor` leaves out a comment that is empty, spaces, or a line break, and keeps a one-character comment | FR-1203 | example | DONE | `src/approval/contract.test.ts::[U1209]` |
-| U1210 | Every `answerFor` result passes `approvalAnswerSchema`, and a result with a stray field would not | FR-1203, FR-1208 | example | DONE | `src/approval/contract.test.ts::[U1210]` |
+| U1210 | Every `answerFor` result passes `approvalAnswerSchema` (that the schema rejects a stray field is `zod`'s own behavior, and `merge.test.ts` `[U95]` pins it) | FR-1203, FR-1208 | example | DONE | `src/approval/contract.test.ts::[U1210]` |
 | U1211 | The payload that `factoryman_merge` builds for a ship task passes `readMergePayload` | FR-1202, FR-1208 | example | DONE | `src/approval/contract.test.ts::[U1211]` |
 | U1212 | `MERGE_RENDERER_ID` is `factoryman-merge-approval` and matches bb's renderer id pattern | FR-1201 | example | DONE | `src/approval/contract.test.ts::[U1212]` |
 

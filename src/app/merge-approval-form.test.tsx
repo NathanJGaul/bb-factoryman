@@ -1,21 +1,3 @@
-  it.each(["text-red-500", "border-t-red-500", "shadow-red-500", "bg-white", "text-[rgb(1,2,3)]", 'style={{ color: "red" }}', "#fff"])(
-    "[U1239] the color check flags %s",
-    (sample) => {
-      expect(NOT_THEME_TOKENS.some((pattern) => pattern.test(sample))).toBe(true);
-    },
-  );
-
-  it.each(["bg-foreground", "text-muted-foreground", "border-border", "hover:bg-state-hover", "whitespace-pre-wrap", "focus-visible:ring-ring"])(
-    "[U1239] the color check accepts the theme token or utility %s",
-    (sample) => {
-      expect(NOT_THEME_TOKENS.some((pattern) => pattern.test(sample))).toBe(false);
-    },
-  );
-
-  it("[U1239] names theme tokens only: the component source has no hex color, fixed palette color, arbitrary color, or inline style", () => {
-    const source = readFileSync(join(dirname(fileURLToPath(import.meta.url)), "merge-approval-form.tsx"), "utf8");
-    expect(NOT_THEME_TOKENS.filter((pattern) => pattern.test(source)).map(String)).toEqual([]);
-  });
 // @vitest-environment jsdom
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -23,7 +5,17 @@ import { fileURLToPath } from "node:url";
 import { act, cleanup, fireEvent, screen, within } from "@testing-library/react";
 import { renderSlot } from "@get-bb/plugin-sdk/testing/app";
 import { afterEach, describe, expect, it } from "vitest";
-import { ALL_CONTROLS, REQUEST, deferred, disabledControls, formHarness, type FormOptions } from "../../test/fixtures/approval-form";
+import {
+  ALL_CONTROLS,
+  REQUEST,
+  deferred,
+  disabledControls,
+  formHarness,
+  press,
+  typeComment as type,
+  valueOf,
+  type FormOptions,
+} from "../../test/fixtures/approval-form";
 import { MergeApprovalForm } from "./merge-approval-form";
 
 afterEach(cleanup);
@@ -32,14 +24,6 @@ function mount(options: FormOptions = {}) {
   const harness = formHarness(options);
   const slot = renderSlot({ component: MergeApprovalForm }, harness.props);
   return { ...harness, slot };
-}
-
-/** The value element that follows a label in the request's description list. */
-function valueOf(label: string): HTMLElement {
-  const term = screen.getByText(label, { selector: "dt" });
-  const value = term.nextElementSibling;
-  if (!(value instanceof HTMLElement)) throw new Error(`no value after ${label}`);
-  return value;
 }
 
 const PALETTE = "red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose|slate|gray|zinc|neutral|stone";
@@ -52,18 +36,12 @@ const NOT_THEME_TOKENS: RegExp[] = [
   /\bstyle=\{/, // an inline style
 ];
 
+/** 2026-11-08 15:30 UTC (the month argument is zero-based). */
 const EXPIRES_AT = Date.UTC(2026, 10, 8, 15, 30);
 const EXPIRES_AT_ISO = "2026-11-08T15:30:00.000Z";
 
 const button = (name: string) => screen.getByRole("button", { name });
 const comment = () => screen.getByRole("textbox");
-const type = (value: string) => fireEvent.change(comment(), { target: { value } });
-/** Press a button and let the answer settle. */
-async function press(name: string) {
-  await act(async () => {
-    fireEvent.click(button(name));
-  });
-}
 
 describe("MergeApprovalForm: the request", () => {
   it("[U1220] shows the task id and the branch under their labels, with the font-mono class", () => {
@@ -106,6 +84,8 @@ describe("MergeApprovalForm: Approve", () => {
   it("[U1226] submits the trimmed comment with Approve", async () => {
     const { submit } = mount();
     type("  Looks good.  ");
+    // The field keeps what the owner typed, spaces included: the answer is trimmed, the field is not.
+    expect((comment() as HTMLTextAreaElement).value).toBe("  Looks good.  ");
     await press("Approve");
     expect(submit.mock.calls[0]?.[0]).toStrictEqual({ decision: "approved", comment: "Looks good." });
   });
@@ -135,6 +115,18 @@ describe("MergeApprovalForm: an answer in flight", () => {
       held.resolve();
     });
     expect(disabledControls()).toEqual(ALL_CONTROLS);
+    expect(group().getAttribute("aria-busy")).not.toBe("true");
+  });
+
+  it("[U1230] sends one answer when two presses arrive before the form re-renders", async () => {
+    const held = deferred();
+    const { submit } = mount({ submit: () => held.promise });
+    // Both clicks land in one batch, so the second reaches a button that is not yet disabled. The in-flight guard stops it.
+    await act(async () => {
+      fireEvent.click(button("Approve"));
+      fireEvent.click(button("Approve"));
+    });
+    expect(submit).toHaveBeenCalledTimes(1);
   });
 
   it("[U1230] sends no second answer for a second press while the first is pending", async () => {
@@ -186,11 +178,16 @@ describe("MergeApprovalForm: the pull request link", () => {
 
   it("[U1242] opens the pull request through bb's navigation, so that bb's open-in-app preference applies", () => {
     const { slot } = mount();
-    fireEvent.click(within(valueOf("Pull request")).getByRole("link"));
+    const link = within(valueOf("Pull request")).getByRole("link");
+    // jsdom cannot navigate, so cancel the default action once the click has bubbled past the form's own handlers.
+    const cancelNavigation = (event: Event) => event.preventDefault();
+    document.addEventListener("click", cancelNavigation);
+    fireEvent.click(link);
+    document.removeEventListener("click", cancelNavigation);
     expect(slot.inspection.navigateCalls).toEqual([{ method: "openUrl", url: REQUEST.prUrl }]);
   });
 
-  it.each(["javascript:alert(1)", "ftp://forge.example/pull/7", "data:text/html,<b>x</b>", "not a url", "//forge.example/pull/7"])(
+  it.each(["javascript:alert(1)", "ftp://forge.example/pull/7", "data:text/html,<b>x</b>", "not a url", "//forge.example/pull/7", "httpx://forge.example/pull/7", "http-x://forge.example/pull/7"])(
     "[U1222] shows %s as plain text with no link",
     (value) => {
       mount({ payload: { ...REQUEST, prUrl: value } });
@@ -202,14 +199,25 @@ describe("MergeApprovalForm: the pull request link", () => {
 });
 
 describe("MergeApprovalForm: a failed answer", () => {
-  it("[U1231] shows the rejection in an alert, re-enables the controls, and keeps the typed comment", async () => {
-    const { submit } = mount({ submit: async () => { throw new Error("bb said no"); } });
-    type("My reason.");
+  it("[U1231] shows the rejection in an alert and re-enables the controls", async () => {
+    mount({ submit: async () => { throw new Error("bb said no"); } });
     await press("Approve");
     expect(screen.getByRole("alert").textContent).toContain("bb said no");
     expect(disabledControls()).toEqual([]);
-    expect((comment() as HTMLTextAreaElement).value).toBe("My reason.");
     expect(screen.getByRole("group", { name: "Merge approval request" }).getAttribute("aria-busy")).not.toBe("true");
+  });
+
+  it("[U1231] shows the text of a rejection that is not an Error", async () => {
+    mount({ submit: () => Promise.reject("plain failure") });
+    await press("Approve");
+    expect(screen.getByRole("alert").textContent).toContain("plain failure");
+  });
+
+  it("[U1231] keeps the typed comment after a rejection, so a retry carries it", async () => {
+    const { submit } = mount({ submit: async () => { throw new Error("bb said no"); } });
+    type("My reason.");
+    await press("Approve");
+    expect((comment() as HTMLTextAreaElement).value).toBe("My reason.");
     await press("Deny");
     expect(submit).toHaveBeenCalledTimes(2);
     expect(submit.mock.calls[1]?.[0]).toStrictEqual({ decision: "denied", comment: "My reason." });
@@ -305,13 +313,27 @@ describe("MergeApprovalForm: expiry, keys, and style", () => {
     expect(evidence.className).toContain("break-words");
     expect(valueOf("Branch").className).toContain("break-all");
     expect(valueOf("Task").className).toContain("break-all");
-  });
-
-  it("[U1239] names theme tokens only: no hex color and no fixed Tailwind palette color in the source", () => {
-    const source = readFileSync(join(dirname(fileURLToPath(import.meta.url)), "merge-approval-form.tsx"), "utf8");
-    expect(source).not.toMatch(/#[0-9a-fA-F]{3,8}\b/);
-    const palette = "red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose|slate|gray|zinc|neutral|stone|white|black";
-    expect(source).not.toMatch(new RegExp(`\\b(?:bg|text|border|ring|fill|stroke|outline|divide|from|to|via)-(?:${palette})(?:-\\d+)?\\b`));
+    expect(valueOf("Pull request").className).toContain("break-all");
   });
 });
 
+describe("MergeApprovalForm: colors", () => {
+  it.each(["text-red-500", "border-t-red-500", "shadow-red-500", "bg-white", "text-[rgb(1,2,3)]", 'style={{ color: "red" }}', "#fff"])(
+    "[U1239] the color check flags %s",
+    (sample) => {
+      expect(NOT_THEME_TOKENS.some((pattern) => pattern.test(sample))).toBe(true);
+    },
+  );
+
+  it.each(["bg-foreground", "text-muted-foreground", "border-border", "hover:bg-state-hover", "whitespace-pre-wrap", "focus-visible:ring-ring"])(
+    "[U1239] the color check accepts the theme token or utility %s",
+    (sample) => {
+      expect(NOT_THEME_TOKENS.some((pattern) => pattern.test(sample))).toBe(false);
+    },
+  );
+
+  it("[U1239] names theme tokens only: the component source has no hex color, fixed palette color, arbitrary color, or inline style", () => {
+    const source = readFileSync(join(dirname(fileURLToPath(import.meta.url)), "merge-approval-form.tsx"), "utf8");
+    expect(NOT_THEME_TOKENS.filter((pattern) => pattern.test(source)).map(String)).toEqual([]);
+  });
+});

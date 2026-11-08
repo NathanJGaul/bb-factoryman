@@ -3,7 +3,7 @@ import { act, cleanup, fireEvent, screen, within } from "@testing-library/react"
 import { loadPluginApp, renderSlot } from "@get-bb/plugin-sdk/testing/app";
 import { afterEach, describe, expect, it } from "vitest";
 import { MERGE_RENDERER_ID } from "../../src/approval/contract";
-import { ALL_CONTROLS, deferred, disabledControls, formHarness } from "../fixtures/approval-form";
+import { ALL_CONTROLS, deferred, disabledControls, formHarness, press, typeComment as type, valueOf } from "../fixtures/approval-form";
 import { DISPATCH, loadWorld, nextForm, type World } from "../fixtures/plugin-host";
 
 const PR = "https://github.com/acme/widgets/pull/7";
@@ -79,12 +79,6 @@ async function mountRenderer(
   return { submitted, request, container, unmount };
 }
 
-const press = async (name: string) => {
-  await act(async () => {
-    fireEvent.click(screen.getByRole("button", { name }));
-  });
-};
-const type = (value: string) => fireEvent.change(screen.getByRole("textbox"), { target: { value } });
 
 describe("the merge approval form through the plugin factory and the registered renderer", () => {
   it("[A1201] registers exactly one pending-interaction renderer, under the id that factoryman_merge passes", async () => {
@@ -104,11 +98,10 @@ describe("the merge approval form through the plugin factory and the registered 
     await mountRenderer(world, form);
     const branch = world.store.getTask("t1")?.branch ?? "";
     expect(branch).not.toBe("");
-    const value = (label: string) => screen.getByText(label, { selector: "dt" }).nextElementSibling as HTMLElement;
-    expect(value("Task").textContent).toBe("t1");
-    expect(value("Branch").textContent).toBe(branch);
-    expect(within(value("Pull request")).getByRole("link", { name: PR }).getAttribute("href")).toBe(PR);
-    expect(value("Evidence").textContent).toBe("PR open.\nTests pass.");
+        expect(valueOf("Task").textContent).toBe("t1");
+    expect(valueOf("Branch").textContent).toBe(branch);
+    expect(within(valueOf("Pull request")).getByRole("link", { name: PR }).getAttribute("href")).toBe(PR);
+    expect(valueOf("Evidence").textContent).toBe("PR open.\nTests pass.");
     world.host.harness.behavior.cancelInteraction(form.id);
     await form.call;
   });
@@ -132,6 +125,8 @@ describe("the merge approval form through the plugin factory and the registered 
     const form = await openForm(world);
     await mountRenderer(world, form);
     type("  Reviewed the diff.  ");
+    // The field keeps what the owner typed, spaces included: only the answer is trimmed.
+    expect((screen.getByRole("textbox") as HTMLTextAreaElement).value).toBe("  Reviewed the diff.  ");
     await press("Approve");
     await form.call;
     const row = world.store.listEvents({ taskId: "t1" }).find((candidate) => candidate.event === "record_approval");
@@ -258,17 +253,15 @@ describe("the merge approval form through the plugin factory and the registered 
     expect(submitted).toStrictEqual([{ decision: "approved", comment: "My reason." }, { decision: "approved", comment: "My reason." }]);
     expect(result.isError).toBe(false);
     expect(state(world)).toBe("merged");
-    // Only the retry reached bb, so the failed attempt left no approval behind.
     expect(approvals(world)).toMatchObject([{ scope: "merge", decision: "approved" }]);
-    expect(approvals(world)).toHaveLength(1);
   });
 
-  it("[A1211] shows a pull request value that is not an http or https URL as plain text", async () => {
+  it.each(["javascript:alert(1)", "httpx://forge.example/pull/7"])("[A1211] shows %s as plain text", async (value) => {
     const world = await readyWorld();
     const form = await openForm(world);
-    await mountRenderer(world, form, { payload: { taskId: "t1", branch: "fm/t1", prUrl: "javascript:alert(1)", evidence: "x" } });
-    const cell = screen.getByText("Pull request", { selector: "dt" }).nextElementSibling as HTMLElement;
-    expect(cell.textContent).toBe("javascript:alert(1)");
+    await mountRenderer(world, form, { payload: { taskId: "t1", branch: "fm/t1", prUrl: value, evidence: "x" } });
+    const cell = valueOf("Pull request");
+    expect(cell.textContent).toBe(value);
     expect(within(cell).queryByRole("link")).toBeNull();
     world.host.harness.behavior.cancelInteraction(form.id);
     await form.call;
@@ -278,10 +271,9 @@ describe("the merge approval form through the plugin factory and the registered 
     const world = await readyWorld();
     const form = await openForm(world);
     await mountRenderer(world, form, { payload: { taskId: "t1", branch: `fm/${"x".repeat(300)}`, prUrl: PR, evidence: "word ".repeat(2000) } });
-    const cell = (label: string) => screen.getByText(label, { selector: "dt" }).nextElementSibling as HTMLElement;
-    expect(cell("Evidence").className).toMatch(/max-h-\d+/);
-    expect(cell("Evidence").className).toContain("overflow-y-auto");
-    expect(cell("Branch").className).toContain("break-all");
+        expect(valueOf("Evidence").className).toMatch(/max-h-\d+/);
+    expect(valueOf("Evidence").className).toContain("overflow-y-auto");
+    expect(valueOf("Branch").className).toContain("break-all");
     world.host.harness.behavior.cancelInteraction(form.id);
     await form.call;
   });

@@ -93,6 +93,8 @@ describe("the live-check runbook: isolation", () => {
     expect(calls.length).toBeGreaterThan(4);
     for (const [, command = "", rest = ""] of calls) {
       expect(registered, command).toContain(command);
+      // The lab's one machine is named after the host, so every preflight call reads the name (live check finding 5.3).
+      if (command === "preflight") expect(rest.trim(), "a preflight call names the machine from $MACHINE").toMatch(/^"\$MACHINE"(\s|$)/);
       for (const flag of rest.match(/(?<![\w-])--[a-z][a-z-]*/g) ?? []) expect(allowedFlags[command], `${command} ${flag}`).toContain(flag);
     }
     // The lab's one machine is named after the host, not server (live check finding 5.3). A1216 pins how the runbook gets the name.

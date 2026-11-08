@@ -1,4 +1,4 @@
-import { screen } from "@testing-library/react";
+import { act, fireEvent, screen } from "@testing-library/react";
 import { vi, type Mock } from "vitest";
 import type { PluginPendingInteractionProps } from "@get-bb/plugin-sdk/app";
 import type { MergeRequestPayload } from "../../src/approval/contract";
@@ -73,4 +73,23 @@ export function deferred<T = void>(): { promise: Promise<T>; resolve: (value: T)
     reject = rej;
   });
   return { promise, resolve, reject };
+}
+
+/** The value element that follows a label in the request's description list. */
+export function valueOf(label: string): HTMLElement {
+  const value = screen.getByText(label, { selector: "dt" }).nextElementSibling;
+  if (!(value instanceof HTMLElement)) throw new Error(`no value after ${label}`);
+  return value;
+}
+
+/** Type into the comment field the way a person would: one change event with the whole text. */
+export function typeComment(value: string): void {
+  fireEvent.change(screen.getByRole("textbox"), { target: { value } });
+}
+
+/** Press a button and let the answer settle. */
+export async function press(name: string): Promise<void> {
+  await act(async () => {
+    fireEvent.click(screen.getByRole("button", { name }));
+  });
 }

@@ -117,28 +117,22 @@ describe("browser-side isolation from the server", () => {
     'import { MERGE_RENDERER_ID } from "../approval/contract";\nexport const id = MERGE_RENDERER_ID;\n',
   ];
 
-  it("[A1221a] fails lint on a server-side import in each browser-side file", async () => {
-    for (const file of browserFiles) {
-      for (const [name, code] of rejected) {
-        expect(await importRestrictions(file, code), `${file} importing ${name}`).toHaveLength(1);
-      }
-    }
+  const rejectedInEachFile = browserFiles.flatMap((file) => rejected.map(([name, code]) => [file, name, code] as const));
+  it.each(rejectedInEachFile)("[A1221a] fails lint on %s importing %s", async (file, _name, code) => {
+    expect(await importRestrictions(file, code)).toHaveLength(1);
   });
 
-  it("[A1221b] passes lint on the imports that the frontend needs", async () => {
-    for (const file of browserFiles) {
-      for (const code of accepted) {
-        expect(await importRestrictions(file, code), `${file}: ${code.split("\n")[0]}`).toEqual([]);
-      }
-    }
+  const acceptedInEachFile = browserFiles.flatMap((file) => accepted.map((code) => [file, (code.split("\n")[0] ?? "").trim(), code] as const));
+  it.each(acceptedInEachFile)("[A1221b] passes lint on %s with %s", async (file, _line, code) => {
+    expect(await importRestrictions(file, code)).toEqual([]);
   });
 
-  it("[A1221c] passes lint on the same server-side imports outside the browser side, and in the browser side's own tests", async () => {
-    for (const [name, code] of rejected) {
-      expect(await importRestrictions("src/tools/probe.ts", code), `src/tools importing ${name}`).toEqual([]);
-    }
+  it.each(rejected)("[A1221c] passes lint on a server file that imports %s", async (_name, code) => {
+    expect(await importRestrictions("src/tools/probe.ts", code)).toEqual([]);
+  });
+
+  it.each(["src/app/probe.test.tsx", "src/approval/probe.test.ts"])("[A1221c] passes lint on server imports in the browser side's own test %s", async (file) => {
     const fixtureImport = 'import { loadWorld } from "../../test/fixtures/plugin-host";\nimport { merge } from "../tools/merge";\nimport { z } from "zod";\nexport const t = [loadWorld, merge, z];\n';
-    expect(await importRestrictions("src/app/probe.test.tsx", fixtureImport)).toEqual([]);
-    expect(await importRestrictions("src/approval/probe.test.ts", fixtureImport)).toEqual([]);
+    expect(await importRestrictions(file, fixtureImport)).toEqual([]);
   });
 });
