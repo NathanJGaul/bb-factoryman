@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { MERGE_RENDERER_ID, type ApprovalAnswer, type MergeRequestPayload } from "../approval/contract";
 import type { MergeExecutor, MergeInput } from "../git/merge";
 import { refuse } from "../machine/refusal";
 import { errorText, type Runtime } from "../runtime";
@@ -8,7 +9,6 @@ import { identify, sameProject } from "./access";
 import type { Caller } from "./dispatch";
 import { failure, refusalOutcome, success, type ToolOutcome } from "./results";
 
-export const MERGE_RENDERER_ID = "factoryman-merge-approval";
 /** The states in which `factoryman_merge` accepts a task. A task that waits for the owner stays in the second one. */
 export const MERGEABLE_STATES: readonly string[] = ["review_ready", "awaiting_approval"];
 
@@ -18,12 +18,17 @@ export const mergeSchema = z.strictObject({ taskId: z.string().min(1) });
 export const approvalAnswerSchema = z.strictObject({
   decision: z.enum(["approved", "denied"]),
   comment: z.string().optional(),
-});
+}) satisfies z.ZodType<ApprovalAnswer>;
 
 /** The evidence the form shows the owner: the latest evidence that put the task in review. */
 function reviewEvidence(rt: Runtime, task: TaskRow): string {
   const rows = rt.deps.store.listEvents({ taskId: task.taskId }).filter((row) => row.outcome === "applied" && row.evidence);
   return rows.findLast((row) => ["validated", "ready"].includes(row.event))?.evidence ?? "";
+}
+
+/** What the form shows the owner. The frontend reads it with `readMergePayload` from the same contract module. */
+function mergeRequestPayload(rt: Runtime, task: TaskRow): MergeRequestPayload {
+  return { taskId: task.taskId, branch: task.branch ?? "", prUrl: task.pullRequestUrl ?? "", evidence: reviewEvidence(rt, task) };
 }
 
 /**
@@ -80,7 +85,7 @@ async function mergeClaimed(rt: Runtime, executor: MergeExecutor, caller: Caller
       threadId: caller.threadId,
       rendererId: MERGE_RENDERER_ID,
       title: `Approve merge of task ${taskId}`,
-      payload: { taskId, branch: task.branch ?? "", prUrl: task.pullRequestUrl ?? "", evidence: reviewEvidence(rt, task) },
+      payload: mergeRequestPayload(rt, task),
       timeoutMs: rt.deps.settings().approvalTimeoutMs,
       ...(caller.signal === undefined ? {} : { signal: caller.signal }),
     });

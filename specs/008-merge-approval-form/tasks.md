@@ -20,7 +20,7 @@ The cycle log records the red evidence. Tests are never weakened, skipped, or de
 
 - [X] T1205 [U1201] [U1202] [U1203] [U1204] [U1205] [U1206] [U1207] [U1208] [U1209] [U1210] [U1211] [U1212] Write `src/approval/contract.test.ts` with a stub `src/approval/contract.ts` that fails each test for the right reason: the payload reader accepts the real payload and rejects each wrong shape; the answer builder trims and drops a blank comment; every `answerFor` result passes `approvalAnswerSchema`; the id matches bb's pattern.
 - [X] T1206 [U1201] [U1202] [U1203] [U1204] [U1205] [U1206] [U1207] [U1208] [U1209] [U1210] [U1211] [U1212] Implement `src/approval/contract.ts` (no imports) with `MERGE_RENDERER_ID`, `MergeRequestPayload`, `readMergePayload`, `ApprovalAnswer`, and `answerFor`.
-- [ ] T1207 [U1213] Make `src/tools/merge.ts` import the id and the payload type from the contract module, and type `approvalAnswerSchema` against `ApprovalAnswer`. The existing `[U89]` test stays green.
+- [X] T1207 [U1213] Make `src/tools/merge.ts` import the id and the payload type from the contract module, and type `approvalAnswerSchema` against `ApprovalAnswer`. The existing `[U89]` test stays green.
 
 ## Phase 3: User story 1 - Approve a merge in the web UI (P1)
 

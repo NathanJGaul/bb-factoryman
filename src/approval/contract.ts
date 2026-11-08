@@ -6,12 +6,13 @@
 export const MERGE_RENDERER_ID = "factoryman-merge-approval";
 
 /** What the form shows the owner. Empty strings are valid: a local-only task has no pull request. */
-export interface MergeRequestPayload {
+// A type alias, not an interface: bb's requestInput() takes JSON, and only an alias is assignable to a JSON object type.
+export type MergeRequestPayload = {
   taskId: string;
   branch: string;
   prUrl: string;
   evidence: string;
-}
+};
 
 /** The only answer that factoryman_merge accepts. The server checks it again with a strict schema. */
 // A type alias, not an interface: bb's submit() takes JSON, and only an alias is assignable to a JSON object type.

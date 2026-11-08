@@ -255,3 +255,12 @@ The `[U1236]` mutant above changed the opening tag of the root element and left 
   - command: `pnpm vitest run src/app/merge-approval-form.test.tsx -t "U1236"`
   - failure: `AssertionError: expected <form role="group" …(3)>…(3)</form> to be null` (Tests  1 failed | 22 skipped (23))
   - restored and clean: yes
+
+## Structural change T1207: `src/tools/merge.ts` takes the renderer id and the payload type from the contract module
+
+A refactor on green code (behavior `U1213` stays a `BASELINE`, and its test `src/tools/merge.test.ts::[U89]` stayed green and unchanged).
+
+- `src/tools/merge.ts` no longer declares `MERGE_RENDERER_ID`. It imports the id from `src/approval/contract.ts`, builds the form's payload in a function typed `MergeRequestPayload`, and types `approvalAnswerSchema` with `satisfies z.ZodType<ApprovalAnswer>`.
+- One compile error on the way: `src/tools/merge.ts(88,7): error TS2322: Type 'MergeRequestPayload' is not assignable to type 'Record<string, Json>'`. An interface is not assignable to a JSON object type, so `MergeRequestPayload` became a type alias (as `ApprovalAnswer` did in group 4). The suite does not type-check, so only `pnpm run check` showed it.
+- gate: `pnpm run check` exited 0 -> 95 files, 1191 passed, 0 failed. No test changed.
+- commit: see git history, "refactor: let the merge tool take the renderer id and the payload type from the contract module"
