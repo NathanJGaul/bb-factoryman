@@ -68,7 +68,7 @@ An unchecked item names what is missing and who owns it.
 - [ ] CHK1226 The TDD audit passes.
       It does not: the verdict is `FAIL` for one reason, seven behaviors whose tests came after their code (`A1215`, `U1236`, `U1238`, `U1239`, `A1212`, `U1241`, `U1242`).
       Each has a revert-red and a killing mutant.
-      Owner: the owner, who decides in D-099 whether to accept the exception.
+      The captain accepted the exception on 2026-11-08 (D-099), and the audit report keeps the note.
 
 ## Spec coverage
 

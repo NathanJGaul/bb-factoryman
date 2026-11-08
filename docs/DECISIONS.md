@@ -863,7 +863,7 @@ None drove new code.
 Each has a recorded revert-red in `tdd/cycle-log.md` (the property removed, the test failing with its failure line kept, the file restored) and at least one deliberate mutant that kills it.
 The repository commits only on green, so the history cannot show a test before its code, and the order cannot be rewritten afterwards.
 The audit's other checks are clean: no open `HIGH` smell, 45 of 45 hand-picked mutants killed, and every acceptance criterion covered.
-The owner decides whether to accept the seven as a documented exception.
+The owner could accept the seven as a documented exception or ask for rework.
 Reworking them would mean new history for tests that already fail when their property is removed, and the plan does not recommend it.
 The captain accepted the seven as a recorded deviation, as for the earlier factoryman milestones, on 2026-11-08.
 They are guard tests that fail against the code without the guard.

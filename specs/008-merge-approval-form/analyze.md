@@ -84,3 +84,9 @@ The cycle log matches the suite counts, the test list carries every behavior ID 
 - C1 is the only blocker for a clean audit. The owner decides D-099. The pull request should say so.
 - The other findings are accepted, and none needs a task.
 - Run `/speckit.converge` to record merge readiness.
+
+## Update: the owner's decision
+
+The captain accepted finding C1 as a recorded deviation on 2026-11-08 (D-099).
+It is no longer open.
+

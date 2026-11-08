@@ -141,6 +141,6 @@ One blocking reason is left, and no edit can clear it: seven behaviors are `TEST
 
 From `/speckit.converge` at `df0121b`: two gaps between the artifacts and the code.
 
-- [ ] T1295 CRITICAL: the owner decides D-099 (seven test-after guard tests against Constitution V) and records the decision in `docs/DECISIONS.md` by changing the entry's status from `Open` to `Decided` or `Deviation, resolved`, or by asking for rework. This is not an implementation task and stays open until the owner decides, per Constitution V (contradicts)
+- [X] T1295 CRITICAL (the captain accepted D-099 as a recorded deviation on 2026-11-08): the owner decides D-099 (seven test-after guard tests against Constitution V) and records the decision in `docs/DECISIONS.md` by changing the entry's status from `Open` to `Decided` or `Deviation, resolved`, or by asking for rework. This is not an implementation task and stays open until the owner decides, per Constitution V (contradicts)
 - [X] T1296 Correct D-098 in `docs/DECISIONS.md`: it says that a test pins the script and the binary, and the test pins the script and the `check` script only, because the audit dropped the `node_modules/.bin/tsc6` check as a test of the install layout. Say so, and say that `pnpm run check` fails without `tsc6`. Per the plan, type check script (partial)
 

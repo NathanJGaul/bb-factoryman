@@ -42,3 +42,9 @@ The implementation satisfies the specification, the plan, and the tasks, with on
 
 - `T1295`: the owner decides D-099 and records it in `docs/DECISIONS.md`. Not an implementation task.
 - The no-mistakes pipeline: review, tests, docs, lint, push, and the pull request. Firstmate starts it.
+
+## Update: the owner's decision
+
+The captain accepted D-099 as a recorded deviation on 2026-11-08, so `T1295` is closed and the only remaining work is the no-mistakes pipeline.
+The TDD audit verdict stays `FAIL` as computed, with the accepted exception noted in `tdd/verification.md`.
+

@@ -168,3 +168,11 @@ It is not a browser test.
 - The red evidence in the cycle log was not reproduced: I did not check out earlier commits, because no commit holds a red state.
   The log's failure lines are the only record.
 - Performance under load, a real person's click, and cross-browser behavior: no criterion, no test.
+
+## Owner decision on the verdict
+
+The captain accepted the seven `TEST_AFTER` behaviors as a recorded deviation (D-099, 2026-11-08), as for the earlier factoryman milestones.
+They are guard tests that fail against the code without the guard (the revert-reds and the mutants above).
+The verdict above stays `FAIL` as the rubric computes it, because an auditor does not accept an exception.
+The exception is the owner's call, and the owner has made it.
+
