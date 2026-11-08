@@ -817,7 +817,8 @@ bb draws the form's title and the requester line and no Cancel of its own, so th
 
 ### D-095: D-030 stays partly open after the renderer (Open, the owner decides)
 
-The renderer lets a person approve in the web UI. It does not stop an agent from answering.
+The renderer lets a person approve in the web UI.
+It does not stop an agent from answering.
 A worker with a shell can still run `bb thread interactions respond`, and bb records the answer as `plugin_submitted` with no submitter, so D-030 stays partly open.
 In `local-only` mode there is no forge backstop either.
 The owner-typed code (option 2 of the report), which only the renderer would show and the owner would type back, would close most of the gap in the app.
@@ -838,7 +839,8 @@ A lint rule keeps `src/app.tsx`, `src/app/`, and `src/approval/` free of Node bu
 The form fails closed in the view: a request that it cannot read (a missing field, a field of the wrong type, or an extra field) gets no Approve button, only Deny and Cancel.
 A pull request value that is not an `http` or `https` URL shows as text and never as a link.
 A rejected answer shows the error, re-enables the controls, and keeps the comment.
-This is a second line only. `factoryman_merge` still validates the answer and records the approval.
+This is a second line only.
+`factoryman_merge` still validates the answer and records the approval.
 One `tsconfig.json` with the `DOM` library and the JSX transform type-checks both sides.
 DOM globals therefore type-check in server code too, and the lint rule in D-096 is what keeps the browser side apart.
 
@@ -853,9 +855,11 @@ The script now calls `tsc6`, and a test pins the script and the binary.
 Constitution principle V says that every behavior change is driven by a test that failed first.
 For seven behaviors the code existed before the test, so the TDD audit (`specs/008-merge-approval-form/tdd/verification.md`) classes them `TEST_AFTER`, and the rubric fails a feature for any `TEST_AFTER`.
 They are `A1215` (the `tsconfig.json` change came with the tooling), `U1236`, `U1238`, `U1239`, and `A1212` (the markup that they guard came with the first version of the form), and `U1241` and `U1242` (the audit found two mutants that no test pinned).
-All seven guard a property that the code already had. None drove new code.
+All seven guard a property that the code already had.
+None drove new code.
 Each has a recorded revert-red in `tdd/cycle-log.md` (the property removed, the test failing with its failure line kept, the file restored) and at least one deliberate mutant that kills it.
 The repository commits only on green, so the history cannot show a test before its code, and the order cannot be rewritten afterwards.
 The audit's other checks are clean: no open `HIGH` smell, 45 of 45 hand-picked mutants killed, and every acceptance criterion covered.
-The owner decides whether to accept the seven as a documented exception. Reworking them would mean new history for tests that already fail when their property is removed, and the plan does not recommend it.
+The owner decides whether to accept the seven as a documented exception.
+Reworking them would mean new history for tests that already fail when their property is removed, and the plan does not recommend it.
 
