@@ -58,9 +58,9 @@ The cycle log records the red evidence. Tests are never weakened, skipped, or de
 **Goal**: `pnpm run check` needs no global `tsc`.
 **Independent test**: Run `pnpm run check` with a PATH that holds node and pnpm only.
 
-- [ ] T1240 [US4] [A1214] [A1215] Write the red tests in `test/acceptance/manifest.test.ts`: the `typecheck` script calls `tsc6`, `node_modules/.bin/tsc6` exists, and `tsconfig.json` includes `src`, the JSX transform, and the DOM library.
-- [ ] T1241 [US4] [A1214] [A1215] Change `package.json` `typecheck` to `tsc6 --noEmit`. Run `pnpm run check` under `env -i` with a PATH that holds no `tsc` and record the result in the cycle log.
-- [ ] T1242 [US4] [A1214] [A1215] Outer loop: the story 4 tests are green and `pnpm test` is green.
+- [X] T1240 [US4] [A1214] [A1215] Write the red tests in `test/acceptance/manifest.test.ts`: the `typecheck` script calls `tsc6`, `node_modules/.bin/tsc6` exists, and `tsconfig.json` includes `src`, the JSX transform, and the DOM library.
+- [X] T1241 [US4] [A1214] [A1215] Change `package.json` `typecheck` to `tsc6 --noEmit`. Run `pnpm run check` under `env -i` with a PATH that holds no `tsc` and record the result in the cycle log.
+- [X] T1242 [US4] [A1214] [A1215] Outer loop: the story 4 tests are green and `pnpm test` is green.
 
 ## Phase 7: User story 5 - The runbook matches what the owner sees (P2)
 

@@ -19,7 +19,7 @@
     "bb-plugin"
   ],
   "scripts": {
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc6 --noEmit",
     "lint": "eslint .",
     "test": "vitest run",
     "build": "bb plugin build",
