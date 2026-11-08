@@ -160,6 +160,12 @@ describe("MergeApprovalForm: Deny and Cancel", () => {
 });
 
 describe("MergeApprovalForm: the pull request link", () => {
+  it("[U1240] underlines the pull request link so that it reads as a link", () => {
+    mount();
+    const link = within(valueOf("Pull request")).getByRole("link");
+    expect(link.className).toContain("underline");
+  });
+
   it("[U1222] shows a javascript:, ftp:, data:, or non-URL pull request value as plain text with no link", () => {
     for (const value of ["javascript:alert(1)", "ftp://forge.example/pull/7", "data:text/html,<b>x</b>", "not a url", "//forge.example/pull/7"]) {
       cleanup();

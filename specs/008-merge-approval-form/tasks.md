@@ -73,16 +73,17 @@ The cycle log records the red evidence. Tests are never weakened, skipped, or de
 
 ## Phase 8: Live check in the lab
 
-- [ ] T1260 [A1219] Build with `bb plugin build` (check `dist/app.js` and the classes in `dist/app.css`), bring up `bblab`, install the plugin, create the throwaway project, and drive a ship task to `review_ready` with the stub agent from the live check report (tier 1). Keep the lab outside the worktree and outside the firstmate home. Touch no shared daemon and no real bb.
-- [ ] T1261 [A1219] Open the supervisor thread in the lab's web UI with `chrome-devtools-axi` (`CHROME_DEVTOOLS_AXI_EXECUTABLE_PATH=/usr/bin/chromium`). Check that the form shows, read the frame, and fix the Cancel duplication or any layout defect.
-- [ ] T1262 [A1219] Click **Approve**, then check the task is `merged` with a `user` approval row. Click **Deny** with a comment on a second task and check a `denied` row and no merge. Click **Cancel** on a third and check no row. Save screenshots of the form (light and dark, wide and narrow), the Approve result, and the Deny result under `data/bb-factoryman-approval-form/` in the firstmate home.
-- [ ] T1263 [A1219] Fix every pixel defect found (spacing, alignment, focus ring, contrast, wrapping), re-run the affected tests, rebuild, and re-check in the lab until the form is clean in both themes. A defect found only in the lab gets a new behavior in `tdd/test-list.md` first when jsdom can express it.
-- [ ] T1264 [A1219] `bblab down`, `bblab-evidence snap after` and `diff`, and confirm the shared no-mistakes daemon, the hosted bb daemon, and the real `~/.bb` are untouched.
+- [X] T1260 [A1219] Build with `bb plugin build` (check `dist/app.js` and the classes in `dist/app.css`), bring up `bblab`, install the plugin, create the throwaway project, and drive a ship task to `review_ready` with the stub agent from the live check report (tier 1). Keep the lab outside the worktree and outside the firstmate home. Touch no shared daemon and no real bb.
+- [X] T1261 [A1219] Open the supervisor thread in the lab's web UI with `chrome-devtools-axi` (`CHROME_DEVTOOLS_AXI_EXECUTABLE_PATH=/usr/bin/chromium`). Check that the form shows, read the frame, and fix the Cancel duplication or any layout defect.
+- [X] T1262 [A1219] Click **Approve**, then check the task is `merged` with a `user` approval row. Click **Deny** with a comment on a second task and check a `denied` row and no merge. Click **Cancel** on a third and check no row. Save screenshots of the form (light and dark, wide and narrow), the Approve result, and the Deny result under `data/bb-factoryman-approval-form/` in the firstmate home.
+- [X] T1263 [A1219] Fix every pixel defect found (spacing, alignment, focus ring, contrast, wrapping), re-run the affected tests, rebuild, and re-check in the lab until the form is clean in both themes. A defect found only in the lab gets a new behavior in `tdd/test-list.md` first when jsdom can express it.
+- [X] T1264 [A1219] `bblab down`, `bblab-evidence snap after` and `diff`, and confirm the shared no-mistakes daemon, the hosted bb daemon, and the real `~/.bb` are untouched.
 
 ## Phase 9: Close-out
 
 - [ ] T1270 `pnpm run check` and `pnpm run build` pass, the worktree holds no lab files, and the suite count is recorded in `tdd/cycle-log.md`.
 - [ ] T1271 `/speckit.tdd.verify`, remediation, `/speckit.implement`, `/speckit.checklist`, `/speckit.analyze`, and `/speckit.converge`.
+- [X] T1273 [U1240] Found in the lab (T1263): write the red test in `src/app/merge-approval-form.test.tsx` that the pull request link is underlined, then style the link in `src/app/merge-approval-form.tsx`.
 - [ ] T1272 Outer loop for the whole feature: every `A` behavior in `tdd/test-list.md` is `DONE`, and A1219 has its screenshots.
 
 ## Dependencies

@@ -26,7 +26,12 @@ function None() {
 
 function PullRequest({ url }: { url: string }): ReactNode {
   if (url === "") return <None />;
-  return isWebUrl(url) ? <UrlLink href={url}>{url}</UrlLink> : url;
+  if (!isWebUrl(url)) return url;
+  return (
+    <UrlLink href={url} className="rounded-sm underline underline-offset-2 hover:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+      {url}
+    </UrlLink>
+  );
 }
 
 function Request({ request }: { request: MergeRequestPayload }) {
@@ -51,7 +56,7 @@ function Request({ request }: { request: MergeRequestPayload }) {
 function Expiry({ at }: { at: number }) {
   const date = new Date(at);
   return (
-    <p className="m-0 text-muted-foreground">
+    <p className="m-0 text-xs text-muted-foreground">
       Expires <time dateTime={date.toISOString()}>{date.toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })}</time>
     </p>
   );
@@ -94,9 +99,8 @@ export function MergeApprovalForm({ interaction, submit, cancel }: PluginPending
       ) : (
         <Request request={request} />
       )}
-      {interaction.expiresAt === null ? null : <Expiry at={interaction.expiresAt} />}
       <div className="flex flex-col gap-1.5">
-        <label htmlFor={commentId} className="font-medium">
+        <label htmlFor={commentId} className="text-muted-foreground">
           Comment (optional)
         </label>
         <textarea
@@ -126,6 +130,7 @@ export function MergeApprovalForm({ interaction, submit, cancel }: PluginPending
           Cancel
         </button>
       </div>
+      {interaction.expiresAt === null ? null : <Expiry at={interaction.expiresAt} />}
     </div>
   );
 }

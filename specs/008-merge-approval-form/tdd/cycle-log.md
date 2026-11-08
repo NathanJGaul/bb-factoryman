@@ -149,3 +149,25 @@ User story 5. One existing test was wrong, and it was fixed as its own step befo
 - refactor: none needed
 - open: the runbook text and D-094 to D-098 are written from what the plan and the tests know. The lab run (A1219, tasks T1260 to T1264) may change the frame and Cancel decision, and then D-097 and the ship step change with it.
 - commit: see git history, "docs: describe the approval form in the runbook, read the machine name, and record D-094 to D-098"
+
+## Group 8: the live check in the lab, and the pixel pass (A1219, U1240, tasks T1260 to T1264)
+
+The outer loop closes in the isolated lab, with a real browser tool clicking in bb's real web UI. The report is `data/bb-factoryman-approval-form/lab-check.md` in the firstmate home, and the screenshots sit beside it.
+
+- setup: `bblab` with bb 0.49.0, the plugin built and installed from a clean copy of the worktree with `bb plugin build` (`dist/app.js` 8.4 KB with no `zod`, `dist/app.css` 24.6 KB with the form's classes compiled to the host's CSS variables), the stub agent from the live check report, a `local-only` project and a `direct-PR` project.
+  - The first lab directory was under `/tmp`, and the plugin build failed there: `npm error TAR_ENTRY_ERROR Unknown system error -122` (a quota-limited tmpfs). The lab moved to `/var/tmp/bblab-approval-form` and was removed after the run.
+- the original defect, reproduced: with `bb.app` removed from the lab copy, bb shows "The plugin form is unavailable. Cancel to continue." and one Cancel button (`00-before-no-frontend-form-unavailable.png`).
+- A1219, clicked in the real UI (first build, before the pixel pass):
+  - **Deny** with the comment `Not before the release.` -> `approval` row `denied`, `record_approval` with `actor: user`, no merge, task `awaiting_approval`.
+  - **Cancel** -> no new approval row, task `awaiting_approval`.
+  - **Approve** with the comment `Reviewed the diff. Ship it.` -> `approval` row `approved`, `record_approval` (`user`), `merge`, task `merged`, merge commit `6a38db3` in the clone.
+- the pixel pass found one defect that jsdom can express:
+  - the pull request URL was an anchor with no underline and no color, so it read as plain text. New behavior `U1240` went on the list first.
+  - red: `pnpm vitest run src/app/merge-approval-form.test.tsx -t "U1240"` -> `AssertionError: expected '' to contain 'underline'`
+  - green: the link got `underline underline-offset-2` and a focus ring. `pnpm run check` exited 0 -> 95 files, 1189 passed, 0 failed.
+- layout-only changes, made with the suite green and no test changed: the expiry line moved from between the evidence and the comment field to below the buttons, as a small muted line, and the comment label lost its bold weight, to match the other labels.
+- final bundle, clicked again on a second task: **Deny** (`Final check: denied from the real UI.`), then **Approve** (`Final check: approved from the real UI.`) -> two approval rows, `merge`, task `merged`, merge commit `527ff71`.
+- checked and fine in the real UI: dark theme, a 420 px width, long evidence (24 lines and a 260-character unbroken token scroll and wrap inside the block), the keyboard focus ring on the link and on Approve.
+- isolation: `bblab down`; ports 48886 and 48887 free; tripwire 0 file-level events; the shared no-mistakes daemon unchanged (pid 970, active); the real `~/.bb` and the hosted daemon untouched. The `bblab-evidence diff` line "LEAK: lab process visible on host" names another lane's lab (worktree slot 3, ports 48896 and 48897), not this one: no process of this lab was left.
+- not covered by the lab: an unreadable request and a rejected answer (the tests cover both), and a person's own click (tier 2).
+- commit: see git history, "feat: underline the pull request link in the approval form and tidy its layout"

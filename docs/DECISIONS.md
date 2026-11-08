@@ -812,6 +812,8 @@ The entry registers one renderer with `app.slots.pendingInteraction`, under the 
 The form shows the task, branch, pull request, and evidence, takes an optional comment, and offers Approve, Deny, and Cancel.
 It answers with the value that `factoryman_merge` already reads, `{ "decision": "approved" | "denied", "comment"?: string }`.
 The backend, the state machine, the tools, and the approval record did not change.
+The isolated lab (bb 0.49.0) checked it with a browser tool: a click on Deny recorded a denial, a click on Cancel recorded nothing, and a click on Approve recorded an approval and merged.
+bb draws the form's title and the requester line and no Cancel of its own, so the plugin's Cancel is the only one.
 
 ### D-095: D-030 stays partly open after the renderer (Open, the owner decides)
 

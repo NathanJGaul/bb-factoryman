@@ -38,7 +38,7 @@ The suite baseline was 92 files and 1134 tests, all passing.
 | A1216 | The runbook's preflight step reads the machine name from `bb machine list` and names no machine called `server` | AC-5.1, FR-1211 | example | DONE | `test/acceptance/live-check.test.ts::[A1216]` |
 | A1217 | The runbook's ship step describes the approval form in the web UI and keeps the rule that a scripted answer is written down as scripted | AC-5.2, FR-1211 | example | DONE | `test/acceptance/live-check.test.ts::[A1217]` |
 | A1218 | The decision log records the renderer (D-094), that D-030 stays partly open (D-095), the dependency-free contract (D-096), the fail-closed view (D-097), and the `tsc6` script (D-098), and says option 2 is deferred | AC-5.3, FR-1212 | example | DONE | `test/acceptance/live-check.test.ts::[A1218]` |
-| A1219 | In the isolated lab, a click on Approve and a click on Deny in the real web UI record the approval and the denial, and the screenshots are kept | AC-5.4, SC-1201 to SC-1203, SC-1206 | example | PENDING | live check, task T1262; evidence in `cycle-log.md` and under `data/bb-factoryman-approval-form/` |
+| A1219 | In the isolated lab, a click on Approve and a click on Deny in the real web UI record the approval and the denial, and the screenshots are kept | AC-5.4, SC-1201 to SC-1203, SC-1206 | example | DONE | live check, task T1262; evidence in `cycle-log.md` and under `data/bb-factoryman-approval-form/` |
 | A1220 | The manifest declares `bb.app` as `./src/app.tsx`, the file exists, and the build script is `bb plugin build` | FR-1201, SC-1205 | example | DONE | `test/acceptance/manifest.test.ts::[A1220]` |
 | A1221 | Lint rejects a Node built-in, `zod`, a server layer, or the backend SDK in the browser-side files, and accepts the same imports in server files | plan constraint: the frontend carries no server code | example | DONE | `test/acceptance/lint-isolation.test.ts::[A1221]` |
 
@@ -91,6 +91,7 @@ The suite baseline was 92 files and 1134 tests, all passing.
 | U1237 | The comment field has a label, and Approve, Deny, and Cancel have accessible names | FR-1209 | example | DONE | `src/app/merge-approval-form.test.tsx::[U1237]` |
 | U1238 | The evidence block and the branch carry the wrapping and scrolling classes that keep long text inside the form | AC-3.4, FR-1209 | example | DONE | `src/app/merge-approval-form.test.tsx::[U1238]` |
 | U1239 | The component source names theme tokens only: no hex color and no fixed Tailwind palette color | FR-1209 | example | DONE | `src/app/merge-approval-form.test.tsx::[U1239]` |
+| U1240 | Underlines the pull request link, so that it reads as a link (found in the lab: the anchor had no styling and looked like plain text) | AC-1.2, FR-1209 | example | DONE | `src/app/merge-approval-form.test.tsx::[U1240]` |
 
 ## Invariants and edge cases still to place
 
