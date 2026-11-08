@@ -848,7 +848,10 @@ DOM globals therefore type-check in server code too, and the lint rule in D-096 
 
 The pinned TypeScript is the alias `npm:@typescript/typescript6`, which installs the binary `tsc6` and no `tsc`.
 The `typecheck` script called `tsc`, so `pnpm run check` passed only on a machine with a global `tsc` on the PATH.
-The script now calls `tsc6`, and a test pins the script and the binary.
+The script now calls `tsc6`, and a test pins the script and the `check` script that runs it.
+The first version of the test also checked that `node_modules/.bin/tsc6` exists.
+The audit dropped that check, because it tests the install layout and not the feature.
+`pnpm run check` fails without `tsc6` anyway.
 
 ### D-099: Seven guard tests came after their code (Deviation, the owner decides)
 

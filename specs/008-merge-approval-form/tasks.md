@@ -82,7 +82,7 @@ The cycle log records the red evidence. Tests are never weakened, skipped, or de
 ## Phase 9: Close-out
 
 - [X] T1270 `pnpm run check` and `pnpm run build` pass, the worktree holds no lab files, and the suite count is recorded in `tdd/cycle-log.md`.
-- [ ] T1271 `/speckit.tdd.verify`, remediation, `/speckit.implement`, `/speckit.checklist`, `/speckit.analyze`, and `/speckit.converge`.
+- [X] T1271 `/speckit.tdd.verify`, remediation, `/speckit.implement`, `/speckit.checklist`, `/speckit.analyze`, and `/speckit.converge`.
 - [X] T1273 [U1240] Found in the lab (T1263): write the red test in `src/app/merge-approval-form.test.tsx` that the pull request link is underlined, then style the link in `src/app/merge-approval-form.tsx`.
 - [X] T1272 Outer loop for the whole feature: every `A` behavior in `tdd/test-list.md` is `DONE`, and A1219 has its screenshots.
 
@@ -136,4 +136,11 @@ The survivors and defects of the second run are closed in `579b982` (see `tdd/cy
 One blocking reason is left, and no edit can clear it: seven behaviors are `TEST_AFTER` by the rubric's own wording.
 
 - [X] T1294 Record the seven test-after behaviors as a deviation in `docs/DECISIONS.md` (D-099), with the revert-reds and the mutants that back them, so that the owner can accept or reject the exception. Done when `grep -n "D-099" docs/DECISIONS.md` finds the entry.
+
+## Phase 12: Convergence
+
+From `/speckit.converge` at `df0121b`: two gaps between the artifacts and the code.
+
+- [ ] T1295 CRITICAL: the owner decides D-099 (seven test-after guard tests against Constitution V) and records the decision in `docs/DECISIONS.md` by changing the entry's status from `Open` to `Decided` or `Deviation, resolved`, or by asking for rework. This is not an implementation task and stays open until the owner decides, per Constitution V (contradicts)
+- [X] T1296 Correct D-098 in `docs/DECISIONS.md`: it says that a test pins the script and the binary, and the test pins the script and the `check` script only, because the audit dropped the `node_modules/.bin/tsc6` check as a test of the install layout. Say so, and say that `pnpm run check` fails without `tsc6`. Per the plan, type check script (partial)
 
