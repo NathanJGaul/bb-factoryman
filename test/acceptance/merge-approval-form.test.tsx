@@ -1,0 +1,300 @@
+// @vitest-environment jsdom
+import { act, cleanup, fireEvent, screen, within } from "@testing-library/react";
+import { loadPluginApp, renderSlot } from "@get-bb/plugin-sdk/testing/app";
+import { afterEach, describe, expect, it } from "vitest";
+import { MERGE_RENDERER_ID } from "../../src/approval/contract";
+import { ALL_CONTROLS, deferred, disabledControls, formHarness, press, typeComment as type, valueOf } from "../fixtures/approval-form";
+import { DISPATCH, loadWorld, nextForm, type World } from "../fixtures/plugin-host";
+
+const PR = "https://github.com/acme/widgets/pull/7";
+/** The instant that the expiry tests use: 2026-11-08 15:30 UTC (the month is zero-based). */
+const EXPIRES_AT = Date.UTC(2026, 10, 8, 15, 30);
+const worker = { threadId: "thr-w1" };
+
+afterEach(cleanup);
+
+/** A direct-PR ship task at review_ready, as in tools-merge.test.ts. */
+async function readyWorld(): Promise<World> {
+  const world = await loadWorld();
+  world.setProject({ deliveryMode: "direct-PR", yolo: false });
+  await world.call("factoryman_dispatch", DISPATCH);
+  await world.call("factoryman_report", { outcome: "done", evidence: "PR open.\nTests pass.", prUrl: PR }, worker);
+  expect(world.store.getTask("t1")?.state).toBe("review_ready");
+  return world;
+}
+
+const merges = (world: World) => world.execCalls.filter((call) => call.command === "gh");
+const state = (world: World) => world.store.getTask("t1")?.state;
+const approvals = (world: World) => world.store.listApprovals("t1");
+
+interface OpenForm {
+  /** The tool call that waits for the owner's answer. */
+  call: ReturnType<World["call"]>;
+  id: string;
+}
+
+/** Make the supervisor ask for the merge, and wait until bb holds the form. */
+async function openForm(world: World): Promise<OpenForm> {
+  const call = world.call("factoryman_merge", { taskId: "t1" });
+  return { call, id: await nextForm(world) };
+}
+
+/**
+ * Mount the renderer that the frontend registered for the open form, the way bb does:
+ * find it by the form's renderer id, and wire `submit` and `cancel` to the form's answer.
+ * `submitted` records every answer that reaches bb.
+ */
+async function mountRenderer(
+  world: World,
+  form: OpenForm,
+  options: { holdSubmit?: Promise<void>; payload?: unknown; expiresAt?: number | null; failFirstSubmit?: string } = {},
+) {
+  const app = await loadPluginApp(() => import("../../src/app"));
+  const request = world.host.harness.inspection.pendingInteractions.find((pending) => pending.id === form.id);
+  if (request === undefined) throw new Error("the form is not open");
+  const registration = app.pendingInteractions.find((candidate) => candidate.id === request.rendererId);
+  if (registration === undefined) throw new Error(`no renderer is registered for ${request.rendererId}`);
+  const submitted: unknown[] = [];
+  let failures = options.failFirstSubmit === undefined ? 0 : 1;
+  const { props } = formHarness({
+    id: form.id,
+    threadId: request.threadId,
+    title: request.title,
+    payload: "payload" in options ? options.payload : request.payload,
+    expiresAt: options.expiresAt ?? null,
+    submit: async (value) => {
+      submitted.push(value);
+      if (failures > 0) {
+        failures -= 1;
+        throw new Error(options.failFirstSubmit);
+      }
+      await options.holdSubmit;
+      world.host.harness.behavior.submitInteraction(form.id, value);
+    },
+    cancel: async () => {
+      world.host.harness.behavior.cancelInteraction(form.id);
+    },
+  });
+  const { container, unmount } = renderSlot(registration, props);
+  return { submitted, request, container, unmount };
+}
+
+
+describe("the merge approval form through the plugin factory and the registered renderer", () => {
+  it("[A1201] registers exactly one pending-interaction renderer, under the id that factoryman_merge passes", async () => {
+    const world = await readyWorld();
+    const app = await loadPluginApp(() => import("../../src/app"));
+    expect(app.pendingInteractions.map((registration) => registration.id)).toEqual([MERGE_RENDERER_ID]);
+    const form = await openForm(world);
+    const request = world.host.harness.inspection.pendingInteractions.find((pending) => pending.id === form.id);
+    expect(request?.rendererId).toBe(app.pendingInteractions[0]?.id);
+    world.host.harness.behavior.cancelInteraction(form.id);
+    await form.call;
+  });
+
+  it("[A1202] shows the task id, branch, pull request, and evidence of the request that factoryman_merge opened", async () => {
+    const world = await readyWorld();
+    const form = await openForm(world);
+    await mountRenderer(world, form);
+    const branch = world.store.getTask("t1")?.branch ?? "";
+    expect(branch).not.toBe("");
+        expect(valueOf("Task").textContent).toBe("t1");
+    expect(valueOf("Branch").textContent).toBe(branch);
+    expect(within(valueOf("Pull request")).getByRole("link", { name: PR }).getAttribute("href")).toBe(PR);
+    expect(valueOf("Evidence").textContent).toBe("PR open.\nTests pass.");
+    world.host.harness.behavior.cancelInteraction(form.id);
+    await form.call;
+  });
+
+  it("[A1203] ends the task merged, with one user approval row that says approved, when Approve is pressed", async () => {
+    const world = await readyWorld();
+    const form = await openForm(world);
+    const { submitted } = await mountRenderer(world, form);
+    await press("Approve");
+    const result = await form.call;
+    expect(submitted).toStrictEqual([{ decision: "approved" }]);
+    expect(result.isError).toBe(false);
+    expect(state(world)).toBe("merged");
+    expect(approvals(world)).toMatchObject([{ scope: "merge", decision: "approved" }]);
+    const approvalRows = world.store.listEvents({ taskId: "t1" }).filter((row) => row.event === "record_approval");
+    expect(approvalRows).toMatchObject([{ actor: "user", outcome: "applied" }]);
+  });
+
+  it("[A1204] carries a typed comment into the approval record", async () => {
+    const world = await readyWorld();
+    const form = await openForm(world);
+    await mountRenderer(world, form);
+    type("  Reviewed the diff.  ");
+    // The field keeps what the owner typed, spaces included: only the answer is trimmed.
+    expect((screen.getByRole("textbox") as HTMLTextAreaElement).value).toBe("  Reviewed the diff.  ");
+    await press("Approve");
+    await form.call;
+    const row = world.store.listEvents({ taskId: "t1" }).find((candidate) => candidate.event === "record_approval");
+    expect(row?.evidence).toBe("Reviewed the diff.");
+  });
+
+  it("[A1204] leaves a blank comment out of the approval record", async () => {
+    const world = await readyWorld();
+    const form = await openForm(world);
+    await mountRenderer(world, form);
+    type("   ");
+    await press("Approve");
+    await form.call;
+    const row = world.store.listEvents({ taskId: "t1" }).find((candidate) => candidate.event === "record_approval");
+    expect(row).toBeDefined();
+    expect(row?.evidence ?? null).toBeNull();
+    expect(state(world)).toBe("merged");
+  });
+
+  it("[A1205] disables every control while the answer is in flight, and two presses send one answer", async () => {
+    const world = await readyWorld();
+    const form = await openForm(world);
+    const held = deferred();
+    const { submitted } = await mountRenderer(world, form, { holdSubmit: held.promise });
+    await press("Approve");
+    expect(disabledControls()).toEqual(ALL_CONTROLS);
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Approve" }));
+    });
+    expect(submitted).toHaveLength(1);
+    held.resolve();
+    await form.call;
+    expect(submitted).toHaveLength(1);
+    expect(approvals(world)).toHaveLength(1);
+    expect(merges(world)).toHaveLength(1);
+  });
+
+  it("[A1206] merges nothing, records a denied row, and leaves the task awaiting approval, when Deny is pressed", async () => {
+    const world = await readyWorld();
+    const form = await openForm(world);
+    const { submitted } = await mountRenderer(world, form);
+    await press("Deny");
+    const result = await form.call;
+    expect(submitted).toStrictEqual([{ decision: "denied" }]);
+    expect(result.isError).toBe(true);
+    expect(merges(world)).toEqual([]);
+    expect(state(world)).toBe("awaiting_approval");
+    expect(approvals(world)).toMatchObject([{ scope: "merge", decision: "denied" }]);
+    const rows = world.store.listEvents({ taskId: "t1" }).filter((row) => row.event === "record_approval");
+    expect(rows).toMatchObject([{ actor: "user", outcome: "applied" }]);
+  });
+
+  it("[A1207] carries a typed comment into the denial record and the supervisor's result", async () => {
+    const world = await readyWorld();
+    const form = await openForm(world);
+    await mountRenderer(world, form);
+    type("  Not before the release.  ");
+    await press("Deny");
+    const result = await form.call;
+    const row = world.store.listEvents({ taskId: "t1" }).find((candidate) => candidate.event === "record_approval");
+    expect(row?.evidence).toBe("Not before the release.");
+    expect(result.text).toContain("Not before the release.");
+    expect(state(world)).toBe("awaiting_approval");
+  });
+
+  it("[A1208] records no approval and runs no merge when Cancel is pressed, and a later call opens a new form", async () => {
+    const world = await readyWorld();
+    const form = await openForm(world);
+    const first = await mountRenderer(world, form);
+    await press("Cancel");
+    const result = await form.call;
+    expect(result.isError).toBe(true);
+    expect(result.text).toMatch(/did not answer/i);
+    expect(merges(world)).toEqual([]);
+    expect(state(world)).toBe("awaiting_approval");
+    expect(approvals(world)).toEqual([]);
+
+    // bb removes a settled form, so the first renderer goes before the second form opens.
+    first.unmount();
+    const again = await openForm(world);
+    await mountRenderer(world, again);
+    await press("Approve");
+    expect((await again.call).isError).toBe(false);
+    expect(state(world)).toBe("merged");
+  });
+
+  it("[A1209] offers no Approve for a request it cannot read, and Deny still records a denial", async () => {
+    const world = await readyWorld();
+    const form = await openForm(world);
+    const { submitted } = await mountRenderer(world, form, { payload: { taskId: "t1" } });
+    expect(screen.getByRole("alert").textContent).toMatch(/unreadable/i);
+    expect(screen.queryByRole("button", { name: "Approve" })).toBeNull();
+    await press("Deny");
+    const result = await form.call;
+    expect(submitted).toStrictEqual([{ decision: "denied" }]);
+    expect(result.isError).toBe(true);
+    expect(merges(world)).toEqual([]);
+    expect(state(world)).toBe("awaiting_approval");
+    expect(approvals(world)).toMatchObject([{ decision: "denied" }]);
+  });
+
+  it("[A1209] offers no Approve for a request it cannot read, and Cancel still records nothing", async () => {
+    const world = await readyWorld();
+    const form = await openForm(world);
+    await mountRenderer(world, form, { payload: null });
+    expect(screen.queryByRole("button", { name: "Approve" })).toBeNull();
+    await press("Cancel");
+    expect((await form.call).text).toMatch(/did not answer/i);
+    expect(approvals(world)).toEqual([]);
+  });
+
+  it("[A1210] shows a rejected answer, re-enables the controls, keeps the typed comment, and records one approval after the retry", async () => {
+    const world = await readyWorld();
+    const form = await openForm(world);
+    const { submitted } = await mountRenderer(world, form, { failFirstSubmit: "bb is unreachable" });
+    type("My reason.");
+    await press("Approve");
+    expect(screen.getByRole("alert").textContent).toContain("bb is unreachable");
+    expect(disabledControls()).toEqual([]);
+    expect((screen.getByRole("textbox") as HTMLTextAreaElement).value).toBe("My reason.");
+
+    await press("Approve");
+    const result = await form.call;
+    expect(submitted).toStrictEqual([{ decision: "approved", comment: "My reason." }, { decision: "approved", comment: "My reason." }]);
+    expect(result.isError).toBe(false);
+    expect(state(world)).toBe("merged");
+    expect(approvals(world)).toMatchObject([{ scope: "merge", decision: "approved" }]);
+  });
+
+  it.each(["javascript:alert(1)", "httpx://forge.example/pull/7"])("[A1211] shows %s as plain text", async (value) => {
+    const world = await readyWorld();
+    const form = await openForm(world);
+    await mountRenderer(world, form, { payload: { taskId: "t1", branch: "fm/t1", prUrl: value, evidence: "x" } });
+    const cell = valueOf("Pull request");
+    expect(cell.textContent).toBe(value);
+    expect(within(cell).queryByRole("link")).toBeNull();
+    world.host.harness.behavior.cancelInteraction(form.id);
+    await form.call;
+  });
+
+  it("[A1212] keeps long evidence and a long branch name inside a wrapping or scrolling block (classes only; the real fit is the live check)", async () => {
+    const world = await readyWorld();
+    const form = await openForm(world);
+    await mountRenderer(world, form, { payload: { taskId: "t1", branch: `fm/${"x".repeat(300)}`, prUrl: PR, evidence: "word ".repeat(2000) } });
+        expect(valueOf("Evidence").className).toMatch(/max-h-\d+/);
+    expect(valueOf("Evidence").className).toContain("overflow-y-auto");
+    expect(valueOf("Branch").className).toContain("break-all");
+    world.host.harness.behavior.cancelInteraction(form.id);
+    await form.call;
+  });
+
+  it("[A1213] shows when the request expires", async () => {
+    const world = await readyWorld();
+    const form = await openForm(world);
+    const { container } = await mountRenderer(world, form, { expiresAt: EXPIRES_AT });
+    const time = container.querySelector("time");
+    expect(time?.getAttribute("datetime")).toBe("2026-11-08T15:30:00.000Z");
+    expect(time?.textContent).toContain("2026");
+    world.host.harness.behavior.cancelInteraction(form.id);
+    await form.call;
+  });
+
+  it("[A1213] shows no expiry line when the request has no expiry", async () => {
+    const world = await readyWorld();
+    const form = await openForm(world);
+    const { container } = await mountRenderer(world, form);
+    expect(container.querySelector("time")).toBeNull();
+    world.host.harness.behavior.cancelInteraction(form.id);
+    await form.call;
+  });
+});

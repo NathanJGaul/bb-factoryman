@@ -13,13 +13,14 @@
     "branding": {
       "icon": "Factory"
     },
-    "server": "./src/server.ts"
+    "server": "./src/server.ts",
+    "app": "./src/app.tsx"
   },
   "keywords": [
     "bb-plugin"
   ],
   "scripts": {
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc6 --noEmit",
     "lint": "eslint .",
     "test": "vitest run",
     "build": "bb plugin build",
@@ -34,11 +35,18 @@
   "devDependencies": {
     "@eslint/js": "^10.0.0",
     "@get-bb/plugin-sdk": "0.6.104",
+    "@testing-library/dom": "^10.4.2",
+    "@testing-library/react": "^16.3.3",
     "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^26.6.6",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
     "cron-parser": "^5.10.3",
     "eslint": "^10.14.0",
     "hono": "^4.13.16",
+    "jsdom": "^31.0.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
     "typescript": "npm:@typescript/typescript6@^6.0.2",
     "typescript-eslint": "^8.72.1",
     "vitest": "^5.1.0"

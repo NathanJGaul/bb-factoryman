@@ -800,3 +800,71 @@ No such agent exists, and the shape of `customAgents` is undocumented.
 This release does not build it (milestone 11 is skills and a runbook).
 Until it exists, the tier 2 gate is every tier 0 check plus the captain's recorded decision to go on without tier 1, and the runbook says what that skip costs.
 
+## Merge approval form
+
+### D-094: The merge approval has a frontend renderer in the plugin (Decided by the captain)
+
+The live check found that bb's web UI showed "The plugin form is unavailable. Cancel to continue." for the `factoryman-merge-approval` form, because the plugin shipped no frontend.
+A person could only cancel the form, and the only way to approve was `bb thread interactions respond`.
+The captain chose option 1 of the live check report: add a frontend renderer so the owner can approve and deny in the web UI.
+The manifest declares `bb.app` as `./src/app.tsx`, and `bb plugin build` writes `dist/app.js` and `dist/app.css` beside the server bundle.
+The entry registers one renderer with `app.slots.pendingInteraction`, under the id that `factoryman_merge` passes to bb.
+The form shows the task, branch, pull request, and evidence, takes an optional comment, and offers Approve, Deny, and Cancel.
+It answers with the value that `factoryman_merge` already reads, `{ "decision": "approved" | "denied", "comment"?: string }`.
+The backend, the state machine, the tools, and the approval record did not change.
+The isolated lab (bb 0.49.0) checked it with a browser tool: a click on Deny recorded a denial, a click on Cancel recorded nothing, and a click on Approve recorded an approval and merged.
+bb draws the form's title and the requester line and no Cancel of its own, so the plugin's Cancel is the only one.
+
+### D-095: D-030 stays partly open after the renderer (Open, the owner decides)
+
+The renderer lets a person approve in the web UI.
+It does not stop an agent from answering.
+A worker with a shell can still run `bb thread interactions respond`, and bb records the answer as `plugin_submitted` with no submitter, so D-030 stays partly open.
+In `local-only` mode there is no forge backstop either.
+The owner-typed code (option 2 of the report), which only the renderer would show and the owner would type back, would close most of the gap in the app.
+The captain deferred it, so the approval design is unchanged.
+`factoryman_decide` stays out of scope (D-057).
+D-058 still stands: the captain accepts the gap until branch protection is in place.
+
+### D-096: The contract module has no imports and the browser bundle ships no `zod` (Gap)
+
+The renderer and `factoryman_merge` agree on the request payload and the answer through `src/approval/contract.ts`.
+The module has no imports, so it runs in the browser bundle and on the server without pulling a schema library or server code into the bundle.
+The browser reads the payload with a plain function, and the server keeps its strict `zod` schema for the answer.
+A contract test passes the payload that `factoryman_merge` builds through the reader, and passes every answer the builder makes through the schema, so the two sides cannot drift.
+A lint rule keeps `src/app.tsx`, `src/app/`, and `src/approval/` free of Node built-ins, `zod`, `better-sqlite3`, the backend SDK, and the server layers.
+
+### D-097: The form fails closed, and one `tsconfig.json` covers both sides (Gap)
+
+The form fails closed in the view: a request that it cannot read (a missing field, a field of the wrong type, or an extra field) gets no Approve button, only Deny and Cancel.
+A pull request value that is not an `http` or `https` URL shows as text and never as a link.
+A rejected answer shows the error, re-enables the controls, and keeps the comment.
+This is a second line only.
+`factoryman_merge` still validates the answer and records the approval.
+One `tsconfig.json` with the `DOM` library and the JSX transform type-checks both sides.
+DOM globals therefore type-check in server code too, and the lint rule in D-096 is what keeps the browser side apart.
+
+### D-098: The type check calls `tsc6` (Gap)
+
+The pinned TypeScript is the alias `npm:@typescript/typescript6`, which installs the binary `tsc6` and no `tsc`.
+The `typecheck` script called `tsc`, so `pnpm run check` passed only on a machine with a global `tsc` on the PATH.
+The script now calls `tsc6`, and a test pins the script and the `check` script that runs it.
+The first version of the test also checked that `node_modules/.bin/tsc6` exists.
+The audit dropped that check, because it tests the install layout and not the feature.
+`pnpm run check` fails without `tsc6` anyway.
+
+### D-099: Seven guard tests came after their code (Deviation, accepted by the captain)
+
+Constitution principle V says that every behavior change is driven by a test that failed first.
+For seven behaviors the code existed before the test, so the TDD audit (`specs/008-merge-approval-form/tdd/verification.md`) classes them `TEST_AFTER`, and the rubric fails a feature for any `TEST_AFTER`.
+They are `A1215` (the `tsconfig.json` change came with the tooling), `U1236`, `U1238`, `U1239`, and `A1212` (the markup that they guard came with the first version of the form), and `U1241` and `U1242` (the audit found two mutants that no test pinned).
+All seven guard a property that the code already had.
+None drove new code.
+Each has a recorded revert-red in `tdd/cycle-log.md` (the property removed, the test failing with its failure line kept, the file restored) and at least one deliberate mutant that kills it.
+The repository commits only on green, so the history cannot show a test before its code, and the order cannot be rewritten afterwards.
+The audit's other checks are clean: no open `HIGH` smell, 45 of 45 hand-picked mutants killed, and every acceptance criterion covered.
+The owner could accept the seven as a documented exception or ask for rework.
+Reworking them would mean new history for tests that already fail when their property is removed, and the plan does not recommend it.
+The captain accepted the seven as a recorded deviation, as for the earlier factoryman milestones, on 2026-11-08.
+They are guard tests that fail against the code without the guard.
+The note stays in `tdd/verification.md`.
