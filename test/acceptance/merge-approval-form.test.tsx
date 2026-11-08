@@ -42,17 +42,27 @@ async function openForm(world: World): Promise<OpenForm> {
  * find it by the form's renderer id, and wire `submit` and `cancel` to the form's answer.
  * `submitted` records every answer that reaches bb.
  */
-async function mountRenderer(world: World, form: OpenForm, options: { holdSubmit?: Promise<void> } = {}) {
+async function mountRenderer(
+  world: World,
+  form: OpenForm,
+  options: { holdSubmit?: Promise<void>; payload?: unknown; expiresAt?: number | null; failFirstSubmit?: string } = {},
+) {
   const app = await loadPluginApp(() => import("../../src/app"));
   const request = world.host.harness.inspection.pendingInteractions.find((pending) => pending.id === form.id);
   if (request === undefined) throw new Error("the form is not open");
   const registration = app.pendingInteractions.find((candidate) => candidate.id === request.rendererId);
   if (registration === undefined) throw new Error(`no renderer is registered for ${request.rendererId}`);
   const submitted: unknown[] = [];
-  renderSlot(registration, {
-    interaction: { id: form.id, threadId: request.threadId, title: request.title, payload: request.payload, createdAt: 1_700_000_000_000, expiresAt: null },
+  let failures = options.failFirstSubmit === undefined ? 0 : 1;
+  const payload = "payload" in options ? options.payload : request.payload;
+  const { container } = renderSlot(registration, {
+    interaction: { id: form.id, threadId: request.threadId, title: request.title, payload: payload as never, createdAt: 1_700_000_000_000, expiresAt: options.expiresAt ?? null },
     submit: async (value) => {
       submitted.push(value);
+      if (failures > 0) {
+        failures -= 1;
+        throw new Error(options.failFirstSubmit);
+      }
       await options.holdSubmit;
       world.host.harness.behavior.submitInteraction(form.id, value);
     },
@@ -60,7 +70,7 @@ async function mountRenderer(world: World, form: OpenForm, options: { holdSubmit
       world.host.harness.behavior.cancelInteraction(form.id);
     },
   });
-  return { submitted, request };
+  return { submitted, request, container };
 }
 
 const press = async (name: string) => {
@@ -200,6 +210,85 @@ describe("the merge approval form through the plugin factory and the registered 
     await press("Approve");
     expect((await again.call).isError).toBe(false);
     expect(state(world)).toBe("merged");
+  });
+
+  it("[A1209] offers no Approve for a request it cannot read, and Deny and Cancel still work", async () => {
+    const world = await readyWorld();
+    const form = await openForm(world);
+    const { submitted } = await mountRenderer(world, form, { payload: { taskId: "t1" } });
+    expect(screen.getByRole("alert").textContent).toMatch(/unreadable/i);
+    expect(screen.queryByRole("button", { name: "Approve" })).toBeNull();
+    await press("Deny");
+    const result = await form.call;
+    expect(submitted).toStrictEqual([{ decision: "denied" }]);
+    expect(result.isError).toBe(true);
+    expect(merges(world)).toEqual([]);
+    expect(state(world)).toBe("awaiting_approval");
+    expect(approvals(world)).toMatchObject([{ decision: "denied" }]);
+
+    cleanup();
+    const second = await readyWorld();
+    const secondForm = await openForm(second);
+    await mountRenderer(second, secondForm, { payload: null });
+    await press("Cancel");
+    expect((await secondForm.call).text).toMatch(/did not answer/i);
+    expect(approvals(second)).toEqual([]);
+  });
+
+  it("[A1210] shows a rejected answer, re-enables the controls, keeps the typed comment, and records nothing", async () => {
+    const world = await readyWorld();
+    const form = await openForm(world);
+    const { submitted } = await mountRenderer(world, form, { failFirstSubmit: "bb is unreachable" });
+    type("My reason.");
+    await press("Approve");
+    expect(screen.getByRole("alert").textContent).toContain("bb is unreachable");
+    expect([...screen.getAllByRole("button"), screen.getByRole("textbox")].every((control) => !control.hasAttribute("disabled"))).toBe(true);
+    expect((screen.getByRole("textbox") as HTMLTextAreaElement).value).toBe("My reason.");
+    expect(approvals(world)).toEqual([]);
+    expect(state(world)).toBe("awaiting_approval");
+    expect(world.host.harness.inspection.pendingInteractions).toHaveLength(1);
+
+    await press("Approve");
+    const result = await form.call;
+    expect(submitted).toStrictEqual([{ decision: "approved", comment: "My reason." }, { decision: "approved", comment: "My reason." }]);
+    expect(result.isError).toBe(false);
+    expect(state(world)).toBe("merged");
+  });
+
+  it("[A1211] shows a pull request value that is not an http or https URL as plain text", async () => {
+    const world = await readyWorld();
+    const form = await openForm(world);
+    await mountRenderer(world, form, { payload: { taskId: "t1", branch: "fm/t1", prUrl: "javascript:alert(1)", evidence: "x" } });
+    const cell = screen.getByText("Pull request", { selector: "dt" }).nextElementSibling as HTMLElement;
+    expect(cell.textContent).toBe("javascript:alert(1)");
+    expect(within(cell).queryByRole("link")).toBeNull();
+    world.host.harness.behavior.cancelInteraction(form.id);
+    await form.call;
+  });
+
+  it("[A1212] keeps long evidence and a long branch name inside a wrapping or scrolling block (classes only; the real fit is the live check)", async () => {
+    const world = await readyWorld();
+    const form = await openForm(world);
+    await mountRenderer(world, form, { payload: { taskId: "t1", branch: `fm/${"x".repeat(300)}`, prUrl: PR, evidence: "word ".repeat(2000) } });
+    const cell = (label: string) => screen.getByText(label, { selector: "dt" }).nextElementSibling as HTMLElement;
+    expect(cell("Evidence").className).toMatch(/max-h-\d+/);
+    expect(cell("Evidence").className).toContain("overflow-y-auto");
+    expect(cell("Branch").className).toContain("break-all");
+    world.host.harness.behavior.cancelInteraction(form.id);
+    await form.call;
+  });
+
+  it("[A1213] shows when the request expires, and no expiry line when there is none", async () => {
+    const world = await readyWorld();
+    const form = await openForm(world);
+    const expiresAt = Date.UTC(2026, 10, 8, 15, 30);
+    const { container } = await mountRenderer(world, form, { expiresAt });
+    expect(container.querySelector("time")?.getAttribute("datetime")).toBe(new Date(expiresAt).toISOString());
+    cleanup();
+    const { container: none } = await mountRenderer(world, form);
+    expect(none.querySelector("time")).toBeNull();
+    world.host.harness.behavior.cancelInteraction(form.id);
+    await form.call;
   });
 });
 

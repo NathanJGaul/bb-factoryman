@@ -48,10 +48,10 @@ The cycle log records the red evidence. Tests are never weakened, skipped, or de
 **Goal**: The form offers no Approve for an unreadable request and keeps the owner's work after an error.
 **Independent test**: Render with a malformed payload and with a rejecting `submit`.
 
-- [ ] T1230 [US3] [U1222] [U1231] [U1232] [U1233] [U1234] [U1235] [U1236] [U1238] [U1239] Write the red tests in `src/app/merge-approval-form.test.tsx` for the plain-text pull request, the rejected answer, the unreadable notice, the expiry, Enter in the comment field, the overflow classes, and the theme-token scan.
-- [ ] T1231 [US3] [A1209] [A1210] [A1211] [A1212] [A1213] Write the red acceptance tests in `test/acceptance/merge-approval-form.test.tsx` for the unreadable request, the rejected answer, the plain-text pull request, the overflow classes, and the expiry.
-- [ ] T1232 [US3] [U1222] [U1231] [U1232] [U1233] [U1234] [U1235] [U1236] [U1238] [U1239] Implement the unreadable state, the failure state, the link guard, the overflow handling, and the expiry line in `src/app/merge-approval-form.tsx`.
-- [ ] T1233 [US3] [A1209] [A1210] [A1211] [A1212] [A1213] Outer loop: the story 3 acceptance tests are green and `pnpm test` is green.
+- [X] T1230 [US3] [U1222] [U1231] [U1232] [U1233] [U1234] [U1235] [U1236] [U1238] [U1239] Write the red tests in `src/app/merge-approval-form.test.tsx` for the plain-text pull request, the rejected answer, the unreadable notice, the expiry, Enter in the comment field, the overflow classes, and the theme-token scan.
+- [X] T1231 [US3] [A1209] [A1210] [A1211] [A1212] [A1213] Write the red acceptance tests in `test/acceptance/merge-approval-form.test.tsx` for the unreadable request, the rejected answer, the plain-text pull request, the overflow classes, and the expiry.
+- [X] T1232 [US3] [U1222] [U1231] [U1232] [U1233] [U1234] [U1235] [U1236] [U1238] [U1239] Implement the unreadable state, the failure state, the link guard, the overflow handling, and the expiry line in `src/app/merge-approval-form.tsx`.
+- [X] T1233 [US3] [A1209] [A1210] [A1211] [A1212] [A1213] Outer loop: the story 3 acceptance tests are green and `pnpm test` is green.
 
 ## Phase 6: User story 4 - A clean machine can run the check (P2)
 

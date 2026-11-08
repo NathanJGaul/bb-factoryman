@@ -28,11 +28,11 @@ The suite baseline was 92 files and 1134 tests, all passing.
 | A1206 | Pressing Deny merges nothing, records a `denied` row, and leaves the task `awaiting_approval` | AC-2.1, FR-1203 | example | DONE | `test/acceptance/merge-approval-form.test.tsx::[A1206]` |
 | A1207 | A typed comment travels with Deny into the denial record | AC-2.2, FR-1203 | example | DONE | `test/acceptance/merge-approval-form.test.tsx::[A1207]` |
 | A1208 | Pressing Cancel records no approval, runs no merge, and leaves the task `awaiting_approval`, and a later call opens a new form | AC-2.3, FR-1204 | example | DONE | `test/acceptance/merge-approval-form.test.tsx::[A1208]` |
-| A1209 | A request the renderer cannot read offers no Approve, and Deny and Cancel still work | AC-3.1, FR-1205 | example | PENDING | `test/acceptance/merge-approval-form.test.tsx::[A1209]` |
-| A1210 | A rejected answer shows an error, re-enables the controls, keeps the typed comment, and records nothing | AC-3.2, FR-1206 | example | PENDING | `test/acceptance/merge-approval-form.test.tsx::[A1210]` |
-| A1211 | A pull request value that is not an `http` or `https` URL shows as plain text | AC-3.3, FR-1207 | example | PENDING | `test/acceptance/merge-approval-form.test.tsx::[A1211]` |
-| A1212 | Long evidence and a long branch name sit inside a wrapping or scrolling block (class level only; the real fit is A1219) | AC-3.4, FR-1209 | example | PENDING | `test/acceptance/merge-approval-form.test.tsx::[A1212]` |
-| A1213 | A request with an expiry time shows when it expires, and one without shows no expiry line | AC-3.5 | example | PENDING | `test/acceptance/merge-approval-form.test.tsx::[A1213]` |
+| A1209 | A request the renderer cannot read offers no Approve, and Deny and Cancel still work | AC-3.1, FR-1205 | example | DONE | `test/acceptance/merge-approval-form.test.tsx::[A1209]` |
+| A1210 | A rejected answer shows an error, re-enables the controls, keeps the typed comment, and records nothing | AC-3.2, FR-1206 | example | DONE | `test/acceptance/merge-approval-form.test.tsx::[A1210]` |
+| A1211 | A pull request value that is not an `http` or `https` URL shows as plain text | AC-3.3, FR-1207 | example | DONE | `test/acceptance/merge-approval-form.test.tsx::[A1211]` |
+| A1212 | Long evidence and a long branch name sit inside a wrapping or scrolling block (class level only; the real fit is A1219) | AC-3.4, FR-1209 | example | DONE | `test/acceptance/merge-approval-form.test.tsx::[A1212]` |
+| A1213 | A request with an expiry time shows when it expires, and one without shows no expiry line | AC-3.5 | example | DONE | `test/acceptance/merge-approval-form.test.tsx::[A1213]` |
 | A1214 | The `typecheck` script calls `tsc6`, the binary exists in `node_modules/.bin`, and a run with a PATH that holds no `tsc` passes (the run is task T1241; the suite pins the script and the binary) | AC-4.1, FR-1210 | example | DONE | `test/acceptance/manifest.test.ts::[A1214]` |
 | A1215 | The type check covers the frontend source: `tsconfig.json` includes `src`, sets the JSX transform, and has the DOM library | AC-4.2, FR-1210 | example | DONE | `test/acceptance/manifest.test.ts::[A1215]` |
 | A1216 | The runbook's preflight step reads the machine name from `bb machine list` and names no machine called `server` | AC-5.1, FR-1211 | example | PENDING | `test/acceptance/live-check.test.ts::[A1216]` |
@@ -73,7 +73,7 @@ The suite baseline was 92 files and 1134 tests, all passing.
 | --- | --- | --- | --- | --- | --- |
 | U1220 | Shows the task id and the branch under their labels, in a monospace face | AC-1.2, FR-1202 | example | DONE | `src/app/merge-approval-form.test.tsx::[U1220]` |
 | U1221 | Shows an `http` pull request URL and an `https` one as links to that URL | AC-1.2, AC-3.3, FR-1207 | example | DONE | `src/app/merge-approval-form.test.tsx::[U1221]` |
-| U1222 | Shows a `javascript:`, `ftp:`, or non-URL pull request value as plain text with no link | AC-3.3, FR-1207 | example | PENDING | `src/app/merge-approval-form.test.tsx::[U1222]` |
+| U1222 | Shows a `javascript:`, `ftp:`, or non-URL pull request value as plain text with no link | AC-3.3, FR-1207 | example | DONE | `src/app/merge-approval-form.test.tsx::[U1222]` |
 | U1223 | Shows "None" for an empty pull request and for empty evidence, and still offers Approve | AC-1.2, FR-1202 | example | DONE | `src/app/merge-approval-form.test.tsx::[U1223]` |
 | U1224 | Shows the evidence with its line breaks kept | AC-1.2, FR-1202 | example | DONE | `src/app/merge-approval-form.test.tsx::[U1224]` |
 | U1225 | Pressing Approve calls `submit` once with `{ "decision": "approved" }` | AC-1.3, FR-1203 | example | DONE | `src/app/merge-approval-form.test.tsx::[U1225]` |
@@ -82,15 +82,15 @@ The suite baseline was 92 files and 1134 tests, all passing.
 | U1228 | Pressing Cancel calls `cancel` once and never calls `submit` | AC-2.3, FR-1204 | example | DONE | `src/app/merge-approval-form.test.tsx::[U1228]` |
 | U1229 | The controls are enabled before a press, disabled while `submit` is pending, and stay disabled after it resolves; the form is `aria-busy` while pending | AC-1.5, FR-1206 | example | DONE | `src/app/merge-approval-form.test.tsx::[U1229]` |
 | U1230 | A second press while an answer is pending sends no second answer | AC-1.5, FR-1206 | example | DONE | `src/app/merge-approval-form.test.tsx::[U1230]` |
-| U1231 | A rejected `submit` shows its message in an alert, re-enables the controls, and keeps the typed comment | AC-3.2, FR-1206 | example | PENDING | `src/app/merge-approval-form.test.tsx::[U1231]` |
-| U1232 | A rejected `cancel` shows its message in an alert and re-enables the controls | AC-3.2, FR-1206 | example | PENDING | `src/app/merge-approval-form.test.tsx::[U1232]` |
-| U1233 | A payload that is `null`, lacks a field, has a field of the wrong type, or has an extra field shows the unreadable notice, no Approve, and both Deny and Cancel | AC-3.1, FR-1205 | example | PENDING | `src/app/merge-approval-form.test.tsx::[U1233]` |
-| U1234 | Pressing Deny on the unreadable notice submits `{ "decision": "denied" }`, and pressing Cancel calls `cancel` | AC-3.1, FR-1204, FR-1205 | example | PENDING | `src/app/merge-approval-form.test.tsx::[U1234]` |
-| U1235 | Shows the expiry in a `<time>` element when `expiresAt` is set, and no expiry line when it is `null` | AC-3.5 | example | PENDING | `src/app/merge-approval-form.test.tsx::[U1235]` |
-| U1236 | Pressing Enter in the comment field submits nothing | FR-1203, FR-1209 | example | PENDING | `src/app/merge-approval-form.test.tsx::[U1236]` |
+| U1231 | A rejected `submit` shows its message in an alert, re-enables the controls, and keeps the typed comment | AC-3.2, FR-1206 | example | DONE | `src/app/merge-approval-form.test.tsx::[U1231]` |
+| U1232 | A rejected `cancel` shows its message in an alert and re-enables the controls | AC-3.2, FR-1206 | example | DONE | `src/app/merge-approval-form.test.tsx::[U1232]` |
+| U1233 | A payload that is `null`, lacks a field, has a field of the wrong type, or has an extra field shows the unreadable notice, no Approve, and both Deny and Cancel | AC-3.1, FR-1205 | example | DONE | `src/app/merge-approval-form.test.tsx::[U1233]` |
+| U1234 | Pressing Deny on the unreadable notice submits `{ "decision": "denied" }`, and pressing Cancel calls `cancel` | AC-3.1, FR-1204, FR-1205 | example | DONE | `src/app/merge-approval-form.test.tsx::[U1234]` |
+| U1235 | Shows the expiry in a `<time>` element when `expiresAt` is set, and no expiry line when it is `null` | AC-3.5 | example | DONE | `src/app/merge-approval-form.test.tsx::[U1235]` |
+| U1236 | Pressing Enter in the comment field submits nothing | FR-1203, FR-1209 | example | DONE | `src/app/merge-approval-form.test.tsx::[U1236]` |
 | U1237 | The comment field has a label, and Approve, Deny, and Cancel have accessible names | FR-1209 | example | DONE | `src/app/merge-approval-form.test.tsx::[U1237]` |
-| U1238 | The evidence block and the branch carry the wrapping and scrolling classes that keep long text inside the form | AC-3.4, FR-1209 | example | PENDING | `src/app/merge-approval-form.test.tsx::[U1238]` |
-| U1239 | The component source names theme tokens only: no hex color and no fixed Tailwind palette color | FR-1209 | example | PENDING | `src/app/merge-approval-form.test.tsx::[U1239]` |
+| U1238 | The evidence block and the branch carry the wrapping and scrolling classes that keep long text inside the form | AC-3.4, FR-1209 | example | DONE | `src/app/merge-approval-form.test.tsx::[U1238]` |
+| U1239 | The component source names theme tokens only: no hex color and no fixed Tailwind palette color | FR-1209 | example | DONE | `src/app/merge-approval-form.test.tsx::[U1239]` |
 
 ## Invariants and edge cases still to place
 

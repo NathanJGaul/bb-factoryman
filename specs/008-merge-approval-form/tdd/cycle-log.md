@@ -108,3 +108,27 @@ User story 2. The tests were written against the group 4 form, which has only Ap
 - green: `src/app/merge-approval-form.tsx` shares one `run(action)` for the three buttons (the in-flight guard and the phase), and adds Deny (outline) and Cancel (ghost). `pnpm run check` exited 0 -> 95 files, 1171 passed, 0 failed.
 - refactor: the single `approve()` became `run(action)` in the same step, because the second and third button would have copied it. The suite stayed green.
 - commit: see git history, "feat: deny or cancel a merge from the approval form"
+
+## Group 6: never approve blind, never fail open (A1209 to A1213, U1222, U1231 to U1236, U1238, U1239)
+
+User story 3. The tests ran against the group 5 form.
+
+- tests: `[U1222]`, `[U1231]` to `[U1236]`, `[U1238]`, `[U1239]` in `src/app/merge-approval-form.test.tsx`, and `[A1209]` to `[A1213]` in `test/acceptance/merge-approval-form.test.tsx` (the mount helper gained a payload override, an expiry, and a first-submit failure)
+- red: `pnpm vitest run src/app test/acceptance/merge-approval-form.test.tsx` -> 10 failed, 35 passed
+  - `[U1222]`, `[A1211]`: `AssertionError: javascript:alert(1): expected <a …(1)></a> to be null` (the form linked every value; React replaces the `javascript:` href with a throwing stub, and the anchor still exists)
+  - `[U1231]`, `[U1232]`, `[A1210]`: `TestingLibraryElementError: Unable to find an accessible element with the role "alert"`, plus an unhandled `Error: bb said no` from the rejected `submit`
+  - `[U1233]`, `[A1209]`: `Unable to find an accessible element with the role "alert"`
+  - `[U1234]`: `Unable to find an accessible element with the role "button" and name "Deny"` (an unreadable payload rendered nothing)
+  - `[U1235]`, `[A1213]`: `AssertionError: expected undefined to be '2026-11-08T15:30:00.000Z'`
+  - Passed against the group 5 form on the first run: `[U1236]`, `[U1238]`, `[U1239]`, `[A1212]`. They guard properties that the markup already had (no `<form>`, wrapping and scrolling classes, theme tokens), so the deliberate mutants below show that they can fail.
+- deliberate mutants, run after green on the finished component (restored byte for byte after each):
+  - the root element becomes a `<form>` that approves on submit -> `[U1236]` failed
+  - `max-h-64` removed from the evidence -> `[U1238]`, `[A1212]` failed
+  - `overflow-y-auto` removed -> `[U1238]`, `[A1212]` failed
+  - `break-all` removed from the branch -> `[U1238]`, `[A1212]` failed
+  - `text-muted-foreground` swapped for `text-red-500` -> `[U1239]` failed
+  - the in-flight flag not reset after a failure -> `[U1231]`, `[A1210]` failed
+  - the comment cleared on a press -> `[U1231]`, `[A1210]` failed
+- green: `src/app/merge-approval-form.tsx` gained `isWebUrl` (only `http:` and `https:` become links), a `try`/`catch` in `run` that shows the failure in a `role="alert"` line and re-enables the controls, the unreadable notice with no Approve, and the expiry line in a `<time>` element. `pnpm run check` exited 0 -> 95 files, 1185 passed, 0 failed.
+- refactor: the pull request cell moved into its own `PullRequest` component and the request list into `Request`, in the same step, to keep `MergeApprovalForm` readable. The suite stayed green.
+- commit: see git history, "feat: make the approval form fail closed on an unreadable request and keep the owner's work on error"

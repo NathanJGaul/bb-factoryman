@@ -1,4 +1,7 @@
 // @vitest-environment jsdom
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { act, cleanup, fireEvent, screen, within } from "@testing-library/react";
 import { renderSlot } from "@get-bb/plugin-sdk/testing/app";
 import { afterEach, describe, expect, it } from "vitest";
@@ -153,6 +156,127 @@ describe("MergeApprovalForm: Deny and Cancel", () => {
     expect(screen.getByLabelText("Comment (optional)")).toBe(comment());
     expect(screen.getAllByRole("button").map((control) => control.textContent)).toEqual(["Approve", "Deny", "Cancel"]);
     for (const name of ["Approve", "Deny", "Cancel"]) expect(button(name)).toBeTruthy();
+  });
+});
+
+describe("MergeApprovalForm: the pull request link", () => {
+  it("[U1222] shows a javascript:, ftp:, data:, or non-URL pull request value as plain text with no link", () => {
+    for (const value of ["javascript:alert(1)", "ftp://forge.example/pull/7", "data:text/html,<b>x</b>", "not a url", "//forge.example/pull/7"]) {
+      cleanup();
+      mount({ payload: { ...REQUEST, prUrl: value } });
+      const cell = valueOf("Pull request");
+      expect(cell.textContent, value).toBe(value);
+      expect(within(cell).queryByRole("link"), value).toBeNull();
+    }
+  });
+});
+
+describe("MergeApprovalForm: a failed answer", () => {
+  it("[U1231] shows the rejection in an alert, re-enables the controls, and keeps the typed comment", async () => {
+    const { submit } = mount({ submit: async () => { throw new Error("bb said no"); } });
+    fireEvent.change(comment(), { target: { value: "My reason." } });
+    await act(async () => {
+      fireEvent.click(button("Approve"));
+    });
+    expect(screen.getByRole("alert").textContent).toContain("bb said no");
+    expect([...screen.getAllByRole("button"), comment()].every((control) => !control.hasAttribute("disabled"))).toBe(true);
+    expect((comment() as HTMLTextAreaElement).value).toBe("My reason.");
+    expect(screen.getByRole("group", { name: "Merge approval request" }).getAttribute("aria-busy")).not.toBe("true");
+    await act(async () => {
+      fireEvent.click(button("Deny"));
+    });
+    expect(submit).toHaveBeenCalledTimes(2);
+    expect(submit.mock.calls[1]?.[0]).toStrictEqual({ decision: "denied", comment: "My reason." });
+  });
+
+  it("[U1232] shows a rejected cancel in an alert and re-enables the controls", async () => {
+    mount({ cancel: async () => { throw new Error("cancel refused"); } });
+    await act(async () => {
+      fireEvent.click(button("Cancel"));
+    });
+    expect(screen.getByRole("alert").textContent).toContain("cancel refused");
+    expect(screen.getAllByRole("button").every((control) => !control.hasAttribute("disabled"))).toBe(true);
+  });
+});
+
+describe("MergeApprovalForm: a request it cannot read", () => {
+  const unreadable: Array<[string, unknown]> = [
+    ["null", null],
+    ["a field missing", { taskId: REQUEST.taskId, branch: REQUEST.branch, prUrl: REQUEST.prUrl }],
+    ["a field of the wrong type", { ...REQUEST, taskId: 7 }],
+    ["an extra field", { ...REQUEST, extra: "x" }],
+    ["a string", "approve everything"],
+  ];
+
+  it("[U1233] shows the unreadable notice, no Approve, and both Deny and Cancel", () => {
+    for (const [name, payload] of unreadable) {
+      cleanup();
+      mount({ payload });
+      expect(screen.getByRole("alert").textContent, name).toMatch(/unreadable/i);
+      expect(screen.queryByRole("button", { name: "Approve" }), name).toBeNull();
+      expect(screen.getByRole("button", { name: "Deny" }), name).toBeTruthy();
+      expect(screen.getByRole("button", { name: "Cancel" }), name).toBeTruthy();
+    }
+  });
+
+  it("[U1234] submits a denial from the unreadable notice, and cancel still cancels", async () => {
+    const denied = mount({ payload: null });
+    await act(async () => {
+      fireEvent.click(button("Deny"));
+    });
+    expect(denied.submit.mock.calls.map((call) => call[0])).toStrictEqual([{ decision: "denied" }]);
+
+    cleanup();
+    const cancelled = mount({ payload: null });
+    await act(async () => {
+      fireEvent.click(button("Cancel"));
+    });
+    expect(cancelled.cancel).toHaveBeenCalledTimes(1);
+    expect(cancelled.submit).not.toHaveBeenCalled();
+  });
+});
+
+describe("MergeApprovalForm: expiry, keys, and style", () => {
+  it("[U1235] shows the expiry in a time element when expiresAt is set, and no expiry line when it is null", () => {
+    const expiresAt = Date.UTC(2026, 10, 8, 15, 30);
+    const { container } = mount({ expiresAt }).slot;
+    const time = container.querySelector("time");
+    expect(time?.getAttribute("datetime")).toBe(new Date(expiresAt).toISOString());
+    expect(time?.parentElement?.textContent).toMatch(/^Expires /);
+
+    cleanup();
+    const none = mount({ expiresAt: null }).slot;
+    expect(none.container.querySelector("time")).toBeNull();
+    expect(none.container.textContent).not.toMatch(/Expires/);
+  });
+
+  it("[U1236] submits nothing when Enter is pressed in the comment field, which is a multi-line field in no form", () => {
+    const { submit, cancel, slot } = mount();
+    expect(slot.container.querySelector("form")).toBeNull();
+    expect(comment().tagName).toBe("TEXTAREA");
+    for (const init of [{ key: "Enter" }, { key: "Enter", ctrlKey: true }, { key: "Enter", metaKey: true }]) {
+      fireEvent.keyDown(comment(), init);
+      fireEvent.keyUp(comment(), init);
+    }
+    expect(submit).not.toHaveBeenCalled();
+    expect(cancel).not.toHaveBeenCalled();
+  });
+
+  it("[U1238] gives the evidence a height limit with its own scroll, and breaks long task, branch, and evidence text", () => {
+    mount({ payload: { ...REQUEST, branch: `fm/${"x".repeat(300)}`, evidence: "y".repeat(5000) } });
+    const evidence = valueOf("Evidence");
+    expect(evidence.className).toContain("max-h-64");
+    expect(evidence.className).toContain("overflow-y-auto");
+    expect(evidence.className).toContain("break-words");
+    expect(valueOf("Branch").className).toContain("break-all");
+    expect(valueOf("Task").className).toContain("break-all");
+  });
+
+  it("[U1239] names theme tokens only: no hex color and no fixed Tailwind palette color in the source", () => {
+    const source = readFileSync(join(dirname(fileURLToPath(import.meta.url)), "merge-approval-form.tsx"), "utf8");
+    expect(source).not.toMatch(/#[0-9a-fA-F]{3,8}\b/);
+    const palette = "red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose|slate|gray|zinc|neutral|stone|white|black";
+    expect(source).not.toMatch(new RegExp(`\\b(?:bg|text|border|ring|fill|stroke|outline|divide|from|to|via)-(?:${palette})(?:-\\d+)?\\b`));
   });
 });
 
