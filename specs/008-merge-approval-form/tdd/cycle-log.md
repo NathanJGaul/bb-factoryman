@@ -211,3 +211,47 @@ Each strengthened test was checked against the mutant that had survived it, re-a
 - mutants M26 and M27, the survivors of finding 6, are killed by the group 9 tests (`[U1241]`, `[U1242]`).
 - gate: `pnpm run check` exited 0 -> 95 files, 1191 passed, 0 failed.
 - commit: see git history, "test: strengthen the underline, expiry, and retry tests and drop vacuous assertions"
+
+## Retroactive red for the five behaviors that the audit classed test-after (task T1284)
+
+The audit (`tdd/verification.md`, finding 5) classed A1215, U1236, U1238, U1239, and A1212 as `TEST_AFTER`, because the code that they check was committed before the test.
+The history cannot change. This entry re-proves, for each one, that the test fails when the property it guards is removed.
+Each mutant was applied by hand to the committed file, the command below ran against it, and `git checkout` restored the file (and `git diff --quiet` confirmed it). The failure lines are copied from the run.
+
+- `[A1215]`, mutant: `tsconfig.json` without the `jsx` line
+  - command: `pnpm vitest run test/acceptance/manifest.test.ts -t "A1215"`
+  - failure: `AssertionError: expected undefined to be 'react-jsx' // Object.is equality` (Tests  1 failed | 4 skipped (5))
+  - restored and clean: yes
+- `[U1236]`, mutant: the root element is a `<form>` (the closing tag is left as it is, which React tolerates in a test)
+  - command: `pnpm vitest run src/app/merge-approval-form.test.tsx -t "U1236"`
+  - failure: `Error: Transform failed with 1 error:` (Tests  no tests)
+  - restored and clean: yes
+- `[U1238]`, mutant: `max-h-64` removed from the evidence
+  - command: `pnpm vitest run src/app/merge-approval-form.test.tsx -t "U1238"`
+  - failure: `AssertionError: expected 'col-span-2 m-0 min-w-0 overflow-y-aut…' to contain 'max-h-64'` (Tests  1 failed | 22 skipped (23))
+  - restored and clean: yes
+- `[U1238]`, mutant: `overflow-y-auto` removed from the evidence
+  - command: `pnpm vitest run src/app/merge-approval-form.test.tsx -t "U1238"`
+  - failure: `AssertionError: expected 'col-span-2 m-0 max-h-64 min-w-0 white…' to contain 'overflow-y-auto'` (Tests  1 failed | 22 skipped (23))
+  - restored and clean: yes
+- `[U1238]`, mutant: `break-all` removed from the branch
+  - command: `pnpm vitest run src/app/merge-approval-form.test.tsx -t "U1238"`
+  - failure: `AssertionError: expected 'm-0 min-w-0 font-mono' to contain 'break-all'` (Tests  1 failed | 22 skipped (23))
+  - restored and clean: yes
+- `[U1239]`, mutant: a fixed palette color (`text-red-500`) on the Task label
+  - command: `pnpm vitest run src/app/merge-approval-form.test.tsx -t "U1239"`
+  - failure: `AssertionError: expected 'import { useId, useRef, useState, typ…' not to match /\b(?:bg|text|border|ring|fill|stroke|…/` (Tests  1 failed | 22 skipped (23))
+  - restored and clean: yes
+- `[A1212]`, mutant: `max-h-64` removed from the evidence
+  - command: `pnpm vitest run test/acceptance/merge-approval-form.test.tsx -t "A1212"`
+  - failure: `AssertionError: expected 'col-span-2 m-0 min-w-0 overflow-y-aut…' to match /max-h-\d+/` (Tests  1 failed | 12 skipped (13))
+  - restored and clean: yes
+
+### Correction to the `[U1236]` line above
+
+The `[U1236]` mutant above changed the opening tag of the root element and left the closing tag as `</div>`. That is a syntax error, and the run failed with `Error: Transform failed with 1 error:` and `Tests  no tests`. It is not a red for the behavior, and the sentence that "React tolerates" the mismatch is wrong. This run replaces it: the opening and the closing tag both became `form`.
+
+- `[U1236]`, mutant: the root element is a `<form>` (both tags)
+  - command: `pnpm vitest run src/app/merge-approval-form.test.tsx -t "U1236"`
+  - failure: `AssertionError: expected <form role="group" …(3)>…(3)</form> to be null` (Tests  1 failed | 22 skipped (23))
+  - restored and clean: yes
