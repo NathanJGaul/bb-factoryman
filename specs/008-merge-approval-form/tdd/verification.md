@@ -21,16 +21,23 @@ suite: 1310 passed, 0 failed, 95 files, 18 s of test time; pnpm run check (typec
 **Verdict: FAIL.**
 One rule still blocks: seven behaviors have tests that came after their code (A1215, U1236, U1238, U1239, A1212, U1241, U1242), and the rubric fails a feature for any `TEST_AFTER`.
 Everything else is clean: no `HIGH` smell is open, 45 of 45 deliberate mutants are killed, every acceptance criterion reaches a test, and no existing test was weakened.
-The seven are guard tests for properties that the code already had. Each has a recorded revert-red in the cycle log (the property removed, the test failing, the file restored) and a mutant that kills it.
+The seven are guard tests for properties that the code already had.
+Each has a recorded revert-red in the cycle log (the property removed, the test failing, the file restored) and a mutant that kills it.
 The order cannot be rewritten, because the repository's rule is to commit only on green, so the history shows each test and its code in one commit, or the code first.
-I wrote the code and most tests, so this audit is not independent. A fresh-context subagent did the smell pass in both runs, and I opened every line it cited before it reached this report.
+I wrote the code and most tests, so this audit is not independent.
+A fresh-context subagent did the smell pass in both runs, and I opened every line it cited before it reached this report.
 
-This run corrects one claim of the first run. Its remediation task T1284 said that re-proving the red would move the five test-after behaviors to `LIKELY`. The rubric says `TEST_AFTER` applies when "history shows the source change landing in an earlier commit than its test", whatever the log holds. The retroactive reds are good evidence of strength, and they do not change the class.
+This run corrects one claim of the first run.
+Its remediation task T1284 said that re-proving the red would move the five test-after behaviors to `LIKELY`.
+The rubric says `TEST_AFTER` applies when "history shows the source change landing in an earlier commit than its test", whatever the log holds.
+The retroactive reds are good evidence of strength, and they do not change the class.
 The decision whether to accept these seven as a documented exception belongs to the owner, and I did not weigh it into the verdict.
 
 ## Test-first evidence
 
-The history cannot show a test before its code, because no commit holds a red state. A test and its code arrived together (`PROVEN` when the log holds the red), or the code came first (`TEST_AFTER`). The log is self-reported.
+The history cannot show a test before its code, because no commit holds a red state.
+A test and its code arrived together (`PROVEN` when the log holds the red), or the code came first (`TEST_AFTER`).
+The log is self-reported.
 
 | Group (commit) | Behaviors | Class | Evidence |
 | --- | --- | --- | --- |
@@ -53,16 +60,25 @@ Discrepancies between the log and the history: none found, apart from the log's 
 
 Changes to tests that already existed, from `git diff bbfdb15 HEAD`:
 
-- `test/acceptance/live-check.test.ts` `[A1109]`: the positive assertion `toMatch(/bb factoryman preflight server --project \$PROJ/)` became `not.toMatch(/preflight server\b/)`, and in this run's fix every `preflight` call must now name `"$MACHINE"`. The old assertion pinned the defect that the live check found (finding 5.3). Not weakened.
-- `test/fixtures/skills.ts`: a `URL` object became a path string, so the plugin host loads under jsdom. No assertion changed.
-- Assertions that the feature's own tests lost after the first audit, each tied to a finding: `toBeTruthy` after `getByRole`, three tautological lines of `[A1210]`, the `node_modules/.bin/tsc6` file check of `[A1214]`, the `zod` stray-field assertion of `[U1210]`, and four repeated assertions. Each was replaced by a stronger one or was a repeat of another test. The `.bin/tsc6` check is the one real loosening: `pnpm run check` fails without `tsc6`, so the gate still covers it.
+- `test/acceptance/live-check.test.ts` `[A1109]`: the positive assertion `toMatch(/bb factoryman preflight server --project \$PROJ/)` became `not.toMatch(/preflight server\b/)`, and in this run's fix every `preflight` call must now name `"$MACHINE"`.
+  The old assertion pinned the defect that the live check found (finding 5.3).
+  Not weakened.
+- `test/fixtures/skills.ts`: a `URL` object became a path string, so the plugin host loads under jsdom.
+  No assertion changed.
+- Assertions that the feature's own tests lost after the first audit, each tied to a finding: `toBeTruthy` after `getByRole`, three tautological lines of `[A1210]`, the `node_modules/.bin/tsc6` file check of `[A1214]`, the `zod` stray-field assertion of `[U1210]`, and four repeated assertions.
+  Each was replaced by a stronger one or was a repeat of another test.
+  The `.bin/tsc6` check is the one real loosening: `pnpm run check` fails without `tsc6`, so the gate still covers it.
 - No `skip`, `only`, `todo`, threshold, or exclusion appears in the range.
 
-`tasks.md` against the test list: every ticked task has all of its behaviors `DONE`, and no task is unticked while its behaviors are `DONE`. Two ticked tasks do not fit the rule, and both are explained: `T1207` (its marker `[U1213]` is a baseline, and the loop never ticks a baseline's task, so I ticked it by hand after the refactor) and `T1288` (its text cites the existing test `[A1109]`, which is not on the list).
+`tasks.md` against the test list: every ticked task has all of its behaviors `DONE`, and no task is unticked while its behaviors are `DONE`.
+Two ticked tasks do not fit the rule, and both are explained: `T1207` (its marker `[U1213]` is a baseline, and the loop never ticks a baseline's task, so I ticked it by hand after the refactor) and `T1288` (its text cites the existing test `[A1109]`, which is not on the list).
 
 ## Findings
 
-Findings 1 to 4 are from the fresh-context subagent of this run, and I confirmed each at the cited lines. The subagent ran the mutants of findings 1 and 2 (M35, M36) before they were fixed. I did not re-run them on the old tests, and I confirmed that the fixed tests kill them. The subagent's own mutant run stopped early, because `/tmp` hit its per-user quota (`EDQUOT`), so I ran the rest of the mutants myself.
+Findings 1 to 4 are from the fresh-context subagent of this run, and I confirmed each at the cited lines.
+The subagent ran the mutants of findings 1 and 2 (M35, M36) before they were fixed.
+I did not re-run them on the old tests, and I confirmed that the fixed tests kill them.
+The subagent's own mutant run stopped early, because `/tmp` hit its per-user quota (`EDQUOT`), so I ran the rest of the mutants myself.
 
 | # | Severity | Finding | Evidence | Status |
 | --- | --- | --- | --- | --- |
@@ -77,12 +93,16 @@ Findings 1 to 4 are from the fresh-context subagent of this run, and I confirmed
 | 9 | MED | Several tests still cover more than one assertion about one scenario (`[U1229]`, `[A1205]`, `[A1208]`, `[A1210]`). `[U1231]` was split. They are single flows, and their names say so. | various | open, accepted |
 | 10 | LOW | `[A1211]` to `[A1213]` repeat `[U1222]`, `[U1238]`, and `[U1235]` through the app's registry with payloads that the backend cannot send; `mountRenderer` keeps its own `submitted` array instead of the harness spy; `[U1235]` pins the year and not the time of day (the visible text is locale text); `[U1236]` cannot trigger a native submit under jsdom, so the `<form>` and `tagName` checks are the real guard. | various | open, accepted |
 
-Properties: the suite is isolated (each test builds its world and cleans up), deterministic (no real clock, sleep, or randomness), and fast (the six audited files take about 2.5 s). Failures name the case or the control now (`it.each`, `disabledControls()`). It is weak on refactor-insensitivity (findings 7 and 8).
+Properties: the suite is isolated (each test builds its world and cleans up), deterministic (no real clock, sleep, or randomness), and fast (the six audited files take about 2.5 s).
+Failures name the case or the control now (`it.each`, `disabledControls()`).
+It is weak on refactor-insensitivity (findings 7 and 8).
 
 ## Mutation results
 
-No mutation tool is installed (the profile says `mutation: null`), so these are deliberate mutants, one at a time, each restored with `git checkout` and checked clean (`git diff --quiet` on the component, the entry, and the contract, and an empty `git status` apart from the intended test changes). The gate afterwards: `pnpm run check` exited 0 (95 files, 1310 passed).
-Scope: `src/app.tsx`, `src/app/merge-approval-form.tsx`, and `src/approval/contract.ts`, run against `src/app`, `src/approval`, and `test/acceptance/merge-approval-form.test.tsx`. 45 mutants, 45 killed. It is a sample of the highest-risk behaviors (what each button sends, fail-closed, in-flight, the link guard, the comment, the renderer id, the payload reader, and the answer builder), not a representative one.
+No mutation tool is installed (the profile says `mutation: null`), so these are deliberate mutants, one at a time, each restored with `git checkout` and checked clean (`git diff --quiet` on the component, the entry, and the contract, and an empty `git status` apart from the intended test changes).
+The gate afterwards: `pnpm run check` exited 0 (95 files, 1310 passed).
+Scope: `src/app.tsx`, `src/app/merge-approval-form.tsx`, and `src/approval/contract.ts`, run against `src/app`, `src/approval`, and `test/acceptance/merge-approval-form.test.tsx`. 45 mutants, 45 killed.
+It is a sample of the highest-risk behaviors (what each button sends, fail-closed, in-flight, the link guard, the comment, the renderer id, the payload reader, and the answer builder), not a representative one.
 
 | Mutants | Killed by | Judgment |
 | --- | --- | --- |
@@ -104,8 +124,11 @@ Scope: `src/app.tsx`, `src/app/merge-approval-form.tsx`, and `src/approval/contr
 | M34 comment label detached | U1237 | killed |
 | C01 to C06 payload reader (field count, type check, null) and answer builder (undefined key, trim, stray field) | U1202 to U1210 | killed |
 
-The first pass of M01 to M08 in this run ran while the `/tmp` quota failure was active and failed whole files for the wrong reason. I ran those eight again alone, and they are killed for the right reason (7 to 25 tests, all in the expected files).
-Not killed and not closed, judged low value: dropping `timeStyle: "short"` from the visible date, changing the failure prefix text, and rewording the unreadable notice while keeping the word "unreadable". The subagent found them. They are copy and locale text, and pinning them would couple the tests to wording.
+The first pass of M01 to M08 in this run ran while the `/tmp` quota failure was active and failed whole files for the wrong reason.
+I ran those eight again alone, and they are killed for the right reason (7 to 25 tests, all in the expected files).
+Not killed and not closed, judged low value: dropping `timeStyle: "short"` from the visible date, changing the failure prefix text, and rewording the unreadable notice while keeping the word "unreadable".
+The subagent found them.
+They are copy and locale text, and pinning them would couple the tests to wording.
 
 ## Traceability
 
@@ -123,14 +146,25 @@ Not killed and not closed, judged low value: dropping `timeStyle: "short"` from 
 | AC-5.1, AC-5.2, AC-5.3 | A1216, A1217, A1218, and `[A1109]` | Yes: the entry point is the document, as in feature 007 (finding 8) |
 | AC-5.4 | A1219 | Manual: the lab run, with 20 screenshots, a report, and database rows quoted in the log. I did not repeat it |
 
-Every acceptance criterion reaches a test, and every `traces` value resolves to a test that exists (a mechanical check found a test marker for all behaviors that have an automated test; `A1221` now has the suffixed ids `[A1221a]` to `[A1221c]`, and the list names all three; `U1213` points at `src/tools/merge.test.ts` `[U89]`, which exists). Tests that trace to nothing: none.
-The acceptance layer is an in-process integration test, and the profile says so. It is not a browser test.
+Every acceptance criterion reaches a test, and every `traces` value resolves to a test that exists (a mechanical check found a test marker for all behaviors that have an automated test; `A1221` now has the suffixed ids `[A1221a]` to `[A1221c]`, and the list names all three; `U1213` points at `src/tools/merge.test.ts` `[U89]`, which exists).
+Tests that trace to nothing: none.
+The acceptance layer is an in-process integration test, and the profile says so.
+It is not a browser test.
 
 ## What was not audited
 
-- Mutation was by hand on three files. No mutation tool is installed, so there is no score for `eslint.config.js`, the docs tests, or the fixtures. `src/tools/merge.ts` was not mutated, and the subagent's own run did not reach it either.
-- The subagent's mutant run of this audit stopped early because `/tmp` hit its quota. It ran 52 mutants of the component, and 19 more for the contract, the entry, and the merge tool did not run. I ran the contract and the entry mutants myself (C01 to C06, M19 to M21).
+- Mutation was by hand on three files.
+  No mutation tool is installed, so there is no score for `eslint.config.js`, the docs tests, or the fixtures.
+  `src/tools/merge.ts` was not mutated, and the subagent's own run did not reach it either.
+- The subagent's mutant run of this audit stopped early because `/tmp` hit its quota.
+  It ran 52 mutants of the component, and 19 more for the contract, the entry, and the merge tool did not run.
+  I ran the contract and the entry mutants myself (C01 to C06, M19 to M21).
 - Coverage: no coverage tool is installed.
-- The live check in the lab (A1219) was not repeated. I read its report and screenshots as evidence, and I made them, so that is not independent either. The lab ran the component as committed in `497f69c`. Since then only tests changed, plus a type-only move of the renderer id and the payload type from `src/tools/merge.ts` into the contract module (`79b9b2b`). The form itself did not change.
-- The red evidence in the cycle log was not reproduced: I did not check out earlier commits, because no commit holds a red state. The log's failure lines are the only record.
+- The live check in the lab (A1219) was not repeated.
+  I read its report and screenshots as evidence, and I made them, so that is not independent either.
+  The lab ran the component as committed in `497f69c`.
+  Since then only tests changed, plus a type-only move of the renderer id and the payload type from `src/tools/merge.ts` into the contract module (`79b9b2b`).
+  The form itself did not change.
+- The red evidence in the cycle log was not reproduced: I did not check out earlier commits, because no commit holds a red state.
+  The log's failure lines are the only record.
 - Performance under load, a real person's click, and cross-browser behavior: no criterion, no test.
