@@ -24,6 +24,9 @@ function valueOf(label: string): HTMLElement {
   return value;
 }
 
+const EXPIRES_AT = Date.UTC(2026, 10, 8, 15, 30);
+const EXPIRES_AT_ISO = "2026-11-08T15:30:00.000Z";
+
 const button = (name: string) => screen.getByRole("button", { name });
 const comment = () => screen.getByRole("textbox");
 
@@ -155,7 +158,6 @@ describe("MergeApprovalForm: Deny and Cancel", () => {
     mount();
     expect(screen.getByLabelText("Comment (optional)")).toBe(comment());
     expect(screen.getAllByRole("button").map((control) => control.textContent)).toEqual(["Approve", "Deny", "Cancel"]);
-    for (const name of ["Approve", "Deny", "Cancel"]) expect(button(name)).toBeTruthy();
   });
 });
 
@@ -163,7 +165,8 @@ describe("MergeApprovalForm: the pull request link", () => {
   it("[U1240] underlines the pull request link so that it reads as a link", () => {
     mount();
     const link = within(valueOf("Pull request")).getByRole("link");
-    expect(link.className).toContain("underline");
+    // The exact token: the class "underline-offset-2" also contains the text "underline".
+    expect(link.classList.contains("underline")).toBe(true);
   });
 
   it("[U1242] opens the pull request through bb's navigation, so that bb's open-in-app preference applies", () => {
@@ -247,8 +250,8 @@ describe("MergeApprovalForm: a request it cannot read", () => {
       mount({ payload });
       expect(screen.getByRole("alert").textContent, name).toMatch(/unreadable/i);
       expect(screen.queryByRole("button", { name: "Approve" }), name).toBeNull();
-      expect(screen.getByRole("button", { name: "Deny" }), name).toBeTruthy();
-      expect(screen.getByRole("button", { name: "Cancel" }), name).toBeTruthy();
+      expect(screen.getByRole("button", { name: "Deny" }).hasAttribute("disabled"), name).toBe(false);
+      expect(screen.getByRole("button", { name: "Cancel" }).hasAttribute("disabled"), name).toBe(false);
     }
   });
 
@@ -271,11 +274,12 @@ describe("MergeApprovalForm: a request it cannot read", () => {
 
 describe("MergeApprovalForm: expiry, keys, and style", () => {
   it("[U1235] shows the expiry in a time element when expiresAt is set, and no expiry line when it is null", () => {
-    const expiresAt = Date.UTC(2026, 10, 8, 15, 30);
-    const { container } = mount({ expiresAt }).slot;
+    const { container } = mount({ expiresAt: EXPIRES_AT }).slot;
     const time = container.querySelector("time");
-    expect(time?.getAttribute("datetime")).toBe(new Date(expiresAt).toISOString());
+    expect(time?.getAttribute("datetime")).toBe(EXPIRES_AT_ISO);
     expect(time?.parentElement?.textContent).toMatch(/^Expires /);
+    // The visible date is locale text, so check only that it names the year.
+    expect(time?.textContent).toContain("2026");
 
     cleanup();
     const none = mount({ expiresAt: null }).slot;

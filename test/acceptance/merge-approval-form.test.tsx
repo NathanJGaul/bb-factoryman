@@ -235,7 +235,7 @@ describe("the merge approval form through the plugin factory and the registered 
     expect(approvals(second)).toEqual([]);
   });
 
-  it("[A1210] shows a rejected answer, re-enables the controls, keeps the typed comment, and records nothing", async () => {
+  it("[A1210] shows a rejected answer, re-enables the controls, keeps the typed comment, and records one approval after the retry", async () => {
     const world = await readyWorld();
     const form = await openForm(world);
     const { submitted } = await mountRenderer(world, form, { failFirstSubmit: "bb is unreachable" });
@@ -244,15 +244,15 @@ describe("the merge approval form through the plugin factory and the registered 
     expect(screen.getByRole("alert").textContent).toContain("bb is unreachable");
     expect([...screen.getAllByRole("button"), screen.getByRole("textbox")].every((control) => !control.hasAttribute("disabled"))).toBe(true);
     expect((screen.getByRole("textbox") as HTMLTextAreaElement).value).toBe("My reason.");
-    expect(approvals(world)).toEqual([]);
-    expect(state(world)).toBe("awaiting_approval");
-    expect(world.host.harness.inspection.pendingInteractions).toHaveLength(1);
 
     await press("Approve");
     const result = await form.call;
     expect(submitted).toStrictEqual([{ decision: "approved", comment: "My reason." }, { decision: "approved", comment: "My reason." }]);
     expect(result.isError).toBe(false);
     expect(state(world)).toBe("merged");
+    // Only the retry reached bb, so the failed attempt left no approval behind.
+    expect(approvals(world)).toMatchObject([{ scope: "merge", decision: "approved" }]);
+    expect(approvals(world)).toHaveLength(1);
   });
 
   it("[A1211] shows a pull request value that is not an http or https URL as plain text", async () => {
@@ -281,9 +281,10 @@ describe("the merge approval form through the plugin factory and the registered 
   it("[A1213] shows when the request expires, and no expiry line when there is none", async () => {
     const world = await readyWorld();
     const form = await openForm(world);
-    const expiresAt = Date.UTC(2026, 10, 8, 15, 30);
-    const { container } = await mountRenderer(world, form, { expiresAt });
-    expect(container.querySelector("time")?.getAttribute("datetime")).toBe(new Date(expiresAt).toISOString());
+    const { container } = await mountRenderer(world, form, { expiresAt: Date.UTC(2026, 10, 8, 15, 30) });
+    const time = container.querySelector("time");
+    expect(time?.getAttribute("datetime")).toBe("2026-11-08T15:30:00.000Z");
+    expect(time?.textContent).toContain("2026");
     cleanup();
     const { container: none } = await mountRenderer(world, form);
     expect(none.querySelector("time")).toBeNull();

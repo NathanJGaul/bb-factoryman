@@ -198,3 +198,16 @@ The two cycles share one commit, because both tests sit in one file.
 
 - suite after both: `pnpm run check` exited 0 -> 95 files, 1191 passed, 0 failed.
 - commit: see git history, "test: pin the retry banner and the link navigation that the audit found unpinned"
+
+## Remediation 1: the four weak-test findings of the audit (tasks T1280 to T1283)
+
+These strengthen tests that already exist. No behavior changed and no test was weakened.
+Each strengthened test was checked against the mutant that had survived it, re-applied by hand and restored with `git checkout`.
+
+- finding 1, `[U1240]` (`src/app/merge-approval-form.test.tsx`): the test asserted `className` contains the text `underline`, which `underline-offset-2` also contains. It now asserts `link.classList.contains("underline")`. Mutant M22 (the `underline` class deleted) now fails `[U1240]`.
+- finding 2, `[U1235]` and `[A1213]`: the expected `datetime` is now the literal `2026-11-08T15:30:00.000Z` and no longer `new Date(expiresAt).toISOString()`, the call that the component makes. Both tests also assert that the visible `<time>` text contains `2026`. Mutant M28 (the visible date from `new Date(0)`) now fails `[U1235]` and `[A1213]`.
+- finding 3: the three `toBeTruthy()` assertions after a `getByRole` are gone. `[U1233]` now asserts that Deny and Cancel are not disabled, and `grep -n toBeTruthy src/app/merge-approval-form.test.tsx` prints nothing.
+- finding 4, `[A1210]`: the three lines that the test's own `submit` wrapper guaranteed (no approvals, `awaiting_approval`, one pending form) are gone. After the successful retry the test asserts that exactly one approval row exists, `approved`, and that the task is `merged`. The test name now says so.
+- mutants M26 and M27, the survivors of finding 6, are killed by the group 9 tests (`[U1241]`, `[U1242]`).
+- gate: `pnpm run check` exited 0 -> 95 files, 1191 passed, 0 failed.
+- commit: see git history, "test: strengthen the underline, expiry, and retry tests and drop vacuous assertions"
