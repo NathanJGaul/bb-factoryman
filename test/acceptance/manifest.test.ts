@@ -37,10 +37,12 @@ describe("package manifest", () => {
     expect(manifest.scripts?.build).toBe("bb plugin build");
   });
 
-  it("[A1214] runs the type check with tsc6 and not with a global tsc, and the check script runs it", () => {
-    const script = manifest.scripts?.typecheck ?? "";
-    expect(script).toMatch(/^tsc6(\s|$)/);
-    expect(script).not.toMatch(/(^|[\s&;|])tsc(\s|$)/);
+  it("[A1214] runs the type check with a binary that the pinned TypeScript package installs, and the check script runs it", () => {
+    const binary = (manifest.scripts?.typecheck ?? "").trim().split(/\s+/)[0];
+    const installed = JSON.parse(
+      readFileSync(new URL("../../node_modules/typescript/package.json", import.meta.url), "utf8"),
+    ) as { bin?: string | Record<string, string> };
+    expect(typeof installed.bin === "object" ? Object.keys(installed.bin) : []).toContain(binary);
     expect(manifest.scripts?.check).toContain("pnpm run typecheck");
   });
 

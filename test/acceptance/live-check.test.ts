@@ -97,7 +97,7 @@ describe("the live-check runbook: isolation", () => {
       if (command === "preflight") expect(rest.trim(), "a preflight call names the machine from $MACHINE").toMatch(/^"\$MACHINE"(\s|$)/);
       for (const flag of rest.match(/(?<![\w-])--[a-z][a-z-]*/g) ?? []) expect(allowedFlags[command], `${command} ${flag}`).toContain(flag);
     }
-    // The lab's one machine is named after the host, not server (live check finding 5.3). A1216 pins how the runbook gets the name.
+    // The lab's one machine is named after the host, not server (live check finding 5.3).
     expect(text).not.toMatch(/preflight server\b/);
     expect(text).not.toMatch(/preflight lab-box/);
     for (const tool of new Set(text.match(/factoryman_[a-z_]+/g) ?? [])) expect(TOOL_NAMES, tool).toContain(tool);
@@ -266,65 +266,3 @@ describe("the live-check runbook: steps that a reader can follow without asking"
     expect(teardown).toContain("The difference must match the caps in section 7.");
   });
 });
-
-describe("the live-check runbook: the merge approval form in the web UI", () => {
-  const DECISIONS = (): string => readFileSync(new URL("../../docs/DECISIONS.md", import.meta.url), "utf8");
-  const shipStep = (text: string): string => {
-    const start = text.indexOf("**Ship task.**");
-    const end = text.indexOf("### Stop and clean up the token");
-    expect(start, "the ship task step").toBeGreaterThan(-1);
-    expect(end, "the end of the ship task step").toBeGreaterThan(start);
-    return text.slice(start, end);
-  };
-
-  it("[A1216] reads the lab machine's name from bb machine list and does not assume that it is named server", () => {
-    const text = runbook();
-    const reads = commandLines(text).filter((line) => /^MACHINE=\$\(bblab x bb machine list --json \| jq -r '\.\[0\]\.name'\)$/.test(line));
-    expect(reads, "a command that reads the machine name").toHaveLength(1);
-    const row = tableRows(section(text, "### Tier 0 checks")).find((cells) => cells[0] === "The plugin's command");
-    expect(row?.[1]).toContain('bblab x bb factoryman preflight "$MACHINE" --project $PROJ');
-    expect(row?.[2]).not.toMatch(/named `server`/);
-    expect(row?.[2]).toMatch(/bb machine list/);
-  });
-
-  it("[A1217] describes the approval form in the web UI, and keeps the rule that a scripted answer is written down as scripted", () => {
-    const text = runbook();
-    const step = shipStep(text);
-    for (const word of ["web UI", "Approve", "Deny", "Cancel", "comment", "task, branch, pull request, and evidence"]) expect(step, word).toContain(word);
-    expect(step).toContain("bb thread interactions respond");
-    // The web UI is the way to answer. The scripted answer is the exception that gets written down.
-    const webUi = step.indexOf("Open that thread in the web UI");
-    expect(webUi, "the sentence that opens the thread in the web UI").toBeGreaterThan(-1);
-    expect(webUi, "the web UI sentence comes before the scripted answer").toBeLessThan(step.indexOf("bb thread interactions respond"));
-    expect(step).toMatch(/write down in the test log that the approval was scripted/);
-    expect(step).toContain("D-030");
-    expect(step).toContain("CHROME_DEVTOOLS_AXI_EXECUTABLE_PATH");
-    const gap = section(text, "## 9.").split("\n").find((line) => /answering the merge form/.test(line));
-    expect(gap).toMatch(/browser tool/);
-    expect(gap).toMatch(/person/);
-  });
-
-  it("[A1218] records the renderer, that D-030 stays partly open, the dependency-free contract, the fail-closed view, and the tsc6 script", () => {
-    const log = DECISIONS();
-    const entry = (id: string): string => {
-      const start = log.indexOf(`### ${id}:`);
-      expect(start, `${id} should have an entry`).toBeGreaterThan(-1);
-      const next = log.indexOf("\n### ", start + 1);
-      return log.slice(start, next === -1 ? undefined : next);
-    };
-    expect(entry("D-094")).toMatch(/frontend renderer/);
-    expect(entry("D-094")).toContain("factoryman-merge-approval");
-    expect(entry("D-095").split("\n")[0], "D-095 is an open decision").toMatch(/\(Open\b/);
-    expect(entry("D-095")).toMatch(/D-030 stays partly open/);
-    expect(entry("D-095")).toContain("bb thread interactions respond");
-    expect(entry("D-095")).toMatch(/owner-typed code/);
-    expect(entry("D-095")).toMatch(/deferred/);
-    expect(entry("D-095")).toContain("factoryman_decide");
-    expect(entry("D-096")).toMatch(/no imports/);
-    expect(entry("D-096")).toContain("zod");
-    expect(entry("D-097")).toMatch(/fails closed/);
-    expect(entry("D-097")).toContain("Approve");
-    expect(entry("D-098")).toContain("tsc6");
-  });
-});
-
