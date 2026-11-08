@@ -95,3 +95,16 @@ U1237 (accessible names of Approve, Deny, and Cancel) waits for group 5, because
 - refactor: none beyond deleting the unused helper
 - not done on purpose: the pull request link is not yet guarded against non-`http(s)` values (U1222, group 6 writes that test first), a rejected answer is not caught (U1231, group 6), and the Deny and Cancel buttons come in group 5.
 - commit: see git history, "feat: show the merge approval form in the web UI and approve from it"
+
+## Group 5: deny and cancel (A1206 to A1208, U1227, U1228, U1237)
+
+User story 2. The tests were written against the group 4 form, which has only Approve.
+
+- tests: `[U1227]`, `[U1228]`, `[U1237]` in `src/app/merge-approval-form.test.tsx`, and `[A1206]` to `[A1208]` in `test/acceptance/merge-approval-form.test.tsx`
+- red: `pnpm vitest run src/app test/acceptance/merge-approval-form.test.tsx` -> 6 failed, 25 passed
+  - `[U1227]`, `[A1206]`, `[A1207]`: `TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Deny"`
+  - `[U1228]`, `[A1208]`: `... the role "button" and name "Cancel"`
+  - `[U1237]`: `AssertionError: expected [ 'Approve' ] to deeply equal [ 'Approve', 'Deny', 'Cancel' ]`
+- green: `src/app/merge-approval-form.tsx` shares one `run(action)` for the three buttons (the in-flight guard and the phase), and adds Deny (outline) and Cancel (ghost). `pnpm run check` exited 0 -> 95 files, 1171 passed, 0 failed.
+- refactor: the single `approve()` became `run(action)` in the same step, because the second and third button would have copied it. The suite stayed green.
+- commit: see git history, "feat: deny or cancel a merge from the approval form"

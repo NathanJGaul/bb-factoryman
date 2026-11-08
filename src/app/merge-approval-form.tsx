@@ -7,6 +7,8 @@ type Phase = "idle" | "sending" | "sent";
 const BUTTON =
   "inline-flex h-9 cursor-pointer items-center justify-center whitespace-nowrap rounded-md px-4 text-sm font-medium focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50";
 const PRIMARY = `${BUTTON} bg-foreground text-background hover:bg-foreground/90`;
+const OUTLINE = `${BUTTON} border border-input bg-transparent hover:bg-state-hover hover:text-foreground`;
+const GHOST = `${BUTTON} hover:bg-state-hover hover:text-foreground`;
 
 function None() {
   return <span className="text-muted-foreground">None</span>;
@@ -32,7 +34,7 @@ function Request({ request }: { request: MergeRequestPayload }) {
 }
 
 /** The body of the merge approval form: the request, an optional comment, and the owner's decision. */
-export function MergeApprovalForm({ interaction, submit }: PluginPendingInteractionProps) {
+export function MergeApprovalForm({ interaction, submit, cancel }: PluginPendingInteractionProps) {
   const request = readMergePayload(interaction.payload);
   const [comment, setComment] = useState("");
   const [phase, setPhase] = useState<Phase>("idle");
@@ -40,11 +42,11 @@ export function MergeApprovalForm({ interaction, submit }: PluginPendingInteract
   const commentId = useId();
   const busy = phase !== "idle";
 
-  async function approve() {
+  async function run(action: () => Promise<void>) {
     if (inFlight.current) return;
     inFlight.current = true;
     setPhase("sending");
-    await submit(answerFor("approved", comment));
+    await action();
     setPhase("sent");
   }
 
@@ -66,8 +68,14 @@ export function MergeApprovalForm({ interaction, submit }: PluginPendingInteract
         />
       </div>
       <div className="flex flex-wrap gap-2">
-        <button type="button" className={PRIMARY} disabled={busy} onClick={() => void approve()}>
+        <button type="button" className={PRIMARY} disabled={busy} onClick={() => void run(() => submit(answerFor("approved", comment)))}>
           Approve
+        </button>
+        <button type="button" className={OUTLINE} disabled={busy} onClick={() => void run(() => submit(answerFor("denied", comment)))}>
+          Deny
+        </button>
+        <button type="button" className={GHOST} disabled={busy} onClick={() => void run(cancel)}>
+          Cancel
         </button>
       </div>
     </div>

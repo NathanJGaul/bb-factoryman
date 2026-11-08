@@ -25,9 +25,9 @@ The suite baseline was 92 files and 1134 tests, all passing.
 | A1203 | Pressing Approve in the renderer ends the task `merged`, with one `user` approval row that says `approved` | AC-1.3, FR-1203 | example | DONE | `test/acceptance/merge-approval-form.test.tsx::[A1203]` |
 | A1204 | A typed comment travels with Approve into the approval record, and a blank comment leaves the record without one | AC-1.4, FR-1203 | example | DONE | `test/acceptance/merge-approval-form.test.tsx::[A1204]` |
 | A1205 | While an answer is in flight every control is disabled, and two presses send one answer | AC-1.5, FR-1206 | example | DONE | `test/acceptance/merge-approval-form.test.tsx::[A1205]` |
-| A1206 | Pressing Deny merges nothing, records a `denied` row, and leaves the task `awaiting_approval` | AC-2.1, FR-1203 | example | PENDING | `test/acceptance/merge-approval-form.test.tsx::[A1206]` |
-| A1207 | A typed comment travels with Deny into the denial record | AC-2.2, FR-1203 | example | PENDING | `test/acceptance/merge-approval-form.test.tsx::[A1207]` |
-| A1208 | Pressing Cancel records no approval, runs no merge, and leaves the task `awaiting_approval`, and a later call opens a new form | AC-2.3, FR-1204 | example | PENDING | `test/acceptance/merge-approval-form.test.tsx::[A1208]` |
+| A1206 | Pressing Deny merges nothing, records a `denied` row, and leaves the task `awaiting_approval` | AC-2.1, FR-1203 | example | DONE | `test/acceptance/merge-approval-form.test.tsx::[A1206]` |
+| A1207 | A typed comment travels with Deny into the denial record | AC-2.2, FR-1203 | example | DONE | `test/acceptance/merge-approval-form.test.tsx::[A1207]` |
+| A1208 | Pressing Cancel records no approval, runs no merge, and leaves the task `awaiting_approval`, and a later call opens a new form | AC-2.3, FR-1204 | example | DONE | `test/acceptance/merge-approval-form.test.tsx::[A1208]` |
 | A1209 | A request the renderer cannot read offers no Approve, and Deny and Cancel still work | AC-3.1, FR-1205 | example | PENDING | `test/acceptance/merge-approval-form.test.tsx::[A1209]` |
 | A1210 | A rejected answer shows an error, re-enables the controls, keeps the typed comment, and records nothing | AC-3.2, FR-1206 | example | PENDING | `test/acceptance/merge-approval-form.test.tsx::[A1210]` |
 | A1211 | A pull request value that is not an `http` or `https` URL shows as plain text | AC-3.3, FR-1207 | example | PENDING | `test/acceptance/merge-approval-form.test.tsx::[A1211]` |
@@ -78,8 +78,8 @@ The suite baseline was 92 files and 1134 tests, all passing.
 | U1224 | Shows the evidence with its line breaks kept | AC-1.2, FR-1202 | example | DONE | `src/app/merge-approval-form.test.tsx::[U1224]` |
 | U1225 | Pressing Approve calls `submit` once with `{ "decision": "approved" }` | AC-1.3, FR-1203 | example | DONE | `src/app/merge-approval-form.test.tsx::[U1225]` |
 | U1226 | Pressing Approve after typing a comment submits the trimmed comment, and a blank comment is left out | AC-1.4, FR-1203 | example | DONE | `src/app/merge-approval-form.test.tsx::[U1226]` |
-| U1227 | Pressing Deny calls `submit` once with `{ "decision": "denied" }`, with the trimmed comment when typed | AC-2.1, AC-2.2, FR-1203 | example | PENDING | `src/app/merge-approval-form.test.tsx::[U1227]` |
-| U1228 | Pressing Cancel calls `cancel` once and never calls `submit` | AC-2.3, FR-1204 | example | PENDING | `src/app/merge-approval-form.test.tsx::[U1228]` |
+| U1227 | Pressing Deny calls `submit` once with `{ "decision": "denied" }`, with the trimmed comment when typed | AC-2.1, AC-2.2, FR-1203 | example | DONE | `src/app/merge-approval-form.test.tsx::[U1227]` |
+| U1228 | Pressing Cancel calls `cancel` once and never calls `submit` | AC-2.3, FR-1204 | example | DONE | `src/app/merge-approval-form.test.tsx::[U1228]` |
 | U1229 | The controls are enabled before a press, disabled while `submit` is pending, and stay disabled after it resolves; the form is `aria-busy` while pending | AC-1.5, FR-1206 | example | DONE | `src/app/merge-approval-form.test.tsx::[U1229]` |
 | U1230 | A second press while an answer is pending sends no second answer | AC-1.5, FR-1206 | example | DONE | `src/app/merge-approval-form.test.tsx::[U1230]` |
 | U1231 | A rejected `submit` shows its message in an alert, re-enables the controls, and keeps the typed comment | AC-3.2, FR-1206 | example | PENDING | `src/app/merge-approval-form.test.tsx::[U1231]` |
@@ -88,7 +88,7 @@ The suite baseline was 92 files and 1134 tests, all passing.
 | U1234 | Pressing Deny on the unreadable notice submits `{ "decision": "denied" }`, and pressing Cancel calls `cancel` | AC-3.1, FR-1204, FR-1205 | example | PENDING | `src/app/merge-approval-form.test.tsx::[U1234]` |
 | U1235 | Shows the expiry in a `<time>` element when `expiresAt` is set, and no expiry line when it is `null` | AC-3.5 | example | PENDING | `src/app/merge-approval-form.test.tsx::[U1235]` |
 | U1236 | Pressing Enter in the comment field submits nothing | FR-1203, FR-1209 | example | PENDING | `src/app/merge-approval-form.test.tsx::[U1236]` |
-| U1237 | The comment field has a label, and Approve, Deny, and Cancel have accessible names | FR-1209 | example | PENDING | `src/app/merge-approval-form.test.tsx::[U1237]` |
+| U1237 | The comment field has a label, and Approve, Deny, and Cancel have accessible names | FR-1209 | example | DONE | `src/app/merge-approval-form.test.tsx::[U1237]` |
 | U1238 | The evidence block and the branch carry the wrapping and scrolling classes that keep long text inside the form | AC-3.4, FR-1209 | example | PENDING | `src/app/merge-approval-form.test.tsx::[U1238]` |
 | U1239 | The component source names theme tokens only: no hex color and no fixed Tailwind palette color | FR-1209 | example | PENDING | `src/app/merge-approval-form.test.tsx::[U1239]` |
 

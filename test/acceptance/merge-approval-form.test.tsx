@@ -153,4 +153,53 @@ describe("the merge approval form through the plugin factory and the registered 
     expect(approvals(world)).toHaveLength(1);
     expect(merges(world)).toHaveLength(1);
   });
+
+  it("[A1206] merges nothing, records a denied row, and leaves the task awaiting approval, when Deny is pressed", async () => {
+    const world = await readyWorld();
+    const form = await openForm(world);
+    const { submitted } = await mountRenderer(world, form);
+    await press("Deny");
+    const result = await form.call;
+    expect(submitted).toStrictEqual([{ decision: "denied" }]);
+    expect(result.isError).toBe(true);
+    expect(merges(world)).toEqual([]);
+    expect(state(world)).toBe("awaiting_approval");
+    expect(approvals(world)).toMatchObject([{ scope: "merge", decision: "denied" }]);
+    const rows = world.store.listEvents({ taskId: "t1" }).filter((row) => row.event === "record_approval");
+    expect(rows).toMatchObject([{ actor: "user", outcome: "applied" }]);
+  });
+
+  it("[A1207] carries a typed comment into the denial record and the supervisor's result", async () => {
+    const world = await readyWorld();
+    const form = await openForm(world);
+    await mountRenderer(world, form);
+    type("  Not before the release.  ");
+    await press("Deny");
+    const result = await form.call;
+    const row = world.store.listEvents({ taskId: "t1" }).find((candidate) => candidate.event === "record_approval");
+    expect(row?.evidence).toBe("Not before the release.");
+    expect(result.text).toContain("Not before the release.");
+    expect(state(world)).toBe("awaiting_approval");
+  });
+
+  it("[A1208] records no approval and runs no merge when Cancel is pressed, and a later call opens a new form", async () => {
+    const world = await readyWorld();
+    const form = await openForm(world);
+    await mountRenderer(world, form);
+    await press("Cancel");
+    const result = await form.call;
+    expect(result.isError).toBe(true);
+    expect(result.text).toMatch(/did not answer/i);
+    expect(merges(world)).toEqual([]);
+    expect(state(world)).toBe("awaiting_approval");
+    expect(approvals(world)).toEqual([]);
+
+    cleanup();
+    const again = await openForm(world);
+    await mountRenderer(world, again);
+    await press("Approve");
+    expect((await again.call).isError).toBe(false);
+    expect(state(world)).toBe("merged");
+  });
 });
+

@@ -119,3 +119,40 @@ describe("MergeApprovalForm: an answer in flight", () => {
     expect(submit).toHaveBeenCalledTimes(1);
   });
 });
+
+describe("MergeApprovalForm: Deny and Cancel", () => {
+  it("[U1227] submits { decision: denied } once when Deny is pressed, with the trimmed comment when one is typed", async () => {
+    const plain = mount();
+    await act(async () => {
+      fireEvent.click(button("Deny"));
+    });
+    expect(plain.submit).toHaveBeenCalledTimes(1);
+    expect(plain.submit.mock.calls[0]?.[0]).toStrictEqual({ decision: "denied" });
+
+    cleanup();
+    const typed = mount();
+    fireEvent.change(comment(), { target: { value: "  Not yet.  " } });
+    await act(async () => {
+      fireEvent.click(button("Deny"));
+    });
+    expect(typed.submit).toHaveBeenCalledTimes(1);
+    expect(typed.submit.mock.calls[0]?.[0]).toStrictEqual({ decision: "denied", comment: "Not yet." });
+  });
+
+  it("[U1228] calls cancel once when Cancel is pressed, and never calls submit", async () => {
+    const { submit, cancel } = mount();
+    await act(async () => {
+      fireEvent.click(button("Cancel"));
+    });
+    expect(cancel).toHaveBeenCalledTimes(1);
+    expect(submit).not.toHaveBeenCalled();
+  });
+
+  it("[U1237] labels the comment field and names the Approve, Deny, and Cancel buttons", () => {
+    mount();
+    expect(screen.getByLabelText("Comment (optional)")).toBe(comment());
+    expect(screen.getAllByRole("button").map((control) => control.textContent)).toEqual(["Approve", "Deny", "Cancel"]);
+    for (const name of ["Approve", "Deny", "Cancel"]) expect(button(name)).toBeTruthy();
+  });
+});
+

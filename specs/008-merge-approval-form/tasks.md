@@ -27,9 +27,9 @@ The cycle log records the red evidence. Tests are never weakened, skipped, or de
 **Goal**: The owner sees the request in the plugin's own form and approves with one press.
 **Independent test**: The acceptance test opens the form through the plugin factory, presses Approve in the registered renderer, and the task ends `merged`.
 
-- [ ] T1210 [US1] [U1220] [U1221] [U1223] [U1224] [U1225] [U1226] [U1229] [U1230] [U1237] Write the red tests in `src/app/merge-approval-form.test.tsx` for the labelled facts, the link, the "None" values, the kept line breaks, Approve with and without a comment, the in-flight state, and the accessible names.
+- [X] T1210 [US1] [U1220] [U1221] [U1223] [U1224] [U1225] [U1226] [U1229] [U1230] [U1237] Write the red tests in `src/app/merge-approval-form.test.tsx` for the labelled facts, the link, the "None" values, the kept line breaks, Approve with and without a comment, the in-flight state, and the accessible names.
 - [X] T1211 [US1] [A1201] [A1202] [A1203] [A1204] [A1205] [A1220] Write the red acceptance tests in `test/acceptance/merge-approval-form.test.tsx` (load the app with `loadPluginApp`, open the form through `loadWorld` and `factoryman_merge`, render the registration against the pending request, press Approve) and the `bb.app` manifest test in `test/acceptance/manifest.test.ts`.
-- [ ] T1212 [US1] [U1220] [U1221] [U1223] [U1224] [U1225] [U1226] [U1229] [U1230] [U1237] Create `src/app/merge-approval-form.tsx` (the labelled list, the evidence block, the comment field, the Approve action, the in-flight state).
+- [X] T1212 [US1] [U1220] [U1221] [U1223] [U1224] [U1225] [U1226] [U1229] [U1230] [U1237] Create `src/app/merge-approval-form.tsx` (the labelled list, the evidence block, the comment field, the Approve action, the in-flight state).
 - [X] T1213 [US1] [A1201] [A1202] [A1203] [A1204] [A1205] [A1220] Create `src/app.tsx` (`definePluginApp` with the `pendingInteraction` slot) and set `bb.app` in `package.json`.
 - [X] T1214 [US1] [A1201] [A1202] [A1203] [A1204] [A1205] [A1220] Outer loop: the story 1 acceptance tests are green and `pnpm test` is green.
 
@@ -38,10 +38,10 @@ The cycle log records the red evidence. Tests are never weakened, skipped, or de
 **Goal**: The owner denies, with an optional comment, and can cancel with no decision.
 **Independent test**: The acceptance test presses Deny and the task stays `awaiting_approval` with a `denied` row.
 
-- [ ] T1220 [US2] [U1227] [U1228] Write the red tests in `src/app/merge-approval-form.test.tsx` for Deny (with and without a comment) and Cancel.
-- [ ] T1221 [US2] [A1206] [A1207] [A1208] Write the red acceptance tests in `test/acceptance/merge-approval-form.test.tsx`: Deny, Deny with a comment, and Cancel followed by a new form.
-- [ ] T1222 [US2] [U1227] [U1228] Add the Deny and Cancel actions to `src/app/merge-approval-form.tsx`.
-- [ ] T1223 [US2] [A1206] [A1207] [A1208] Outer loop: the story 2 acceptance tests are green and `pnpm test` is green.
+- [X] T1220 [US2] [U1227] [U1228] Write the red tests in `src/app/merge-approval-form.test.tsx` for Deny (with and without a comment) and Cancel.
+- [X] T1221 [US2] [A1206] [A1207] [A1208] Write the red acceptance tests in `test/acceptance/merge-approval-form.test.tsx`: Deny, Deny with a comment, and Cancel followed by a new form.
+- [X] T1222 [US2] [U1227] [U1228] Add the Deny and Cancel actions to `src/app/merge-approval-form.tsx`.
+- [X] T1223 [US2] [A1206] [A1207] [A1208] Outer loop: the story 2 acceptance tests are green and `pnpm test` is green.
 
 ## Phase 5: User story 3 - Never approve blind, never fail open (P1)
 
