@@ -47,3 +47,30 @@ To get a real red, the cycle reverted `lib` and `jsx` in `tsconfig.json` to thei
   - `pnpm run check` -> 92 files, 1139 passed, 0 failed
 - refactor: none needed
 - commit: see git history, "feat: keep the frontend free of server imports with a lint rule"
+
+## Group 3: the contract module (U1201 to U1212)
+
+One red run for the whole group, because the twelve behaviors share one small file and each test fails or passes alone.
+The stub `src/approval/contract.ts` had the real exports with wrong bodies: an empty renderer id, a reader that returns `null`, and a builder that returns only the decision.
+
+- test: `src/approval/contract.test.ts` (new, twelve tests, `[U1201]` to `[U1212]`)
+- red: `pnpm vitest run src/approval/contract.test.ts` -> 6 failed, 6 passed
+  - `[U1201]`, `[U1206]`: `AssertionError: expected null to deeply equal { taskId: 't1', branch: 'fm/t1', …(2) }` and `... { taskId: '', branch: '', …(2) }`
+  - `[U1208]`: `AssertionError: expected { decision: 'approved' } to strictly equal { decision: 'approved', …(1) }`
+  - `[U1209]`: `AssertionError: expected { decision: 'approved' } to strictly equal { decision: 'approved', comment: 'a' }`
+  - `[U1211]`: `AssertionError: expected null to deeply equal { taskId: 't1', branch: Any<String>, … }`, and the renderer id check before it passed because the stub's id is read from the real form
+  - `[U1212]`: `AssertionError: expected '' to be 'factoryman-merge-approval'`
+  - Passed against the stub, as expected for a stub that returns `null` and drops the comment: `[U1202]` to `[U1205]` (a `null` answer is right for a wrong shape), `[U1207]`, `[U1210]`. The deliberate mutants below show that these tests can fail.
+- deliberate mutants, run after green on the finished module (the file was restored byte for byte after each):
+  - field-count check removed -> `[U1205]` failed
+  - `evidence` type check removed -> `[U1204]` failed
+  - `null` check removed -> `[U1202]` failed (`Object.keys(null)` throws)
+  - blank comment kept as an `undefined` key -> `[U1207]`, `[U1209]` failed
+  - stray field added to the answer -> `[U1208]`, `[U1209]`, `[U1210]` failed
+  - comment not trimmed -> `[U1208]`, `[U1209]` failed
+  - `[U1203]` (a missing field) is also caught by the field-count check, so no single-line mutant isolates it; `[U1204]` and `[U1205]` cover the checks beneath it.
+- green: `src/approval/contract.ts` (no imports) with the id, `MergeRequestPayload`, `readMergePayload`, `ApprovalAnswer`, and `answerFor`.
+  - The first `pnpm run check` after the module failed lint: `27:24 error '_omitted' is assigned a value but never used` in the `[U1203]` test. This entry first claimed a passing check before that run was read, and the commit that carried the claim was amended. The test now builds the incomplete object with `delete`, and the re-run of `pnpm run check` exited 0: 93 files, 1151 passed, 0 failed.
+- refactor: none needed
+- not done in this group: U1213 stays `BASELINE` and task T1207 (make `src/tools/merge.ts` use the contract module) is left for `/speckit.implement`, because the loop never ticks a task whose behavior is a baseline. `src/tools/merge.ts` keeps its own copy of the id until then, and `[U1211]` pins that both sides agree.
+- commit: see git history, "feat: add the approval contract module shared by the merge tool and the form"

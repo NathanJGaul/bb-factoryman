@@ -48,18 +48,18 @@ The suite baseline was 92 files and 1134 tests, all passing.
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| U1201 | `readMergePayload` returns the payload for an object with exactly the four string fields | FR-1202, FR-1205 | example | PENDING | `src/approval/contract.test.ts::[U1201]` |
-| U1202 | It returns `null` for `null`, a string, a number, and an array | FR-1205 | example | PENDING | `src/approval/contract.test.ts::[U1202]` |
-| U1203 | It returns `null` when any one of the four fields is missing | FR-1205 | example | PENDING | `src/approval/contract.test.ts::[U1203]` |
-| U1204 | It returns `null` when a field is a number, `null`, or an object | FR-1205 | example | PENDING | `src/approval/contract.test.ts::[U1204]` |
-| U1205 | It returns `null` when the object carries a fifth field | FR-1205 | example | PENDING | `src/approval/contract.test.ts::[U1205]` |
-| U1206 | It accepts empty strings in every field, because a `local-only` task has no pull request | FR-1202 | example | PENDING | `src/approval/contract.test.ts::[U1206]` |
-| U1207 | `answerFor("approved")` and `answerFor("denied")` without a comment carry only the decision | FR-1203 | example | PENDING | `src/approval/contract.test.ts::[U1207]` |
-| U1208 | `answerFor` trims the comment and keeps the text between | FR-1203 | example | PENDING | `src/approval/contract.test.ts::[U1208]` |
-| U1209 | `answerFor` leaves out a comment that is empty, spaces, or a line break, and keeps a one-character comment | FR-1203 | example | PENDING | `src/approval/contract.test.ts::[U1209]` |
-| U1210 | Every `answerFor` result passes `approvalAnswerSchema`, and a result with a stray field would not | FR-1203, FR-1208 | example | PENDING | `src/approval/contract.test.ts::[U1210]` |
-| U1211 | The payload that `factoryman_merge` builds for a ship task passes `readMergePayload` | FR-1202, FR-1208 | example | PENDING | `src/approval/contract.test.ts::[U1211]` |
-| U1212 | `MERGE_RENDERER_ID` is `factoryman-merge-approval` and matches bb's renderer id pattern | FR-1201 | example | PENDING | `src/approval/contract.test.ts::[U1212]` |
+| U1201 | `readMergePayload` returns the payload for an object with exactly the four string fields | FR-1202, FR-1205 | example | DONE | `src/approval/contract.test.ts::[U1201]` |
+| U1202 | It returns `null` for `null`, a string, a number, and an array | FR-1205 | example | DONE | `src/approval/contract.test.ts::[U1202]` |
+| U1203 | It returns `null` when any one of the four fields is missing | FR-1205 | example | DONE | `src/approval/contract.test.ts::[U1203]` |
+| U1204 | It returns `null` when a field is a number, `null`, or an object | FR-1205 | example | DONE | `src/approval/contract.test.ts::[U1204]` |
+| U1205 | It returns `null` when the object carries a fifth field | FR-1205 | example | DONE | `src/approval/contract.test.ts::[U1205]` |
+| U1206 | It accepts empty strings in every field, because a `local-only` task has no pull request | FR-1202 | example | DONE | `src/approval/contract.test.ts::[U1206]` |
+| U1207 | `answerFor("approved")` and `answerFor("denied")` without a comment carry only the decision | FR-1203 | example | DONE | `src/approval/contract.test.ts::[U1207]` |
+| U1208 | `answerFor` trims the comment and keeps the text between | FR-1203 | example | DONE | `src/approval/contract.test.ts::[U1208]` |
+| U1209 | `answerFor` leaves out a comment that is empty, spaces, or a line break, and keeps a one-character comment | FR-1203 | example | DONE | `src/approval/contract.test.ts::[U1209]` |
+| U1210 | Every `answerFor` result passes `approvalAnswerSchema`, and a result with a stray field would not | FR-1203, FR-1208 | example | DONE | `src/approval/contract.test.ts::[U1210]` |
+| U1211 | The payload that `factoryman_merge` builds for a ship task passes `readMergePayload` | FR-1202, FR-1208 | example | DONE | `src/approval/contract.test.ts::[U1211]` |
+| U1212 | `MERGE_RENDERER_ID` is `factoryman-merge-approval` and matches bb's renderer id pattern | FR-1201 | example | DONE | `src/approval/contract.test.ts::[U1212]` |
 
 ### `src/tools/merge.ts`
 
