@@ -853,7 +853,7 @@ The first version of the test also checked that `node_modules/.bin/tsc6` exists.
 The audit dropped that check, because it tests the install layout and not the feature.
 `pnpm run check` fails without `tsc6` anyway.
 
-### D-099: Seven guard tests came after their code (Deviation, the owner decides)
+### D-099: Seven guard tests came after their code (Deviation, accepted by the captain)
 
 Constitution principle V says that every behavior change is driven by a test that failed first.
 For seven behaviors the code existed before the test, so the TDD audit (`specs/008-merge-approval-form/tdd/verification.md`) classes them `TEST_AFTER`, and the rubric fails a feature for any `TEST_AFTER`.
@@ -865,4 +865,6 @@ The repository commits only on green, so the history cannot show a test before i
 The audit's other checks are clean: no open `HIGH` smell, 45 of 45 hand-picked mutants killed, and every acceptance criterion covered.
 The owner decides whether to accept the seven as a documented exception.
 Reworking them would mean new history for tests that already fail when their property is removed, and the plan does not recommend it.
-
+The captain accepted the seven as a recorded deviation, as for the earlier factoryman milestones, on 2026-11-08.
+They are guard tests that fail against the code without the guard.
+The note stays in `tdd/verification.md`.
