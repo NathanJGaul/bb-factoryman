@@ -281,3 +281,10 @@ The audit's mutants were re-applied by hand and restored with `git checkout`.
 - regression sample after all of it: mutants M01, M02, M03, M05, M09, M14, M19, M22, M26, M27, and M28 are still killed (M09 now also by `[U1241]`).
 - gate: `pnpm run check` exited 0 -> 95 files, 1254 passed, 0 failed.
 - commit: see git history, "test: name each case, split multi-scenario tests, and tighten the config and docs checks"
+
+## Close-out checks (tasks T1270 and T1272)
+
+- `pnpm run check` exited 0 -> typecheck (`tsc6`), lint, and 95 files with 1254 tests passed, 0 failed (the audit's run at `497f69c` had 1189 tests; the groups 9 and the remediations added behaviors U1241 and U1242 and turned case loops into `it.each`).
+- `BB_CLI_ERROR_LOG=0 pnpm run build` exited 0 and wrote `dist/server.js`, `dist/app.js` (8.4 KB, no `zod`), `dist/app.css`, and the three `*.meta.json` files. `dist/` is git-ignored, and I removed it afterwards. The real `~/.bb/plugins` listing is unchanged (only the `toolchain-0.28.1-4.3.0-4.3.0-4.3.0` cache from 2026-11-05).
+- The worktree holds no lab file: the lab ran in `/var/tmp/bblab-approval-form`, which I removed, and the scratch files sit in the scratchpad.
+- every acceptance behavior (`A1201` to `A1221`) is `DONE` in `tdd/test-list.md`. `A1219` has its 20 screenshots and `lab-check.md` in `data/bb-factoryman-approval-form/` in the firstmate home. `U1213` stays a baseline.

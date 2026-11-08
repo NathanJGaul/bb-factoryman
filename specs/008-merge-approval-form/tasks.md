@@ -81,10 +81,10 @@ The cycle log records the red evidence. Tests are never weakened, skipped, or de
 
 ## Phase 9: Close-out
 
-- [ ] T1270 `pnpm run check` and `pnpm run build` pass, the worktree holds no lab files, and the suite count is recorded in `tdd/cycle-log.md`.
+- [X] T1270 `pnpm run check` and `pnpm run build` pass, the worktree holds no lab files, and the suite count is recorded in `tdd/cycle-log.md`.
 - [ ] T1271 `/speckit.tdd.verify`, remediation, `/speckit.implement`, `/speckit.checklist`, `/speckit.analyze`, and `/speckit.converge`.
 - [X] T1273 [U1240] Found in the lab (T1263): write the red test in `src/app/merge-approval-form.test.tsx` that the pull request link is underlined, then style the link in `src/app/merge-approval-form.tsx`.
-- [ ] T1272 Outer loop for the whole feature: every `A` behavior in `tdd/test-list.md` is `DONE`, and A1219 has its screenshots.
+- [X] T1272 Outer loop for the whole feature: every `A` behavior in `tdd/test-list.md` is `DONE`, and A1219 has its screenshots.
 
 ## Dependencies
 
