@@ -129,3 +129,11 @@ Mutant ids (M22 and so on) are the ones in the report's mutation table, and the 
 - [X] T1292 Finding 13 (MED): in `test/acceptance/live-check.test.ts` (`[A1217]`, `[A1218]`), assert order and status, not only presence: the web UI sentences come before the scripted-answer sentence in the ship step, and D-095's status is `Open`. Done when a mutant that swaps those two sentences fails `[A1217]`.
 - [X] T1293 Finding 14 (LOW): give each `[A1221]` test its own id suffix, name the `Date.UTC` and `1_700_000_000_000` literals, and name the failing control in the `.every(...)` assertions. Done when `grep -c "\[A1221\]" test/acceptance/lint-isolation.test.ts` is 1 per test name and the suite passes.
 
+## Phase 11: TDD remediation, second audit
+
+From `specs/008-merge-approval-form/tdd/verification.md` (verdict FAIL at `579b982`).
+The survivors and defects of the second run are closed in `579b982` (see `tdd/cycle-log.md`, "Remediation 3").
+One blocking reason is left, and no edit can clear it: seven behaviors are `TEST_AFTER` by the rubric's own wording.
+
+- [X] T1294 Record the seven test-after behaviors as a deviation in `docs/DECISIONS.md` (D-099), with the revert-reds and the mutants that back them, so that the owner can accept or reject the exception. Done when `grep -n "D-099" docs/DECISIONS.md` finds the entry.
+

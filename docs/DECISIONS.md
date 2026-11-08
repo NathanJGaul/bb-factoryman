@@ -847,3 +847,15 @@ DOM globals therefore type-check in server code too, and the lint rule in D-096 
 The pinned TypeScript is the alias `npm:@typescript/typescript6`, which installs the binary `tsc6` and no `tsc`.
 The `typecheck` script called `tsc`, so `pnpm run check` passed only on a machine with a global `tsc` on the PATH.
 The script now calls `tsc6`, and a test pins the script and the binary.
+
+### D-099: Seven guard tests came after their code (Deviation, the owner decides)
+
+Constitution principle V says that every behavior change is driven by a test that failed first.
+For seven behaviors the code existed before the test, so the TDD audit (`specs/008-merge-approval-form/tdd/verification.md`) classes them `TEST_AFTER`, and the rubric fails a feature for any `TEST_AFTER`.
+They are `A1215` (the `tsconfig.json` change came with the tooling), `U1236`, `U1238`, `U1239`, and `A1212` (the markup that they guard came with the first version of the form), and `U1241` and `U1242` (the audit found two mutants that no test pinned).
+All seven guard a property that the code already had. None drove new code.
+Each has a recorded revert-red in `tdd/cycle-log.md` (the property removed, the test failing with its failure line kept, the file restored) and at least one deliberate mutant that kills it.
+The repository commits only on green, so the history cannot show a test before its code, and the order cannot be rewritten afterwards.
+The audit's other checks are clean: no open `HIGH` smell, 45 of 45 hand-picked mutants killed, and every acceptance criterion covered.
+The owner decides whether to accept the seven as a documented exception. Reworking them would mean new history for tests that already fail when their property is removed, and the plan does not recommend it.
+
