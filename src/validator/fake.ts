@@ -1,4 +1,4 @@
-import type { Finding, RunView, Validator, ValidatorResult } from "./types";
+import type { Finding, RunView, Validator, ValidatorResult, Where } from "./types";
 
 type Operation = "start" | "status" | "findings" | "answer" | "cancel";
 
@@ -15,23 +15,23 @@ export class FakeValidator implements Validator {
     this.scripts.set(operation, [...results]);
   }
 
-  start(input: { cwd: string; intent: string; wait?: string }) {
+  start(input: Where & { intent: string; wait?: string }) {
     return this.next<RunView>("start", input);
   }
 
-  status(input: { cwd: string; runId?: string }) {
+  status(input: Where & { runId?: string }) {
     return this.next<RunView>("status", input);
   }
 
-  findings(input: { cwd: string; runId?: string }) {
+  findings(input: Where & { runId?: string }) {
     return this.next<Finding[]>("findings", input);
   }
 
-  answer(input: { cwd: string; response: import("./types").Answer }) {
+  answer(input: Where & { response: import("./types").Answer }) {
     return this.next<RunView>("answer", input);
   }
 
-  cancel(input: { cwd: string; runId?: string }) {
+  cancel(input: Where & { runId?: string }) {
     return this.next<void>("cancel", input);
   }
 

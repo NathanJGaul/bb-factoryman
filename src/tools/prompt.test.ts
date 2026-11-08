@@ -22,6 +22,13 @@ describe("buildWorkerPrompt", () => {
     expect(buildWorkerPrompt({ ...base, kind: "scout" })).toMatch(/report/i);
   });
 
+  it("[A1106] points the worker to the factoryman-worker skill, for every kind and mode", () => {
+    for (const mode of ["no-mistakes", "direct-PR", "local-only"] as const) {
+      expect(buildWorkerPrompt({ ...base, mode })).toMatch(/factoryman-worker skill/);
+    }
+    expect(buildWorkerPrompt({ ...base, kind: "scout" })).toMatch(/factoryman-worker skill/);
+  });
+
   it("[U32] tells every worker not to contact the owner", () => {
     for (const mode of ["no-mistakes", "direct-PR", "local-only"] as const) {
       expect(buildWorkerPrompt({ ...base, mode })).toMatch(/do not contact the owner/i);

@@ -16,9 +16,14 @@ function describeTask(rt: Runtime, task: TaskRow): string {
   const lines = [`Task ${task.taskId}: ${task.kind}, ${task.mode}, state ${task.state}`];
   if (task.workerThreadId !== null) lines.push(`  worker thread: ${task.workerThreadId}`);
   if (task.branch !== null) lines.push(`  branch: ${task.branch}`);
+  if (task.machine !== null) lines.push(`  machine: ${task.machine}`);
   if (task.pullRequestUrl !== null) lines.push(`  pull request: ${task.pullRequestUrl}`);
-  const start = rt.deps.store.listEvents({ taskId: task.taskId }).find((row) => row.event === "start" && row.outcome === "applied");
-  const firstLine = start?.evidence?.split("\n")[0]?.trim();
+  const rows = rt.deps.store.listEvents({ taskId: task.taskId });
+  const start = rows.find((row) => row.event === "start" && row.outcome === "applied");
+  // A queued task has no start yet. Its description is in the request on its create row.
+  const request = rows.find((row) => row.event === "create" && row.outcome === "applied")?.payload["request"];
+  const queuedText = typeof request === "object" && request !== null ? (request as { description?: unknown }).description : undefined;
+  const firstLine = (start?.evidence ?? (typeof queuedText === "string" ? queuedText : undefined))?.split("\n")[0]?.trim();
   if (firstLine) lines.push(`  description: ${clip(firstLine, 120)}`);
   return lines.join("\n");
 }

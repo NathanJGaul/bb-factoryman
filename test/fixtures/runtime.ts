@@ -1,6 +1,8 @@
 import { FakeBbPort } from "./bb-port";
+import { FakeFiles } from "./files";
 import { fakeClock } from "./store";
 import type { Exec, ExecResult } from "../../src/exec";
+import { RulesTableResolver } from "../../src/dispatch/resolver";
 import { Runtime, type Logger, type RuntimeDeps, type Settings } from "../../src/runtime";
 import { createMemoryStore } from "../../src/store/memory";
 
@@ -12,6 +14,7 @@ export interface LogLine {
 export interface TestRuntime {
   runtime: Runtime;
   bb: FakeBbPort;
+  files: FakeFiles;
   lines: LogLine[];
   execCalls: Array<{ command: string; args: readonly string[]; cwd?: string }>;
   /** Script exec results by command line; the default is a successful empty run. */
@@ -25,6 +28,7 @@ export interface TestRuntime {
 /** A runtime over the memory store, a fake clock, sequential IDs, and a fake port. */
 export function testRuntime(overrides: Partial<RuntimeDeps> = {}): TestRuntime {
   const bb = new FakeBbPort();
+  const files = new FakeFiles();
   const lines: LogLine[] = [];
   const log: Logger = {
     debug: (message) => lines.push({ level: "debug", message }),
@@ -38,7 +42,7 @@ export function testRuntime(overrides: Partial<RuntimeDeps> = {}): TestRuntime {
     execCalls.push({ command, args, cwd: options?.cwd });
     return state.execHandler(command, args);
   };
-  const settings: Settings = { mergeMethod: "squash", approvalTimeoutMs: 600_000 };
+  const settings: Settings = { mergeMethod: "squash", approvalTimeoutMs: 600_000, machinePollMs: 30_000, maxWorkers: 0 };
   const clock = fakeClock();
   const sleeps: number[] = [];
   let next = 1;
@@ -46,6 +50,8 @@ export function testRuntime(overrides: Partial<RuntimeDeps> = {}): TestRuntime {
     store: createMemoryStore(),
     bb,
     exec,
+    files,
+    resolver: new RulesTableResolver(),
     log,
     now: clock,
     newId: () => `t${next++}`,
@@ -56,6 +62,7 @@ export function testRuntime(overrides: Partial<RuntimeDeps> = {}): TestRuntime {
   return {
     runtime,
     bb,
+    files,
     lines,
     execCalls,
     get execHandler() {

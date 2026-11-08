@@ -2,7 +2,7 @@ import { writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { commitFile, git, initRepo, repoWithRemote, tmpDir } from "../../test/fixtures/git-repo";
-import { runCommand } from "../exec";
+import { runCommand, type Exec } from "../exec";
 import { worktreeReport } from "./report";
 
 const prMode = (path: string) => ({ path, mode: "no-mistakes" as const, baseBranch: null });
@@ -87,5 +87,19 @@ describe("worktreeReport", () => {
     const result = await worktreeReport(runCommand, prMode(tmpDir()));
     expect(result.ok).toBe(false);
     expect(!result.ok && result.message).toMatch(/git/i);
+  });
+
+  it("[U837] passes the host option and the path to each git command", async () => {
+    const calls: Array<{ args: readonly string[]; cwd?: string; host?: string | null }> = [];
+    const exec: Exec = async (_command, args, options) => {
+      calls.push({ args, cwd: options?.cwd, host: options?.host });
+      return { code: 0, stdout: args[0] === "rev-list" ? "0\n" : "", stderr: "" };
+    };
+    await worktreeReport(exec, { ...prMode("/work/gpu/tree"), host: "host_gpu" });
+    expect(calls).toHaveLength(2);
+    expect(calls.every((call) => call.host === "host_gpu" && call.cwd === "/work/gpu/tree")).toBe(true);
+    calls.length = 0;
+    await worktreeReport(exec, prMode("/work/tree"));
+    expect(calls.every((call) => call.host === null || call.host === undefined)).toBe(true);
   });
 });

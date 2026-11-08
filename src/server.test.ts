@@ -74,15 +74,21 @@ describe("createPlugin", () => {
     expect(paths.filter((path) => path.startsWith("plugins."))).toEqual([]);
   });
 
-  it("[U123] registers the command, the five tools, the six event handlers, and one service", async () => {
+  it("[U123] registers the command, the five tools, the seven event handlers, and two services", async () => {
     const host = createFakePluginHost({ pluginId: "factoryman" });
     await createPlugin()(host.bb);
     const { registrations } = host.harness.inspection;
     expect(registrations.cli?.name).toBe("factoryman");
     expect(registrations.agentTools).toHaveLength(5);
-    expect(registrations.services.map((service) => service.name)).toEqual(["factoryman-startup"]);
+    expect(registrations.services.map((service) => service.name)).toEqual(["factoryman-startup", "factoryman-machines"]);
     const handled = Object.entries(registrations.threadEventHandlers).filter(([, n]) => n > 0).map(([name]) => name).sort();
-    expect(handled).toEqual(["interaction.pending", "thread.archived", "thread.deleted", "thread.failed", "thread.idle", "turn.failed"]);
+    expect(handled).toEqual(["experimental_host.deleted", "interaction.pending", "thread.archived", "thread.deleted", "thread.failed", "thread.idle", "turn.failed"]);
+  });
+
+  it("[U876] defines the machine check interval setting with a default of 30 seconds", async () => {
+    const host = createFakePluginHost({ pluginId: "factoryman" });
+    await createPlugin()(host.bb);
+    expect(host.harness.inspection.registrations.settingsDescriptors["machinePollSeconds"]).toMatchObject({ type: "number", default: 30 });
   });
 
   it("[U124] leaves the replayed task rows equal to the cached rows after a seeded random walk of tool calls and thread events", async () => {

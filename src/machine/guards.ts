@@ -16,6 +16,8 @@ export const GUARD_NAMES = [
   "mergeAuthorized",
   "promotionAuthorized",
   "worktreeLanded",
+  "localOnlyStaysOnClone",
+  "customChecksPassed",
 ] as const;
 
 export type GuardName = (typeof GUARD_NAMES)[number];
@@ -113,6 +115,25 @@ const worktreeLanded: Guard = (_context, event) => {
     : refuse("unlanded_work", `Teardown refused: the worktree has ${unpushedCommits} unpushed commit(s).`);
 };
 
+/** Hard rule 6: `local-only` commits stay in the clone, so the worker must run on the machine that holds it. */
+const localOnlyStaysOnClone: Guard = (context, event) => {
+  if (event.type !== "start" || context.mode !== "local-only") return null;
+  if (event.machine === undefined || event.machine === null) return null;
+  return event.cloneMachine !== undefined && event.cloneMachine !== null && event.machine === event.cloneMachine
+    ? null
+    : refuse(
+        "machine_mismatch",
+        `A \`local-only\` task stays on the machine that holds the clone (${event.cloneMachine ?? "unknown"}), but the task was pinned to ${event.machine}.`,
+      );
+};
+
+/** Hard rule 7: a custom check can only add a refusal. A failed check refuses `handoff` and `ready`. */
+const customChecksPassed: Guard = (_context, event) => {
+  if (event.type !== "handoff" && event.type !== "ready") return null;
+  const failed = (event.checks ?? []).filter((entry) => !entry.passed).map((entry) => entry.name);
+  return failed.length === 0 ? null : refuse("check_failed", `Custom checks failed: ${failed.join(", ")}. Fix them, commit, and report again.`);
+};
+
 export const GUARDS: Record<GuardName, Guard> = {
   profileResolved,
   evidenceProvided,
@@ -127,4 +148,6 @@ export const GUARDS: Record<GuardName, Guard> = {
   mergeAuthorized,
   promotionAuthorized,
   worktreeLanded,
+  localOnlyStaysOnClone,
+  customChecksPassed,
 };

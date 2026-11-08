@@ -1,0 +1,212 @@
+{
+  "bbVersion": "0.48.1",
+  "commands": {
+    "status": {
+      "flags": [
+        "--help",
+        "--json"
+      ],
+      "ok": true
+    },
+    "machine list": {
+      "flags": [
+        "--all",
+        "--help",
+        "--json"
+      ],
+      "ok": true
+    },
+    "project create": {
+      "flags": [
+        "--help",
+        "--host",
+        "--json",
+        "--machine",
+        "--name",
+        "--root"
+      ],
+      "ok": true
+    },
+    "skill list": {
+      "flags": [
+        "--environment",
+        "--help",
+        "--json",
+        "--project"
+      ],
+      "ok": true
+    },
+    "provider models": {
+      "flags": [
+        "--environment",
+        "--help",
+        "--host",
+        "--json",
+        "--machine",
+        "--project",
+        "--selected-model"
+      ],
+      "ok": true
+    },
+    "provider list": {
+      "flags": [
+        "--all",
+        "--environment",
+        "--help",
+        "--host",
+        "--json",
+        "--machine"
+      ],
+      "ok": true
+    },
+    "thread spawn": {
+      "flags": [
+        "--base-branch",
+        "--environment",
+        "--environment-inputs",
+        "--environment-provider",
+        "--file",
+        "--help",
+        "--host",
+        "--image",
+        "--json",
+        "--lifecycle-owner-thread",
+        "--machine",
+        "--machine-inputs",
+        "--model",
+        "--new-environment",
+        "--new-machine",
+        "--option",
+        "--origin-kind",
+        "--parent-notifications",
+        "--parent-self",
+        "--parent-thread",
+        "--permission-mode",
+        "--pinned",
+        "--plan",
+        "--project",
+        "--prompt",
+        "--prompt-file",
+        "--provider",
+        "--reasoning-level",
+        "--section",
+        "--send-at",
+        "--service-tier",
+        "--source-seq-end",
+        "--source-thread",
+        "--title",
+        "--visibility"
+      ],
+      "ok": true
+    },
+    "thread tell": {
+      "flags": [
+        "--compact-first",
+        "--file",
+        "--help",
+        "--image",
+        "--json",
+        "--message-file",
+        "--mode",
+        "--model",
+        "--permission-mode",
+        "--plan",
+        "--reasoning-level",
+        "--send-at",
+        "--service-tier"
+      ],
+      "ok": true
+    },
+    "thread wait": {
+      "flags": [
+        "--event",
+        "--help",
+        "--json",
+        "--poll-interval",
+        "--status",
+        "--timeout"
+      ],
+      "ok": true
+    },
+    "thread output": {
+      "flags": [
+        "--help",
+        "--json",
+        "--self"
+      ],
+      "ok": true
+    },
+    "thread interactions respond": {
+      "flags": [
+        "--help",
+        "--json",
+        "--self",
+        "--value"
+      ],
+      "ok": true
+    },
+    "thread interactions list": {
+      "flags": [
+        "--help",
+        "--json",
+        "--self"
+      ],
+      "ok": true
+    },
+    "thread interactions show": {
+      "flags": [
+        "--help",
+        "--json",
+        "--self"
+      ],
+      "ok": true
+    },
+    "plugin install": {
+      "flags": [
+        "--help",
+        "--json",
+        "--no-wait",
+        "--plugin",
+        "--subdirectory",
+        "--tag-prefix",
+        "--yes"
+      ],
+      "ok": true
+    },
+    "plugin list": {
+      "flags": [
+        "--help",
+        "--json"
+      ],
+      "ok": true
+    },
+    "plugin logs": {
+      "flags": [
+        "--follow",
+        "--help",
+        "--lines"
+      ],
+      "ok": true
+    },
+    "plugin build": {
+      "flags": [
+        "--help"
+      ],
+      "ok": true
+    },
+    "plugin uninstall": {
+      "flags": [
+        "--help",
+        "--json"
+      ],
+      "ok": true
+    },
+    "plugin config": {
+      "flags": [
+        "--help",
+        "--json"
+      ],
+      "ok": true
+    }
+  }
+}

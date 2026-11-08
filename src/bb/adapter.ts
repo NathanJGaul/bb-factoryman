@@ -1,5 +1,5 @@
 import type { BbPluginApi } from "@get-bb/plugin-sdk";
-import type { BbPort, InputResult, Json } from "./port";
+import type { BbPort, InputResult, Json, MachineInfo, ProjectSource, TerminalRead } from "./port";
 
 const PERMISSION_MODES = ["accept-edits", "auto", "full"] as const;
 type PermissionMode = (typeof PERMISSION_MODES)[number];
@@ -32,10 +32,12 @@ function isNotFound(error: unknown): boolean {
 export function createBbPort(bb: BbPluginApi): BbPort {
   return {
     async spawnWorker(request) {
-      // bb 0.48.1 rejects a host workspace without a host ID (found in the live smoke test), so use the project's default host.
+      // bb 0.48.1 rejects a host workspace without a host ID (found in the live smoke test), so use the project's default host
+      // unless the task is pinned to a machine. A pinned machine must hold a source of the project (spike item 6).
       const project = await bb.sdk.projects.get({ projectId: request.projectId });
-      const hostId = project.sources.find((candidate) => candidate.isDefault)?.hostId;
+      const hostId = request.hostId ?? project.sources.find((candidate) => candidate.isDefault)?.hostId;
       if (hostId === undefined || hostId === null) throw new Error(`bb reports no host for project ${request.projectId}.`);
+      if (!project.sources.some((candidate) => candidate.hostId === hostId)) throw new Error(`The project has no source on host ${hostId}.`);
       const thread = await bb.sdk.threads.spawn({
         projectId: request.projectId,
         prompt: request.prompt,
@@ -100,6 +102,61 @@ export function createBbPort(bb: BbPluginApi): BbPort {
         request.signal ? { signal: request.signal } : undefined,
       );
       return result as InputResult;
+    },
+
+    async listMachines(): Promise<MachineInfo[]> {
+      const hosts = await bb.sdk.hosts.list();
+      return hosts.map((host) => ({
+        id: host.id,
+        name: host.name,
+        status: host.status,
+        phase: host.lifecycle.phase,
+        online: host.status === "connected" && host.lifecycle.phase === "active",
+      }));
+    },
+
+    async getProjectSources(projectId): Promise<ProjectSource[]> {
+      const project = await bb.sdk.projects.get({ projectId });
+      return project.sources.map((source) => ({ hostId: source.hostId, path: source.path, isDefault: source.isDefault }));
+    },
+
+    async getThreadCost(threadId) {
+      const context = await bb.sdk.threads.context({ threadId });
+      const cost = context.usage?.cost;
+      return cost === undefined || cost === null ? null : { amount: cost.amount, currency: cost.currency };
+    },
+
+    async listProjects() {
+      const projects = await bb.sdk.projects.list();
+      return projects.map((project) => ({ id: project.id, name: project.name }));
+    },
+
+    async startTerminal(hostId, cwd, argv) {
+      const session = await bb.sdk.terminals.create({ cols: 200, rows: 50, scope: { kind: "host_path", hostId, cwd }, start: { mode: "argv", argv } });
+      return { terminalId: session.id };
+    },
+
+    async readTerminal(terminalId): Promise<TerminalRead> {
+      const read = await bb.sdk.terminals.output({ terminalId });
+      const output = [...read.chunks]
+        .sort((a, b) => a.seq - b.seq)
+        .map((chunk) => Buffer.from(chunk.dataBase64, "base64").toString("utf8"))
+        .join("");
+      return { status: read.status, exitCode: read.exitCode, output, truncated: read.truncated };
+    },
+
+    async closeTerminal(terminalId) {
+      await bb.sdk.terminals.close({ terminalId, mode: "force" });
+    },
+
+    async listProviders(hostId) {
+      const providers = await bb.sdk.providers.list(hostId === undefined ? undefined : { hostId });
+      return providers.map((provider) => ({
+        id: provider.id,
+        available: provider.available,
+        permissionModes: [...provider.capabilities.permissionModes],
+        reasoningLevels: (provider.reasoningLevels ?? []).map((level) => level.id),
+      }));
     },
 
     async setThreadMetadata(threadId, metadata: Record<string, Json>) {

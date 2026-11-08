@@ -182,9 +182,33 @@ describe("start", () => {
     });
   });
 
+  it.each(["ship", "scout"] as const)("[U818] records the machine in a %s task and refuses a local-only start on another machine", (kind) => {
+    const task = snapshot("queued", { kind, profile: null, mode: "local-only" });
+    const moved = nextSnapshot(task, validEvent("start", { machine: "host_a", cloneMachine: "host_a" }));
+    expect(moved.context.machine).toBe("host_a");
+    const refused = transition(task, validEvent("start", { machine: "host_b", cloneMachine: "host_a" }));
+    expect(refused).toMatchObject({ ok: false, refusal: { code: "machine_mismatch" } });
+  });
+
   it("records a null machine when none is pinned", () => {
     const next = nextSnapshot(snapshot("queued", { profile: null }), validEvent("start", { machine: undefined }));
     expect(next.context.machine).toBeNull();
+  });
+});
+
+describe("custom checks", () => {
+  it("[U918] refuses handoff and ready with check_failed, and still runs the earlier guards first", () => {
+    const failing = [{ name: "lint", passed: false }];
+    const noMistakes = snapshot("working", { mode: "no-mistakes" });
+    expect(transition(noMistakes, validEvent("handoff", { checks: failing }))).toMatchObject({ ok: false, refusal: { code: "check_failed" } });
+    expect(transition(noMistakes, validEvent("handoff", { checks: [{ name: "lint", passed: true }] })).ok).toBe(true);
+    const direct = snapshot("working", { mode: "direct-PR" });
+    expect(transition(direct, validEvent("ready", { checks: failing }))).toMatchObject({ ok: false, refusal: { code: "check_failed" } });
+    expect(transition(direct, validEvent("ready", { checks: [] })).ok).toBe(true);
+    // The evidence gate comes first, so passing checks cannot stand in for evidence.
+    expect(transition(noMistakes, validEvent("handoff", { evidence: "", checks: [{ name: "lint", passed: true }] }))).toMatchObject({ ok: false, refusal: { code: "evidence_required" } });
+    // A mode mismatch comes first too.
+    expect(transition(direct, validEvent("handoff", { checks: failing }))).toMatchObject({ ok: false, refusal: { code: "mode_mismatch" } });
   });
 });
 

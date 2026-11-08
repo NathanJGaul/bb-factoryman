@@ -1,4 +1,4 @@
-# Milestone 0: spike results for milestones 4 to 6
+# Milestone 0: spike results for milestones 4 to 11
 
 This file records the bb and no-mistakes facts that milestones 4 to 6 depend on.
 It follows the format in `spike/SPIKE.md`.
@@ -285,6 +285,196 @@ Also not driven live: `gh pr merge` against a real forge, a person answering the
 Fallback: the unit and acceptance tests cover the paths that could not be driven live.
 No production code was added to make them drivable.
 
+## Milestone 7: dispatch resolver
+
+The checks in this section ran on 2026-11-07 against a throwaway bb 0.48.1 server.
+`bb-app` started it with `--data-dir <scratch>/bb-data --server-port 39971 --host-daemon-port 39972`, and `BB_SERVER_URL` pointed the `bb` CLI at it.
+The owner's `~/.bb` and the shared bb stayed untouched.
+
+## 29. Provider availability and catalog
+
+Result: confirmed
+
+Evidence: `bb provider list --json` on the throwaway server returned seven providers.
+Each entry has an `available` boolean, `capabilities.permissionModes`, and an ordered `reasoningLevels` list of `{ id, label }`.
+`bb.sdk.providers.list()` returns the same `ProviderInfo[]` (`ProvidersArea.list` in `@get-bb/plugin-sdk` 0.6.104).
+
+- `pi` offers only the `full` permission mode, so a profile can name a mode that its provider rejects.
+- Reasoning level IDs are provider-specific strings: `codex` lists `none` and `ultra`, and `claude-code` lists `ultracode`.
+  No shared enum exists, so the resolver compares levels with a ladder from the dispatch config.
+- `bb thread spawn --reasoning-level` accepts "low, medium, high, xhigh, max, or a provider-specific id".
+
+Fallback: none needed.
+A provider that the list omits, or that reports `available: false`, counts as unavailable, so the check fails closed.
+
+## Milestone 8: machine placement
+
+These checks ran on 2026-11-07 against the same throwaway bb 0.48.1 server as milestone 7.
+It had one machine, the local host, and a throwaway project (a git repository with a local bare `origin`) whose only source sat on that host.
+A second enrolled daemon would write enrollment credentials outside the throwaway data directory, so no check enrolled one.
+
+## 6. Spawn on a machine
+
+Result: confirmed
+
+Evidence: `bb thread spawn --project <id> --machine <host-id> --new-environment worktree ...` created a thread on the local host (`status: starting`).
+The SDK call is the one the adapter already makes: `environment: { type: "host", hostId, workspace }` (D-053).
+Two refusals show the contract:
+
+- An unknown machine: `Machine 'host_bogus' was not found. Available machines: ...`.
+- A machine with no source of the project: `HTTP 409: No project source configured for this host`.
+
+A project therefore needs a source on the chosen machine, and the plugin reads `bb.sdk.projects.get().sources` to check it before the spawn.
+
+Fallback: none needed.
+
+## 7. Disconnect detection
+
+Result: partial
+
+Evidence: a machine is a `Host`.
+`bb.sdk.hosts.list()` and `.get()` return `status: "connected" | "disconnected"`, `lastSeenAt`, and `lifecycle.phase` (`creating`, `active`, `suspending`, `suspended`, `resuming`, `removing`, `destroyed`).
+`bb machine create --provider manual --no-wait` made a host that was `disconnected` with `lastSeenAt: null`, in phase `creating` and then `removing`.
+The plugin event list (`PluginThreadEventPayloads`) has no connect or disconnect event.
+It has `experimental_host.deleted`, which fires once after a machine is removed.
+
+Not driven: a real enrolled daemon that stops and comes back, because enrolling a second daemon would write outside the throwaway directory.
+
+Fallback: poll `hosts.list()` on an interval, and treat `status !== "connected"` or `phase !== "active"` as offline.
+Handle `experimental_host.deleted` at once.
+A host that bb no longer lists counts as offline.
+
+## 8. Remote prerequisites
+
+Result: partial
+
+Evidence: two mechanisms exist, both checked on the local host of the throwaway server.
+
+- `bb.sdk.providers.list({ hostId })` (CLI: `bb provider list --machine <id>`) reports `available` for a provider on that machine.
+- `bb.sdk.terminals.create({ scope: { kind: "host_path", hostId, cwd }, start: { mode: "argv", argv }, cols, rows })` runs one command on a host.
+  `terminals.get` reports `status: "exited"` and `exitCode`, and `terminals.output` returns base64 chunks, `exitCode`, `truncated`, and `closeReason`.
+  `bb terminal create --machine <id> --cwd <dir> --command "echo probe-ok; command -v no-mistakes; exit 3"` printed both lines and exited with code 3.
+- A terminal is a PTY, so it merges standard error into standard output and ends lines with a carriage return.
+  Wrapping the command in `sh` with `mktemp`, `base64`, and `tr -d '\n'` returned one line, `FMX1 <code> <stdout base64> <stderr base64>`, and a command that wrote to both streams and exited with 4 came back as `FMX1 4 b3V0LWxpbmUK ZXJyLWxpbmUK`.
+
+So the plugin can check the agent CLI per machine, `no-mistakes` (installed, and a `no-mistakes` git remote in the source), and `gh auth status`, and it can run the validator and the landed-work check where the worktree lives.
+
+Not driven: a real remote machine, so the sign-in state of an agent CLI and the scope of `gh` credentials were not read from one.
+
+Fallback: a failed, timed-out, or truncated terminal command is a failed command, so every caller fails closed.
+
+## Milestone 9: extension surface
+
+These checks ran on 2026-11-07 against the throwaway bb 0.48.1 server, with two probe plugins built in a scratch directory.
+`probe-a` registered one discoverable RPC method (`ping`), one method that was not marked discoverable (`secret`), and a command that wrote plugin metadata on a thread.
+`probe-b` called `bb.sdk.plugins.callRpc` on both methods and read the metadata.
+
+## 9. Cross-plugin metadata
+
+Result: confirmed
+
+Evidence: `probe-b` called `bb.sdk.threads.getPluginMetadata({ threadId, pluginId: "probe-a" })` and got `{ taskId: "t-probe", state: "working" }`, the values that `probe-a` had written.
+The SDK takes an explicit `pluginId`, so any plugin can read another plugin's thread metadata.
+It can write it too (`updatePluginMetadata` takes the same argument), which matches item 2: metadata is a hint and not an authority.
+
+Fallback: none needed.
+The plugin stamps task facts as metadata for others to read, and it decides every caller from its own store (D-035).
+
+## 10. `callRpc` discoverability
+
+Result: confirmed
+
+Evidence: `probe-b` called both `ping` (registered with `experimental_discoverable: true`) and `secret` (registered without it), and both answered: `{"ping":{"pong":2},"secret":{"ok":true}}`.
+The flag affects discovery listings, and it does not gate a call.
+Any method that a plugin registers is therefore callable by every other plugin and by any local client.
+
+Fallback: the plugin registers read methods only, so a call can read and cannot change anything.
+It marks them discoverable so that a sibling plugin can find them.
+
+## `.bb/factoryman/` loading
+
+Result: confirmed
+
+Evidence: the plugin reads files from the project's default `local_path` source with the Node file system.
+`bb.sdk.projects.get` returns the source's path and host.
+The plugin cannot tell from that data whether the path is on the server's own machine (D-062).
+
+Fallback: an absent file reads as empty config, and an unreadable or invalid file blocks the call that needs it.
+
+## Milestone 10: limits, backstop, and cutover
+
+These checks ran on 2026-11-07 against the same throwaway bb 0.48.1 server.
+
+## 12. Cost data
+
+Result: partial
+
+Evidence: `bb.sdk.threads.context({ threadId })` (CLI: `bb thread context`) returns `usage`, which holds an optional `cost` of `{ amount, currency }`, an `estimated` flag, and the model's context window.
+A `claude-code` thread on the throwaway server returned `cost: null` and `estimated: true`.
+The SDK documents `cost` as optional, so a provider that reports it fills it, and this one did not.
+The thread events also carry token counts (`thread/tokenUsage/updated`) with no price.
+
+Not driven: a provider that reports cost.
+
+Fallback: the design's own: a budget that needs cost data is not enforced when the data is missing, and a cap on tasks per day stays in force.
+The dispatch result says which budgets could not be checked.
+
+## 13. Push notifications
+
+Result: confirmed, with a decision
+
+Evidence: the built-in `push-notifications` plugin has a command, `bb push-notifications send`, that "sends a notification to every enabled channel".
+It exposes no RPC method for another plugin in what the CLI lists.
+The plugin calls no other plugin (the design's standalone rule), so a plugin-to-plugin call is out.
+
+Decision: the plugin posts to a webhook URL that the owner sets.
+Delivery works: the plugin process has a global `fetch`, and a probe plugin on the throwaway server posted JSON to a local receiver, which saw the body and answered 200.
+Not driven: a real receiver beyond localhost.
+
+Fallback: none needed.
+
+## 18. Branch protection
+
+Result: not driven (needs a forge)
+
+Evidence: the checklist and the `gh api` commands are written in `docs/BRANCH-PROTECTION.md`, and `bb factoryman protection` prints them.
+Nothing here changes a GitHub setting, and nothing was run against a forge.
+
+Fallback: the owner runs the steps on a throwaway repository first (`docs/LIVE-CHECK.md`).
+
+## 19. firstmate registry
+
+Result: confirmed
+
+Evidence: firstmate keeps its registry at `data/projects.md` in its home.
+The header of `bin/fm-project-mode.sh` documents the line format: `- <name> [<mode> +yolo branch=<prefix> forge=<value>] - <description> (added <date>)`, with the bracket optional and its tokens in any order.
+The modes are `no-mistakes`, `direct-PR`, `local-only`, and `no-mistakes-prod-only`, which firstmate maps to `no-mistakes`.
+I read both files and wrote to neither.
+
+Fallback: the import is a dry run that reads one file and prints a table.
+
+## Milestone 11: skills and live check
+
+## 11. Skill override
+
+Result: partial
+
+Evidence: a throwaway bb 0.48.1 listed the skill that `probec` ships in `skills/example-todos/SKILL.md` with scope `plugin` and provider `bb`.
+The skill's name is the directory name and the front matter name.
+A project skill with the same name, `.claude/skills/example-todos/SKILL.md` in a registered project, appeared beside it with scope `provider-project`.
+`bb skill list --project <id> --json` returned both rows, and a project skill does not replace or hide the plugin skill in the listing.
+No agent thread ran, so which one a session loads is not known.
+The scaffold's `bb.agents.configure({ skills: [...] })` takes skill names, and the fake host returns them (`[A1102]`).
+The SDK says that a duplicate or unknown skill name rejects the plugin's whole selection, and the fake host does the same: with one wrong name, `resolveAgentConfiguration` returned no tools and no skills.
+A wrong skill name would therefore take the supervisor's tools away (`[A1102]`, and `test/fixtures/skills.ts` reads the names from the files).
+I also built this plugin and installed it by path into the throwaway bb.
+`bb plugin list` showed it running with both services and the `bb factoryman` command, and `bb skill list --json` showed `factoryman-supervisor` and `factoryman-worker` with scope `plugin`.
+`bb factoryman protection acme/widgets` and `bb factoryman import-registry --apply` ran there and printed their texts.
+
+Fallback: the skills are advice and no gate depends on them (D-091).
+A project can add a skill of its own with a different name.
+The live check records which skill a real session loads (`docs/LIVE-CHECK.md`, section 9).
+
 ## Not checked
 
 These items belong to milestones 7 to 11, or to the owner's live install, and the task brief excludes them.
@@ -294,8 +484,3 @@ These items belong to milestones 7 to 11, or to the owner's live install, and th
 | 3. Read-only supervisor | Not needed for milestones 4 to 6. |
 | 4. Worktree removal veto | Not needed for milestones 4 to 6. |
 | 5. Dispatch hook ordering | Capacity is milestone 10. |
-| 6 to 8. Machines | Machine placement is milestone 8. |
-| 9 to 11. Extension surface | Milestone 9. |
-| 12 to 13. Cost and notifications | Milestone 10. |
-| 18. Branch protection | Needs a forge. It is the owner's setup step. |
-| 19. firstmate registry | Cutover is milestone 10. |

@@ -82,3 +82,68 @@ describe("factoryman_report", () => {
     expect((await report(t.runtime, WORKER, { outcome: "blocked", evidence: "Waiting." })).text).toBe("Task t1 is now blocked.");
   });
 });
+
+describe("factoryman_report custom checks", () => {
+  const WORKFLOW_PATH = "/work/repo/.bb/factoryman/workflow.json";
+  const workflow = (checks: Record<string, unknown>) => JSON.stringify({ version: 1, checks });
+
+  async function withChecks(text: string = workflow({ "no-mistakes": [{ name: "lint", argv: ["pnpm", "run", "lint"] }] })) {
+    const t = await withDispatchedTask();
+    t.bb.checkouts.set("proj-1", "/work/repo");
+    t.files.files.set(WORKFLOW_PATH, text);
+    t.bb.envPaths.set("env-thr-w1", "/work/tree");
+    return t;
+  }
+  const ran = (t: Awaited<ReturnType<typeof withChecks>>) => t.execCalls.filter((call) => call.command === "pnpm");
+
+  it("[U937] blocks a done report, runs nothing, and records nothing when bb cannot read the project", async () => {
+    const t = await withChecks();
+    t.bb.checkoutError = new Error("bb is down");
+    const before = t.runtime.deps.store.listEvents({ taskId: "t1" }).length;
+    const outcome = await report(t.runtime, WORKER, { outcome: "done", evidence: "Committed." });
+    expect(outcome.ok).toBe(false);
+    expect(outcome.text).toContain("could not read the project");
+    expect(ran(t)).toEqual([]);
+    expect(t.runtime.deps.store.listEvents({ taskId: "t1" })).toHaveLength(before);
+    expect(t.runtime.deps.store.getTask("t1")?.state).toBe("working");
+  });
+
+  it.each([
+    ["the worker thread", (t: Awaited<ReturnType<typeof withChecks>>) => void (t.bb.getThreadError = new Error("bb is down"))],
+    ["the worktree path", (t: Awaited<ReturnType<typeof withChecks>>) => void (t.bb.envPathError = new Error("bb is down"))],
+  ])("[U938] blocks a done report, runs nothing, and records nothing when bb cannot read %s", async (_label, break_) => {
+    const t = await withChecks();
+    break_(t);
+    const before = t.runtime.deps.store.listEvents({ taskId: "t1" }).length;
+    const outcome = await report(t.runtime, WORKER, { outcome: "done", evidence: "Committed." });
+    expect(outcome.ok).toBe(false);
+    expect(outcome.text).toContain("Cannot run the custom checks");
+    expect(ran(t)).toEqual([]);
+    expect(t.runtime.deps.store.listEvents({ taskId: "t1" })).toHaveLength(before);
+  });
+
+  it.each([
+    ["failing checks", workflow({ "no-mistakes": [{ name: "lint", argv: ["pnpm", "run", "lint"] }] })],
+    ["an invalid file", "{ not json"],
+  ])("[U939] lets a worker report blocked and failed, and runs no check, with %s", async (_label, text) => {
+    for (const outcome of ["blocked", "failed"] as const) {
+      const t = await withChecks(text);
+      t.execHandler = () => ({ code: 1, stdout: "", stderr: "lint failed" });
+      const result = await report(t.runtime, WORKER, { outcome, evidence: "Cannot go on." });
+      expect(result.ok, outcome).toBe(true);
+      expect(t.runtime.deps.store.getTask("t1")?.state).toBe(outcome === "blocked" ? "blocked" : "failed");
+      expect(ran(t), outcome).toEqual([]);
+    }
+  });
+
+  it("[U943] gives a check with no timeout of its own the default timeout", async () => {
+    const t = await withChecks();
+    const seen: Array<number | undefined> = [];
+    t.runtime.deps.exec = async (command, _args, options) => {
+      if (command === "pnpm") seen.push(options?.timeoutMs);
+      return { code: 0, stdout: "", stderr: "" };
+    };
+    await report(t.runtime, WORKER, { outcome: "done", evidence: "Committed." });
+    expect(seen).toEqual([600_000]);
+  });
+});
