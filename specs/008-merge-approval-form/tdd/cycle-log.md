@@ -171,3 +171,30 @@ The outer loop closes in the isolated lab, with a real browser tool clicking in 
 - isolation: `bblab down`; ports 48886 and 48887 free; tripwire 0 file-level events; the shared no-mistakes daemon unchanged (pid 970, active); the real `~/.bb` and the hosted daemon untouched. The `bblab-evidence diff` line "LEAK: lab process visible on host" names another lane's lab (worktree slot 3, ports 48896 and 48897), not this one: no process of this lab was left.
 - not covered by the lab: an unreadable request and a rejected answer (the tests cover both), and a person's own click (tier 2).
 - commit: see git history, "feat: underline the pull request link in the approval form and tidy its layout"
+
+## Group 9: two behaviors that the audit found unpinned (U1241, U1242)
+
+The audit (`tdd/verification.md`, finding 6, task T1285) found two mutants that no test caught.
+Both behaviors already existed in the component, so a new test passes on its first run.
+The cycle therefore follows the playbook's rule for code that predates its test: revert the behavior, write the test, observe the red, restore.
+Neither behavior was implemented test-first in the first place, and both are admitted here as test-after code with a revert-red.
+The two cycles share one commit, because both tests sit in one file.
+
+### Cycle U1241: a retry that succeeds clears the failure banner
+
+- test: `src/app/merge-approval-form.test.tsx::[U1241]` (new)
+- revert: `setFailure(null);` removed from `run` in `src/app/merge-approval-form.tsx` (the audit's mutant M26)
+- red: `pnpm vitest run src/app/merge-approval-form.test.tsx -t "U1241"` -> `AssertionError: expected <p role="alert" …(1)></p> to be null` (1 failed)
+- restore: `git checkout -- src/app/merge-approval-form.tsx`, and `git diff --quiet` on the file confirmed it. Same command -> 1 passed.
+- refactor: none needed
+
+### Cycle U1242: the pull request link goes through bb's navigation
+
+- test: `src/app/merge-approval-form.test.tsx::[U1242]` (new). It clicks the link and reads `slot.inspection.navigateCalls` from the harness.
+- revert: `<UrlLink ...>` replaced by a plain `<a ...>` (the audit's mutant M27)
+- red: `pnpm vitest run src/app/merge-approval-form.test.tsx -t "U1242"` -> `AssertionError: expected [] to deeply equal [ { method: 'openUrl', …(1) } ]` (1 failed)
+- restore: `git checkout -- src/app/merge-approval-form.tsx`, clean. Same command -> 1 passed.
+- refactor: none needed
+
+- suite after both: `pnpm run check` exited 0 -> 95 files, 1191 passed, 0 failed.
+- commit: see git history, "test: pin the retry banner and the link navigation that the audit found unpinned"

@@ -92,6 +92,8 @@ The suite baseline was 92 files and 1134 tests, all passing.
 | U1238 | The evidence block and the branch carry the wrapping and scrolling classes that keep long text inside the form | AC-3.4, FR-1209 | example | DONE | `src/app/merge-approval-form.test.tsx::[U1238]` |
 | U1239 | The component source names theme tokens only: no hex color and no fixed Tailwind palette color | FR-1209 | example | DONE | `src/app/merge-approval-form.test.tsx::[U1239]` |
 | U1240 | Underlines the pull request link, so that it reads as a link (found in the lab: the anchor had no styling and looked like plain text) | AC-1.2, FR-1209 | example | DONE | `src/app/merge-approval-form.test.tsx::[U1240]` |
+| U1241 | A retry that succeeds clears the failure banner (found by the audit: a stale "Your answer was not sent" banner stayed after a good retry) | AC-3.2 | example | DONE | `src/app/merge-approval-form.test.tsx::[U1241]` |
+| U1242 | The pull request link is the SDK's `UrlLink`, so a click goes through bb's navigation with the URL (found by the audit: a plain anchor passed every test) | AC-1.2 | example | DONE | `src/app/merge-approval-form.test.tsx::[U1242]` |
 
 ## Invariants and edge cases still to place
 

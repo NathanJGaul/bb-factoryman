@@ -166,6 +166,12 @@ describe("MergeApprovalForm: the pull request link", () => {
     expect(link.className).toContain("underline");
   });
 
+  it("[U1242] opens the pull request through bb's navigation, so that bb's open-in-app preference applies", () => {
+    const { slot } = mount();
+    fireEvent.click(within(valueOf("Pull request")).getByRole("link"));
+    expect(slot.inspection.navigateCalls).toEqual([{ method: "openUrl", url: REQUEST.prUrl }]);
+  });
+
   it("[U1222] shows a javascript:, ftp:, data:, or non-URL pull request value as plain text with no link", () => {
     for (const value of ["javascript:alert(1)", "ftp://forge.example/pull/7", "data:text/html,<b>x</b>", "not a url", "//forge.example/pull/7"]) {
       cleanup();
@@ -202,6 +208,27 @@ describe("MergeApprovalForm: a failed answer", () => {
     });
     expect(screen.getByRole("alert").textContent).toContain("cancel refused");
     expect(screen.getAllByRole("button").every((control) => !control.hasAttribute("disabled"))).toBe(true);
+  });
+});
+
+describe("MergeApprovalForm: a retry after a failed answer", () => {
+  it("[U1241] clears the failure banner when a retry succeeds", async () => {
+    let attempts = 0;
+    mount({
+      submit: async () => {
+        attempts += 1;
+        if (attempts === 1) throw new Error("bb said no");
+      },
+    });
+    await act(async () => {
+      fireEvent.click(button("Approve"));
+    });
+    expect(screen.getByRole("alert").textContent).toContain("bb said no");
+    await act(async () => {
+      fireEvent.click(button("Approve"));
+    });
+    expect(attempts).toBe(2);
+    expect(screen.queryByRole("alert")).toBeNull();
   });
 });
 
