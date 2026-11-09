@@ -90,7 +90,7 @@ Run `pnpm run conformance:docs` to regenerate `docs/HARNESS-SUPPORT.md` from the
 | S1 | A ready provider dispatches. A provider in another state is refused, with bb's reason, and creates no task. |
 | S2 | The thread row shows the requested provider, model, level, and mode. A profile the provider cannot take is refused before anything spawns. |
 | S3 | A scout goes `queued`, `working`, `report_ready`, keeps its evidence, and wakes the supervisor once. |
-| S4 | A ship task in `local-only` mode leaves its commit on the task branch and reaches `review_ready`. |
+| S4 | A ship task leaves its commit on the task branch and reaches `review_ready`, in the delivery mode of the driver's lab project (`local-only`, or `direct-PR` for Pi). |
 | S5 | A worker sees the report tool and its own skill only. A supervisor sees its four tools and its own skill only. |
 | S6 | A turn that ends with no report leaves the task `working` and wakes the supervisor once. |
 | S7 | A failing model turn fails the task, wakes the supervisor once, and keeps the cause in the evidence. |
@@ -100,13 +100,18 @@ Run `pnpm run conformance:docs` to regenerate `docs/HARNESS-SUPPORT.md` from the
 | S11 | Teardown is refused for a dirty worktree, removes a clean one, and leaves no process behind. |
 | S12 | A wake that reaches a busy supervisor arrives exactly once. |
 
-Some checks wait for plugin changes that are out of scope for this feature (report tasks H1, H3, and H4).
+Some checks wait for a plugin change that is still open (report task H4, the `bb factoryman supervisor start` command).
 They are written to the behavior that the report asks for, and `conformance/known-gaps.json` lists the ones that fail today.
+The checks that waited for report tasks H1 and H3 passed once the harness contracts landed, and their entries are gone.
 
 ## Add a harness
 
 1. Write `tools/conformance/drivers/<id>.ts` that implements the `Driver` interface.
    It says how to bind the CLI, which files to write into the lab home so the CLI talks to the fake model, which profile to dispatch, and which tool route the harness shows its model.
+   It also says which delivery mode the lab project uses, in the optional field `deliveryMode`.
+   The default is `local-only`.
+   Name `direct-PR` for a harness that the plugin refuses in `local-only` mode, as it does for Pi (`src/harness/contracts.ts`), and scenario S4 follows the mode.
+   The reasoning level of the profile must be one that the lab model lists, because dispatch refuses any other.
 2. Register the driver in `tools/conformance/drivers/index.ts`.
 3. If the harness uses a new request format, add a module under `tools/fake-model/wire/`.
 4. Run `pnpm run conformance -- --tier 1.5 --harness <id>` and `pnpm run conformance:docs`.

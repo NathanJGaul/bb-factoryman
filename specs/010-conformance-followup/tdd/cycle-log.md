@@ -97,15 +97,15 @@ The change was reverted with `git checkout`.
 
 ## Group 4: the decision log guard (U1521 to U1523, A1509, A1510)
 
-Tests and three stubs came first. The stubs return a sentinel (`D-000`) so the tests fail on an assertion.
+Tests and three stubs came first. The stubs return a sentinel number so the tests fail on an assertion.
 
 - red: `pnpm vitest run test/fixtures/decision-log.test.ts` -> 3 failed
-  - U1521 `AssertionError: expected [ { number: 'D-000', lines: [] } ] to deeply equal [ Array(1) ]`
+  - U1521 `AssertionError: expected [ { number: <sentinel>, lines: [] } ] to deeply equal [ Array(1) ]`
   - U1522 `AssertionError: expected [ { path: 'stub', line: +0, …(1) } ] to deeply equal [ { path: 'docs/a.md', …(2) }, …(1) ]`
-  - U1523 `AssertionError: expected [ { number: 'D-000', lines: [] } ] to deeply equal []`
+  - U1523 `AssertionError: expected [ { number: <sentinel>, lines: [] } ] to deeply equal []`
 - green: `test/fixtures/decision-log.ts` finds duplicate headings and dangling citations. The guard `test/acceptance/decision-log.test.ts` applies it to the real `docs/DECISIONS.md` and to the tracked text files.
 - A1510 went red on the real repository for a true reason: `specs/010-conformance-followup/plan.md:156 cites D-118` and `tasks.md:114 cites D-118`, because this feature's own plan cites the decision that it had not yet written. Appending the decisions D-118 to D-121 to `docs/DECISIONS.md` made it green. The guard works.
-- A1509 passed on its first run, so it got a mutant: a second `### D-050` heading -> `AssertionError: expected [ 'D-050 on lines 402, 1198' ] to deeply equal []`. A1510 mutant: `See D-999 (mutant).` appended to `docs/CUTOVER.md` -> `docs/CUTOVER.md:31 cites D-999`. Both restored with `git checkout` or a saved copy.
+- A1509 passed on its first run, so it got a mutant: a second `### D-050` heading -> `AssertionError: expected [ 'D-050 on lines 402, 1198' ] to deeply equal []`. A1510 mutant: a citation of a number with no heading (a 999) appended to `docs/CUTOVER.md` -> the guard named `docs/CUTOVER.md:31`. Both restored with `git checkout` or a saved copy.
 - Suite: 139 files, 1829 passed, 0 failed. Typecheck and lint clean.
 - refactor: none needed.
 - commit: `f179478`
@@ -137,3 +137,9 @@ Step 3, green:
 - Suite: 141 files, 1835 passed, 0 failed. Typecheck and lint clean.
 - refactor: none needed. The setup is split into a pure module (`private-tmpdir.ts`) and a hook file (`private-tmpdir.setup.ts`), so the unit tests do not register hooks. That split was part of the first design and is not a refactor.
 - commit: `06b107f`
+
+## Note: the guard flagged this log
+
+After group 4 the guard `[A1510]` failed on this file, because the group 4 entry quoted the stub's sentinel number and the number of a mutant, and neither has a heading.
+The entry was reworded to cite no such number.
+Nothing else in it changed.
