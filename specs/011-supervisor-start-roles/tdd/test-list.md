@@ -26,11 +26,11 @@ Table-driven tests cover the lines that name several inputs, and the cycle log r
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| A1601 | The registered command `supervisor start --project p --profile claude` in the fake host spawns exactly one thread with the profile's provider, model, reasoning level, and permission mode, with the metadata `{ role: "supervisor" }` set in the spawn call, and prints the thread ID | US1.1, FR-001, FR-002, FR-003, FR-008 | example | PENDING | `test/acceptance/supervisor-start.test.ts::[A1601]` |
-| A1602 | `agents.configure` of the plugin for the metadata of the spawned thread offers the four supervisor tools and the `factoryman-supervisor` skill and no worker tool or skill | US1.2, FR-002, SC-002 | example | PENDING | `test/acceptance/supervisor-start.test.ts::[A1602]` |
-| A1603 | The thread's first prompt is the `--prompt` text when given, and the fixed default (wait for instructions) when not | US1.3, US1.4 | example | PENDING | `test/acceptance/supervisor-start.test.ts::[A1603]` |
-| A1604 | A profile whose provider is not ready, whose permission mode the provider lacks, or whose model or level is not listed makes the command exit 1 with dispatch's reason, spawns nothing, and adds no event or row to the store; a Pi profile in a `local-only` project spawns | US1.5, US1.6, FR-005, SC-007 | example | PENDING | `test/acceptance/supervisor-start.test.ts::[A1604]` |
-| A1605 | The profile is the `--profile` flag, else `roles.supervisor.profile` of the project's `dispatch.json`; with neither, or with an undefined name, or with a missing, unreadable, or invalid file, the command exits 1, names the remedy, and spawns nothing | US2.1, US2.2, US2.3, US2.4, US2.7, FR-004, FR-006, SC-007 | example | PENDING | `test/acceptance/supervisor-start.test.ts::[A1605]` |
+| A1601 | The registered command `supervisor start --project p --profile claude` in the fake host spawns exactly one thread with the profile's provider, model, reasoning level, and permission mode, with the metadata `{ role: "supervisor" }` set in the spawn call, and prints the thread ID | US1.1, FR-001, FR-002, FR-003, FR-008 | example | DONE | `test/acceptance/supervisor-start.test.ts::[A1601]` |
+| A1602 | `agents.configure` of the plugin for the metadata of the spawned thread offers the four supervisor tools and the `factoryman-supervisor` skill and no worker tool or skill | US1.2, FR-002, SC-002 | example | DONE | `test/acceptance/supervisor-start.test.ts::[A1602]` |
+| A1603 | The thread's first prompt is the `--prompt` text when given, and the fixed default (wait for instructions) when not | US1.3, US1.4 | example | DONE | `test/acceptance/supervisor-start.test.ts::[A1603]` |
+| A1604 | A profile whose provider is not ready, whose permission mode the provider lacks, or whose model or level is not listed makes the command exit 1 with dispatch's reason, spawns nothing, and adds no event or row to the store; a Pi profile in a `local-only` project spawns | US1.5, US1.6, FR-005, SC-007 | example | DONE | `test/acceptance/supervisor-start.test.ts::[A1604]` |
+| A1605 | The profile is the `--profile` flag, else `roles.supervisor.profile` of the project's `dispatch.json`; with neither, or with an undefined name, or with a missing, unreadable, or invalid file, the command exits 1, names the remedy, and spawns nothing | US2.1, US2.2, US2.3, US2.4, US2.7, FR-004, FR-006, SC-007 | example | DONE | `test/acceptance/supervisor-start.test.ts::[A1605]` |
 | A1606 | `factoryman_dispatch` for a project whose file has an invalid `roles` block is blocked with `config_invalid` and the path of the field, one whose file has a valid `roles` block dispatches as before, and a file without `roles` is unchanged | US2.5, US2.6, US5.1, US5.2, US5.3, US5.4, FR-012, FR-013, FR-014 | example | DONE | `test/acceptance/roles-config.test.ts::[A1606]` |
 | A1607 | The registered command `supervisor <thread>` stamps the role and prints the clear advice for Codex and omp threads, the next-turn advice for Claude Code and Pi threads, the clear advice for an unknown or unreadable provider, no advice and exit 1 for a rejected stamp, and a refusal for a worker thread; no output says "from its next session" | US3.1, US3.2, US3.3, US3.4, US3.5, US3.6, FR-009, FR-010, FR-011, SC-003 | example | PENDING | `test/acceptance/tools-supervisor-command.test.ts::[A1607]` |
 | A1608 | The `factoryman_report` hand-off of a `no-mistakes` ship task puts the worker's evidence first and the validator line after a blank line in the `handoff` event, names the agent, its bb provider, and a ready state, and the task becomes `validating` | US4.1, FR-016, FR-017, FR-021, SC-005 | example | PENDING | `test/acceptance/validator-observe.test.ts::[A1608]` |
@@ -90,32 +90,32 @@ Table-driven tests cover the lines that name several inputs, and the cycle log r
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| U1623 | The command spawns once with the profile's four fields and the metadata `{ role: "supervisor" }`, and prints the thread ID, the profile name, the provider, and the model | US1.1, FR-001 to FR-003, FR-008 | example | PENDING | |
-| U1624 | `--prompt` text is the thread's first prompt | US1.3 | example | PENDING | |
-| U1625 | Without `--prompt` the first prompt is the fixed text that tells the supervisor to wait for instructions | US1.4 | example | PENDING | |
-| U1626 | `roles.supervisor.profile` is used when `--profile` is absent | US2.1, FR-004 | example | PENDING | |
-| U1627 | `--profile` wins over `roles.supervisor.profile` | US2.2, FR-004 | example | PENDING | |
-| U1628 | With neither, the command exits 1, names both ways to choose a profile, says that `default` is the worker's and is not used, and spawns nothing | US2.3, FR-004, SC-007 | example | PENDING | |
-| U1629 | An undefined profile name exits 1, lists the defined profiles (or says none), and spawns nothing | US2.4, FR-004, SC-007 | example | PENDING | |
-| U1630 | The project is `--project`, falls back to the command context, and `--project` wins when both are present | FR-001 | example | PENDING | |
-| U1631 | An invalid `dispatch.json` exits 1 with the loader's message and spawns nothing | US2.7, FR-006 | example | PENDING | |
-| U1632 | An unreadable `dispatch.json` exits 1 with the reason and spawns nothing | US2.7, FR-006 | example | PENDING | |
-| U1633 | A missing `dispatch.json` and a project with no checkout each exit 1 as having no defined profile and spawn nothing | US2.7, FR-006 | example | PENDING | |
-| U1634 | A checkout read that throws exits 1 with the reason and spawns nothing | FR-006, FR-029 | example | PENDING | |
-| U1635 | A provider that is not ready exits 1 with the gate's message and `Nothing was spawned.` | US1.5, FR-005, SC-007 | example | PENDING | |
-| U1636 | A permission mode the provider lacks, and a model or level the provider does not list, each exit 1 with the gate's message and spawn nothing | US1.5, FR-005, SC-007 | example | PENDING | |
-| U1637 | A gate read that throws exits 1 and spawns nothing | FR-005, FR-029 | example | PENDING | |
-| U1638 | A Pi profile in a `local-only` project spawns, because the admission rule is not applied | US1.6, FR-005 | example | PENDING | |
-| U1639 | The gate reads the default host (no host ID) and runs before the spawn | FR-005, FR-007 | example | PENDING | |
-| U1640 | A spawn that throws exits 1 with `Could not start the supervisor` and bb's reason, and records nothing | FR-008 | example | PENDING | |
-| U1641 | No project, a repeated flag, a flag without a value, a blank value, an unknown flag, and an extra positional each exit 2 with the usage text and spawn nothing | FR-001 | example | PENDING | |
+| U1623 | The command spawns once with the profile's four fields and the metadata `{ role: "supervisor" }`, and prints the thread ID, the profile name, the provider, and the model | US1.1, FR-001 to FR-003, FR-008 | example | DONE | `src/tools/supervisor-start.test.ts::[U1623]` |
+| U1624 | `--prompt` text is the thread's first prompt | US1.3 | example | DONE | `src/tools/supervisor-start.test.ts::[U1624]` |
+| U1625 | Without `--prompt` the first prompt is the fixed text that tells the supervisor to wait for instructions | US1.4 | example | DONE | `src/tools/supervisor-start.test.ts::[U1625]` |
+| U1626 | `roles.supervisor.profile` is used when `--profile` is absent | US2.1, FR-004 | example | DONE | `src/tools/supervisor-start.test.ts::[U1626]` |
+| U1627 | `--profile` wins over `roles.supervisor.profile` | US2.2, FR-004 | example | DONE | `src/tools/supervisor-start.test.ts::[U1627]` |
+| U1628 | With neither, the command exits 1, names both ways to choose a profile, says that `default` is the worker's and is not used, and spawns nothing | US2.3, FR-004, SC-007 | example | DONE | `src/tools/supervisor-start.test.ts::[U1628]` |
+| U1629 | An undefined profile name exits 1, lists the defined profiles (or says none), and spawns nothing | US2.4, FR-004, SC-007 | example | DONE | `src/tools/supervisor-start.test.ts::[U1629]` |
+| U1630 | The project is `--project`, falls back to the command context, and `--project` wins when both are present | FR-001 | example | DONE | `src/tools/supervisor-start.test.ts::[U1630]` |
+| U1631 | An invalid `dispatch.json` exits 1 with the loader's message and spawns nothing | US2.7, FR-006 | example | DONE | `src/tools/supervisor-start.test.ts::[U1631]` |
+| U1632 | An unreadable `dispatch.json` exits 1 with the reason and spawns nothing | US2.7, FR-006 | example | DONE | `src/tools/supervisor-start.test.ts::[U1632]` |
+| U1633 | A missing `dispatch.json` and a project with no checkout each exit 1 as having no defined profile and spawn nothing | US2.7, FR-006 | example | DONE | `src/tools/supervisor-start.test.ts::[U1633]` |
+| U1634 | A checkout read that throws exits 1 with the reason and spawns nothing | FR-006, FR-029 | example | DONE | `src/tools/supervisor-start.test.ts::[U1634]` |
+| U1635 | A provider that is not ready exits 1 with the gate's message and `Nothing was spawned.` | US1.5, FR-005, SC-007 | example | DONE | `src/tools/supervisor-start.test.ts::[U1635]` |
+| U1636 | A permission mode the provider lacks, and a model or level the provider does not list, each exit 1 with the gate's message and spawn nothing | US1.5, FR-005, SC-007 | example | DONE | `src/tools/supervisor-start.test.ts::[U1636]` |
+| U1637 | A gate read that throws exits 1 and spawns nothing | FR-005, FR-029 | example | DONE | `src/tools/supervisor-start.test.ts::[U1637]` |
+| U1638 | A Pi profile in a `local-only` project spawns, because the admission rule is not applied | US1.6, FR-005 | example | DONE | `src/tools/supervisor-start.test.ts::[U1638]` |
+| U1639 | The gate reads the default host (no host ID) and runs before the spawn | FR-005, FR-007 | example | DONE | `src/tools/supervisor-start.test.ts::[U1639]` |
+| U1640 | A spawn that throws exits 1 with `Could not start the supervisor` and bb's reason, and records nothing | FR-008 | example | DONE | `src/tools/supervisor-start.test.ts::[U1640]` |
+| U1641 | No project, a repeated flag, a flag without a value, a blank value, an unknown flag, and an extra positional each exit 2 with the usage text and spawn nothing | FR-001 | example | DONE | `src/tools/supervisor-start.test.ts::[U1641]` |
 
 ### `src/tools/supervisor-command.ts` and `src/server.ts` (tests in `src/tools/supervisor-command.test.ts` and `src/server.test.ts`)
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| U1642 | The word `start` selects the start command, and any other first word is a thread ID that is stamped | FR-001, FR-009 | example | PENDING | |
-| U1643 | The usage text and the registered CLI summary list `supervisor <thread-id>` and then `supervisor start ...` | FR-001 | example | PENDING | |
+| U1642 | The word `start` selects the start command, and any other first word is a thread ID that is stamped | FR-001, FR-009 | example | DONE | `src/tools/supervisor-command.test.ts::[U1642]` |
+| U1643 | The usage text and the registered CLI summary list `supervisor <thread-id>` and then `supervisor start ...` | FR-001 | example | DONE | `src/tools/supervisor-command.test.ts::[U1643]`, `src/server.test.ts::[U1643]` |
 | U1644 | A stamp on a Codex thread and on an `acp-omp` thread prints the thread, the harness, and `bb thread clear <thread>` | US3.1, FR-010 | example | PENDING | |
 | U1645 | A stamp on a `claude-code` thread and on a `pi` thread says the tools arrive at the next turn and does not mention a clear | US3.2, FR-010 | example | PENDING | |
 | U1646 | A stamp on a thread whose provider has no contract row prints the generic advice with `bb thread clear` and names the provider | US3.3, FR-010 | example | PENDING | |

@@ -65,3 +65,32 @@ It was made discriminating before the implementation: each case now has to name 
   Suite `pnpm test` -> 144 files, 1872 passed, 0 failed (26 s). `pnpm run typecheck` and `pnpm run lint` clean: no other `DispatchConfig` literal needed the new field.
 - refactor: none needed. `defaultRoles()` is shared by `emptyDispatchConfig` and was written once.
 - commit: see the commit that carries this entry.
+
+## Group 3: the start command (U1623 to U1643, A1601 to A1605)
+
+A stub came first: `runSupervisorStart` returned `not implemented: supervisor start` with exit 1, and `START_USAGE` existed, so the reds are assertions.
+The routing tests and the registration test went red because the word `start` was read as a thread ID (`supervisor start --project ...` has extra arguments, so the old command printed the usage and exited 2).
+
+- red: `pnpm vitest run src/tools/supervisor-start.test.ts src/tools/supervisor-command.test.ts src/server.test.ts` -> 27 failed
+  - U1623 `AssertionError: expected 1 to be +0` (the stub's exit code)
+  - U1624, U1625 `AssertionError: expected undefined to match object { prompt: 'Watch the repo and wait.' }` (no spawn call)
+  - U1626, U1627 `AssertionError: expected undefined to match object { profile: { …(4) } }`
+  - U1628, U1629, U1631 to U1637, U1640 `AssertionError: expected 'not implemented: supervisor start\n' to contain '<the contract text>'`
+  - U1630 `AssertionError: expected [] to deeply equal [ [ 'proj-ctx' ] ]`
+  - U1638 `AssertionError: expected 1 to be +0`
+  - U1639 `AssertionError: expected [] to deeply equal [ [ undefined ] ]`
+  - U1641 (six tests) `AssertionError: expected 1 to be 2`
+  - U1642 `AssertionError: expected 2 to be 1`
+  - U1643 (usage text) `AssertionError: expected 'Usage: bb factoryman preflight <machi…' to be 'Usage: bb factoryman supervisor start…'`
+  - U1643 (registration) `AssertionError: expected 'bb factoryman supervisor <thread-id>' to contain 'bb factoryman supervisor start [--pro…'`
+- red: `pnpm vitest run test/acceptance/supervisor-start.test.ts` -> 5 failed
+  - A1601, A1605 `AssertionError: expected 2 to be +0`
+  - A1602 `AssertionError: expected [] to deeply equal [ 'factoryman_dispatch', …(3) ]`
+  - A1603 `AssertionError: expected [] to deeply equal [ 'Watch the repo and wait.', …(1) ]`
+  - A1604 `AssertionError: expected 2 to be 1`
+- green: `src/tools/supervisor-start.ts` parses the three flags (each once, non-blank), reads the checkout and `dispatch.json` through `loadDispatchConfig`, chooses the profile (`--profile`, then `roles.supervisor.profile`, never `default`, with `Object.hasOwn` so that `constructor` is not a profile), runs `gateReadiness` on the default host, and calls `spawnSupervisor` once with `{ role: "supervisor" }`.
+  `runFactorymanCommand` routes the word `start`, the usage text gained the start line, and the registered `supervisor` command lists both usage lines.
+  Suite `pnpm test` -> 146 files, 1904 passed, 0 failed (26 s). `pnpm run typecheck` and `pnpm run lint` clean.
+- Observation: the fake host accepts a two-line `usage` string in the CLI registration. A real bb has not seen it yet, so the live runs (T040 to T043) are the check.
+- refactor: none needed. `refuse` and `names` are the two helpers the module needed, and each has three or more callers.
+- commit: see the commit that carries this entry.

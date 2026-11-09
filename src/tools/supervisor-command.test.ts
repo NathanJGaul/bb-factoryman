@@ -21,6 +21,26 @@ describe("bb factoryman supervisor", () => {
     expect(t.bb.callsTo("setThreadMetadata")).toEqual([]);
   });
 
+  it("[U1642] routes the word start to the start command, and stamps any other first word as a thread ID", async () => {
+    const t = await withDispatchedTask();
+    t.bb.checkouts.set("proj-1", "/work/repo");
+    const started = await runFactorymanCommand(t.runtime, ["supervisor", "start", "--project", "proj-1"]);
+    expect(started.exitCode).toBe(1);
+    expect(started.stderr).toContain("No supervisor profile is set for project proj-1.");
+    expect(t.bb.callsTo("setThreadMetadata")).toEqual([]);
+    const stamped = await runFactorymanCommand(t.runtime, ["supervisor", "thr-new"]);
+    expect(stamped.exitCode).toBe(0);
+    expect(t.bb.callsTo("setThreadMetadata")).toEqual([["thr-new", { role: "supervisor" }]]);
+  });
+
+  it("[U1643] lists the supervisor lines first in the usage text, the stamp line and then the start line", async () => {
+    const t = await withDispatchedTask();
+    const usage = (await runFactorymanCommand(t.runtime, ["nope"])).stderr ?? "";
+    const lines = usage.split("\n");
+    expect(lines[0]).toBe("Usage: bb factoryman supervisor <thread-id>");
+    expect(lines[1]).toBe("Usage: bb factoryman supervisor start [--project <id>] [--profile <name>] [--prompt <text>]");
+  });
+
   it("[U119] prints usage and exits non-zero without a thread ID or with an unknown command", async () => {
     const t = await withDispatchedTask();
     for (const argv of [["supervisor"], [], ["nope"]]) {

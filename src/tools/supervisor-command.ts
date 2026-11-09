@@ -5,6 +5,7 @@ import { protectionSteps } from "../limits/protection";
 import { parseRegistry, type RegistryEntry } from "../limits/registry";
 import { errorText, type Runtime } from "../runtime";
 import { identify } from "./access";
+import { runSupervisorStart, START_USAGE } from "./supervisor-start";
 
 export interface CommandResult {
   exitCode: number;
@@ -14,6 +15,7 @@ export interface CommandResult {
 
 const USAGE =
   "Usage: bb factoryman supervisor <thread-id>\n" +
+  START_USAGE +
   "Usage: bb factoryman preflight <machine> --project <project-id> [--provider <provider-id>]\n" +
   INIT_USAGE +
   "Usage: bb factoryman protection <owner/repo> [--branch <branch>] [--check <name>]\n" +
@@ -29,6 +31,9 @@ export interface CommandContext {
  * thread, so bb offers it the four supervisor tools. The stamp only chooses
  * which tools bb offers. Each tool still decides the caller from the store.
  *
+ * `bb factoryman supervisor start` spawns a supervisor with the role set in the
+ * spawn call, so the role exists at the thread's first session (report task H4).
+ *
  * `bb factoryman preflight <machine> --project <id>` reports what a remote
  * machine is missing, and changes nothing.
  *
@@ -37,7 +42,7 @@ export interface CommandContext {
  */
 export async function runFactorymanCommand(rt: Runtime, argv: string[], ctx: CommandContext = {}): Promise<CommandResult> {
   const [command, ...rest] = argv;
-  if (command === "supervisor") return supervisor(rt, rest);
+  if (command === "supervisor") return rest[0] === "start" ? runSupervisorStart(rt, rest.slice(1), ctx) : supervisor(rt, rest);
   if (command === "preflight") return preflight(rt, rest, ctx);
   if (command === "dispatch") return rest[0] === "init" ? runDispatchInit(rt, rest.slice(1), ctx) : { exitCode: 2, stderr: USAGE };
   if (command === "protection") return protection(rest);
