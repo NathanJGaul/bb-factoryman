@@ -60,3 +60,22 @@ Tests and a stub index first: `HARNESS_IDS` was empty and `resolveDriver` refuse
   - U1332 and U1333 passed at first. They looped over the empty id list, so the pass proved nothing. The tests were strengthened before any implementation (`expect(HARNESS_IDS).toHaveLength(4)` first), and then ran red: `pnpm vitest run tools/conformance/drivers` -> 8 failed.
 - green: `tools/conformance/drivers/` holds `types.ts` (the `Driver` interface), `bind.ts` (the install-directory rule), one file per driver (`claude-code.ts`, `codex.ts`, `pi.ts`, `omp.ts`, `stub.ts`), and `index.ts`. The values come from the harness-independence report, appendix B. `pnpm vitest run tools/conformance/drivers` -> 8 passed. `pnpm run typecheck` and `pnpm run lint` pass.
 - refactor: none needed.
+
+## Group 4: the stub agent (U1335 to U1344)
+
+Tests, a fake stdio MCP server (`tools/stub-agent/fake-mcp.ts`), and a placeholder agent first.
+The placeholder answered `initialize` and refused every other method.
+The tests start the agent as a child process and speak ACP over stdio.
+
+- red: `pnpm vitest run tools/stub-agent` -> 10 failed
+  - U1335 `AssertionError: expected '' not to be ''` (no session id)
+  - U1336 `AssertionError: expected '' to contain '[tools] factoryman_report'`
+  - U1337 `AssertionError: expected '' to contain '[shell ok] marker.txt'`
+  - U1338 `AssertionError: expected undefined to be 'done'`
+  - U1339 `Error: Command failed: git ... rev-list --count main..fm/t-1` (no branch)
+  - U1340 `AssertionError: expected '' to match /silent/i`
+  - U1341 `AssertionError: expected [] to deeply equal [ true, true, false ]`
+  - U1343 `AssertionError: expected 'Method not found: session/prompt' to contain 'CONFORMANCE-CAUSE-401'`
+- green: `tools/stub-agent/stub-agent.ts` is the t01 agent (report appendix A, with the `prlong=` flag of the approval-form copy) in TypeScript, with `SLEEP`, `silent`, `double-report`, `fail=<code>`, the `dirty` flag for scouts, and the `[brain:...]` marker. `pnpm vitest run tools/stub-agent` -> 10 passed.
+- lint: `no-useless-assignment` flagged `let args: Json = {}`; fixed to `let args: Json;` (no behavior change). `pnpm run typecheck` and `pnpm run lint` pass.
+- refactor: none needed.
