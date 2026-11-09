@@ -119,7 +119,7 @@ A1301 to A1309 live in `test/acceptance/harness-readiness.test.ts`, A1310 to A13
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| U1322 | A `ready` provider that lists the permission mode and the level passes (moves to the new signature) | AC-1.8 | example | BASELINE | `src/dispatch/availability.test.ts::[U730]` |
+| U1322 | A `ready` provider that lists the permission mode and the level passes (moves to the new signature) | AC-1.8 | example | DONE | `src/dispatch/availability.test.ts::[U730]` |
 | U1323 | `not_installed` blocks with "is not installed on <host> (bb status: not_installed). Install its CLI there." | AC-1.2, FR-1313 | example | DONE | `src/dispatch/availability.test.ts` |
 | U1324 | `unauthenticated` with a login command blocks and says "Run `<command>` on that machine." | AC-1.1, FR-1313 | example | DONE | `src/dispatch/availability.test.ts` |
 | U1325 | `unauthenticated` with no login command blocks and says "Sign in to it on that machine." | AC-1.1, FR-1313 | example | DONE | `src/dispatch/availability.test.ts` |
@@ -130,12 +130,12 @@ A1301 to A1309 live in `test/acceptance/harness-readiness.test.ts`, A1310 to A13
 | U1330 | A provider with no state blocks, and the message lists the provider IDs that bb reports, or "none" | AC-1.4, FR-1312 | example | DONE | `src/dispatch/availability.test.ts` |
 | U1331 | The state of the profile's provider decides, not the first state in the list: a not-ready state of another provider does not block | AC-1.5, FR-1312 | example | DONE | `src/dispatch/availability.test.ts` |
 | U1332 | Readiness is checked before the listing: a provider that is both unlisted and not ready gets the readiness message | FR-1312 (order) | example | DONE | `src/dispatch/availability.test.ts` |
-| U1333 | A provider that bb does not list blocks and names the providers it knows (moves to the new signature) | FR-1317 | example | BASELINE | `src/dispatch/availability.test.ts::[U731]` |
-| U1334 | A listed provider with `available` false blocks (moves to the new signature) | FR-1317 | example | BASELINE | `src/dispatch/availability.test.ts::[U732]` |
-| U1335 | A permission mode that the provider does not list blocks with today's message (moves to the new signature) | FR-1317 | example | BASELINE | `src/dispatch/availability.test.ts::[U733]` |
+| U1333 | A provider that bb does not list blocks and names the providers it knows (moves to the new signature) | FR-1317 | example | DONE | `src/dispatch/availability.test.ts::[U731]` |
+| U1334 | A listed provider with `available` false blocks (moves to the new signature) | FR-1317 | example | DONE | `src/dispatch/availability.test.ts::[U732]` |
+| U1335 | A permission mode that the provider does not list blocks with today's message (moves to the new signature) | FR-1317 | example | DONE | `src/dispatch/availability.test.ts::[U733]` |
 | U1336 | The permission mode is checked before the level: a profile with both wrong gets the mode message | FR-1312 (order) | example | DONE | `src/dispatch/availability.test.ts` |
-| U1337 | With no model data, a level that the provider does not list blocks with today's message (moves to the new signature) | FR-1317 | example | BASELINE | `src/dispatch/availability.test.ts::[U734]` |
-| U1338 | The level check is skipped when the provider lists no levels (moves to the new signature) | FR-1317 | example | BASELINE | `src/dispatch/availability.test.ts::[U735]` |
+| U1337 | With no model data, a level that the provider does not list blocks with today's message (moves to the new signature) | FR-1317 | example | DONE | `src/dispatch/availability.test.ts::[U734]` |
+| U1338 | The level check is skipped when the provider lists no levels (moves to the new signature) | FR-1317 | example | DONE | `src/dispatch/availability.test.ts::[U735]` |
 
 ### `src/dispatch/gate.ts`: reads (H1, H2)
 
@@ -156,7 +156,7 @@ A1301 to A1309 live in `test/acceptance/harness-readiness.test.ts`, A1310 to A13
 | U1346 | A named provider that is ready on the host gives no `agent_cli` problem | AC-1.6, FR-1315 | example | DONE | `src/machines/preflight.test.ts` |
 | U1347 | A named provider that is `unauthenticated` on the host gives an `agent_cli` problem with the readiness text and the login command | AC-1.6, FR-1315 | example | DONE | `src/machines/preflight.test.ts` |
 | U1348 | With no named provider, one ready listed provider gives no problem | FR-1315 | example | DONE | `src/machines/preflight.test.ts` |
-| U1349 | With no named provider and no ready listed provider, the problem says "No agent CLI is available on <host>" (today's text) | FR-1315 | example | BASELINE | `src/machines/preflight.test.ts::[U839]` |
+| U1349 | With no named provider and no ready listed provider, the problem says "No agent CLI is available on <host>" (today's text) | FR-1315 | example | DONE | `src/machines/preflight.test.ts::[U839]` |
 | U1350 | The preflight reads the states with the host's own ID | AC-1.5, AC-1.6 | example | DONE | `src/machines/preflight.test.ts` |
 
 ### `src/limits/queue.ts`: readiness at queue start (H1)
@@ -165,8 +165,8 @@ A1301 to A1309 live in `test/acceptance/harness-readiness.test.ts`, A1310 to A13
 | --- | --- | --- | --- | --- | --- |
 | U1351 | A queued task whose provider is `unauthenticated` stays queued, spawns nothing, and the log names the message | AC-1.7, FR-1316 | example | DONE | `src/limits/queue.test.ts` |
 | U1352 | A failed states read keeps the task queued | AC-1.7, FR-1316 | example | DONE | `src/limits/queue.test.ts` |
-| U1353 | A queued task starts once the provider is ready (cap and order unchanged) | AC-1.7 | example | BASELINE | `src/limits/queue.test.ts::[U1007]` |
-| U1354 | A queued task whose provider is unavailable stays queued and spawns nothing | FR-1316 | example | BASELINE | `src/limits/queue.test.ts::leaves a task queued, and does not spawn, when the provider is no longer available` |
+| U1353 | A queued task starts once the provider is ready (cap and order unchanged) | AC-1.7 | example | DONE | `src/limits/queue.test.ts::[U1007]` |
+| U1354 | A queued task whose provider is unavailable stays queued and spawns nothing | FR-1316 | example | DONE | `src/limits/queue.test.ts::leaves a task queued, and does not spawn, when the provider is no longer available` |
 
 ### `src/tools/dispatch.ts` (H1)
 
@@ -236,12 +236,12 @@ A1301 to A1309 live in `test/acceptance/harness-readiness.test.ts`, A1310 to A13
 | U1391 | A record with a blank key is rejected | FR-1341 | example | DONE | `src/dispatch/config.test.ts` |
 | U1392 | An empty array is rejected, at the top level and inside a record, and an array of one level is accepted | FR-1341 (boundary) | example | DONE | `src/dispatch/config.test.ts` |
 | U1393 | A record entry with a repeated level is rejected | FR-1341 | example | DONE | `src/dispatch/config.test.ts` |
-| U1394 | An array with a repeated level is rejected (today's rule) | FR-1341 | example | BASELINE | `src/dispatch/config.test.ts::[U707]` |
+| U1394 | An array with a repeated level is rejected (today's rule) | FR-1341 | example | DONE | `src/dispatch/config.test.ts::[U707]` |
 | U1395 | A value that is neither an array nor a record (a string, a number, null) is rejected | FR-1341 | example | DONE | `src/dispatch/config.test.ts` |
 | U1396 | `ladderFor` returns the array for any provider when the setting is an array | AC-5.6, FR-1342 | example | DONE | `src/dispatch/config.test.ts` |
 | U1397 | `ladderFor` returns the record's entry for a provider that has one | AC-5.7, FR-1342 | example | DONE | `src/dispatch/config.test.ts` |
 | U1398 | `ladderFor` returns the default ladder for a provider that the record omits | AC-5.8, FR-1342 | example | DONE | `src/dispatch/config.test.ts` |
-| U1399 | A config that sets nothing keeps the default array (today's rule) | AC-5.6 | example | BASELINE | `src/dispatch/config.test.ts::[U701]` |
+| U1399 | A config that sets nothing keeps the default array (today's rule) | AC-5.6 | example | DONE | `src/dispatch/config.test.ts::[U701]` |
 
 ### `src/dispatch/resolver.ts`: ladders (H2)
 
@@ -251,7 +251,7 @@ A1301 to A1309 live in `test/acceptance/harness-readiness.test.ts`, A1310 to A13
 | U1401 | An explicit Codex profile below the baseline blocks with `reasoning_lowered` and not "cannot be ranked" | AC-5.7, FR-1342 | example | DONE | `src/dispatch/resolver.test.ts` |
 | U1402 | A provider with no record entry is ranked in the default ladder | AC-5.8, FR-1342 | example | DONE | `src/dispatch/resolver.test.ts` |
 | U1403 | A baseline level that is not on the explicit profile's ladder blocks with "cannot be ranked", and standing permission lifts the block | FR-1342, D-064 | example | DONE | `src/dispatch/resolver.test.ts` |
-| U1404 | With an array ladder the floor behaves as before: lowered blocks, equal or higher clears, off-ladder blocks | AC-5.6 | example | BASELINE | `src/dispatch/resolver.test.ts::[U722]`, `[U723]`, `[U724]`, `[U725]` |
+| U1404 | With an array ladder the floor behaves as before: lowered blocks, equal or higher clears, off-ladder blocks | AC-5.6 | example | DONE | `src/dispatch/resolver.test.ts::[U722]`, `[U723]`, `[U724]`, `[U725]` |
 
 ### `src/files.ts` (H10)
 
@@ -266,7 +266,7 @@ A1301 to A1309 live in `test/acceptance/harness-readiness.test.ts`, A1310 to A13
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
 | U1408 | With no override, no matching rule, and no default, the resolver returns `blocked` with code `no_default_profile` and the message that names `bb factoryman dispatch init --provider <id>` | AC-4.1, FR-1331 | example | DONE | `src/dispatch/resolver.test.ts` |
-| U1409 | An explicit profile, a rule, and a configured default still resolve, in that order | AC-4.2 | example | BASELINE | `src/dispatch/resolver.test.ts::[U711]`, `[U716]`, `[U744]` |
+| U1409 | An explicit profile, a rule, and a configured default still resolve, in that order | AC-4.2 | example | DONE | `src/dispatch/resolver.test.ts::[U711]`, `[U716]`, `[U744]` |
 | U1410 | The resolver module exports no `BUILTIN_PROFILE`, and no resolution has the source `builtin` | FR-1331, FR-1332 | example | DONE | `src/dispatch/resolver.test.ts` |
 | U1411 | The dispatch success text for a configured default says "the configured default", and no source text names a built-in default | FR-1332 | example | DONE | `src/tools/dispatch.test.ts` |
 
@@ -347,7 +347,7 @@ A1301 to A1309 live in `test/acceptance/harness-readiness.test.ts`, A1310 to A13
 | U1462 | A cause follows a turn-failure evidence (category and HTTP) | AC-6.1, FR-1352 | example | DONE | `src/wiring/handlers.test.ts` |
 | U1463 | A cause follows the fallback evidence "worker thread entered the error state" | AC-6.1, FR-1352 | example | DONE | `src/wiring/handlers.test.ts` |
 | U1464 | A remedy adds a second line "Remedy: ..." and the cause line is unchanged | AC-6.4, FR-1354 | example | DONE | `src/wiring/handlers.test.ts` |
-| U1465 | With no cause the evidence is today's text for the error-text, turn-failure, and fallback cases | AC-6.5, FR-1356 | example | BASELINE | `src/wiring/handlers.test.ts::[U135]`, `[U136]`, `[U137]` |
+| U1465 | With no cause the evidence is today's text for the error-text, turn-failure, and fallback cases | AC-6.5, FR-1356 | example | DONE | `src/wiring/handlers.test.ts::[U135]`, `[U136]`, `[U137]` |
 | U1466 | A throw from the cause read leaves today's evidence, still records the failure, and logs a warning | AC-6.5, FR-1356 | example | DONE | `src/wiring/handlers.test.ts` |
 | U1467 | The cause in the evidence is flattened and bounded | AC-6.6, FR-1355 | example | DONE | `src/wiring/handlers.test.ts` |
 | U1468 | The cause is read once, after the grace wait for an empty error text | plan: edge case, grace wait | example | DONE | `src/wiring/handlers.test.ts` |
@@ -359,7 +359,7 @@ A1301 to A1309 live in `test/acceptance/harness-readiness.test.ts`, A1310 to A13
 | --- | --- | --- | --- | --- | --- |
 | U1470 | A `failed` task keeps evidence of exactly 1200 characters whole in the wake message | AC-6.3, FR-1353 (boundary) | example | DONE | `src/wiring/wake.test.ts` |
 | U1471 | A `failed` task cuts evidence of 1201 characters to 1199 and an ellipsis | AC-6.3, FR-1353 (boundary) | example | DONE | `src/wiring/wake.test.ts` |
-| U1472 | A task in any other state keeps 600 characters, and `needs_decision` keeps 8000 | FR-1353 (the limits stay) | example | BASELINE | `src/wiring/wake.test.ts::[U128]`, `[U214]` |
+| U1472 | A task in any other state keeps 600 characters, and `needs_decision` keeps 8000 | FR-1353 (the limits stay) | example | DONE | `src/wiring/wake.test.ts::[U128]`, `[U214]` |
 
 ### `src/limits/queue.ts`: model checks at queue start (H2)
 
