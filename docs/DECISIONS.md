@@ -503,8 +503,7 @@ Milestone 7 reads only `dispatch.json` there.
 Milestone 9 adds the rest of the workflow config and reuses the same directory.
 The checkout is the project's default `local_path` source (`BbPort.getProjectCheckout`).
 bb does not say whether that source sits on the server machine.
-If it sits on a remote machine, the path will not exist on the server, the file reads as absent, and the built-in default applies.
-That fallback is silent for the owner, so the dispatch result names the profile source ("from the built-in default").
+If it sits on a remote machine, the path will not exist on the server, the file reads as absent, and dispatch blocks with a `dispatch init` hint (D-104 removed the built-in default that once applied here).
 The live check in milestone 11 confirms the path on a real project.
 
 ### D-063: The built-in default profile is `claude-code`, `claude-sonnet-5-5`, `high`, `auto` (Gap)
@@ -523,7 +522,6 @@ The text above records the decision as it stood.
 firstmate never lowers the reasoning level to save quota without standing permission.
 The resolver has no quota data, so the only way it can lower a level is an explicit override that sits below what the owner declared.
 The baseline is the profiles of the matching rules, or else the configured default.
-The built-in default sets none.
 A level below any baseline profile blocks with `reasoning_lowered`, unless `standingPermission.lowerReasoning` is true in the file.
 Reasoning level IDs are provider-specific (spike item 29), so the ladder lives in the config and defaults to `none, low, medium, high, xhigh, max`.
 When two levels differ and either one is off the ladder, the check blocks, because it cannot rank them.
