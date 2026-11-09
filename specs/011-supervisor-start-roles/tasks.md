@@ -126,8 +126,8 @@ Commands run from the repository root.
 ## Phase 9: Polish and cross-cutting
 
 - [X] T050 Run `pnpm run check` (type check, lint, full suite). Fix every failure and every flaky test, even one that an earlier change caused.
-- [ ] T051 Confirm FR-015 and FR-029 with a search: no write to no-mistakes configuration anywhere in `src/`, and no import of `@get-bb/*` under `src/machine/` or `src/harness/`. Record the commands and results in `checklist.md`.
-- [ ] T052 Run the steps of `quickstart.md` in order and record each result in `checklist.md`. Write the five verdicts into a file outside the worktree for the pull request description.
+- [X] T051 Confirm FR-015 and FR-029 with a search: no write to no-mistakes configuration anywhere in `src/`, and no import of `@get-bb/*` under `src/machine/` or `src/harness/`. Record the commands and results in `checklist.md`.
+- [X] T052 Run the steps of `quickstart.md` in order and record each result in `checklist.md`. Write the five verdicts into a file outside the worktree for the pull request description.
 
 ## Dependencies
 
