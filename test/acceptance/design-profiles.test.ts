@@ -41,8 +41,8 @@ describe("docs/DESIGN.md: dispatch profiles and harness independence", () => {
     expect(refused).toMatchObject({ ok: false, code: "provider_not_admitted", permanent: true });
     expect(text).toContain("`no_default_profile`");
     expect(text).toContain("`src/harness/contracts.ts`");
-    expect(CONTRACTS.map((row) => row.provider)).toContain("claude");
-    expect(contractFor("claude")).toBe(CONTRACTS.find((row) => row.provider === "claude"));
+    expect(CONTRACTS.map((row) => row.provider)).toContain("claude-code");
+    expect(contractFor("claude-code")).toBe(CONTRACTS.find((row) => row.provider === "claude-code"));
 
     // The roles block: stated in its own paragraph and again in the supervisor paragraph, and the code accepts the field.
     const roles = between(text, "**Roles.**", "**Supervisor start.**");
