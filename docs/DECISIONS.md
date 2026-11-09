@@ -921,7 +921,7 @@ The root config cannot take `erasableSyntaxOnly`, because `src/` uses constructo
 The tools import nothing from `src/` and nothing from `@get-bb/*`.
 The stub agent and the fake model run inside the lab and import only Node modules.
 
-### D-105: Four harness facts that the report's table did not show (Finding)
+### D-105: Five harness facts that the report's table did not show (Finding)
 
 1. Claude Code sends the sandbox text, the deferred tool list, and the skill list as messages with the role `system` inside the `messages` array.
    A parser that reads only the `system` field sees no plugin tool and no skill.
@@ -933,6 +933,12 @@ The stub agent and the fake model run inside the lab and import only Node module
 4. omp in `accept-edits` asks for approval before a shell command (an `approval` interaction, `waiting_for_approval`), and a worker that cannot answer waits for ever.
    The driver uses `full`.
    A real omp worker in `accept-edits` stops at its first shell command, and the plugin then wakes the supervisor with the `interaction.pending` text.
+5. omp never records a failed thread for a model error.
+   For HTTP 401 and 404 it ends the turn normally after one request and shows the error as the assistant's text.
+   For HTTP 500 and 429 it retries for about six minutes and then does the same.
+   The plugin therefore sees a silent turn, and the supervisor learns of the error only by reading the worker's thread.
+   The driver says `failure.mode: "ends-turn"`, and scenario S7 checks for the silent-turn wake on such a harness.
+
 The drivers carry these facts.
 A CLI upgrade that changes one fails a scenario, and the maintainer edits one driver.
 
