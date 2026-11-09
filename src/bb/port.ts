@@ -57,6 +57,8 @@ export interface BbPort {
   setThreadMetadata(threadId: string, metadata: Record<string, Json>): Promise<void>;
   /** Every provider bb knows, with its availability on `hostId`, or on the default host when it is absent. */
   listProviders(hostId?: string): Promise<ProviderAvailability[]>;
+  /** What bb says about each provider's readiness on `hostId`, or on the default host when it is absent. */
+  getProviderStates(hostId?: string): Promise<ProviderState[]>;
   /** Every machine bb knows. */
   listMachines(): Promise<MachineInfo[]>;
   /** The cost bb recorded for a thread, or null when the provider reports none. */
@@ -78,6 +80,20 @@ export interface ProviderAvailability {
   permissionModes: string[];
   /** Reasoning level IDs. An empty list means bb reported none. */
   reasoningLevels: string[];
+}
+
+/** bb's readiness verdict for a provider. Only `ready` lets a worker start. */
+export type ProviderStatus = "ready" | "not_installed" | "unauthenticated" | "expired" | "unsupported_version" | "unknown";
+
+/** One provider's state on one host, cut to the fields that the dispatch gate reads. */
+export interface ProviderState {
+  providerId: string;
+  status: ProviderStatus;
+  installedVersion: string | null;
+  minimumSupportedVersion: string | null;
+  /** The command to run on the host that holds the CLI, or null when bb gives none. */
+  localLoginCommand: string | null;
+  statusMessage: string | null;
 }
 
 /** A machine as bb reports it: an enrolled host (spike items 6 and 7). */

@@ -110,10 +110,10 @@ A1301 to A1309 live in `test/acceptance/harness-readiness.test.ts`, A1310 to A13
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| U1318 | `getProviderStates` calls `providerStates` with no argument when no host is given, and with `{ hostId }` when one is | FR-1311, AC-1.5 | example | PENDING | |
-| U1319 | It keeps `providerId`, `status`, `installedVersion`, `minimumSupportedVersion`, `localLoginCommand`, and `statusMessage` of each entry, in order | FR-1311 | example | PENDING | |
-| U1320 | A status outside the six known values becomes `unknown` | FR-1312 (fail closed) | example | PENDING | |
-| U1321 | An SDK error is not caught | FR-1312 | example | PENDING | |
+| U1318 | `getProviderStates` calls `providerStates` with no argument when no host is given, and with `{ hostId }` when one is | FR-1311, AC-1.5 | example | DONE | `src/bb/adapter.test.ts::[U1318]` to `[U1321]` |
+| U1319 | It keeps `providerId`, `status`, `installedVersion`, `minimumSupportedVersion`, `localLoginCommand`, and `statusMessage` of each entry, in order | FR-1311 | example | DONE | `src/bb/adapter.test.ts::[U1318]` to `[U1321]` |
+| U1320 | A status outside the six known values becomes `unknown` | FR-1312 (fail closed) | example | DONE | `src/bb/adapter.test.ts::[U1318]` to `[U1321]` |
+| U1321 | An SDK error is not caught | FR-1312 | example | DONE | `src/bb/adapter.test.ts::[U1318]` to `[U1321]` |
 
 ### `src/dispatch/availability.ts` (H1)
 

@@ -1,5 +1,5 @@
 import type { BbPluginApi } from "@get-bb/plugin-sdk";
-import type { BbPort, InputResult, Json, MachineInfo, ProjectSource, TerminalRead } from "./port";
+import type { BbPort, InputResult, Json, MachineInfo, ProjectSource, ProviderStatus, TerminalRead } from "./port";
 
 const PERMISSION_MODES = ["accept-edits", "auto", "full"] as const;
 type PermissionMode = (typeof PERMISSION_MODES)[number];
@@ -8,6 +8,8 @@ function permissionMode(value: string): PermissionMode {
   if ((PERMISSION_MODES as readonly string[]).includes(value)) return value as PermissionMode;
   throw new Error(`Unknown permission mode \`${value}\`.`);
 }
+
+const PROVIDER_STATUSES: readonly ProviderStatus[] = ["ready", "not_installed", "unauthenticated", "expired", "unsupported_version", "unknown"];
 
 interface ThreadFields {
   id: string;
@@ -156,6 +158,19 @@ export function createBbPort(bb: BbPluginApi): BbPort {
         available: provider.available,
         permissionModes: [...provider.capabilities.permissionModes],
         reasoningLevels: (provider.reasoningLevels ?? []).map((level) => level.id),
+      }));
+    },
+
+    async getProviderStates(hostId) {
+      const response = await bb.sdk.system.providerStates(hostId === undefined ? undefined : { hostId });
+      return response.providers.map((state) => ({
+        providerId: state.providerId,
+        // A status that this plugin does not know is not ready. Reading it as unknown keeps the gate closed.
+        status: PROVIDER_STATUSES.includes(state.status as ProviderStatus) ? (state.status as ProviderStatus) : "unknown",
+        installedVersion: state.installedVersion,
+        minimumSupportedVersion: state.minimumSupportedVersion,
+        localLoginCommand: state.localLoginCommand,
+        statusMessage: state.statusMessage,
       }));
     },
 

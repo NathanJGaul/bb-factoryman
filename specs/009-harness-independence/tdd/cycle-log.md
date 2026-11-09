@@ -48,3 +48,16 @@ Its subject is "feat: pin the harness contract table and read the provider in co
 - notes: A1313 passes against the old code and is a guard: it fails if the hint turns on by default.
   The helper that ticks `tasks.md` also ticks a task whose behaviors are all `DONE` or `BASELINE`.
   A task that names a `BASELINE` behavior (T1324 names U1322) would otherwise never tick, and `/speckit.implement` would redo it.
+
+## Group 2: the provider states read and its fixtures (tasks T1320 to T1323, H1 part 1)
+
+Behaviors: U1318 to U1321.
+Commit subject: "feat: read bb's provider states through the port (H1)".
+
+- test: `src/bb/adapter.test.ts` gained a `getProviderStates` block (10 cases) against a stub `getProviderStates` in `src/bb/adapter.ts` that throws "not implemented".
+- red: `pnpm vitest run src/bb/adapter.test.ts -t "getProviderStates"` -> `10 failed`; every case fails with `Error: not implemented` (U1318, U1319, U1320 for each status, U1321).
+- green: the adapter calls `bb.sdk.system.providerStates` with no argument or `{ hostId }`, keeps the six fields, and maps a status outside the six known values to `unknown` (fail closed).
+  `pnpm vitest run src/bb/adapter.test.ts` -> 32 passed.
+- fixtures (tasks T1322, T1323, no behavior id): `FakeBbPort` gained `states`, `statesByHost`, `statesError`, and a default that derives one state per listed provider (`ready` when available, `not_installed` otherwise); `loadWorld` gained `providerStates`, `providerStatesByHost`, `providerStatesError`, a `system.providerStates` fake with the same default, and the exported `stateFixture` and `providerState` builders.
+  The fixtures change no test. `pnpm run check` -> 97 files, 1366 passed, 0 failed.
+- refactor: none needed.

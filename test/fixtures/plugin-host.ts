@@ -20,6 +20,25 @@ export function providerFixture(id: string, overrides: Record<string, unknown> =
   };
 }
 
+/** A provider state as `bb.sdk.system.providerStates` returns it, cut to the fields the plugin reads. */
+export function stateFixture(providerId: string, overrides: Record<string, unknown> = {}) {
+  return {
+    providerId,
+    displayName: providerId,
+    status: "ready",
+    installedVersion: null,
+    minimumSupportedVersion: null,
+    localLoginCommand: null,
+    loginCommand: null,
+    statusMessage: null,
+    accountEmail: null,
+    planLabel: null,
+    canInstall: false,
+    canUpdate: false,
+    ...overrides,
+  };
+}
+
 /** A host as `bb.sdk.hosts.list` returns it, cut to the fields the plugin reads. */
 export function hostFixture(id: string, name: string, overrides: { status?: string; phase?: string } = {}) {
   return { id, name, status: overrides.status ?? "connected", lifecycle: { phase: overrides.phase ?? "active" } };
@@ -133,6 +152,15 @@ export interface WorldOptions {
   providersByHost?: Record<string, unknown[]>;
   /** Make `providers.list` fail. */
   providersError?: Error;
+  /**
+   * What `system.providerStates` returns. When it is absent, each provider of `providers.list` is `ready` when it is
+   * available and `not_installed` otherwise.
+   */
+  providerStates?: unknown[];
+  /** What `system.providerStates` returns per host ID, instead of `providerStates`. */
+  providerStatesByHost?: Record<string, unknown[]>;
+  /** Make `system.providerStates` fail. */
+  providerStatesError?: Error;
   /** Make `projects.get` fail. */
   projectError?: Error;
   /** Make `hosts.list` fail. */
@@ -219,6 +247,16 @@ export async function loadWorld(options: WorldOptions = {}): Promise<World> {
           if (held !== null) await held;
           const byHost = args?.hostId === undefined ? undefined : options.providersByHost?.[args.hostId];
           return byHost ?? options.providers ?? [providerFixture("claude"), providerFixture("claude-code")];
+        },
+      },
+      system: {
+        providerStates: async (args?: { hostId?: string }) => {
+          if (options.providerStatesError) throw options.providerStatesError;
+          const byHost = args?.hostId === undefined ? undefined : options.providerStatesByHost?.[args.hostId];
+          if (byHost !== undefined) return { providers: byHost };
+          if (options.providerStates !== undefined) return { providers: options.providerStates };
+          const listed = ((args?.hostId === undefined ? undefined : options.providersByHost?.[args.hostId]) ?? options.providers ?? [providerFixture("claude"), providerFixture("claude-code")]) as Array<{ id: string; available: boolean }>;
+          return { providers: listed.map((provider) => stateFixture(provider.id, { status: provider.available ? "ready" : "not_installed" })) };
         },
       },
       hosts: {

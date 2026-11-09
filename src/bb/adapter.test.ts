@@ -190,6 +190,62 @@ describe("createBbPort", () => {
     ]);
   });
 
+  describe("getProviderStates", () => {
+    const entry = (overrides: Record<string, unknown> = {}) => ({
+      providerId: "codex",
+      displayName: "Codex",
+      status: "unauthenticated",
+      installedVersion: "0.166.0",
+      minimumSupportedVersion: "0.136.0",
+      localLoginCommand: "codex login",
+      loginCommand: "codex login --remote",
+      statusMessage: "Not signed in",
+      accountEmail: null,
+      canInstall: false,
+      canUpdate: false,
+      planLabel: null,
+      ...overrides,
+    });
+
+    it("[U1318] calls providerStates with no argument for no host, and with the host ID for a host", async () => {
+      const { port, sdk } = setup({ system: { providerStates: async () => ({ providers: [] }) } } as FakeSdkOverrides);
+      await port.getProviderStates();
+      await port.getProviderStates("h2");
+      expect(sdk.callsTo("system.providerStates")).toEqual([[undefined], [{ hostId: "h2" }]]);
+    });
+
+    it("[U1319] keeps the provider ID, status, versions, local login command, and status message of each entry, in order", async () => {
+      const { port } = setup({
+        system: { providerStates: async () => ({ providers: [entry(), entry({ providerId: "pi", status: "ready", installedVersion: null, minimumSupportedVersion: null, localLoginCommand: null, statusMessage: null })] }) },
+      } as FakeSdkOverrides);
+      expect(await port.getProviderStates()).toEqual([
+        { providerId: "codex", status: "unauthenticated", installedVersion: "0.166.0", minimumSupportedVersion: "0.136.0", localLoginCommand: "codex login", statusMessage: "Not signed in" },
+        { providerId: "pi", status: "ready", installedVersion: null, minimumSupportedVersion: null, localLoginCommand: null, statusMessage: null },
+      ]);
+    });
+
+    it("[U1320] reads a status outside the six known values as unknown", async () => {
+      const { port } = setup({ system: { providerStates: async () => ({ providers: [entry({ status: "rate_limited" }), entry({ status: undefined })] }) } } as FakeSdkOverrides);
+      expect((await port.getProviderStates()).map((state) => state.status)).toEqual(["unknown", "unknown"]);
+    });
+
+    it.each(["ready", "not_installed", "unauthenticated", "expired", "unsupported_version", "unknown"])("[U1320] keeps the known status %s", async (status) => {
+      const { port } = setup({ system: { providerStates: async () => ({ providers: [entry({ status })] }) } } as FakeSdkOverrides);
+      expect((await port.getProviderStates())[0]?.status).toBe(status);
+    });
+
+    it("[U1321] does not catch an SDK error", async () => {
+      const { port } = setup({
+        system: {
+          providerStates: async () => {
+            throw new Error("HTTP 500");
+          },
+        },
+      } as FakeSdkOverrides);
+      await expect(port.getProviderStates()).rejects.toThrow("HTTP 500");
+    });
+  });
+
   it("[U819] lists machines with ID, name, status, phase, and an online flag", async () => {
     const host = (id: string, status: string, phase: string) => ({ id, name: `name-${id}`, status, lifecycle: { phase } });
     const { port } = setup({
