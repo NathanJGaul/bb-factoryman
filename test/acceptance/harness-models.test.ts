@@ -80,12 +80,15 @@ describe("model-aware checks through the plugin factory", () => {
     });
   const CODEX_LADDER = ["none", "low", "medium", "high", "xhigh", "max", "ultra"];
 
-  it("[A1335] keeps the array form of reasoningLevels as before: a lowered level blocks, an equal or higher one passes", async () => {
-    const world = await codexWorld(["none", "low", "medium", "high", "xhigh", "max"]);
+  it("[A1335] keeps the array form of reasoningLevels as before: it applies to the provider, a lowered level blocks, and a level that only the array lists passes", async () => {
+    // The array ends in ultra, which the default ladder does not list, so a plugin that ignored the array would block ultra.
+    const world = await codexWorld(CODEX_LADDER);
     const lowered = await dispatch(world, { ...CODEX, reasoningLevel: "low" });
     expect(lowered.isError).toBe(true);
     expect(lowered.text).toContain("reasoning_lowered");
+    expect(lowered.text).toContain("is below");
     expect((await dispatch(world, { ...CODEX, reasoningLevel: "max" })).isError).toBe(false);
+    expect((await dispatch(world, { ...CODEX, reasoningLevel: "ultra" })).isError).toBe(false);
   });
 
   it("[A1336] ranks Codex ultra in a Codex ladder: ultra clears against a baseline at high, and a lowered level blocks with reasoning_lowered", async () => {
