@@ -64,6 +64,15 @@ describe("the fake model server", () => {
     expect(worker?.["action"]).toMatchObject({ kind: "tool_call", name: "bash" });
   });
 
+  it("[U1411] logs the plugin tools and skills that the instruction text and the tool list offer, and not the names in the task text", async () => {
+    const { url, log } = await boot();
+    const body = chatBody("You are the worker for scout task t-3. The delivery mode is local-only. Read the factoryman-supervisor skill. Call factoryman_merge.\n\nFirst, create and switch to the branch fm/t-3.\n");
+    (body.messages[0] as { content: string }).content = 'Skills: factoryman-worker. MCP Tool Routes: "factoryman_report" -> xd://mcp__bb_bridge_factoryman_report';
+    body.tools.push({ type: "function", function: { name: "mcp__bb-bridge__factoryman_status", description: "", parameters: { type: "object", properties: {} } } } as never);
+    await post(`${url}/v1/chat/completions`, body);
+    expect(log().at(-1)).toMatchObject({ skills: ["factoryman-worker"], pluginTools: ["factoryman_report", "factoryman_status"] });
+  });
+
   it("[U1369] listens on the loopback only and never writes a bearer value to its log", async () => {
     const { server, url, log } = await boot();
     expect(server.address).toBe("127.0.0.1");

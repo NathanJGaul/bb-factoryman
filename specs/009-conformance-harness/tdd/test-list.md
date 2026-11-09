@@ -179,6 +179,13 @@ Tests carry their behavior id in the title, for example `[U1301]`.
 | U1369 | Binds the loopback only, and ignores any bearer value | AC-4.4 | example | PENDING | |
 | U1370 | Delays a reply by the `SLEEP` directive's time | FR-1305 | example | PENDING | |
 
+### `tools/fake-model/instructions.ts`
+
+| id | behavior | traces | kind | state | test |
+| --- | --- | --- | --- | --- | --- |
+| U1410 | Finds the plugin tools a harness offers by every route (plain, MCP-prefixed, deferred in a system reminder, device in the instruction text) and the skills named in the instruction text, and ignores the same names in the task text | AC-4.3, FR-1307 | example | PENDING | |
+| U1411 | The fake model's log records those tools and skills for each request, so the suite can read what a role was offered | AC-4.3 | example | PENDING | |
+
 ### `tools/conformance/lab.ts`
 
 | id | behavior | traces | kind | state | test |
@@ -186,8 +193,8 @@ Tests carry their behavior id in the title, for example `[U1301]`.
 | U1371 | Builds the `bblab` command from the repository path and passes no credential variable | AC-1.6, FR-1313 | example | PENDING | |
 | U1372 | Builds the install and build commands for the plugin copy with no network use and an excluded `.git`, `specs`, and `tools` | FR-1302 | example | PENDING | |
 | U1373 | The offline proof passes when the public connection fails and the loopback works, and fails in every other case | AC-5.1, AC-5.3 | example | PENDING | |
-| U1374 | Reads a wake count from a brain log: the stub's log and the fake model's log give the same count for the same transcript | FR-1307 | example | PENDING | |
-| U1375 | Reads the tools and skills a thread was offered, from the stub log or the fake model log, by role | AC-1.3 | example | PENDING | |
+| U1374 | Counts the wake messages of a task from a thread's event log: only events that the plugin sent, naming the task and the state, so the count does not depend on the brain | FR-1307 | example | PENDING | |
+| U1375 | Reads the tools and skills a thread was offered from the stub's log or the fake model's log, by the task id or the supervisor label in the prompt | AC-1.3 | example | PENDING | |
 
 ### `tools/conformance/docs.ts`
 

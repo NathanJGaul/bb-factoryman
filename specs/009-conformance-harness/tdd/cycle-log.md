@@ -143,3 +143,17 @@ Unit tests with a server stub that rejected with "not implemented" first.
   - A1319 did not react to these three mutations. The audit needs its own mutant (a changed `fail=` status).
   - The file was restored (`cp` of the saved copy) and the four tests passed again. These four are `TEST_AFTER` with a recorded revert-red, as in D-099.
 - refactor: none needed.
+
+## Group 9: what a harness tells its model (U1410, U1411) - found while designing the S5 check
+
+S5 needs to read which plugin tools and skills a role was offered. The lab showed that three of the four harnesses do not list the report tool in the tool array (Claude Code defers it, omp makes it a device), and that the task text itself names the tools and skills. So two behaviors were appended to the test list (U1410, U1411, task T1347).
+
+- red: `pnpm vitest run tools/fake-model/instructions.test.ts` -> 1 failed: U1410 `AssertionError: expected [] to deeply equal [ 'factoryman-supervisor', …(1) ]`
+- red: `pnpm vitest run tools/fake-model/server.test.ts` -> 1 failed, 4 passed: U1411 `AssertionError: expected { Object (t, method, ...) } to match object { …(2) }` (the log had no `pluginTools` and counted skills from the whole text)
+- green: `tools/fake-model/instructions.ts` (`instructionText`, `pluginToolsIn`, `skillsIn`) and the server log fields `skills` and `pluginTools`. `pnpm vitest run tools/fake-model test/acceptance/conformance-fake-model.test.ts` -> 30 passed. `pnpm run typecheck` and `pnpm run lint` pass.
+- refactor: `skillsOf` in `server.ts` was replaced by the new helpers.
+- live notes from the first offline lab run (T1363, T1334 groundwork):
+  - bb 0.49.0 starts offline. `ENETUNREACH` for `1.1.1.1:443`, HTTP 200 on the lab's own loopback port.
+  - `bb plugin build` and `bb plugin install` both need bb's build toolchain (`esbuild`, `tailwindcss`) in `<data dir>/plugins/toolchain-*`, which bb installs with `npm install` on first use. Offline that call retried for 4 minutes and failed with `EAI_AGAIN`. The runner therefore builds the plugin once with the network on, outside the sandbox, with `BB_DATA_DIR` set to the lab's data directory. After that, `bb plugin install` takes 1.4 seconds offline.
+  - A `curl` inside the lab opens the canary `.ssh/known_hosts` four times (the tripwire counted it). The probe inside the lab uses `node` instead.
+  - A wake is a `client/turn/requested` event with `originPluginId: "bb-factoryman"` in the supervisor's thread log. The worker's model, reasoning level, and permission mode are in its first `client/turn/requested` event, under `execution`.

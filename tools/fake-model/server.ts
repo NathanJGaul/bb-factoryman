@@ -11,6 +11,7 @@ import { createServer, type IncomingMessage, type ServerResponse } from "node:ht
 import type { AddressInfo } from "node:net";
 import { fileURLToPath } from "node:url";
 import { nextAction } from "./brain.ts";
+import { instructionText, pluginToolsIn, skillsIn } from "./instructions.ts";
 import type { Action, Conversation, Wire, WireFormat, WireResponse } from "./types.ts";
 import { chat } from "./wire/chat.ts";
 import { messages } from "./wire/messages.ts";
@@ -44,8 +45,6 @@ async function settle(action: Action): Promise<Exclude<Action, { kind: "delay" }
   return current;
 }
 
-const SKILL = /factoryman-(?:worker|supervisor)/g;
-
 function describeActor(c: Conversation): string {
   const users = c.turns.filter((t) => t.role === "user").map((t) => t.text);
   const worker = users.map((text) => /You are the worker for (?:scout|ship) task (\S+?)\./.exec(text)?.[1]).find((id) => id !== undefined);
@@ -57,9 +56,14 @@ function describeActor(c: Conversation): string {
   return "other";
 }
 
-function skillsOf(c: Conversation): string[] {
-  const text = [c.system, ...c.turns.map((t) => ("text" in t ? t.text : ""))].join("\n");
-  return [...new Set(text.match(SKILL) ?? [])].sort();
+function instructions(c: Conversation): string {
+  return instructionText(c.system, c.turns.flatMap((t) => (t.role === "user" ? [t.text] : [])));
+}
+
+/** The plugin tools a harness offers by any route: the tool list, a deferred tool, or a device. */
+function pluginToolsOf(c: Conversation): string[] {
+  const listed = c.tools.flatMap((tool) => /^(?:mcp__[A-Za-z0-9_-]+__)?(factoryman_[a-z]+)$/.exec(tool.name)?.[1] ?? []);
+  return [...new Set([...listed, ...pluginToolsIn(instructions(c))])].sort();
 }
 
 function summarize(c: Conversation) {
@@ -112,7 +116,8 @@ export function startServer(options: { port: number; logFile: string }): Promise
         model: conversation.model,
         stream: conversation.stream,
         tools: conversation.tools.map((tool) => tool.name),
-        skills: skillsOf(conversation),
+        skills: skillsIn(instructions(conversation)),
+        pluginTools: pluginToolsOf(conversation),
         actor: describeActor(conversation),
         action: decided.kind === "delay" ? { kind: decided.kind, ms: decided.ms, then: decided.then.kind } : decided.kind === "tool_call" ? { kind: decided.kind, name: decided.name } : { kind: decided.kind },
         turns: summarize(conversation),
