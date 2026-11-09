@@ -138,50 +138,50 @@ Table-driven tests cover the lines that name several inputs, and the cycle log r
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| U1656 | A scalar `agent: claude` reads as the one name `claude` | FR-016 | example | PENDING | |
-| U1657 | A flow list `agent: [codex, grok]` reads as the names in order | FR-016, US4.3 | example | PENDING | |
-| U1658 | A block list (`agent:` then `- codex` lines) reads as the names in order | FR-016, US4.3 | example | PENDING | |
-| U1659 | Quotes around a name are removed | FR-016 | example | PENDING | |
-| U1660 | A trailing comment is not part of the value | FR-016 | example | PENDING | |
-| U1661 | A commented-out `agent` line is ignored | FR-016 | example | PENDING | |
-| U1662 | An indented `agent` key is ignored, because only a top-level key counts | FR-016 | example | PENDING | |
-| U1663 | No `agent` line reads as `auto` | FR-016, US4.4 | example | PENDING | |
-| U1664 | `agent: auto` reads as `auto`, and `auto` inside a list is an entry of the list | FR-016, FR-018 | example | PENDING | |
-| U1665 | An unclosed flow list, an `agent:` with no items, two top-level `agent` lines, and an empty name each fail with a reason that names the shape, and none is guessed | FR-016, FR-020, US4.6 | example | PENDING | |
-| U1666 | The table of agent to provider holds exactly `claude`, `codex`, `pi`, `acp:omp`, `opencode`, `grok`, and `cursor` with their providers | FR-017 | example | PENDING | |
-| U1667 | `acp:other`, `copilot`, `rovodev`, `devin`, `antigravity`, and an unknown name map to no provider | FR-017, FR-019 | example | PENDING | |
+| U1656 | A scalar `agent: claude` reads as the one name `claude` | FR-016 | example | DONE | `src/validator/agent.test.ts::[U1656]` |
+| U1657 | A flow list `agent: [codex, grok]` reads as the names in order | FR-016, US4.3 | example | DONE | `src/validator/agent.test.ts::[U1657]` |
+| U1658 | A block list (`agent:` then `- codex` lines) reads as the names in order | FR-016, US4.3 | example | DONE | `src/validator/agent.test.ts::[U1658]` |
+| U1659 | Quotes around a name are removed | FR-016 | example | DONE | `src/validator/agent.test.ts::[U1659]` |
+| U1660 | A trailing comment is not part of the value | FR-016 | example | DONE | `src/validator/agent.test.ts::[U1660]` |
+| U1661 | A commented-out `agent` line is ignored | FR-016 | example | DONE | `src/validator/agent.test.ts::[U1661]` |
+| U1662 | An indented `agent` key is ignored, because only a top-level key counts | FR-016 | example | DONE | `src/validator/agent.test.ts::[U1662]` |
+| U1663 | No `agent` line reads as `auto` | FR-016, US4.4 | example | DONE | `src/validator/agent.test.ts::[U1663]` |
+| U1664 | `agent: auto` reads as `auto`, and `auto` inside a list is an entry of the list | FR-016, FR-018 | example | DONE | `src/validator/agent.test.ts::[U1664]` |
+| U1665 | An unclosed flow list, an `agent:` with no items, two top-level `agent` lines, and an empty name each fail with a reason that names the shape, and none is guessed | FR-016, FR-020, US4.6 | example | DONE | `src/validator/agent.test.ts::[U1665]` |
+| U1666 | The table of agent to provider holds exactly `claude`, `codex`, `pi`, `acp:omp`, `opencode`, `grok`, and `cursor` with their providers | FR-017 | example | DONE | `src/validator/agent.test.ts::[U1666]` |
+| U1667 | `acp:other`, `copilot`, `rovodev`, `devin`, `antigravity`, and an unknown name map to no provider | FR-017, FR-019 | example | DONE | `src/validator/agent.test.ts::[U1667]` |
 
 ### `src/validator/agent.ts`: the observation
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| U1668 | A mapped agent whose provider bb reports `ready` is `ready` and names its provider | US4.1, FR-017 | example | PENDING | |
-| U1669 | A mapped agent whose provider is `unauthenticated`, `not_installed`, `expired`, or `unsupported_version` is `not_ready` with the text and the remedy that dispatch gives | US4.2, FR-017 | example | PENDING | |
-| U1670 | A mapped agent whose provider is missing from the host's states is `not_ready` and the text says that bb reports no state | FR-017, FR-020 | example | PENDING | |
-| U1671 | An agent with no mapped provider is `unchecked`, its reason says that readiness was not checked, and it is never `ready` | US4.5, FR-019 | example | PENDING | |
-| U1672 | An ordered list is ready when one entry is ready (also when the first is not and a later one is), and keeps its order | US4.3, FR-016, FR-017 | example | PENDING | |
-| U1673 | An ordered list with no ready entry is not ready | US4.3, FR-017 | example | PENDING | |
-| U1674 | `auto` lists the mapped providers that bb reports ready on the host and is ready when the list is not empty | US4.4, FR-018 | example | PENDING | |
-| U1675 | `auto` with no ready mapped provider is not ready | US4.4, FR-018 | example | PENDING | |
-| U1676 | A host with no configuration file (the read exits 3) reads as the default `auto`, with source `default` | US4.4, FR-016 | example | PENDING | |
-| U1677 | Any other non-zero exit of the read is `unobserved` with the exit code and the standard error | US4.6, FR-020 | example | PENDING | |
-| U1678 | A read that did not run, or was killed or timed out (exit code null), is `unobserved` with the reason | US4.6, FR-020 | example | PENDING | |
-| U1679 | A setting that cannot be read (U1665) is `unobserved` with the reason of the parser | US4.6, FR-020 | example | PENDING | |
-| U1680 | A `getProviderStates` call that throws makes the observation `unobserved`, and an `exec` call that throws does too, and the function never throws | US4.6, FR-020, FR-029 | example | PENDING | |
-| U1681 | The only `exec` call is `sh` with `-c` and the contract's script, with `timeoutMs` 30000 and the host of the call, and `getProviderStates` gets the same host | US4.7, US4.11, FR-015 | example | PENDING | |
+| U1668 | A mapped agent whose provider bb reports `ready` is `ready` and names its provider | US4.1, FR-017 | example | DONE | `src/validator/agent.test.ts::[U1668]` |
+| U1669 | A mapped agent whose provider is `unauthenticated`, `not_installed`, `expired`, or `unsupported_version` is `not_ready` with the text and the remedy that dispatch gives | US4.2, FR-017 | example | DONE | `src/validator/agent.test.ts::[U1669]` |
+| U1670 | A mapped agent whose provider is missing from the host's states is `not_ready` and the text says that bb reports no state | FR-017, FR-020 | example | DONE | `src/validator/agent.test.ts::[U1670]` |
+| U1671 | An agent with no mapped provider is `unchecked`, its reason says that readiness was not checked, and it is never `ready` | US4.5, FR-019 | example | DONE | `src/validator/agent.test.ts::[U1671]` |
+| U1672 | An ordered list is ready when one entry is ready (also when the first is not and a later one is), and keeps its order | US4.3, FR-016, FR-017 | example | DONE | `src/validator/agent.test.ts::[U1672]` |
+| U1673 | An ordered list with no ready entry is not ready | US4.3, FR-017 | example | DONE | `src/validator/agent.test.ts::[U1673]` |
+| U1674 | `auto` lists the mapped providers that bb reports ready on the host and is ready when the list is not empty | US4.4, FR-018 | example | DONE | `src/validator/agent.test.ts::[U1674]` |
+| U1675 | `auto` with no ready mapped provider is not ready | US4.4, FR-018 | example | DONE | `src/validator/agent.test.ts::[U1675]` |
+| U1676 | A host with no configuration file (the read exits 3) reads as the default `auto`, with source `default` | US4.4, FR-016 | example | DONE | `src/validator/agent.test.ts::[U1676]` |
+| U1677 | Any other non-zero exit of the read is `unobserved` with the exit code and the standard error | US4.6, FR-020 | example | DONE | `src/validator/agent.test.ts::[U1677]` |
+| U1678 | A read that did not run, or was killed or timed out (exit code null), is `unobserved` with the reason | US4.6, FR-020 | example | DONE | `src/validator/agent.test.ts::[U1678]` |
+| U1679 | A setting that cannot be read (U1665) is `unobserved` with the reason of the parser | US4.6, FR-020 | example | DONE | `src/validator/agent.test.ts::[U1679]` |
+| U1680 | A `getProviderStates` call that throws makes the observation `unobserved`, and an `exec` call that throws does too, and the function never throws | US4.6, FR-020, FR-029 | example | DONE | `src/validator/agent.test.ts::[U1680]` |
+| U1681 | The only `exec` call is `sh` with `-c` and the contract's script, with `timeoutMs` 30000 and the host of the call, and `getProviderStates` gets the same host | US4.7, US4.11, FR-015 | example | DONE | `src/validator/agent.test.ts::[U1681]` |
 
 ### `src/validator/agent.ts`: the text
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| U1682 | The line for one ready agent names the agent, its provider, and the host, and says it is ready | US4.1, FR-021 | example | PENDING | |
-| U1683 | The line for a not-ready agent says it is not ready and carries bb's problem text | US4.2, FR-021 | example | PENDING | |
-| U1684 | The line for a list names each agent in order with its own readiness | US4.3, FR-021 | example | PENDING | |
-| U1685 | The line for `auto` says that no-mistakes picks the first runnable agent when the run starts, and lists the ready providers or says there is none | US4.4, FR-018, FR-021 | example | PENDING | |
-| U1686 | The line for a host with no file says that the default applies, before the `auto` line | US4.4, FR-021 | example | PENDING | |
-| U1687 | The line for an unmapped agent says that its readiness was not checked | US4.5, FR-019, FR-021 | example | PENDING | |
-| U1688 | The line for an unobserved result says that the agent could not be observed, gives the reason, and says readiness is not known | US4.6, FR-020, FR-021 | example | PENDING | |
-| U1689 | Over every case above, no line says an unchecked or unobserved result is ready, and `validatorProblem` is null exactly when the observation is ready | US4.5, US4.6, FR-019, FR-020, SC-005 | example | PENDING | |
+| U1682 | The line for one ready agent names the agent, its provider, and the host, and says it is ready | US4.1, FR-021 | example | DONE | `src/validator/agent.test.ts::[U1682]` |
+| U1683 | The line for a not-ready agent says it is not ready and carries bb's problem text | US4.2, FR-021 | example | DONE | `src/validator/agent.test.ts::[U1683]` |
+| U1684 | The line for a list names each agent in order with its own readiness | US4.3, FR-021 | example | DONE | `src/validator/agent.test.ts::[U1684]` |
+| U1685 | The line for `auto` says that no-mistakes picks the first runnable agent when the run starts, and lists the ready providers or says there is none | US4.4, FR-018, FR-021 | example | DONE | `src/validator/agent.test.ts::[U1685]` |
+| U1686 | The line for a host with no file says that the default applies, before the `auto` line | US4.4, FR-021 | example | DONE | `src/validator/agent.test.ts::[U1686]` |
+| U1687 | The line for an unmapped agent says that its readiness was not checked | US4.5, FR-019, FR-021 | example | DONE | `src/validator/agent.test.ts::[U1687]` |
+| U1688 | The line for an unobserved result says that the agent could not be observed, gives the reason, and says readiness is not known | US4.6, FR-020, FR-021 | example | DONE | `src/validator/agent.test.ts::[U1688]` |
+| U1689 | Over every case above, no line says an unchecked or unobserved result is ready, and `validatorProblem` is null exactly when the observation is ready | US4.5, US4.6, FR-019, FR-020, SC-005 | example | DONE | `src/validator/agent.test.ts::[U1689]` |
 
 ### `src/machines/preflight.ts` (tests in `src/machines/preflight.test.ts`)
 

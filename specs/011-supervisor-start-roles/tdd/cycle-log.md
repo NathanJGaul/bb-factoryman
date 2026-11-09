@@ -121,3 +121,21 @@ They now compare the number of reads before and after the command.
   So `roleAdvice` takes a structural type, `RoleChangeFacts` (`provider` and `roleChange`), that a contract row fits, and imports nothing.
 - refactor: none needed beyond the lint fix.
 - commit: see the commit that carries this entry.
+
+## Group 5a: the validator agent module (U1656 to U1689)
+
+A stub came first: every exported function of `src/validator/agent.ts` threw `not implemented: <name>`, and `AGENT_PROVIDERS` was an empty record, so each red is a stub signal or a table assertion.
+The shape simplified from `data-model.md`: an `auto` entry is one more entry of the agent list (kind `auto`), so there is one `agents` list and no top-level `auto` or `readyProviders` field.
+
+- red: `pnpm vitest run src/validator/agent.test.ts` -> 52 failed, 0 passed
+  - U1656 to U1665 (parser, 10 tests and their rows) `Error: not implemented: parseAgentSetting`
+  - U1666 `AssertionError: expected {} to deeply equal { claude: 'claude-code', …(6) }`
+  - U1667 (eleven rows) `Error: not implemented: providerForAgent`
+  - U1668 to U1681 (observation, 14 tests) `Error: not implemented: observeValidatorAgent`
+  - U1682 to U1688 (text, 7 tests) `Error: not implemented: describeObservation`
+  - U1689 `Error: not implemented: validatorProblem`
+- green: `parseAgentSetting` reads the top-level `agent` key in its three shapes with a small comment and quote reader and refuses the broken shapes; `observeValidatorAgent` runs the one `sh -c` read (30 s, the host of the call), reads the same host's provider states, and builds one entry per name with `readinessProblem` of `src/dispatch/availability.ts`; `describeObservation` and `validatorProblem` write the evidence line and the preflight message.
+  One test failed after the first implementation (`[U1683]`: a single not-ready line must carry bb's problem text with its period, and only list entries trim it), and one type error was in my test helper; both were fixed in the same cycle.
+  Suite `pnpm test` -> 148 files, 1975 passed, 0 failed (26 s). `pnpm run typecheck` and `pnpm run lint` clean.
+- refactor: none needed.
+- commit: see the commit that carries this entry.
