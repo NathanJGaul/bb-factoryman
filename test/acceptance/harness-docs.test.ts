@@ -27,18 +27,32 @@ function markdownIn(dir: string): string[] {
 }
 
 describe("the decision record of the harness work", () => {
-  it("[A1345] holds D-100 to D-107 in order after D-099, each with a status, and D-100 records the five decisions and the tasks built and open", () => {
+  it("[A1345] holds D-100 to D-107 in order after D-099 (and D-108 after them, when it exists), each with a status", () => {
     const found = decisionHeadings(decisions());
     const numbers = found.map((entry) => entry.number);
-    expect(numbers.slice(numbers.indexOf(99))).toEqual([99, 100, 101, 102, 103, 104, 105, 106, 107]);
+    const after = numbers.slice(numbers.indexOf(99));
+    expect(after.slice(0, 9)).toEqual([99, 100, 101, 102, 103, 104, 105, 106, 107]);
+    expect([[], [108]]).toContainEqual(after.slice(9));
     expect(found.find((entry) => entry.number === 100)?.status).toMatch(/Decided by the captain/);
+  });
 
+  it("[A1345] records the five decisions in D-100, and the tasks built in one sentence and the tasks left open in another", () => {
     const text = section(decisions(), "### D-100:");
-    for (const decision of ["D1 A", "D2 A", "D3 A", "D4 B", "D5 A"]) expect(text, decision).toContain(decision);
-    for (const task of ["H1", "H2", "H3", "H5", "H10", "H11"]) expect(text, `built: ${task}`).toContain(task);
-    for (const task of ["H4", "H6", "H9", "H12", "H13", "H14"]) expect(text, `open: ${task}`).toContain(task);
-    expect(text).toMatch(/builds|built/i);
-    expect(text).toMatch(/stay[s]? open|not built|open/i);
+    for (const decision of ["D1 A", "D2 A", "D3 A", "D4 B", "D5 A"]) expect(text, decision).toMatch(new RegExp(`^- ${decision}:`, "m"));
+    const built = /^This release builds[^\n]*/m.exec(text)?.[0] ?? "";
+    const open = /^The tasks H4[^\n]*/m.exec(text)?.[0] ?? "";
+    expect(built, "the sentence that lists the tasks built").not.toBe("");
+    expect(open, "the sentence that lists the tasks left open").not.toBe("");
+    const mentions = (sentence: string, task: string) => new RegExp(`\\b${task}\\b`).test(sentence);
+    for (const task of ["H5", "H1", "H11", "H10", "H2", "H3"]) {
+      expect(mentions(built, task), `${task} is built`).toBe(true);
+      expect(mentions(open, task), `${task} is not open`).toBe(false);
+    }
+    for (const task of ["H4", "H6", "H9", "H12", "H13", "H14"]) {
+      expect(mentions(open, task), `${task} is open`).toBe(true);
+      expect(mentions(built, task), `${task} is not built`).toBe(false);
+    }
+    expect(open).toMatch(/stay open/);
   });
 
   it("[A1346] keeps the text of D-063 and adds an Amended by D-104 line", () => {
