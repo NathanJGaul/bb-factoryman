@@ -1,10 +1,12 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { FakeBbPort } from "./bb-port";
 import { makeCheckout, removeCheckouts } from "./checkout";
-import { DEFAULT_MODEL_IDS } from "./models";
 import { DISPATCH, loadWorld, providerFixture, TEST_DEFAULT_DISPATCH } from "./plugin-host";
 
 afterEach(removeCheckouts);
+
+// The model IDs that the existing tests dispatch with, written out. This is the pin: a change to the shared list in models.ts fails here.
+const DEFAULT_MODEL_IDS_LITERAL = ["opus", "sonnet", "haiku", "claude-sonnet-5-5", "stub-model", "m", "b", "other", "opus-strict"];
 
 // Many tests rely on these defaults without saying so (they dispatch a model such as "opus" and expect a ready
 // provider). This file pins them, so a change to one fails here and not in forty other places.
@@ -23,7 +25,7 @@ describe("the defaults of FakeBbPort", () => {
     const bb = new FakeBbPort();
     for (const provider of ["claude", "pi", "acp-omp", "a-provider-nobody-has-heard-of"]) {
       const list = await bb.listModels(provider);
-      expect(list.models.map((model) => model.id), provider).toEqual([...DEFAULT_MODEL_IDS]);
+      expect(list.models.map((model) => model.id), provider).toEqual(DEFAULT_MODEL_IDS_LITERAL);
       expect(list.loadError, provider).toBeNull();
       for (const model of list.models) {
         expect(model.reasoningLevels).toEqual(["low", "medium", "high", "xhigh", "max"]);
@@ -50,7 +52,7 @@ describe("the defaults of loadWorld", () => {
     const world = await loadWorld();
     for (const providerId of ["claude", "pi", "acp-omp"]) {
       const answer = await world.host.bb.sdk.providers.models({ providerId });
-      expect(answer.models.map((model) => model.id), providerId).toEqual([...DEFAULT_MODEL_IDS]);
+      expect(answer.models.map((model) => model.id), providerId).toEqual(DEFAULT_MODEL_IDS_LITERAL);
       expect(answer.modelLoadError).toBeNull();
     }
   });

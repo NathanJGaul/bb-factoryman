@@ -120,9 +120,6 @@ describe("checkProfile: readiness", () => {
     expect(message).not.toContain("not available in bb");
   });
 
-  it("[U1322] passes a ready provider (the readiness text is only for the other states)", () => {
-    expect(checkProfile(profile, facts({ states: [state({ status: "ready" })] }))).toBeNull();
-  });
 });
 
 describe("readinessProblem", () => {

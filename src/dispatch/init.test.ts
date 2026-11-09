@@ -280,6 +280,7 @@ describe("dispatch init: the file and the output", () => {
     const READS = ["getThread", "getEnvironmentPath", "getProjectCheckout", "getProjectRemote", "getThreadCost", "listProjects", "readTerminal", "listProviders", "getProviderStates", "listMachines", "getProjectSources", "listModels", "getFailureCause"];
     const called = new Set(t.bb.calls.map((call) => call.method));
     expect([...called].filter((method) => !READS.includes(method))).toEqual([]);
-    for (const needed of ["getProjectCheckout", "listProviders", "listModels"]) expect(called.has(needed), needed).toBe(true);
+    // The command reads the checkout, the providers, and the models, and nothing else. (The first allowlist version of this test had dropped this exact set.)
+    expect([...called].sort()).toEqual(["getProjectCheckout", "listModels", "listProviders"]);
   });
 });

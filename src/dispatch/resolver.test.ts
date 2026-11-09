@@ -100,12 +100,9 @@ describe("RulesTableResolver precedence", () => {
     expect(resolve(config([rule("scouting", { kind: "scout" })]))).toEqual({ status: "blocked", code: "no_default_profile", message: NO_PROFILE_MESSAGE });
   });
 
-  it("[U1410] exports no BUILTIN_PROFILE, and no resolution has the source builtin", () => {
+  it("[U1410] exports no BUILTIN_PROFILE", () => {
+    // The sources that a result can have are pinned by U811, U1408, and U1409; this test pins the export.
     expect(Object.keys(resolverModule)).not.toContain("BUILTIN_PROFILE");
-    expect(resolve(config())).toMatchObject({ status: "blocked" });
-    expect(resolve(config([rule("r", { kind: "ship" })]))).toMatchObject({ status: "clear", source: "rule" });
-    expect(resolve(config([], { default: "steady" }))).toMatchObject({ status: "clear", source: "default" });
-    expect(resolve(config(), {}, { profile: deep })).toMatchObject({ status: "clear", source: "override" });
   });
 });
 

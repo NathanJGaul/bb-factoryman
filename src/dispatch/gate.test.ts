@@ -21,10 +21,8 @@ describe("gateProfile: reads", () => {
     expect(bb.callsTo("listModels")).toEqual([["claude", "host_gpu"]]);
     expect(result).toMatchObject({ ok: false, code: "provider_unavailable" });
     expect(result).toMatchObject({ message: expect.stringContaining("not signed in on gpu-box") });
-  });
-
-  it("[U1340] lets the default host's own ready states pass the same profile that the remote machine's states block", async () => {
-    expect(await gateProfile(new FakeBbPort(), profile, "direct-PR", null)).toEqual({ ok: true });
+    // The same bb, asked for the default host, still holds ready states: only the remote machine's own states blocked it.
+    expect(await gateProfile(bb, profile, "direct-PR", null)).toEqual({ ok: true });
   });
 
   it("[U1341] reads with no host ID for the default host, and names it in a message", async () => {

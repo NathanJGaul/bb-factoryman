@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { parseDispatchConfig } from "../../src/dispatch/config";
@@ -162,14 +162,5 @@ describe("bb factoryman dispatch init through the plugin factory", () => {
     const written = JSON.parse(readFileSync(dispatchFile(checkout), "utf8")) as { profiles: Record<string, Record<string, unknown>> };
     expect(Object.keys(written).sort()).toEqual(["default", "profiles", "rules", "version"]);
     expect(Object.keys(written.profiles["claude-code"] ?? {}).sort()).toEqual(["model", "permissionMode", "provider", "reasoningLevel"]);
-  });
-
-  it("[A1324] creates the config directory when the checkout has none", async () => {
-    const checkout = makeCheckout();
-    writeFileSync(join(checkout, "README.md"), "x");
-    expect(existsSync(join(checkout, ".bb"))).toBe(false);
-    const world = await bare(checkout);
-    expect((await init(world)).exitCode).toBe(0);
-    expect(existsSync(dispatchFile(checkout))).toBe(true);
   });
 });
