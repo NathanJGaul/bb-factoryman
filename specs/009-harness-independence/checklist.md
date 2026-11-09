@@ -120,3 +120,13 @@ These items need a bb 0.49.0 lab (`docs/LIVE-CHECK.md`, `quickstart.md` part 2) 
 - [ ] CHK1366 The model field that a spawn resolves (`id` or `model`) is recorded in `spike/RESULTS.md`.
 - [ ] CHK1367 Tier 2 runs, credentials, and the open tasks H4, H6 to H9, and H12 to H14.
       Owner: the captain (D-100 lists them).
+
+## Update after convergence
+
+`/speckit.converge` appended Phase 12 (`T1423` to `T1426`), and the worker did it.
+The items above keep their evidence from `85af53e`, and these facts replace the counts they quote:
+
+- The test list holds 225 `DONE` and 3 `BASELINE` behaviors (228), with U1478 added by `T1423`, and none is `PENDING`.
+- `pnpm run check` at `ce6b382` exits 0 with 107 files and 1628 tests, and `pnpm run build` writes the bundles.
+- `src/harness/contracts.ts` now freezes its rows (U1478). The layers that `CHK1301` lists did not change.
+- No item changed state. `CHK1338`, `CHK1339`, `CHK1340`, and `CHK1360` to `CHK1367` stay unchecked, with the same owners.

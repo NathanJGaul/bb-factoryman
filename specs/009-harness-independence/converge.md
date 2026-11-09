@@ -115,3 +115,23 @@ The captain's brief excludes a real-model run and any credential, so they stay u
 - The captain's decisions on D-108, U1, and C2. Not implementation tasks.
 - The owner's live check, `CHK1360` to `CHK1367`. Not built here.
 - The no-mistakes pipeline: review, tests, docs, lint, push, and the pull request. Firstmate starts it.
+
+## Update: Phase 12 is done
+
+The worker did the four convergence tasks after this file was written.
+All 96 tasks of `tasks.md` are ticked, and no behavior is `PENDING`.
+
+| Task | Result | Commit |
+| --- | --- | --- |
+| `T1423` | `deepFreeze` in `src/harness/contracts.ts` freezes the table, the generic row, and everything inside them. U1478 (4 tests) failed first and passes now. Three mutants (a shallow freeze, an unfrozen generic row, an unfrozen table) each fail U1478. | `6da1716` |
+| `T1424` | `contracts/dispatch-gate.md` names the messages that end with `No other provider was tried.` (readiness, not listed, admission). The "Not listed" row shows the sentence that the old text already had. | `54f1f03` |
+| `T1425` | `contracts/cli-dispatch-init.md` lists the value-is-a-flag case and points at `[U1412]` to `[U1417]`. | `f309821` |
+| `T1426` | `updated_at` in `tdd/test-list.md` is `6da1716`. | `ce6b382` |
+
+The gate after the tasks: `pnpm run check` exits 0 with 107 files and 1628 tests, and `pnpm run build` writes the bundles.
+The test list holds 225 `DONE` and 3 `BASELINE` behaviors (228), and none is `PENDING`.
+The 71 `TEST_AFTER` behaviors are the same 71, so the TDD verdict is still `FAIL` until the captain accepts D-108.
+U1478 has a recorded red in `tdd/cycle-log.md` ("Convergence: the frozen contract rows"), so it is not one of the 71.
+
+A second converge run would find no gap that a worker can close.
+What stays open is the captain's (D-108, U1, C2), the owner's live check (`CHK1360` to `CHK1367`), and the optional drifts that I left as they are on purpose (I3, I6, I7, I8).
