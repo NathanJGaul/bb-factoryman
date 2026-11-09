@@ -25,6 +25,8 @@ export interface Server {
 
 const WIRES: Record<WireFormat, Wire> = { chat, responses, messages };
 const HOST = "127.0.0.1";
+/** After this many requests from one actor, the script ends, so a harness that repeats a request cannot hold the lab for ever. */
+const REQUEST_LIMIT = 150;
 
 function wireFor(path: string): WireFormat | null {
   if (path.includes("/chat/completions")) return "chat";
@@ -86,6 +88,7 @@ const plain = (res: ServerResponse, status: number, body: unknown) => send(res, 
 /** Start the server. The log file gets one JSON line per request. A bearer value is never read, only noted as present. */
 export function startServer(options: { port: number; logFile: string }): Promise<Server> {
   const log = (entry: Record<string, unknown>) => appendFileSync(options.logFile, `${JSON.stringify({ t: new Date().toISOString(), ...entry })}\n`);
+  const counts = new Map<string, number>();
   const server = createServer((req, res) => {
     void (async () => {
       const path = (req.url ?? "/").split("?")[0] ?? "/";
@@ -107,7 +110,10 @@ export function startServer(options: { port: number; logFile: string }): Promise
       }
       const wire = WIRES[format];
       const conversation = wire.parse(parsed);
-      const decided = nextAction(conversation);
+      const actor = describeActor(conversation);
+      const seen = (counts.get(actor) ?? 0) + 1;
+      counts.set(actor, seen);
+      const decided: Action = actor !== "other" && seen > REQUEST_LIMIT ? { kind: "text", text: "BRAIN: request limit reached, so the script ends here." } : nextAction(conversation);
       log({
         method: req.method,
         url: req.url,
@@ -118,7 +124,7 @@ export function startServer(options: { port: number; logFile: string }): Promise
         tools: conversation.tools.map((tool) => tool.name),
         skills: skillsIn(instructions(conversation)),
         pluginTools: pluginToolsOf(conversation),
-        actor: describeActor(conversation),
+        actor,
         action: decided.kind === "delay" ? { kind: decided.kind, ms: decided.ms, then: decided.then.kind } : decided.kind === "tool_call" ? { kind: decided.kind, name: decided.name } : { kind: decided.kind },
         turns: summarize(conversation),
       });

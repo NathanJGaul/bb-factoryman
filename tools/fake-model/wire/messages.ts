@@ -1,5 +1,5 @@
 import type { Action, Conversation, OfferedTool, Turn, Wire } from "../types.ts";
-import { type Json, json, sse, stream, textOf, toolsOf } from "./shared.ts";
+import { callId, type Json, json, sse, stream, textOf, toolsOf } from "./shared.ts";
 
 /** Anthropic Messages, the format of Claude Code. */
 function parse(body: unknown): Conversation {
@@ -34,11 +34,12 @@ function render(action: Exclude<Action, { kind: "delay" }>, conversation: Conver
     return json(action.status, { type: "error", error: { type, message: action.message } });
   }
   const model = conversation.model;
+  const id = callId(conversation, "toolu");
   const stop = action.kind === "tool_call" ? "tool_use" : "end_turn";
-  const block = action.kind === "tool_call" ? { type: "tool_use", id: "toolu_conformance", name: action.name, input: action.args } : { type: "text", text: action.text };
+  const block = action.kind === "tool_call" ? { type: "tool_use", id, name: action.name, input: action.args } : { type: "text", text: action.text };
   if (!conversation.stream) return json(200, { id: "msg_conformance", type: "message", role: "assistant", model, content: [block], stop_reason: stop, stop_sequence: null, usage: { input_tokens: 10, output_tokens: 5 } });
   const start = { id: "msg_conformance", type: "message", role: "assistant", model, content: [], stop_reason: null, stop_sequence: null, usage: { input_tokens: 10, output_tokens: 1 } };
-  const opening = action.kind === "tool_call" ? { type: "tool_use", id: "toolu_conformance", name: action.name, input: {} } : { type: "text", text: "" };
+  const opening = action.kind === "tool_call" ? { type: "tool_use", id, name: action.name, input: {} } : { type: "text", text: "" };
   const delta = action.kind === "tool_call" ? { type: "input_json_delta", partial_json: JSON.stringify(action.args) } : { type: "text_delta", text: action.text };
   return stream(
     sse([

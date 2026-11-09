@@ -1,5 +1,5 @@
 import type { Action, Conversation, OfferedTool, Turn, Wire } from "../types.ts";
-import { type Json, json, parseArgs, sse, stream, textOf, toolsOf, usage } from "./shared.ts";
+import { callId, type Json, json, parseArgs, sse, stream, textOf, toolsOf, usage } from "./shared.ts";
 
 /** OpenAI chat completions, the format of Pi and omp. */
 function parse(body: unknown): Conversation {
@@ -37,10 +37,10 @@ function render(action: Exclude<Action, { kind: "delay" }>, conversation: Conver
   const created = Math.floor(Date.now() / 1000);
   const model = conversation.model;
   const finish = action.kind === "tool_call" ? "tool_calls" : "stop";
-  const callId = "call_conformance";
-  const delta = action.kind === "tool_call" ? { tool_calls: [{ index: 0, id: callId, type: "function", function: { name: action.name, arguments: JSON.stringify(action.args) } }] } : { content: action.text };
+  const id = callId(conversation, "call");
+  const delta = action.kind === "tool_call" ? { tool_calls: [{ index: 0, id, type: "function", function: { name: action.name, arguments: JSON.stringify(action.args) } }] } : { content: action.text };
   if (!conversation.stream) {
-    const message = action.kind === "tool_call" ? { role: "assistant", content: null, tool_calls: [{ id: callId, type: "function", function: { name: action.name, arguments: JSON.stringify(action.args) } }] } : { role: "assistant", content: action.text };
+    const message = action.kind === "tool_call" ? { role: "assistant", content: null, tool_calls: [{ id, type: "function", function: { name: action.name, arguments: JSON.stringify(action.args) } }] } : { role: "assistant", content: action.text };
     return json(200, { id: ID, object: "chat.completion", created, model, choices: [{ index: 0, message, finish_reason: finish }], usage: usage() });
   }
   const chunk = (d: Json, reason: string | null) => ({ data: { id: ID, object: "chat.completion.chunk", created, model, choices: [{ index: 0, delta: d, finish_reason: reason }] } });

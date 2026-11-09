@@ -269,3 +269,13 @@ Real Codex 0.166.0 behind the fake model's Responses format, lab offline, isolat
   - green: `tools/conformance/drivers/codex.ts` adds the file. `pnpm vitest run tools/conformance` -> all pass.
 - S9.stamp-advice failed for Codex: the stamp text was `Thread ... is now a factoryman supervisor. It sees the four supervisor tools from its next session.` with no advice to clear the thread, but Codex needs `bb thread clear` (S9.tools-after-step passed after the driver cleared the thread). This is report task H4 (item 10 of the report). The gap list now holds `S9.stamp-advice` for `codex` and `omp` (omp is expected to show the same; the omp run confirms or removes it).
 - Codex failure evidence (S7): `worker thread failed: provider error (category connection-failed, HTTP 401)` with the cause text dropped, as the report found (H3).
+
+## Group 15: unique tool call ids and a request limit (U1418, U1419) - found by the first Claude Code run
+
+The first Claude Code run did not finish. The fake model's log showed one worker answering the same request more than 2,000 times, with the history never growing, until the run was stopped by hand (about 20 minutes). Claude Code's own transcript in the lab home (`home/.claude/projects/.../*.jsonl`) showed the cause: every `tool_use` the fake model made had the id `toolu_conformance`. Claude Code runs a tool call once per id, so it ran the first call and skipped every later one, then asked again. Pi and Codex accepted the repeated id (`call_conformance`), which hid the mistake.
+
+- red: `pnpm vitest run tools/fake-model/wire/ids.test.ts` -> U1418 failed for all three formats: `AssertionError: expected 1 to be 4 // Object.is equality`
+- green: `callId` in `tools/fake-model/wire/shared.ts` builds an id from the number of calls already in the conversation; the chat, Responses, and Messages renderers use it. `pnpm vitest run tools/fake-model` -> 30 passed.
+- red: `pnpm vitest run tools/fake-model/server.test.ts -t U1419` -> `AssertionError: expected 'tool_calls' to be 'stop'` (the 151st identical request still got a tool call)
+- green: the server counts requests per actor and ends the script with a text answer after 150. A looping harness can no longer hold the lab. `pnpm vitest run tools/fake-model` -> 30 passed; `pnpm run typecheck` and `pnpm run lint` pass.
+- note: a run stopped by hand leaves the lab up. `bblab down` stopped it, and the next run resets the lab directory.

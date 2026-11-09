@@ -1,5 +1,5 @@
 import type { Action, Conversation, OfferedTool, Turn, Wire } from "../types.ts";
-import { type Json, json, parseArgs, sse, stream, textOf, toolsOf } from "./shared.ts";
+import { callId, type Json, json, parseArgs, sse, stream, textOf, toolsOf } from "./shared.ts";
 
 /** OpenAI Responses, the format of Codex. */
 function parse(body: unknown): Conversation {
@@ -34,9 +34,10 @@ function render(action: Exclude<Action, { kind: "delay" }>, conversation: Conver
   const usage = { input_tokens: 10, output_tokens: 5, total_tokens: 15, input_tokens_details: { cached_tokens: 0 }, output_tokens_details: { reasoning_tokens: 0 } };
   const base = { id: "resp_conformance", object: "response", created_at: Math.floor(Date.now() / 1000), model: conversation.model, status: "in_progress", output: [] as unknown[] };
   const args = action.kind === "tool_call" ? JSON.stringify(action.args) : "";
+  const id = callId(conversation, "call");
   const item =
     action.kind === "tool_call"
-      ? { type: "function_call", id: "fc_conformance", call_id: "call_conformance", name: action.name, arguments: args, status: "completed" }
+      ? { type: "function_call", id: `fc_${id}`, call_id: id, name: action.name, arguments: args, status: "completed" }
       : { type: "message", id: "msg_conformance", role: "assistant", status: "completed", content: [{ type: "output_text", text: action.text, annotations: [] }] };
   const completed = { ...base, status: "completed", output: [item], usage };
   if (!conversation.stream) return json(200, completed);
@@ -44,8 +45,8 @@ function render(action: Exclude<Action, { kind: "delay" }>, conversation: Conver
   if (action.kind === "tool_call") {
     events.push(
       { event: "response.output_item.added", data: { type: "response.output_item.added", output_index: 0, item: { ...item, arguments: "", status: "in_progress" } } },
-      { event: "response.function_call_arguments.delta", data: { type: "response.function_call_arguments.delta", output_index: 0, item_id: "fc_conformance", delta: args } },
-      { event: "response.function_call_arguments.done", data: { type: "response.function_call_arguments.done", output_index: 0, item_id: "fc_conformance", arguments: args } },
+      { event: "response.function_call_arguments.delta", data: { type: "response.function_call_arguments.delta", output_index: 0, item_id: `fc_${id}`, delta: args } },
+      { event: "response.function_call_arguments.done", data: { type: "response.function_call_arguments.done", output_index: 0, item_id: `fc_${id}`, arguments: args } },
     );
   } else {
     events.push(

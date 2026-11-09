@@ -171,6 +171,18 @@ Tests carry their behavior id in the title, for example `[U1301]`.
 | U1365 | Messages: a tool-call action and a text action become the event stream, with `stop_reason` set | AC-4.1 | example | PENDING | |
 | U1366 | An error action becomes the error body of the format, with the status and cause text | AC-4.2 | example | PENDING | |
 
+### `tools/fake-model/wire` (added)
+
+| id | behavior | traces | kind | state | test |
+| --- | --- | --- | --- | --- | --- |
+| U1418 | Gives every tool call in one conversation its own id, so a harness that deduplicates calls by id (Claude Code does) runs each one | AC-3.3, AC-3.4 | example | PENDING | |
+
+### `tools/fake-model/server.ts` (added)
+
+| id | behavior | traces | kind | state | test |
+| --- | --- | --- | --- | --- | --- |
+| U1419 | Ends the script for an actor after 150 requests with a plain text answer, so a harness that repeats a request cannot loop for ever and hold the lab | AC-4.2 | example | PENDING | |
+
 ### `tools/fake-model/server.ts`
 
 | id | behavior | traces | kind | state | test |

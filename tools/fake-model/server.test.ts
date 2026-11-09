@@ -73,6 +73,18 @@ describe("the fake model server", () => {
     expect(log().at(-1)).toMatchObject({ skills: ["factoryman-worker"], pluginTools: ["factoryman_report", "factoryman_status"] });
   });
 
+  it("[U1419] ends the script for an actor after 150 requests with a plain text answer, so a repeating harness cannot loop for ever", async () => {
+    const { url, log } = await boot();
+    const body = chatBody("You are the worker for scout task t-5. The delivery mode is local-only.\n\nFirst, create and switch to the branch fm/t-5.\n");
+    for (let i = 0; i < 150; i += 1) await post(`${url}/v1/chat/completions`, body);
+    const kinds = log().map((l) => (l["action"] as { kind: string }).kind);
+    expect(kinds.slice(0, 150).every((kind) => kind === "tool_call")).toBe(true);
+    const last = await post(`${url}/v1/chat/completions`, body);
+    const reply = (await last.json()) as { choices: Array<{ finish_reason: string }> };
+    expect(reply.choices[0]?.finish_reason).toBe("stop");
+    expect(log().at(-1)?.["action"]).toMatchObject({ kind: "text" });
+  }, 30_000);
+
   it("[U1369] listens on the loopback only and never writes a bearer value to its log", async () => {
     const { server, url, log } = await boot();
     expect(server.address).toBe("127.0.0.1");

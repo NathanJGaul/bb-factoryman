@@ -1,4 +1,4 @@
-import type { OfferedTool } from "../types.ts";
+import type { Conversation, OfferedTool } from "../types.ts";
 
 export type Json = Record<string, unknown>;
 
@@ -43,3 +43,12 @@ export function toolsOf(list: unknown, pick: (tool: Json) => OfferedTool | null)
   return Array.isArray(list) ? list.flatMap((tool) => pick(tool as Json) ?? []) : [];
 }
 
+
+/**
+ * A tool call id that no earlier call in the conversation has. Claude Code runs a call once per id,
+ * so a fixed id would make it skip every call after the first.
+ */
+export function callId(conversation: Conversation, prefix: string): string {
+  const earlier = conversation.turns.reduce((n, turn) => (turn.role === "assistant" ? n + turn.toolCalls.length : n), 0);
+  return `${prefix}_conformance_${earlier + 1}`;
+}
