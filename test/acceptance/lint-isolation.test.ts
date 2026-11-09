@@ -150,8 +150,11 @@ describe("harness table isolation", () => {
     ["a re-export", 'export * from "./other";\n'],
   ];
 
-  it.each(rejected)("[A1312] fails lint on src/harness importing %s", async (_name, code) => {
-    expect((await importRestrictions("src/harness/probe.ts", code)).length).toBeGreaterThan(0);
+  it.each(rejected)("[A1312] fails lint on src/harness importing %s", async (name, code) => {
+    const messages = await importRestrictions("src/harness/probe.ts", code);
+    // A bare Node built-in matches both the path rule and the pattern rule, so it reports twice. Everything else reports once.
+    expect(messages).toHaveLength(name === "a bare node built-in" ? 2 : 1);
+    for (const message of messages) expect(message).toContain("data only");
   });
 
   it.each(rejected)("[A1312] passes lint on %s in another server layer", async (_name, code) => {

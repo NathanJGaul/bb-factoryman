@@ -86,6 +86,6 @@ describe("the decision record of the harness work", () => {
   });
 
   it("[A1348] tells the runbook reader to stop when dispatch blocks with no_default_profile though dispatch.json exists", () => {
-    expect(read("docs/LIVE-CHECK.md")).toContain("no_default_profile");
+    expect(read("docs/LIVE-CHECK.md")).toContain("If dispatch blocks with `no_default_profile` although `dispatch.json` exists, stop and record it.");
   });
 });

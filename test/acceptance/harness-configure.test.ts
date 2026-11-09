@@ -25,17 +25,23 @@ describe("the harness contract table", () => {
 });
 
 describe("bb.agents.configure through the plugin factory", () => {
-  it("[A1313] returns no instructions for any role on any provider when the plugin runs with its defaults", async () => {
+  // The tools and skills of each role, written out. They are the ones the roles had before the hint existed.
+  const ROLES: Array<[string, Record<string, unknown>, { tools: string[]; skills: string[] }]> = [
+    ["worker", WORKER, { tools: ["factoryman_report"], skills: ["factoryman-worker"] }],
+    ["supervisor", SUPERVISOR, { tools: ["factoryman_dispatch", "factoryman_merge", "factoryman_status", "factoryman_teardown"], skills: ["factoryman-supervisor"] }],
+    ["unroled thread", {}, { tools: [], skills: [] }],
+  ];
+
+  it("[A1313] returns the tools and skills the roles had before, and no instructions, for every role on every provider when the plugin runs with its defaults", async () => {
     const world = await loadWorld();
     for (const providerId of PROVIDERS) {
-      for (const metadata of [WORKER, SUPERVISOR, {}]) {
+      for (const [role, metadata, expected] of ROLES) {
         const selected = await configured(world, providerId, metadata);
-        expect(selected.instructions, `${providerId} ${JSON.stringify(metadata)}`).toBeNull();
+        expect(selected.instructions, `${providerId} ${role}`).toBeNull();
+        expect(selected.tools.map((tool) => tool.name).sort(), `${providerId} ${role} tools`).toEqual(expected.tools);
+        expect(selected.skills, `${providerId} ${role} skills`).toEqual(expected.skills);
       }
     }
-    // The tools and skills are the ones the roles had before this feature.
-    expect((await configured(world, "claude-code", WORKER)).tools.map((tool) => tool.name)).toEqual(["factoryman_report"]);
-    expect((await configured(world, "pi", SUPERVISOR)).tools.map((tool) => tool.name).sort()).toEqual(["factoryman_dispatch", "factoryman_merge", "factoryman_status", "factoryman_teardown"]);
   });
 
   it("[A1314] gives a worker on claude-code and a worker on acp-omp the hint of their rows when the hint is on", async () => {
