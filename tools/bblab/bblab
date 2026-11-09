@@ -121,7 +121,7 @@ lab_x() {          # run a command inside the running sandbox, in the clean lab 
 
 # Ask the lab's bb for its front page. An offline lab is invisible from the host, so the probe runs inside it.
 probe_http() {
-  if is_offline; then lab_x curl -s -m 2 -o /dev/null -w '%{http_code}' "http://127.0.0.1:$1/" 2>/dev/null
+  if is_offline; then lab_x node -e 'fetch("http://127.0.0.1:" + process.argv[1] + "/", { signal: AbortSignal.timeout(2000) }).then((r) => process.stdout.write(String(r.status)), () => {})' "$1" 2>/dev/null
   else curl -s -m 2 -o /dev/null -w '%{http_code}' "http://127.0.0.1:$1/" 2>/dev/null; fi
 }
 

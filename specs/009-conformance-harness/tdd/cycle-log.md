@@ -157,3 +157,11 @@ S5 needs to read which plugin tools and skills a role was offered. The lab showe
   - `bb plugin build` and `bb plugin install` both need bb's build toolchain (`esbuild`, `tailwindcss`) in `<data dir>/plugins/toolchain-*`, which bb installs with `npm install` on first use. Offline that call retried for 4 minutes and failed with `EAI_AGAIN`. The runner therefore builds the plugin once with the network on, outside the sandbox, with `BB_DATA_DIR` set to the lab's data directory. After that, `bb plugin install` takes 1.4 seconds offline.
   - A `curl` inside the lab opens the canary `.ssh/known_hosts` four times (the tripwire counted it). The probe inside the lab uses `node` instead.
   - A wake is a `client/turn/requested` event with `originPluginId: "bb-factoryman"` in the supervisor's thread log. The worker's model, reasoning level, and permission mode are in its first `client/turn/requested` event, under `execution`.
+
+## Group 5 addendum: the offline probe uses node and not curl (U1347)
+
+The first offline lab run showed that a `curl` inside the lab opens the canary `.ssh/known_hosts`, which the tripwire counts.
+The test for U1347 gained an assertion that the script has no `lab_x curl`.
+
+- red: `pnpm vitest run tools/bblab` -> 1 failed: `AssertionError: expected '#!/usr/bin/env bash\n# bblab - isolat…' not to match /lab_x curl/`
+- green: `probe_http` runs a `node` one-liner (`fetch` with a 2 second timeout) inside an offline lab. `pnpm vitest run tools/bblab` -> 5 passed.

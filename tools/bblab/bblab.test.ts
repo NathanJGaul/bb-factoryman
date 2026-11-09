@@ -1,5 +1,5 @@
 import { type SpawnSyncReturns, spawnSync } from "node:child_process";
-import { existsSync, mkdirSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { tmpDir } from "../../test/fixtures/git-repo.ts";
@@ -39,6 +39,8 @@ describe("bblab plan", () => {
     const offline = run(["plan", "--offline"]).stdout;
     expect(offline).toMatch(/nsenter:.* --net /);
     expect(offline).toContain("ready-probe: inside the lab");
+    // A curl inside the lab opens the canary known_hosts file and trips the tripwire, so the probe uses node.
+    expect(readFileSync(BBLAB, "utf8")).not.toMatch(/lab_x curl/);
     const shared = run(["plan"]).stdout;
     expect(shared).not.toMatch(/nsenter:.* --net /);
     expect(shared).toContain("ready-probe: host");
