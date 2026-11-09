@@ -89,3 +89,51 @@ The change was reverted with `git checkout`.
 - mutant: the file cut to its first two entries (a deleted S9 entry) -> U1520, A1507, and A1508 fail (3 failed, 9 passed). Restored.
 - refactor: none needed.
 - commit: see `git log` ("fix(conformance): remove the three known gaps")
+
+## Setup notes (tasks T001 and T002), recorded after the fact from the planning runs
+
+- T001: `pnpm install --frozen-lockfile` was already satisfied. The planning run `pnpm vitest run` on `3b827b8` gave 136 files, 1796 passed, 0 failed (31 s). `pnpm run typecheck` and `pnpm run lint` were clean.
+- T002, leak baseline: the suite run with a fresh `TMPDIR` and the setup file left out (a scratch config with the same `include`) left 394 `bb-fake-plugin-host-*` directories directly under that `TMPDIR`. The live-check report counted 394 too. See group 5 for the run with the fix.
+
+## Group 4: the decision log guard (U1521 to U1523, A1509, A1510)
+
+Tests and three stubs came first. The stubs return a sentinel (`D-000`) so the tests fail on an assertion.
+
+- red: `pnpm vitest run test/fixtures/decision-log.test.ts` -> 3 failed
+  - U1521 `AssertionError: expected [ { number: 'D-000', lines: [] } ] to deeply equal [ Array(1) ]`
+  - U1522 `AssertionError: expected [ { path: 'stub', line: +0, …(1) } ] to deeply equal [ { path: 'docs/a.md', …(2) }, …(1) ]`
+  - U1523 `AssertionError: expected [ { number: 'D-000', lines: [] } ] to deeply equal []`
+- green: `test/fixtures/decision-log.ts` finds duplicate headings and dangling citations. The guard `test/acceptance/decision-log.test.ts` applies it to the real `docs/DECISIONS.md` and to the tracked text files.
+- A1510 went red on the real repository for a true reason: `specs/010-conformance-followup/plan.md:156 cites D-118` and `tasks.md:114 cites D-118`, because this feature's own plan cites the decision that it had not yet written. Appending the decisions D-118 to D-121 to `docs/DECISIONS.md` made it green. The guard works.
+- A1509 passed on its first run, so it got a mutant: a second `### D-050` heading -> `AssertionError: expected [ 'D-050 on lines 402, 1198' ] to deeply equal []`. A1510 mutant: `See D-999 (mutant).` appended to `docs/CUTOVER.md` -> `docs/CUTOVER.md:31 cites D-999`. Both restored with `git checkout` or a saved copy.
+- Suite: 139 files, 1829 passed, 0 failed. Typecheck and lint clean.
+- refactor: none needed.
+- commit: `f179478`
+
+## Group 5: the private temporary directory (U1524 to U1528, A1511)
+
+Step 1, the unit tests with a stub (`createPrivateTmpdir` returned `{ dir: "", restore() {} }`):
+
+- Three of the five tests passed vacuously against the stub (U1525, U1527, U1528 only asserted the state after `restore`). Before any implementation they were strengthened to assert the state before `restore` as well (the directory exists, `TMPDIR` points at it). That is a stronger test, not a weaker one.
+- red: `pnpm vitest run test/setup/private-tmpdir.test.ts` -> 5 failed
+  - U1524 `AssertionError: expected '.' to be '/home/nathanjgaul/.cache/tmp/private-…'`
+  - U1525 `AssertionError: expected '/home/nathanjgaul/.cache/tmp/private-…' to be ''`
+  - U1526 `AssertionError: expected '.' to be '/home/nathanjgaul/.cache/tmp'`
+  - U1527 `AssertionError: expected [ 'bb-fake-plugin-host-other-run' ] to deeply equal [ '', 'bb-fake-plugin-host-other-run' ]`
+  - U1528 `AssertionError: expected '/home/nathanjgaul/.cache/tmp/private-…' to be ''`
+- Note: the stub's empty `dir` made U1525 write `bb-fake-plugin-host-abc/nested/data.db` into the repository root. I removed that stray directory by hand before the commit.
+
+Step 2, the acceptance test with an empty setup file (`private-tmpdir.setup.ts` held only a comment):
+
+- The test runs a child `vitest` process with a private `TMPDIR` twice. A control run with no setup file must leave three host directories (two fixtures, three hosts), and the real run must leave none and still report the failing fixture.
+- red: `pnpm vitest run test/acceptance/tmpdir-leak.test.ts` -> `AssertionError: expected [ 'bb-fake-plugin-host-20gNLe', …(2) ] to deeply equal []` (the control passed with three leaks, and the run with the empty setup file leaked the same three).
+- A first attempt failed on the child's colored summary line, so the child now runs with `NO_COLOR=1`. That is a test fix made before any implementation.
+
+Step 3, green:
+
+- `test/setup/private-tmpdir.ts` implements `createPrivateTmpdir`, `test/setup/private-tmpdir.setup.ts` calls it and registers `afterAll` and a `process.once("exit")` restore, and `vitest.config.ts` lists the setup file.
+- `pnpm vitest run test/setup test/acceptance/tmpdir-leak.test.ts` -> 2 files, 6 passed.
+- Measure (A1512): the same full suite with a fresh `TMPDIR` each time. Without the setup file: 139 files, 1829 passed, `find $TMPDIR -maxdepth 1 -name 'bb-fake-plugin-host-*'` -> 394. With the setup file: 141 files, 1835 passed, `find $TMPDIR -name 'bb-fake-plugin-host-*'` -> 0, and `ls $TMPDIR` -> empty.
+- Suite: 141 files, 1835 passed, 0 failed. Typecheck and lint clean.
+- refactor: none needed. The setup is split into a pure module (`private-tmpdir.ts`) and a hook file (`private-tmpdir.setup.ts`), so the unit tests do not register hooks. That split was part of the first design and is not a refactor.
+- commit: `06b107f`
