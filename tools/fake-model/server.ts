@@ -5,7 +5,7 @@
 // that the prompt carries (see brain.ts), logs every request, and needs no credential.
 // It listens on the loopback only and makes no outbound connection.
 //
-// usage: node server.ts --port <n> --log <file>     (port 0 picks a free port; the first output line says which)
+// usage: node server.ts --port <n> --log <file> [--bodies <file>]     (port 0 picks a free port; the first output line says which)
 import { appendFileSync } from "node:fs";
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import type { AddressInfo } from "node:net";
@@ -86,7 +86,7 @@ function send(res: ServerResponse, reply: WireResponse): void {
 const plain = (res: ServerResponse, status: number, body: unknown) => send(res, { status, contentType: "application/json", body: JSON.stringify(body) });
 
 /** Start the server. The log file gets one JSON line per request. A bearer value is never read, only noted as present. */
-export function startServer(options: { port: number; logFile: string }): Promise<Server> {
+export function startServer(options: { port: number; logFile: string; bodiesFile?: string }): Promise<Server> {
   const log = (entry: Record<string, unknown>) => appendFileSync(options.logFile, `${JSON.stringify({ t: new Date().toISOString(), ...entry })}\n`);
   const counts = new Map<string, number>();
   const server = createServer((req, res) => {
@@ -108,6 +108,7 @@ export function startServer(options: { port: number; logFile: string }): Promise
         log({ method: req.method, url: req.url, auth, note: "unreadable body" });
         return plain(res, 400, { error: { message: "unreadable body" } });
       }
+      if (options.bodiesFile !== undefined) appendFileSync(options.bodiesFile, `${JSON.stringify({ t: new Date().toISOString(), url: req.url, body: parsed })}\n`);
       const wire = WIRES[format];
       const conversation = wire.parse(parsed);
       const actor = describeActor(conversation);
@@ -155,7 +156,7 @@ function main(argv: string[]): void {
     process.stderr.write("usage: node server.ts --port <n> --log <file>\n");
     process.exit(2);
   }
-  startServer({ port, logFile }).then(
+  startServer({ port, logFile, ...(value("--bodies") === undefined ? {} : { bodiesFile: value("--bodies") as string }) }).then(
     (server) => process.stdout.write(`${JSON.stringify({ listening: `${server.address}:${server.port}` })}\n`),
     (error: unknown) => {
       process.stderr.write(`fake model failed to start: ${error instanceof Error ? error.message : String(error)}\n`);

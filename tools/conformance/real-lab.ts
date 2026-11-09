@@ -331,7 +331,7 @@ export async function openRealLab(init: RealLabInit): Promise<LabSession> {
         const done = await lab.inLab(command, { input: "" });
         if (done.code !== 0) throw new Error(`Setup command failed (${command.join(" ")}): ${done.stderr.trim()}`);
       }
-      await lab.inLab(["bash", "-c", `setsid nohup node ${join(labDir, "tools/fake-model/server.ts")} --port ${ports.model} --log ${join(labDir, "model/requests.jsonl")} > ${join(labDir, "logs/model.log")} 2>&1 < /dev/null &`]);
+      await lab.inLab(["bash", "-c", `setsid nohup node ${join(labDir, "tools/fake-model/server.ts")} --port ${ports.model} --log ${join(labDir, "model/requests.jsonl")} --bodies ${join(labDir, "model/bodies.jsonl")} > ${join(labDir, "logs/model.log")} 2>&1 < /dev/null &`]);
       let answered = false;
       for (let i = 0; i < 30 && !answered; i += 1) {
         const ping = await lab.inLab(["node", "-e", `fetch("http://127.0.0.1:${ports.model}/v1/models").then((r)=>console.log(r.status),()=>console.log("none"))`]);

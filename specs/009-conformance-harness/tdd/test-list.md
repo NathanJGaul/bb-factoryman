@@ -177,6 +177,12 @@ Tests carry their behavior id in the title, for example `[U1301]`.
 | --- | --- | --- | --- | --- | --- |
 | U1418 | Gives every tool call in one conversation its own id, so a harness that deduplicates calls by id (Claude Code does) runs each one | AC-3.3, AC-3.4 | example | PENDING | |
 
+### `tools/fake-model/server.ts` (added, bodies)
+
+| id | behavior | traces | kind | state | test |
+| --- | --- | --- | --- | --- | --- |
+| U1420 | Keeps the raw request body of every request in a second file when asked, so a new harness can be diagnosed and its bodies can become test fixtures | AC-4.3 | example | PENDING | |
+
 ### `tools/fake-model/server.ts` (added)
 
 | id | behavior | traces | kind | state | test |

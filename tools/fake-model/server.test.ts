@@ -9,10 +9,10 @@ afterEach(async () => {
   for (const server of running.splice(0)) await server.close();
 });
 
-async function boot(): Promise<{ server: Server; url: string; log: () => Array<Record<string, unknown>> }> {
+async function boot(bodiesFile?: string): Promise<{ server: Server; url: string; log: () => Array<Record<string, unknown>> }> {
   const dir = tmpDir("fake-model-");
   const logFile = join(dir, "requests.jsonl");
-  const server = await startServer({ port: 0, logFile });
+  const server = await startServer({ port: 0, logFile, ...(bodiesFile === undefined ? {} : { bodiesFile }) });
   running.push(server);
   return {
     server,
@@ -84,6 +84,19 @@ describe("the fake model server", () => {
     expect(reply.choices[0]?.finish_reason).toBe("stop");
     expect(log().at(-1)?.["action"]).toMatchObject({ kind: "text" });
   }, 30_000);
+
+  it("[U1420] keeps the raw request body of every request in a second file when asked", async () => {
+    const bodies = join(tmpDir("fake-model-bodies-"), "bodies.jsonl");
+    const { url } = await boot(bodies);
+    await post(`${url}/v1/chat/completions`, chatBody("first"));
+    await post(`${url}/v1/chat/completions`, chatBody("second"));
+    const kept = readFileSync(bodies, "utf8").trim().split("\n").map((l) => JSON.parse(l) as { url: string; body: { messages: Array<{ content: string }> } });
+    expect(kept.map((k) => k.body.messages[1]?.content)).toEqual(["first", "second"]);
+    expect(kept[0]?.url).toBe("/v1/chat/completions");
+    const { url: plain, log } = await boot();
+    await post(`${plain}/v1/chat/completions`, chatBody("third"));
+    expect(log()).toHaveLength(1);
+  });
 
   it("[U1369] listens on the loopback only and never writes a bearer value to its log", async () => {
     const { server, url, log } = await boot();
