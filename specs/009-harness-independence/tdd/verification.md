@@ -141,3 +141,10 @@ Tests tracing to nothing: a few cases carry no id (the "four named rows" count, 
 - The mutants of the ledger, which this audit could not re-run from the repository (finding 24).
 - Performance and load: no criterion, no test.
 - Independence: the author ran the audit (see the note at the top).
+
+## Update after the audit (not part of the audit)
+
+Findings 17 to 24 were open at `verified_at: 2c4ee15`.
+The worker repaired them afterwards in tasks T1415 to T1422 (tests, fixtures, records, and the ledger runner only; no production code), and `tdd/cycle-log.md` ("Remediation 3") has the evidence for each.
+The audit did not re-read those changes.
+The verdict and finding 1 do not change: 71 behaviors stay `TEST_AFTER` until the captain accepts D-108.

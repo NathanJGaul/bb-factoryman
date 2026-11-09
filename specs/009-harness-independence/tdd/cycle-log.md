@@ -381,3 +381,18 @@ Each tightened assertion was shown to fail on a mutant, one mutant at a time, wi
 - T1414 (finding 16): U1474, U1475, and U1476 are on the list as characterization behaviors (`BASELINE`), because the branches they cover exist and had no test.
   They passed on their first run, so there is no red to record, and the task's proof ("three red entries") is not met as written.
   The deliberate-mutant check replaces it: a checkout read failure that escapes fails U1474, a providers failure that loses its text fails U1475, unknown levels of a listed model that are used fail U1476, and a missing provider-wide fallback fails U1476 and U1431.
+
+## Remediation 3: the follow-up to the second audit (tasks T1415 to T1422, findings 17 to 24)
+
+The second audit (`tdd/verification.md`, verified at `2c4ee15`) kept the verdict `FAIL` for the 71 `TEST_AFTER` behaviors and listed eight open findings of `MED` and `LOW` severity.
+No production code changed in this group, and every task ran `pnpm run check` (the suite ended at 107 files, 1624 passed, 0 failed).
+The tests that these tasks removed were duplicates of tests that stay; no assertion was lost.
+
+- T1415 (finding 17): the second `[U1340]` was U1339 again. The first U1340 test now asks the same `FakeBbPort` for the default host after the remote machine's block and expects `ok`. A mutant that gives the default host the remote machine's states fails U1340 and U1341.
+- T1416 (finding 18): `test/fixtures/defaults.test.ts` asserts the literal default model IDs. A mutant that drops `m` from `test/fixtures/models.ts` now fails it (before, only A1319 and A1323 failed).
+- T1417 (finding 19): U1410 keeps only the "no `BUILTIN_PROFILE` export" line, the second U1322 (identical to U730) and the second `[A1324]` case (the first one creates the directory) are gone. The mutants "a built-in default returns" and "init writes with flag w" still fail the remaining tests. Three tests fewer (1626 to 1623).
+- T1418 (finding 20): U1440 asserts the exact set of methods again, besides the allowlist. The first allowlist version had dropped it. A mutant that reads the machines fails U1440.
+- T1419 (finding 21): the lint cases carry the expected message count as a column, the record path in the config test is loose where the code does not decide it, the omp text case is U1449, and the leftover numbers in the failure tests and in `files.test.ts` have names. Two mutants (a changed lint message, a wake limit left at 600) still fail.
+- T1420 (finding 22): U1476 is three tests. The unlisted-model case now has a provider that lists `low` and `high` only, so a fallback to the default model's own levels fails it. Two mutants fail the U1476 tests. U1474 to U1476 stay `BASELINE`, and T1414's proof stays unmet as written (see "Remediation 2").
+- T1421 (finding 23): `dispatch init`'s usage cases are one `it.each` table for each id U1412 to U1417; the `test` column of U1349 names `[U1349]`; the tdd profile names the two new fixture files; A1345 requires D-108.
+- T1422 (finding 24): the ledger runner and its mutant list are in `specs/009-harness-independence/tdd/ledger-mutants.py`. Running it for one mutant from the repository root prints one JSON line (L10: A1310, U1303, U1306 fail) and leaves `git status` unchanged.

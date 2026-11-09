@@ -36,24 +36,32 @@ const profileOf = (t: TestRuntime, provider = "codex") => {
 const ARGS = ["--provider", "codex", "--project", "proj-1"];
 
 describe("dispatch init: the arguments", () => {
-  // Each call that the command must refuse as a usage error, with the id of the behavior it shows.
-  const usageCase = (id: string, label: string, args: string[]) =>
-    it(`${id} prints the usage and exits 2 for ${label}, and reads and writes nothing`, async () => {
-      const t = setup();
-      const result = await run(t, args);
-      expect(result).toEqual({ exitCode: 2, stderr: INIT_USAGE });
-      expect(t.bb.calls).toEqual([]);
-      expect(t.files.writes).toEqual([]);
-    });
+  // A call that the command must refuse as a usage error: it prints the usage, exits 2, and reads and writes nothing.
+  const expectUsage = async (args: string[]) => {
+    const t = setup();
+    const result = await run(t, args);
+    expect(result).toEqual({ exitCode: 2, stderr: INIT_USAGE });
+    expect(t.bb.calls).toEqual([]);
+    expect(t.files.writes).toEqual([]);
+  };
 
-  usageCase("[U1412]", "no --provider", ["--project", "proj-1"]);
-  usageCase("[U1413]", "no --project and no project in the context", ["--provider", "codex"]);
-  usageCase("[U1414]", "a flag with no value", ["--provider", "codex", "--project"]);
-  usageCase("[U1414]", "a flag whose value is another flag", ["--provider", "--model", "--project", "proj-1"]);
-  usageCase("[U1415]", "a flag with a blank value", ["--provider", "codex", "--project", "  "]);
-  usageCase("[U1416]", "a repeated flag", ["--provider", "codex", "--provider", "pi", "--project", "proj-1"]);
-  usageCase("[U1417]", "an unknown flag", ["--provider", "codex", "--project", "proj-1", "--force", "yes"]);
-  usageCase("[U1417]", "a stray word", ["codex", "--project", "proj-1"]);
+  it.each([["no --provider", ["--project", "proj-1"]]])("[U1412] prints the usage and exits 2 for %s", async (_label, args) => expectUsage(args));
+
+  it.each([["no --project and no project in the context", ["--provider", "codex"]]])("[U1413] prints the usage and exits 2 for %s", async (_label, args) => expectUsage(args));
+
+  it.each([
+    ["a flag with no value", ["--provider", "codex", "--project"]],
+    ["a flag whose value is another flag", ["--provider", "--model", "--project", "proj-1"]],
+  ])("[U1414] prints the usage and exits 2 for %s", async (_label, args) => expectUsage(args));
+
+  it.each([["a flag with a blank value", ["--provider", "codex", "--project", "  "]]])("[U1415] prints the usage and exits 2 for %s", async (_label, args) => expectUsage(args));
+
+  it.each([["a repeated flag", ["--provider", "codex", "--provider", "pi", "--project", "proj-1"]]])("[U1416] prints the usage and exits 2 for %s", async (_label, args) => expectUsage(args));
+
+  it.each([
+    ["an unknown flag", ["--provider", "codex", "--project", "proj-1", "--force", "yes"]],
+    ["a stray word", ["codex", "--project", "proj-1"]],
+  ])("[U1417] prints the usage and exits 2 for %s", async (_label, args) => expectUsage(args));
 
   it("[U1418] takes the project from the context when --project is absent", async () => {
     const t = setup();
@@ -191,20 +199,26 @@ describe("dispatch init: what stops it", () => {
     expect(t.files.writes).toEqual([]);
   });
 
-  it("[U1476] takes the default level from the provider-wide list, medium first, when bb does not know the model's levels", async () => {
-    const unknown = { models: [modelEntry("m", { isDefault: true, defaultReasoningLevel: "", reasoningKnown: false, reasoningLevels: ["max"] })], loadError: null };
-    const withMedium = setup({ models: unknown });
-    await run(withMedium, ARGS);
-    expect(profileOf(withMedium)).toMatchObject({ model: "m", reasoningLevel: "medium" });
-    const withoutMedium = setup({ models: unknown, providers: [{ id: "codex", available: true, permissionModes: ["auto"], reasoningLevels: ["low", "high"] }] });
-    await run(withoutMedium, ARGS);
-    expect(profileOf(withoutMedium)).toMatchObject({ model: "m", reasoningLevel: "low" });
+  // A model whose levels bb does not know lists ["max"] here, which the provider does not offer, so only the provider-wide list can give a valid level.
+  const UNKNOWN_LEVELS = { models: [modelEntry("m", { isDefault: true, defaultReasoningLevel: "", reasoningKnown: false, reasoningLevels: ["max"] })], loadError: null };
+
+  it("[U1476] takes medium from the provider-wide list when bb does not know the model's levels and the provider lists medium", async () => {
+    const t = setup({ models: UNKNOWN_LEVELS });
+    await run(t, ARGS);
+    expect(profileOf(t)).toMatchObject({ model: "m", reasoningLevel: "medium" });
   });
 
-  it("[U1476] takes the default level from the provider-wide list when --model names a model that bb does not list", async () => {
-    const t = setup();
+  it("[U1476] takes the first level of the provider-wide list when bb does not know the model's levels and the provider lists no medium", async () => {
+    const t = setup({ models: UNKNOWN_LEVELS, providers: [{ id: "codex", available: true, permissionModes: ["auto"], reasoningLevels: ["low", "high"] }] });
+    await run(t, ARGS);
+    expect(profileOf(t)).toMatchObject({ model: "m", reasoningLevel: "low" });
+  });
+
+  it("[U1476] takes the level from the provider-wide list, and not from the default model, when --model names a model that bb does not list", async () => {
+    // The default model (gpt-6-luna) lists medium and defaults to it. The provider lists low and high only.
+    const t = setup({ providers: [{ id: "codex", available: true, permissionModes: ["auto"], reasoningLevels: ["low", "high"] }] });
     expect((await run(t, [...ARGS, "--model", "gpt-9-unlisted"])).exitCode).toBe(0);
-    expect(profileOf(t)).toMatchObject({ model: "gpt-9-unlisted", reasoningLevel: "medium" });
+    expect(profileOf(t)).toMatchObject({ model: "gpt-9-unlisted", reasoningLevel: "low" });
   });
 
   it("[U1434] exits 1 when the models read throws", async () => {

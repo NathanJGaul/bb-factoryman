@@ -27,13 +27,12 @@ function markdownIn(dir: string): string[] {
 }
 
 describe("the decision record of the harness work", () => {
-  it("[A1345] holds D-100 to D-107 in order after D-099 (and D-108 after them, when it exists), each with a status", () => {
+  it("[A1345] holds D-100 to D-108 in order after D-099, each with a status", () => {
     const found = decisionHeadings(decisions());
     const numbers = found.map((entry) => entry.number);
-    const after = numbers.slice(numbers.indexOf(99));
-    expect(after.slice(0, 9)).toEqual([99, 100, 101, 102, 103, 104, 105, 106, 107]);
-    expect([[], [108]]).toContainEqual(after.slice(9));
+    expect(numbers.slice(numbers.indexOf(99), numbers.indexOf(99) + 10)).toEqual([99, 100, 101, 102, 103, 104, 105, 106, 107, 108]);
     expect(found.find((entry) => entry.number === 100)?.status).toMatch(/Decided by the captain/);
+    expect(found.find((entry) => entry.number === 108)?.status).toMatch(/for the captain to accept/);
   });
 
   it("[A1345] records the five decisions in D-100, and the tasks built in one sentence and the tasks left open in another", () => {

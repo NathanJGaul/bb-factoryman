@@ -156,7 +156,7 @@ A1301 to A1309 live in `test/acceptance/harness-readiness.test.ts`, A1310 to A13
 | U1346 | A named provider that is ready on the host gives no `agent_cli` problem | AC-1.6, FR-1315 | example | DONE | `src/machines/preflight.test.ts` |
 | U1347 | A named provider that is `unauthenticated` on the host gives an `agent_cli` problem with the readiness text and the login command | AC-1.6, FR-1315 | example | DONE | `src/machines/preflight.test.ts` |
 | U1348 | With no named provider, one ready listed provider gives no problem | FR-1315 | example | DONE | `src/machines/preflight.test.ts` |
-| U1349 | With no named provider and no ready listed provider, the problem says "No agent CLI is available on <host>" (today's text) | FR-1315 | example | DONE | `src/machines/preflight.test.ts::[U839]` |
+| U1349 | With no named provider and no ready listed provider, the problem says "No agent CLI is available on <host>" (today's text) | FR-1315 | example | DONE | `src/machines/preflight.test.ts::[U1349]`, `[U839]` |
 | U1350 | The preflight reads the states with the host's own ID | AC-1.5, AC-1.6 | example | DONE | `src/machines/preflight.test.ts` |
 
 ### `src/limits/queue.ts`: readiness at queue start (H1)
