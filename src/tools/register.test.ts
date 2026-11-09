@@ -103,10 +103,11 @@ describe("skillsForMetadata", () => {
 
 describe("the provider-aware configuration", () => {
   const PROVIDERS = ["claude-code", "codex", "pi", "acp-omp", "acp-opencode"];
-  const ROLES: Array<[string, Record<string, unknown>]> = [
-    ["supervisor", { role: "supervisor" }],
-    ["worker", { role: "worker", taskId: "t1" }],
-    ["none", {}],
+  // The tools and skills of each role, written out. They are the ones the roles had before the hint existed.
+  const ROLES: Array<[string, Record<string, unknown>, { tools: string[]; skills: string[] }]> = [
+    ["supervisor", { role: "supervisor" }, { tools: ["factoryman_dispatch", "factoryman_merge", "factoryman_status", "factoryman_teardown"], skills: ["factoryman-supervisor"] }],
+    ["worker", { role: "worker", taskId: "t1" }, { tools: ["factoryman_report"], skills: ["factoryman-worker"] }],
+    ["none", {}, { tools: [], skills: [] }],
   ];
 
   function configure(providerId: string, pluginMetadata: Record<string, unknown>, options?: { toolHints?: boolean }) {
@@ -120,11 +121,11 @@ describe("the provider-aware configuration", () => {
   // The fake host reports "no instructions" as `instructions: null`, so that is how these tests read it.
   it("[U1312] returns only the tools and skills, and no instructions, with no option, for every role on every provider", async () => {
     for (const providerId of PROVIDERS) {
-      for (const [role, metadata] of ROLES) {
+      for (const [role, metadata, expected] of ROLES) {
         const selected = await configure(providerId, metadata);
         expect(selected.instructions, `${providerId} ${role}`).toBeNull();
-        expect(selected.skills, `${providerId} ${role}`).toEqual(skillsForMetadata(metadata));
-        expect(selected.tools.map((tool) => tool.name).sort(), `${providerId} ${role}`).toEqual([...toolsForMetadata(metadata)].sort());
+        expect(selected.skills, `${providerId} ${role}`).toEqual(expected.skills);
+        expect(selected.tools.map((tool) => tool.name).sort(), `${providerId} ${role}`).toEqual(expected.tools);
       }
     }
   });

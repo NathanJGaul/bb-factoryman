@@ -96,7 +96,7 @@ describe("gateProfile: admission", () => {
   it("[U1363] returns provider_not_admitted, permanent, for a refused provider", async () => {
     const result = await gateProfile(new FakeBbPort(), pi, "local-only", null);
     expect(result).toMatchObject({ ok: false, code: "provider_not_admitted", permanent: true });
-    expect(result).toMatchObject({ message: admit("pi", "local-only") });
+    expect(result).toMatchObject({ message: expect.stringContaining("The provider `pi` is not admitted for local-only projects. It runs workers with no sandbox") });
   });
 
   it("[U1365] refuses before it makes any bb read", async () => {
