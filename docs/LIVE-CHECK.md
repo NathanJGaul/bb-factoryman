@@ -270,7 +270,10 @@ bblab x bb thread wait "$SUP" --status idle
 bblab x bb factoryman supervisor "$SUP"
 ```
 
-The stamp applies from the thread's next session, and the thread already ran its first turn.
+The stamp applies when the harness builds a new session for the thread.
+On Claude Code and Pi, that is the next turn.
+On Codex and omp, run `bb thread clear "$SUP"` first, as the stamp command says.
+To skip the stamp, start the supervisor with `bb factoryman supervisor start --project "$PROJ" --profile <name>`, which sets the role in the spawn call.
 Send the first instruction with `bb thread tell` and check the tools in the reply:
 
 ```sh

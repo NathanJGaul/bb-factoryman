@@ -20,7 +20,7 @@ Commands run from the repository root.
 
 ## Phase 1: Setup
 
-- [ ] T001 Run `pnpm install --frozen-lockfile` and `pnpm run check` on the clean branch, and record in `specs/011-supervisor-start-roles/tdd/cycle-log.md` that the baseline is green (tests, lint, type check) and how long it takes. Count the `bb-fake-plugin-host-*` directories directly under `${TMPDIR:-/tmp}` before and after one `pnpm run test`, and record both numbers as the leak baseline for [A1620].
+- [X] T001 Run `pnpm install --frozen-lockfile` and `pnpm run check` on the clean branch, and record in `specs/011-supervisor-start-roles/tdd/cycle-log.md` that the baseline is green (tests, lint, type check) and how long it takes. Count the `bb-fake-plugin-host-*` directories directly under `${TMPDIR:-/tmp}` before and after one `pnpm run test`, and record both numbers as the leak baseline for [A1620].
 
 ## Phase 2: Foundational (blocks stories 1, 3, and 4)
 
@@ -102,10 +102,10 @@ Commands run from the repository root.
 
 ### Live runs (after the code commits at green)
 
-- [ ] T040 [US6] [A1615] Bring up `/var/tmp/bblab-supervisor-start` with a pinned bb (reuse the pin of an earlier lab) and run `pnpm run conformance -- --tier 1 --lab-dir /var/tmp/bblab-supervisor-start`. Expect exit 0 and S9 `pass`. Keep the output outside the worktree.
-- [ ] T041 [US6] [A1616] Run tier 1.5 for `claude-code`, then `codex`, then `pi`, then `omp`, offline, one after the other in the same lab directory. Expect exit 0, S9 `pass`, and isolation clean for each.
-- [ ] T042 [US6] [A1617] Read the S9 evidence and the isolation block of each result file: the started supervisor's tools and skill on its first request, the stamp text for Codex and omp, `isolation.clean` true, no tripwire event. If a harness contradicts the plan (for example Codex needs a clear even with a seeded role), stop and record the conflict in `docs/DECISIONS.md` before any further change. Then run `pnpm run conformance:docs` and commit the results.
-- [ ] T043 [US6] Run [A1614] [A1615] [A1616] [A1617] and see them green. Story 6 is done only when they are.
+- [X] T040 [US6] [A1615] Bring up `/var/tmp/bblab-supervisor-start` with a pinned bb (reuse the pin of an earlier lab) and run `pnpm run conformance -- --tier 1 --lab-dir /var/tmp/bblab-supervisor-start`. Expect exit 0 and S9 `pass`. Keep the output outside the worktree.
+- [X] T041 [US6] [A1616] Run tier 1.5 for `claude-code`, then `codex`, then `pi`, then `omp`, offline, one after the other in the same lab directory. Expect exit 0, S9 `pass`, and isolation clean for each.
+- [X] T042 [US6] [A1617] Read the S9 evidence and the isolation block of each result file: the started supervisor's tools and skill on its first request, the stamp text for Codex and omp, `isolation.clean` true, no tripwire event. If a harness contradicts the plan (for example Codex needs a clear even with a seeded role), stop and record the conflict in `docs/DECISIONS.md` before any further change. Then run `pnpm run conformance:docs` and commit the results.
+- [X] T043 [US6] Run [A1614] [A1615] [A1616] [A1617] and see them green. Story 6 is done only when they are.
 
 ### Lab bring-up hardening (found by the first live Pi run)
 
@@ -116,12 +116,12 @@ Commands run from the repository root.
 
 **Goal**: The decisions, the constitution amendment, and the text that this change makes wrong are written down.
 
-- [ ] T044 [US7] Write the acceptance tests [A1618] in `test/acceptance/decision-log.test.ts` (the last heading is at least D-123, and `.specify/memory/constitution.md` is at 1.4.0 with Principle VI naming H4 and H12) and [A1619] in `test/acceptance/conformance-docs.test.ts` (the generated document lists S9 as `pass` for every harness and no known gap). See them fail.
+- [X] T044 [US7] Write the acceptance tests [A1618] in `test/acceptance/decision-log.test.ts` (the last heading is at least D-123, and `.specify/memory/constitution.md` is at 1.4.0 with Principle VI naming H4 and H12) and [A1619] in `test/acceptance/conformance-docs.test.ts` (the generated document lists S9 as `pass` for every harness and no known gap). See them fail.
 - [ ] T045 [P] [US7] Write the entries D-123 onward in `docs/DECISIONS.md` (Google developer documentation style, one sentence per line): the skipped clarification and the four assumptions it left; the supervisor profile source and the refusal without `default`; admission not applied to a supervisor; the spawn environment and the default prompt; the roles schema and the single accepted validator value; the observation source, its limits, and the agent-to-provider table; the non-blocking hand-off and the blocking preflight; the S9 strengthening; the constitution amendment; and any conflict that T042 found. The decision-log guard must pass.
-- [ ] T046 [P] [US7] Amend Principle VI of `.specify/memory/constitution.md` to name H4 and H12, bump the version to 1.4.0 with today's date as the last amendment, and cite the decision. Covers [A1618].
+- [X] T046 [P] [US7] Amend Principle VI of `.specify/memory/constitution.md` to name H4 and H12, bump the version to 1.4.0 with today's date as the last amendment, and cite the decision. Covers [A1618].
 - [ ] T047 [P] [US7] Correct the text that this change makes wrong, and nothing else: the S9 row and the paragraph about the open H4 gaps in `docs/CONFORMANCE.md`; the sentence "The stamp applies from the thread's next session" in `docs/LIVE-CHECK.md` (change `test/acceptance/live-check.test.ts` only if the guide's steps change); step 5 of `docs/CUTOVER.md`. The H9 rewrite stays out of scope.
-- [ ] T048 [US7] Regenerate `docs/HARNESS-SUPPORT.md` with `pnpm run conformance:docs` from the final result files. Covers [A1619].
-- [ ] T049 [US7] Run [A1618] [A1619] and see them green. Then run `pnpm run check`, count the `bb-fake-plugin-host-*` directories again, and record the difference from T001 for [A1620] (expected 0). Story 7 is done only when they are.
+- [X] T048 [US7] Regenerate `docs/HARNESS-SUPPORT.md` with `pnpm run conformance:docs` from the final result files. Covers [A1619].
+- [X] T049 [US7] Run [A1618] [A1619] and see them green. Then run `pnpm run check`, count the `bb-fake-plugin-host-*` directories again, and record the difference from T001 for [A1620] (expected 0). Story 7 is done only when they are.
 
 ## Phase 9: Polish and cross-cutting
 

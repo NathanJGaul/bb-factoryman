@@ -245,3 +245,41 @@ The wait is a pure helper with tests; the call in `real-lab.ts` is glue that onl
 - The result files of the first live runs (tier 1, and tier 1.5 for Claude Code, Codex, and omp) record the plugin commit `5042e16`. The plugin code is unchanged by this group, which touches only the lab tooling, so they stay valid. The Pi result file is overwritten by the rerun.
 - refactor: none needed.
 - commit: see the commit that carries this entry.
+
+## Live runs (A1615 to A1617)
+
+The runs used the lab `/var/tmp/bblab-supervisor-start` with the pinned bb 0.49.0 and its toolchain copied from an earlier lab, no credential, tier 1.5 offline, and each harness bound read-only from this machine.
+The first four were run on the code commit `5042e16`; the Pi result comes from the rerun on `53eeae8`, which differs from `5042e16` only in `tools/conformance` (the wait for bb's model catalog, group 7).
+`src/` is identical in both commits, and `dirty` is false in all five result files.
+
+| Run | CLI | Exit | S9 | Isolation | Commit |
+| --- | --- | --- | --- | --- | --- |
+| tier 1 | stub-agent 0.0.1 | 0 | pass (5 of 5 checks) | clean, no tripwire event | `5042e16` |
+| tier 1.5 claude-code | claude 2.1.316 | 0 | pass (5 of 5) | clean | `5042e16` |
+| tier 1.5 codex | codex 0.166.0 | 0 | pass (5 of 5) | clean | `5042e16` |
+| tier 1.5 pi | pi 1.4.0 | 0 | pass (5 of 5) | clean | `53eeae8` |
+| tier 1.5 omp | omp 18.18.3 | 0 | pass (5 of 5) | clean | `5042e16` |
+
+Every run reports S10 as skipped at tier 1.5 and as pass at tier 1, and no known gap.
+The evidence of S9 in the result files:
+
+- `S9.start-tools`: on all four harnesses and on the stub, the started supervisor was offered `factoryman_dispatch`, `factoryman_merge`, `factoryman_status`, `factoryman_teardown` and the skill `factoryman-supervisor` on its first request, and nothing else of the plugin. This includes Codex and omp, where a late stamp needs a clear.
+- `S9.unstamped-no-tools`: a thread with no role was offered no tool and no skill on all five.
+- `S9.stamp-advice`: Codex and omp print "applies a new role only when its session is rebuilt" and `Run \`bb thread clear <thread>\``. Claude Code and Pi print "on its next turn" and no clear. The stub has no contract row and prints the generic clear advice.
+- `S9.tools-after-step`: after the documented step (the next turn, or the clear), the late-stamped supervisor has its four tools and its skill on all five.
+
+The first Pi run failed S2 to S12 with "The model `mock/mock-1` is not listed ... It lists: no models", and its result file was overwritten by the rerun.
+Group 7 records the cause and the fix.
+Nothing in the live runs contradicted the plan: a role seeded at spawn reaches the first turn on every harness (research R3), so no conflict goes into the decision log.
+
+## Records (A1618 to A1620)
+
+- A1618 and A1619 were written first and were red (`expected '# bb-factoryman Constitution…' to match /\*\*Version\*\*: 1\.4\.0 /` and `Target cannot be null or undefined`, because the Role change rows still read "known gap").
+  The constitution was amended to 1.4.0, and `docs/HARNESS-SUPPORT.md` was regenerated from the five result files.
+- Three existing tests changed because the text they pin was wrong or incomplete, each with its reason:
+  - `[A1122]` pinned the sentence "The stamp applies from the thread's next session". That sentence is the documented error (D-125), so the test now pins the corrected sentence and the mention of `supervisor start`, and the runbook text changed with it.
+  - `[A1109]` is a whitelist of flags that the runbook may name for each plugin command. `supervisor` had none, and now has `--project`, `--profile`, and `--prompt`, which are the three flags of the new command. Any other flag is still refused.
+  - The recorded bb command line in `test/fixtures/bb-cli.json` gained `thread clear` (flags `--help`, `--json`, `--self`, read from `bb thread clear --help`), because the runbook now names it and the same test checks every `bb` command against the recording.
+- The measure for A1620 and T001: the matching directories in the temporary directory were 3212 before and 3212 after one full `pnpm test`, so the run adds none.
+  The leak baseline before the first change was not counted (only the suite baseline was), and decision D-121 recorded 0 added for master, so the baseline is taken from D-121.
+  The 3212 directories are leaks from before D-121, which the fix leaves alone by design.

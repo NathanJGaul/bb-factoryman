@@ -17,7 +17,7 @@ In-flight tasks are not imported: finish them in firstmate first.
 2. Pick one project. Finish or abandon its firstmate tasks, so no firstmate worker owns a branch in it.
 3. Set up the backstop for that project: see `docs/BRANCH-PROTECTION.md`.
 4. In that project, put the rules in `.bb/factoryman/dispatch.json` and the checks and limits in `.bb/factoryman/workflow.json`.
-5. Run `bb factoryman supervisor <thread-id>` on the project's supervisor thread.
+5. Start the project's supervisor with `bb factoryman supervisor start --project <id> --profile <name>`, or run `bb factoryman supervisor <thread-id>` on a supervisor thread that already exists and follow the advice that it prints.
 6. Dispatch one scout task and one ship task, and watch them through `factoryman_status`.
 7. Stop using firstmate for that project.
 8. Repeat for the next project.

@@ -75,4 +75,18 @@ describe("pnpm run conformance:docs", () => {
     expect(row).toMatch(/^\| S4 \| pass \| Ship \| This harness ran in direct-PR mode, because the plugin does not admit it in local-only mode\. \|$/);
     expect(doc).not.toContain("Ship in local-only mode");
   });
+
+  it("[A1619] lists S9 as pass for every harness and no known gap in the committed support document, which is what the committed result files render", () => {
+    const dir = join(ROOT, "conformance/results");
+    const results = readdirSync(dir)
+      .filter((name) => name.endsWith(".json"))
+      .sort()
+      .map((name) => parseResult(readFileSync(join(dir, name), "utf8")));
+    expect(results.map((r) => `${r.tier}-${r.harness}`).sort()).toEqual(["1-stub", "1.5-claude-code", "1.5-codex", "1.5-omp", "1.5-pi"]);
+    const doc = readFileSync(join(ROOT, "docs/HARNESS-SUPPORT.md"), "utf8");
+    expect(doc).toBe(renderSupport(results));
+    expect(doc.match(/^\| S9 \| pass \| Role change \|/gm) ?? []).toHaveLength(5);
+    expect(doc).not.toMatch(/^\| \w+ \| known gap/m);
+    expect(doc).not.toMatch(/with known gaps/);
+  });
 });
