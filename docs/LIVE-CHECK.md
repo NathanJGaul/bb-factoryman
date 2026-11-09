@@ -16,7 +16,8 @@ Read this first:
   The throwaway bb gets its own daemon home (section 5).
 - `bblab down` is the hard stop for everything in this runbook.
   It kills the sandbox, so no lab process survives it.
-- Every command below runs inside the throwaway bb, except the conformance runner of section 6, which builds a lab of its own. Nothing here changes a GitHub setting.
+- Every command below runs inside the throwaway bb, except the conformance runner of section 6, which builds a lab of its own.
+  Nothing here changes a GitHub setting.
 
 ## 1. Where the isolation comes from
 
@@ -69,12 +70,16 @@ Option A of the live-isolation report, a separate account or seat, would give a 
 ## 3. Prerequisites
 
 1. `bblab` and `bblab-evidence` saved and executable (section 1).
-2. A bb build that matches your hosted server (the report's section 6.0 step 3 pins it). The plugin needs bb 0.48.1 or newer and `@get-bb/plugin-sdk` 0.6.104 or newer.
-3. A clean copy of this repository to build from. Never build from the clone that bb registers as a project.
+2. A bb build that matches your hosted server (the report's section 6.0 step 3 pins it).
+   The plugin needs bb 0.48.1 or newer and `@get-bb/plugin-sdk` 0.6.104 or newer.
+3. A clean copy of this repository to build from.
+   Never build from the clone that bb registers as a project.
 4. `pnpm run check` passes in that copy.
 5. Before you start, snapshot the machine: `bblab-evidence snap before`.
-6. The command-line tool of the harness that you will fund (`claude`, `codex`, `pi`, or `omp`) is installed on the host. The lab binds it read-only and installs no copy.
-7. Read the usage page of each account that funds the run and write the numbers down. You compare them after tier 2 (section 10).
+6. The command-line tool of the harness that you will fund (`claude`, `codex`, `pi`, or `omp`) is installed on the host.
+   The lab binds it read-only and installs no copy.
+7. Read the usage page of each account that funds the run and write the numbers down.
+   You compare them after tier 2 (section 10).
 
 ## 4. Bring-up and install
 
@@ -187,7 +192,8 @@ The caps in section 7 cover the supervisor.
 
 ### Tier 0 checks (no model)
 
-Run these first. Each must pass before you spend anything.
+Run these first.
+Each must pass before you spend anything.
 
 The lab has one machine, and bb names it after the host, so the name differs from one computer to the next.
 Read the name before the first check:
@@ -206,7 +212,8 @@ MACHINE=$(bblab x bb machine list --json | jq -r '.[0].name')
 | The skills | section 4 | both plugin skills listed |
 
 Check the path assumption of D-062: `.bb/factoryman/` must be readable from the server for a project whose default source is on the server's own machine.
-If dispatch blocks with `no_default_profile` although `dispatch.json` exists, stop and record it. The plugin picks no profile itself (D-112), so that block means the server could not read the file.
+If dispatch blocks with `no_default_profile` although `dispatch.json` exists, stop and record it.
+The plugin picks no profile itself (D-112), so that block means the server could not read the file.
 
 ### Tier 1 (no model, the stub agent)
 
@@ -243,7 +250,8 @@ The runner needs `bwrap`, a pinned bb, and the harness CLI, and it uses no crede
 **Do not start tier 2 until** all of this holds:
 
 1. Every tier 0 check passed, and `pnpm run check` passed in the copy you installed.
-2. Tier 1 passed, and tier 1.5 passed for the harness you will run. The result file in `conformance/results/` names the CLI and bb versions, and they match what you installed.
+2. Tier 1 passed, and tier 1.5 passed for the harness you will run.
+   The result file in `conformance/results/` names the CLI and bb versions, and they match what you installed.
 3. `bblab status` shows a tripwire count of zero.
 4. You have read the caps in section 7.
 
@@ -443,13 +451,19 @@ These stay unverified, and each needs something outside the lab:
   Use a throwaway repository on a real forge, and follow `docs/BRANCH-PROTECTION.md` on that repository only.
 - A second enrolled machine: spawn on it, take it offline, and the remote preflight.
   Enroll a second machine into the lab, and not into your own bb.
-- A person answering the merge form in the app. The form renders and takes a click (a browser tool drove it in the lab), but nobody has watched a person use it.
-- Cost data from a provider that reports it, and the webhook against a real receiver. The contract table lists Claude Code as reporting `null` and the other three as unknown.
+- A person answering the merge form in the app.
+  The form renders and takes a click (a browser tool drove it in the lab), but nobody has watched a person use it.
+- Cost data from a provider that reports it, and the webhook against a real receiver.
+  The contract table lists Claude Code as reporting `null` and the other three as unknown.
 - Which of a plugin skill and a project skill with the same name a session loads (spike item 11).
-- A tier 2 run on any harness. No real model has read the worker skill, found the report tool, avoided `git push`, or reported with evidence.
-- A Pi ship task. The plugin refuses Pi in `local-only` mode, and `direct-PR` needs a real forge.
+- A tier 2 run on any harness.
+  No real model has read the worker skill, found the report tool, avoided `git push`, or reported with evidence.
+- A Pi ship task.
+  The plugin refuses Pi in `local-only` mode, and `direct-PR` needs a real forge.
 - A no-mistakes pipeline run with a real agent, and the validator observation against a real no-mistakes install (D-134).
-- Whether a process inside the lab can read a credential from the environment of the lab's keeper process. The fresh shell of section 7 limits what that environment holds. Nobody has tested the rest.
+- Whether a process inside the lab can read a credential from the environment of the lab's keeper process.
+  The fresh shell of section 7 limits what that environment holds.
+  Nobody has tested the rest.
 
 ## 10. Teardown and the "firstmate was undisturbed" checklist
 

@@ -156,7 +156,9 @@ You talk to one thread per bb project: the supervisor. It dispatches workers, re
 
 **What wakes the supervisor.** The plugin, not the agent, watches thread events. It messages the supervisor only when a task reaches a state that needs attention: a decision, a review-ready pull request, a failure, or a credential problem. While workers run normally, the supervisor uses no tokens.
 
-**What the supervisor can do.** The plugin gives the supervisor four tools. None of them edits project files. A worker gets a fifth, `factoryman_report`.
+**What the supervisor can do.** The plugin gives the supervisor four tools.
+None of them edits project files.
+A worker gets a fifth, `factoryman_report`.
 
 | Tool | Purpose | Who sees it |
 | --- | --- | --- |
@@ -181,30 +183,44 @@ Resolution follows firstmate's precedence:
 1. An explicit override on the task.
 2. The best-fitting rule in the project's dispatch config.
 3. The configured default.
-4. No profile: dispatch blocks with the code `no_default_profile`, and the message names `bb factoryman dispatch init --provider <id>`, which writes a starter `dispatch.json` (D-112). The plugin picks no harness for you.
+4. No profile: dispatch blocks with the code `no_default_profile`, and the message names `bb factoryman dispatch init --provider <id>`, which writes a starter `dispatch.json` (D-112).
+   The plugin picks no harness for you.
 
 A deterministic resolver handles any task that matches exactly one rule. When several rules fit, the resolver returns `ambiguous` and the supervisor chooses. Scripts own the mechanics, and the agent owns the judgment.
 
 Two constraints carry over from firstmate:
 
-- The resolver never lowers the reasoning level to save quota without your standing permission. Reasoning levels belong to a provider, so `reasoningLevels` in the config is one list or a record from provider ID to its own list (D-113).
+- The resolver never lowers the reasoning level to save quota without your standing permission.
+  Reasoning levels belong to a provider, so `reasoningLevels` in the config is one list or a record from provider ID to its own list (D-113).
 - A missing profile or a provider that bb does not report `ready` is a blocker you see, not a silent fallback to another provider.
 
 The resolver is an interface, and a rules table is the first implementation. A faster classifier, such as Jev, can replace it later without touching the state machine.
 
 The dispatch config is a JSON file under the project's `.bb/` directory, validated with `zod`. Plugin settings hold only strings, numbers, and booleans, so they can't carry a rules list.
 
-**Checks before a spawn.** One function applies every check, and dispatch and the queue start both call it, so no path to a spawn skips one. A blocked dispatch creates no task.
+**Checks before a spawn.** One function applies every check, and dispatch and the queue start both call it, so no path to a spawn skips one.
+A blocked dispatch creates no task.
 
-1. Admission, from the contract table. The table lists the delivery modes in which a harness is refused. Pi offers only the permission mode `full`, so a Pi worker has no sandbox, and dispatch refuses Pi in `local-only` mode with `provider_not_admitted` (D-111). A scout task counts too.
-2. Readiness, from `bb.sdk.system.providerStates` on the host that runs the worker (D-109). Only `ready` passes. `not_installed`, `unauthenticated`, `expired`, `unsupported_version`, an unknown status, a missing state, and a failed read all block. The message carries bb's login command or the installed and minimum versions. The `available` flag of `bb provider list` means only that the CLI is installed, so the plugin does not trust it.
+1. Admission, from the contract table.
+   The table lists the delivery modes in which a harness is refused.
+   Pi offers only the permission mode `full`, so a Pi worker has no sandbox, and dispatch refuses Pi in `local-only` mode with `provider_not_admitted` (D-111).
+   A scout task counts too.
+2. Readiness, from `bb.sdk.system.providerStates` on the host that runs the worker (D-109).
+   Only `ready` passes.
+   `not_installed`, `unauthenticated`, `expired`, `unsupported_version`, an unknown status, a missing state, and a failed read all block.
+   The message carries bb's login command or the installed and minimum versions.
+   The `available` flag of `bb provider list` means only that the CLI is installed, so the plugin does not trust it.
 3. Permission mode: the provider must offer the profile's mode.
-4. Model and level: when bb lists the model and knows its levels, the model's list decides. Otherwise the provider-wide list decides. A model that bb does not list follows the contract row: Claude Code and Codex accept it, and the other rows refuse it (D-114).
+4. Model and level: when bb lists the model and knows its levels, the model's list decides.
+   Otherwise the provider-wide list decides.
+   A model that bb does not list follows the contract row: Claude Code and Codex accept it, and the other rows refuse it (D-114).
 
 **Harness contract table.** `src/harness/contracts.ts` holds pinned facts for each bb provider, with the CLI and bb versions they were tested with.
 The facts are the permission modes bb offered, the sandbox, the refused delivery modes, whether unlisted models are accepted, how the model sees `factoryman_report`, when a stamped role reaches a live thread (the next turn, or after `bb thread clear`), and where bb records the cause of a failure (D-110).
-The table is data with no imports. A provider with no row gets a generic row that claims nothing, so the runtime checks decide alone.
-Only the refused modes act as a gate. The rest feed advice and tests.
+The table is data with no imports.
+A provider with no row gets a generic row that claims nothing, so the runtime checks decide alone.
+Only the refused modes act as a gate.
+The rest feed advice and tests.
 
 **Failures.** When a worker thread fails, the evidence quotes the cause that the provider recorded, and adds a remedy line for a missing sign-in or model (D-115).
 
@@ -220,16 +236,25 @@ Only the refused modes act as a gate. The rest feed advice and tests.
 }
 ```
 
-- `roles.supervisor.profile` names the profile that the supervisor starts with. It must name a defined profile, and it is never `default`, which is the worker's.
-- `roles.validator.agent` accepts `observe` only. The plugin never writes no-mistakes configuration, and other values are refused with a reason.
+- `roles.supervisor.profile` names the profile that the supervisor starts with.
+  It must name a defined profile, and it is never `default`, which is the worker's.
+- `roles.validator.agent` accepts `observe` only.
+  The plugin never writes no-mistakes configuration, and other values are refused with a reason.
 
 A file without `roles` behaves as it did before.
 
-**Supervisor start.** `bb factoryman supervisor start` spawns the supervisor thread with `role: supervisor` in the spawn call, so the thread has its four tools and its skill from the first session on all four harnesses (D-130). It takes `--project`, `--profile`, and `--prompt`. The profile is `--profile`, then `roles.supervisor.profile`. With neither, the command refuses and spawns nothing (D-124). The command applies the readiness, mode, model, and level checks and skips admission, because admission confines workers (D-125).
-For a thread that a person already made, `bb factoryman supervisor <thread>` stamps the role and prints advice from the contract table: the role applies on the next turn, or run `bb thread clear` first. A provider with no row gets the clear advice.
+**Supervisor start.** `bb factoryman supervisor start` spawns the supervisor thread with `role: supervisor` in the spawn call, so the thread has its four tools and its skill from the first session on all four harnesses (D-130).
+It takes `--project`, `--profile`, and `--prompt`.
+The profile is `--profile`, then `roles.supervisor.profile`.
+With neither, the command refuses and spawns nothing (D-124).
+The command applies the readiness, mode, model, and level checks and skips admission, because admission confines workers (D-125).
+For a thread that a person already made, `bb factoryman supervisor <thread>` stamps the role and prints advice from the contract table: the role applies on the next turn, or run `bb thread clear` first.
+A provider with no row gets the clear advice.
 
-**Validator observation.** For a `no-mistakes` project, the plugin reads which agent no-mistakes will use from the `agent` key of no-mistakes' global `config.yaml` (D-126), maps it to a bb provider, and checks that bb reports it `ready`. It never writes that file.
-The hand-off adds one line to its evidence and never refuses on it (D-128). The remote-machine preflight reports a `validator_agent` problem when the agent is not ready or cannot be observed.
+**Validator observation.** For a `no-mistakes` project, the plugin reads which agent no-mistakes will use from the `agent` key of no-mistakes' global `config.yaml` (D-126), maps it to a bb provider, and checks that bb reports it `ready`.
+It never writes that file.
+The hand-off adds one line to its evidence and never refuses on it (D-128).
+The remote-machine preflight reports a `validator_agent` problem when the agent is not ready or cannot be observed.
 No test has read a real no-mistakes install (D-134).
 
 ## Data model and restart behavior
@@ -260,7 +285,9 @@ bb runs threads on any enrolled machine, so v1 places workers directly instead o
 - Merge authority stays on the server. Workers on any machine can't merge.
 - Config stays in the server checkout, and the plugin injects it into the worker prompt, because a remote checkout doesn't have `.bb/factoryman/`.
 
-**Remote machine setup.** The gate runs where the worktree lives. Each remote machine needs the agent CLI installed and signed in so that bb reports its provider `ready`, no-mistakes installed and initialized for each repo with its configured agent ready, and its own scoped git credentials. A preflight check reports what's missing before the first dispatch.
+**Remote machine setup.** The gate runs where the worktree lives.
+Each remote machine needs the agent CLI installed and signed in so that bb reports its provider `ready`, no-mistakes installed and initialized for each repo with its configured agent ready, and its own scoped git credentials.
+A preflight check reports what's missing before the first dispatch.
 
 **Domain leads in v2.** A domain lead is a persistent thread with a short charter: a scope, the projects it covers, and a machine. It stays idle until the supervisor routes in-scope work to it. It plans that work, splits it into tasks, and dispatches workers only inside its scope and machine. It reports to the supervisor. It can't merge, tear down work, or contact you. The plugin's state machine still runs every task, so the gates don't depend on the lead behaving. Scope routing is a new column in the dispatch rules. v2 ships when a single supervisor becomes the bottleneck.
 
