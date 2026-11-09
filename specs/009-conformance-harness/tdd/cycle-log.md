@@ -48,3 +48,15 @@ Tests and stubs first: `parseResult` threw "not implemented", `serializeResult` 
 - green: `tools/conformance/result.ts` (a `zod` schema for the file, strict, with the verdict values) and `tools/conformance/args.ts` (the flags, the tier rules, the lab-directory refusal, offline by default at tier 1.5). `pnpm vitest run tools/conformance` -> 30 passed. `pnpm run typecheck` and `pnpm run lint` pass.
 - note on U1319: its red came from the stub's empty output and not from a missing validator, so the audit must prove the test with a mutant (a loosened schema) and not by the red alone.
 - refactor: none needed.
+
+## Group 3: the drivers (U1327 to U1334)
+
+Tests and a stub index first: `HARNESS_IDS` was empty and `resolveDriver` refused every id.
+
+- red: `pnpm vitest run tools/conformance/drivers` -> 6 failed, 2 passed
+  - U1327 `AssertionError: expected [] to deeply equal [ 'claude-code', 'codex', 'omp', 'pi' ]`
+  - U1328 to U1331 `Error: not implemented` (the helper threw the stub's refusal)
+  - U1334 `Error: not implemented`
+  - U1332 and U1333 passed at first. They looped over the empty id list, so the pass proved nothing. The tests were strengthened before any implementation (`expect(HARNESS_IDS).toHaveLength(4)` first), and then ran red: `pnpm vitest run tools/conformance/drivers` -> 8 failed.
+- green: `tools/conformance/drivers/` holds `types.ts` (the `Driver` interface), `bind.ts` (the install-directory rule), one file per driver (`claude-code.ts`, `codex.ts`, `pi.ts`, `omp.ts`, `stub.ts`), and `index.ts`. The values come from the harness-independence report, appendix B. `pnpm vitest run tools/conformance/drivers` -> 8 passed. `pnpm run typecheck` and `pnpm run lint` pass.
+- refactor: none needed.
