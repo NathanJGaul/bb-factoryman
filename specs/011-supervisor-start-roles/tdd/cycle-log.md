@@ -283,3 +283,21 @@ Nothing in the live runs contradicted the plan: a role seeded at spawn reaches t
 - The measure for A1620 and T001: the matching directories in the temporary directory were 3212 before and 3212 after one full `pnpm test`, so the run adds none.
   The leak baseline before the first change was not counted (only the suite baseline was), and decision D-121 recorded 0 added for master, so the baseline is taken from D-121.
   The 3212 directories are leaks from before D-121, which the fix leaves alone by design.
+
+## Remediation 1: the shell read runs under a real sh (U1723 to U1726)
+
+`tdd/verification.md` (finding 1) found that no test executed `READ_SCRIPT`: every double answered by matching the imported constant, so mutant `M17` (the present and absent branches swapped) survived four test files.
+The behavior already held, so these four tests passed on their first run, and they are `TEST_AFTER` by the rubric.
+In place of a red, each has a killing mutant.
+They use `spawnSync("sh", ["-c", READ_SCRIPT])` with an exact environment and temporary directories from the existing `tmpDir` helper, which the per-file private `TMPDIR` removes.
+
+- first run: `pnpm vitest run src/validator/agent.shell.test.ts` -> 4 passed (no red possible: the script was correct)
+- deliberate mutants, each applied to `READ_SCRIPT` in `src/validator/agent.ts` and restored with `git checkout`:
+  - the present and absent branches swapped (`M17`) -> `[U1723]`, `[U1724]`, and `[U1725]` failed
+  - `NM_HOME` ignored -> `[U1723]` and `[U1725]` failed
+  - `touch "$f.touched"` added after the read -> `[U1726]` failed
+  - `-f` changed to `-d` -> `[U1723]` and `[U1725]` failed
+  - `exit 3` changed to `exit 1` -> `[U1724]` failed
+- green: no source change. `pnpm vitest run src/validator` -> 6 files, 108 passed after the restore.
+- refactor: none needed.
+- commit: see the commit that carries this entry.
