@@ -10,12 +10,12 @@
     "version": "0.49.0"
   },
   "plugin": {
-    "commit": "eae7b62",
+    "commit": "1e7be3e",
     "dirty": false
   },
-  "startedAt": "2026-11-09T06:29:40.131Z",
-  "finishedAt": "2026-11-09T06:32:16.226Z",
-  "offline": false,
+  "startedAt": "2026-11-09T16:06:08.920Z",
+  "finishedAt": "2026-11-09T16:08:58.835Z",
+  "offline": true,
   "isolation": {
     "clean": true,
     "report": "no change to the real home, the credentials, or the lab process list. tripwire: no events"
@@ -23,7 +23,7 @@
   "scenarios": [
     {
       "id": "S1",
-      "verdict": "known-gap",
+      "verdict": "pass",
       "checks": [
         {
           "id": "S1.ready",
@@ -34,22 +34,14 @@
         {
           "id": "S1.unready-blocks",
           "title": "A dispatch to codex (not_installed) is blocked and creates no task",
-          "ok": false,
-          "evidence": "task created: t-a0abeb18; tasks 0 to 1; text: Dispatched scout task t-a0abeb18 in local-only mode. Worker thread thr_erzc7miy6p, branch fm/t-a0abeb18.",
-          "gap": {
-            "task": "H1",
-            "reason": "dispatch trusts the `available` flag of bb's provider list, which means installed and not signed in, and does not read providerStates"
-          }
+          "ok": true,
+          "evidence": "task created: none; tasks 0 to 0; text: Dispatch blocked (provider_unavailable): The provider `codex` is not installed on the default host (bb status: not_installed). Install its CLI there. No other provider was tried. No task was created."
         },
         {
           "id": "S1.remedy",
           "title": "The refusal names bb's status \"not_installed\" or its login command",
-          "ok": false,
-          "evidence": "Dispatched scout task t-a0abeb18 in local-only mode. Worker thread thr_erzc7miy6p, branch fm/t-a0abeb18.",
-          "gap": {
-            "task": "H1",
-            "reason": "the refusal cannot name bb's status or login command, because dispatch does not read providerStates"
-          }
+          "ok": true,
+          "evidence": "Dispatch blocked (provider_unavailable): The provider `codex` is not installed on the default host (bb status: not_installed). Install its CLI there. No other provider was tried. No task was created."
         }
       ]
     },
@@ -103,7 +95,7 @@
           "id": "S4.branch-commit",
           "title": "The task branch holds the one commit the worker made",
           "ok": true,
-          "evidence": "git rev-list --count main..fm/t-979f85df: 1"
+          "evidence": "git rev-list --count main..fm/t-7f262c23: 1"
         },
         {
           "id": "S4.review-ready",
@@ -139,7 +131,7 @@
           "id": "S5.supervisor-tools",
           "title": "The supervisor is offered its four tools and not the report tool",
           "ok": true,
-          "evidence": "tools: factoryman_dispatch, factoryman_merge, factoryman_status, factoryman_teardown (thread thr_bvdyzb86dg)"
+          "evidence": "tools: factoryman_dispatch, factoryman_merge, factoryman_status, factoryman_teardown (thread thr_7es68ma7kf)"
         },
         {
           "id": "S5.supervisor-skills",
@@ -169,7 +161,7 @@
     },
     {
       "id": "S7",
-      "verdict": "known-gap",
+      "verdict": "pass",
       "checks": [
         {
           "id": "S7.failed",
@@ -186,12 +178,8 @@
         {
           "id": "S7.cause",
           "title": "The failure evidence holds the harness's cause text (CONFORMANCE-CAUSE-500)",
-          "ok": false,
-          "evidence": "evidence: worker thread failed: provider error (category unknown, HTTP unknown)",
-          "gap": {
-            "task": "H3",
-            "reason": "the failure evidence reads thread.failed.error and turn.failed.errorInfo, and drops the cause text that bb keeps in provider/error.detail"
-          }
+          "ok": true,
+          "evidence": "evidence: worker thread failed: provider error (category unknown, HTTP unknown). Provider-reported cause: \"STUB upstream failure: CONFORMANCE-CAUSE-500\""
         }
       ]
     },
@@ -227,7 +215,7 @@
           "id": "S9.start-command",
           "title": "`bb factoryman supervisor start` spawns a supervisor with its role",
           "ok": false,
-          "evidence": "exit 2: Usage: bb factoryman supervisor <thread-id>\nUsage: bb factoryman preflight <machine> --project <project-id> [--provider <provider-id>]\nUsage: bb factoryman protection <owner/repo> [--branch <branch>] ",
+          "evidence": "exit 2: Usage: bb factoryman supervisor <thread-id>\nUsage: bb factoryman preflight <machine> --project <project-id> [--provider <provider-id>]\nUsage: bb factoryman dispatch init --provider <id> [--project <id",
           "gap": {
             "task": "H4",
             "reason": "the command `bb factoryman supervisor start` does not exist yet"
@@ -243,7 +231,7 @@
           "id": "S9.stamp-advice",
           "title": "The stamp needs no advice on this harness",
           "ok": true,
-          "evidence": "Thread thr_ezgxjge329 is now a factoryman supervisor. It sees the four supervisor tools from its next session."
+          "evidence": "Thread thr_xb8e4ackr4 is now a factoryman supervisor. It sees the four supervisor tools from its next session."
         },
         {
           "id": "S9.tools-after-step",
@@ -261,13 +249,13 @@
           "id": "S10.state-kept",
           "title": "Every task keeps its state across a reload",
           "ok": true,
-          "evidence": "before: t-002be35c:report_ready, t-14804e6a:report_ready, t-3070d552:report_ready, t-50dba2cf:working, t-7789cc6d:report_ready, t-979f85df:review_ready, t-9f24173b:report_ready, t-a0abeb18:failed, t-ba616175:working, t-bc84d0bc:failed, t-fb4ede42:working; after: t-002be35c:report_ready, t-14804e6a:report_ready, t-3070d552:report_ready, t-50dba2cf:working, t-7789cc6d:report_ready, t-979f85df:review_ready, t-9f24173b:report_ready, t-a0abeb18:failed, t-ba616175:working, t-bc84d0bc:failed, t-fb4ede42:working"
+          "evidence": "before: t-102e411b:report_ready, t-1d2e13aa:working, t-5192e256:report_ready, t-57d65dd3:report_ready, t-7f262c23:review_ready, t-a3bb91a9:report_ready, t-aaac15ed:report_ready, t-d0dc657f:working, t-da4f4666:working, t-f51268fe:failed; after: t-102e411b:report_ready, t-1d2e13aa:working, t-5192e256:report_ready, t-57d65dd3:report_ready, t-7f262c23:review_ready, t-a3bb91a9:report_ready, t-aaac15ed:report_ready, t-d0dc657f:working, t-da4f4666:working, t-f51268fe:failed"
         },
         {
           "id": "S10.no-new-events",
           "title": "A reload adds no event to the log",
           "ok": true,
-          "evidence": "34 events before and after"
+          "evidence": "31 events before and after"
         }
       ]
     },
@@ -285,7 +273,7 @@
           "id": "S11.dirty-kept",
           "title": "The dirty worktree is still there",
           "ok": true,
-          "evidence": "worktree: /var/tmp/bblab-conformance/data/plugins/environment-git-worktree/host-data/worktrees/thr_b4ac5ajajz-1/work"
+          "evidence": "worktree: /var/tmp/bblab-conformance-followup/data/plugins/environment-git-worktree/host-data/worktrees/thr_3yxs336pxt-1/work"
         },
         {
           "id": "S11.clean-removed",
@@ -309,7 +297,7 @@
           "id": "S12.delivered",
           "title": "The wake arrives",
           "ok": true,
-          "evidence": "1 wake(s) for t-71bbf83d"
+          "evidence": "1 wake(s) for t-dced8415"
         },
         {
           "id": "S12.once",

@@ -4,26 +4,26 @@
   "harness": "omp",
   "cli": {
     "name": "omp",
-    "version": "18.14.1"
+    "version": "18.18.3"
   },
   "bb": {
     "version": "0.49.0"
   },
   "plugin": {
-    "commit": "43eb149",
+    "commit": "1e7be3e",
     "dirty": false
   },
-  "startedAt": "2026-11-09T06:22:45.978Z",
-  "finishedAt": "2026-11-09T06:25:12.259Z",
+  "startedAt": "2026-11-09T16:03:19.361Z",
+  "finishedAt": "2026-11-09T16:06:00.712Z",
   "offline": true,
   "isolation": {
     "clean": true,
-    "report": "no change to the real home, the credentials, or the lab process list (2 unrelated file name change(s) from other tools were ignored). tripwire: no events"
+    "report": "no change to the real home, the credentials, or the lab process list. tripwire: no events"
   },
   "scenarios": [
     {
       "id": "S1",
-      "verdict": "known-gap",
+      "verdict": "pass",
       "checks": [
         {
           "id": "S1.ready",
@@ -34,22 +34,14 @@
         {
           "id": "S1.unready-blocks",
           "title": "A dispatch to codex (not_installed) is blocked and creates no task",
-          "ok": false,
-          "evidence": "task created: t-9630edbf; tasks 0 to 1; text: Dispatched scout task t-9630edbf in local-only mode. Worker thread thr_wyipwezubw, branch fm/t-9630edbf.",
-          "gap": {
-            "task": "H1",
-            "reason": "dispatch trusts the `available` flag of bb's provider list, which means installed and not signed in, and does not read providerStates"
-          }
+          "ok": true,
+          "evidence": "task created: none; tasks 0 to 0; text: Dispatch blocked (provider_unavailable): The provider `codex` is not installed on the default host (bb status: not_installed). Install its CLI there. No other provider was tried. No task was created."
         },
         {
           "id": "S1.remedy",
           "title": "The refusal names bb's status \"not_installed\" or its login command",
-          "ok": false,
-          "evidence": "Dispatched scout task t-9630edbf in local-only mode. Worker thread thr_wyipwezubw, branch fm/t-9630edbf.",
-          "gap": {
-            "task": "H1",
-            "reason": "the refusal cannot name bb's status or login command, because dispatch does not read providerStates"
-          }
+          "ok": true,
+          "evidence": "Dispatch blocked (provider_unavailable): The provider `codex` is not installed on the default host (bb status: not_installed). Install its CLI there. No other provider was tried. No task was created."
         }
       ]
     },
@@ -61,7 +53,7 @@
           "id": "S2.thread-profile",
           "title": "The thread row shows the requested provider, model, level, and mode",
           "ok": true,
-          "evidence": "acp-omp mock/mock-1 low full"
+          "evidence": "acp-omp mock/mock-1 auto full"
         },
         {
           "id": "S2.unsupported-blocks",
@@ -103,7 +95,7 @@
           "id": "S4.branch-commit",
           "title": "The task branch holds the one commit the worker made",
           "ok": true,
-          "evidence": "git rev-list --count main..fm/t-9d85bae6: 1"
+          "evidence": "git rev-list --count main..fm/t-bebc7634: 1"
         },
         {
           "id": "S4.review-ready",
@@ -139,7 +131,7 @@
           "id": "S5.supervisor-tools",
           "title": "The supervisor is offered its four tools and not the report tool",
           "ok": true,
-          "evidence": "tools: factoryman_dispatch, factoryman_merge, factoryman_status, factoryman_teardown (thread thr_usk6mvwiwt)"
+          "evidence": "tools: factoryman_dispatch, factoryman_merge, factoryman_status, factoryman_teardown (thread thr_9k4tukyt87)"
         },
         {
           "id": "S5.supervisor-skills",
@@ -212,7 +204,7 @@
           "id": "S9.start-command",
           "title": "`bb factoryman supervisor start` spawns a supervisor with its role",
           "ok": false,
-          "evidence": "exit 2: Usage: bb factoryman supervisor <thread-id>\nUsage: bb factoryman preflight <machine> --project <project-id> [--provider <provider-id>]\nUsage: bb factoryman protection <owner/repo> [--branch <branch>] ",
+          "evidence": "exit 2: Usage: bb factoryman supervisor <thread-id>\nUsage: bb factoryman preflight <machine> --project <project-id> [--provider <provider-id>]\nUsage: bb factoryman dispatch init --provider <id> [--project <id",
           "gap": {
             "task": "H4",
             "reason": "the command `bb factoryman supervisor start` does not exist yet"
@@ -228,7 +220,7 @@
           "id": "S9.stamp-advice",
           "title": "The stamp command tells the person to clear the thread, because this harness needs it",
           "ok": false,
-          "evidence": "Thread thr_9k3dd6s94t is now a factoryman supervisor. It sees the four supervisor tools from its next session.",
+          "evidence": "Thread thr_fswswk4hc6 is now a factoryman supervisor. It sees the four supervisor tools from its next session.",
           "gap": {
             "task": "H4",
             "reason": "the stamp command says the tools arrive \"from its next session\" and does not tell the person to run `bb thread clear`, which this harness needs"
@@ -261,7 +253,7 @@
           "id": "S11.dirty-kept",
           "title": "The dirty worktree is still there",
           "ok": true,
-          "evidence": "worktree: /var/tmp/bblab-conformance/data/plugins/environment-git-worktree/host-data/worktrees/thr_uv35yqckzu-1/work"
+          "evidence": "worktree: /var/tmp/bblab-conformance-followup/data/plugins/environment-git-worktree/host-data/worktrees/thr_x3fi6ebi66-1/work"
         },
         {
           "id": "S11.clean-removed",
@@ -285,7 +277,7 @@
           "id": "S12.delivered",
           "title": "The wake arrives",
           "ok": true,
-          "evidence": "1 wake(s) for t-205561eb"
+          "evidence": "1 wake(s) for t-84d25eb7"
         },
         {
           "id": "S12.once",
