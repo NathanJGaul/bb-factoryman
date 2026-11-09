@@ -10,11 +10,11 @@
     "version": "0.49.0"
   },
   "plugin": {
-    "commit": "1e7be3e",
+    "commit": "5042e16",
     "dirty": false
   },
-  "startedAt": "2026-11-09T15:50:10.393Z",
-  "finishedAt": "2026-11-09T15:56:21.327Z",
+  "startedAt": "2026-11-09T20:12:59.158Z",
+  "finishedAt": "2026-11-09T20:19:07.979Z",
   "offline": true,
   "isolation": {
     "clean": true,
@@ -95,7 +95,7 @@
           "id": "S4.branch-commit",
           "title": "The task branch holds the one commit the worker made",
           "ok": true,
-          "evidence": "git rev-list --count main..fm/t-2da906b4: 1"
+          "evidence": "git rev-list --count main..fm/t-2055a96b: 1"
         },
         {
           "id": "S4.review-ready",
@@ -131,7 +131,7 @@
           "id": "S5.supervisor-tools",
           "title": "The supervisor is offered its four tools and not the report tool",
           "ok": true,
-          "evidence": "tools: factoryman_dispatch, factoryman_merge, factoryman_status, factoryman_teardown (thread thr_ctymu69kuw)"
+          "evidence": "tools: factoryman_dispatch, factoryman_merge, factoryman_status, factoryman_teardown (thread thr_q5tb4i57q9)"
         },
         {
           "id": "S5.supervisor-skills",
@@ -209,17 +209,19 @@
     },
     {
       "id": "S9",
-      "verdict": "known-gap",
+      "verdict": "pass",
       "checks": [
         {
           "id": "S9.start-command",
-          "title": "`bb factoryman supervisor start` spawns a supervisor with its role",
-          "ok": false,
-          "evidence": "exit 2: Usage: bb factoryman supervisor <thread-id>\nUsage: bb factoryman preflight <machine> --project <project-id> [--provider <provider-id>]\nUsage: bb factoryman dispatch init --provider <id> [--project <id",
-          "gap": {
-            "task": "H4",
-            "reason": "the command `bb factoryman supervisor start` does not exist yet"
-          }
+          "title": "`bb factoryman supervisor start` spawns a supervisor and names its thread",
+          "ok": true,
+          "evidence": "exit 0: Started factoryman supervisor thread thr_yzw2cp64x3 with the profile harness (claude-code, claude-haiku-5-5).\nThe role is set at spawn, so the thread has the four supervisor tools and the factoryman-s"
+        },
+        {
+          "id": "S9.start-tools",
+          "title": "A supervisor started with the command has its four tools and its skill on its first turn, and no worker tool or skill",
+          "ok": true,
+          "evidence": "tools: factoryman_dispatch, factoryman_merge, factoryman_status, factoryman_teardown; skills: factoryman-supervisor"
         },
         {
           "id": "S9.unstamped-no-tools",
@@ -229,9 +231,9 @@
         },
         {
           "id": "S9.stamp-advice",
-          "title": "The stamp needs no advice on this harness",
+          "title": "The stamp command succeeds",
           "ok": true,
-          "evidence": "Thread thr_98x8fgur45 is now a factoryman supervisor. It sees the four supervisor tools from its next session."
+          "evidence": "Thread thr_efywyg5b5k is now a factoryman supervisor.\nIt gets the four supervisor tools and the factoryman-supervisor skill on its next turn."
         },
         {
           "id": "S9.tools-after-step",
@@ -260,7 +262,7 @@
           "id": "S11.dirty-kept",
           "title": "The dirty worktree is still there",
           "ok": true,
-          "evidence": "worktree: /var/tmp/bblab-conformance-followup/data/plugins/environment-git-worktree/host-data/worktrees/thr_jywaq8nk2m-1/work"
+          "evidence": "worktree: /var/tmp/bblab-supervisor-start/data/plugins/environment-git-worktree/host-data/worktrees/thr_2sru54h6m4-1/work"
         },
         {
           "id": "S11.clean-removed",
@@ -284,7 +286,7 @@
           "id": "S12.delivered",
           "title": "The wake arrives",
           "ok": true,
-          "evidence": "1 wake(s) for t-5b08273a"
+          "evidence": "1 wake(s) for t-9cf19b26"
         },
         {
           "id": "S12.once",

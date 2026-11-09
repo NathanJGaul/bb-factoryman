@@ -10,12 +10,12 @@
     "version": "0.49.0"
   },
   "plugin": {
-    "commit": "1e7be3e",
+    "commit": "5042e16",
     "dirty": false
   },
-  "startedAt": "2026-11-09T16:06:08.920Z",
-  "finishedAt": "2026-11-09T16:08:58.835Z",
-  "offline": true,
+  "startedAt": "2026-11-09T20:09:54.360Z",
+  "finishedAt": "2026-11-09T20:12:42.529Z",
+  "offline": false,
   "isolation": {
     "clean": true,
     "report": "no change to the real home, the credentials, or the lab process list. tripwire: no events"
@@ -95,7 +95,7 @@
           "id": "S4.branch-commit",
           "title": "The task branch holds the one commit the worker made",
           "ok": true,
-          "evidence": "git rev-list --count main..fm/t-7f262c23: 1"
+          "evidence": "git rev-list --count main..fm/t-5fbcbb17: 1"
         },
         {
           "id": "S4.review-ready",
@@ -131,7 +131,7 @@
           "id": "S5.supervisor-tools",
           "title": "The supervisor is offered its four tools and not the report tool",
           "ok": true,
-          "evidence": "tools: factoryman_dispatch, factoryman_merge, factoryman_status, factoryman_teardown (thread thr_7es68ma7kf)"
+          "evidence": "tools: factoryman_dispatch, factoryman_merge, factoryman_status, factoryman_teardown (thread thr_6npgppktdt)"
         },
         {
           "id": "S5.supervisor-skills",
@@ -209,17 +209,19 @@
     },
     {
       "id": "S9",
-      "verdict": "known-gap",
+      "verdict": "pass",
       "checks": [
         {
           "id": "S9.start-command",
-          "title": "`bb factoryman supervisor start` spawns a supervisor with its role",
-          "ok": false,
-          "evidence": "exit 2: Usage: bb factoryman supervisor <thread-id>\nUsage: bb factoryman preflight <machine> --project <project-id> [--provider <provider-id>]\nUsage: bb factoryman dispatch init --provider <id> [--project <id",
-          "gap": {
-            "task": "H4",
-            "reason": "the command `bb factoryman supervisor start` does not exist yet"
-          }
+          "title": "`bb factoryman supervisor start` spawns a supervisor and names its thread",
+          "ok": true,
+          "evidence": "exit 0: Started factoryman supervisor thread thr_cuybnup45w with the profile harness (acp-stub, acp-default).\nThe role is set at spawn, so the thread has the four supervisor tools and the factoryman-superviso"
+        },
+        {
+          "id": "S9.start-tools",
+          "title": "A supervisor started with the command has its four tools and its skill on its first turn, and no worker tool or skill",
+          "ok": true,
+          "evidence": "tools: factoryman_dispatch, factoryman_merge, factoryman_status, factoryman_teardown; skills: factoryman-supervisor"
         },
         {
           "id": "S9.unstamped-no-tools",
@@ -229,9 +231,9 @@
         },
         {
           "id": "S9.stamp-advice",
-          "title": "The stamp needs no advice on this harness",
+          "title": "The stamp command succeeds",
           "ok": true,
-          "evidence": "Thread thr_xb8e4ackr4 is now a factoryman supervisor. It sees the four supervisor tools from its next session."
+          "evidence": "Thread thr_ehjz7e7hpc is now a factoryman supervisor.\nThe harness acp-stub has no recorded role-change behavior.\nRun `bb thread clear thr_ehjz7e7hpc` so the thread gets the four supervisor tools and the factoryman-supervisor skill."
         },
         {
           "id": "S9.tools-after-step",
@@ -249,7 +251,7 @@
           "id": "S10.state-kept",
           "title": "Every task keeps its state across a reload",
           "ok": true,
-          "evidence": "before: t-102e411b:report_ready, t-1d2e13aa:working, t-5192e256:report_ready, t-57d65dd3:report_ready, t-7f262c23:review_ready, t-a3bb91a9:report_ready, t-aaac15ed:report_ready, t-d0dc657f:working, t-da4f4666:working, t-f51268fe:failed; after: t-102e411b:report_ready, t-1d2e13aa:working, t-5192e256:report_ready, t-57d65dd3:report_ready, t-7f262c23:review_ready, t-a3bb91a9:report_ready, t-aaac15ed:report_ready, t-d0dc657f:working, t-da4f4666:working, t-f51268fe:failed"
+          "evidence": "before: t-07136a57:working, t-3553f8e1:working, t-4bdc4277:working, t-5fbcbb17:review_ready, t-6c0895ee:report_ready, t-a2b90223:report_ready, t-ab677902:report_ready, t-bc3d717d:report_ready, t-c3e40a69:report_ready, t-e77d4766:failed; after: t-07136a57:working, t-3553f8e1:working, t-4bdc4277:working, t-5fbcbb17:review_ready, t-6c0895ee:report_ready, t-a2b90223:report_ready, t-ab677902:report_ready, t-bc3d717d:report_ready, t-c3e40a69:report_ready, t-e77d4766:failed"
         },
         {
           "id": "S10.no-new-events",
@@ -273,7 +275,7 @@
           "id": "S11.dirty-kept",
           "title": "The dirty worktree is still there",
           "ok": true,
-          "evidence": "worktree: /var/tmp/bblab-conformance-followup/data/plugins/environment-git-worktree/host-data/worktrees/thr_3yxs336pxt-1/work"
+          "evidence": "worktree: /var/tmp/bblab-supervisor-start/data/plugins/environment-git-worktree/host-data/worktrees/thr_zwbwt2vagd-1/work"
         },
         {
           "id": "S11.clean-removed",
@@ -297,7 +299,7 @@
           "id": "S12.delivered",
           "title": "The wake arrives",
           "ok": true,
-          "evidence": "1 wake(s) for t-dced8415"
+          "evidence": "1 wake(s) for t-7679628e"
         },
         {
           "id": "S12.once",
