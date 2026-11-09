@@ -47,7 +47,16 @@ const PI_REASON =
 
 const TESTED_BB = "0.49.0";
 
-export const CONTRACTS: readonly HarnessContract[] = [
+/** Freezes a value and everything inside it, so no caller of `contractFor` can change the shared table. */
+function deepFreeze<T>(value: T): T {
+  if (typeof value === "object" && value !== null) {
+    for (const child of Object.values(value)) deepFreeze(child);
+    Object.freeze(value);
+  }
+  return value;
+}
+
+export const CONTRACTS: readonly HarnessContract[] = deepFreeze([
   {
     provider: "claude-code",
     testedWith: { cli: "2.1.316", bb: TESTED_BB },
@@ -116,10 +125,10 @@ export const CONTRACTS: readonly HarnessContract[] = [
     steer: "inject",
     cost: "unknown",
   },
-];
+]);
 
 /** The row for every provider that is in no other row. It makes no claim, so the runtime gate decides alone. */
-export const GENERIC_CONTRACT: HarnessContract = {
+export const GENERIC_CONTRACT: HarnessContract = deepFreeze({
   provider: "*",
   testedWith: null,
   workerModes: [],
@@ -135,7 +144,7 @@ export const GENERIC_CONTRACT: HarnessContract = {
   failureLatency: "unknown",
   steer: "unknown",
   cost: "unknown",
-};
+});
 
 const BY_PROVIDER: ReadonlyMap<string, HarnessContract> = new Map(CONTRACTS.map((row) => [row.provider, row]));
 

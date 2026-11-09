@@ -94,6 +94,7 @@ A1301 to A1309 live in `test/acceptance/harness-readiness.test.ts`, A1310 to A13
 | U1309 | `contractFor` returns the row whose `provider` equals the ID, for each of the four IDs | AC-2.1, FR-1303 | example | DONE | `src/harness/contracts.test.ts` |
 | U1310 | `contractFor` returns the generic row for `acp-opencode`, for the empty string, and for `Claude-Code` (IDs match exactly) | AC-2.2, FR-1303 | example | DONE | `src/harness/contracts.test.ts` |
 | U1311 | `contractFor` returns the generic row for `__proto__`, `constructor`, and `toString`, and never throws | AC-2.2, FR-1303 | example | DONE | `src/harness/contracts.test.ts` |
+| U1478 | The generic row, every named row, and every array and object inside them are frozen at run time, so an assignment to a row throws and `contractFor` cannot hand out a row that a caller can change | plan: H5, "The generic row is a frozen object" (T1423) | example | DONE | `src/harness/contracts.test.ts::[U1478]` |
 
 ### `src/tools/register.ts` (H5)
 

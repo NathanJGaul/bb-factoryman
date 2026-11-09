@@ -396,3 +396,15 @@ The tests that these tasks removed were duplicates of tests that stay; no assert
 - T1420 (finding 22): U1476 is three tests. The unlisted-model case now has a provider that lists `low` and `high` only, so a fallback to the default model's own levels fails it. Two mutants fail the U1476 tests. U1474 to U1476 stay `BASELINE`, and T1414's proof stays unmet as written (see "Remediation 2").
 - T1421 (finding 23): `dispatch init`'s usage cases are one `it.each` table for each id U1412 to U1417; the `test` column of U1349 names `[U1349]`; the tdd profile names the two new fixture files; A1345 requires D-108.
 - T1422 (finding 24): the ledger runner and its mutant list are in `specs/009-harness-independence/tdd/ledger-mutants.py`. Running it for one mutant from the repository root prints one JSON line (L10: A1310, U1303, U1306 fail) and leaves `git status` unchanged.
+
+## Convergence: the frozen contract rows (task T1423, behavior U1478)
+
+`/speckit.converge` found one gap against the plan: `plan.md:88` says the generic row is a frozen object, and `src/harness/contracts.ts` did not freeze any row.
+The repository commits only on green (D-099), so this entry holds the red evidence and the commit holds the test and the code.
+
+- test: `src/harness/contracts.test.ts` gained U1478 (4 tests): the table, every row, and everything inside the rows are frozen, and an assignment to the row that `contractFor` returns throws for `claude-code`, `pi`, and an unknown ID.
+- red: `pnpm vitest run src/harness/contracts.test.ts -t "U1478"` -> `4 failed | 18 skipped`; the decisive lines are the unfrozen paths `CONTRACTS.0` to `CONTRACTS.3` with their nested arrays, and `AssertionError: expected function to throw an error, but it didn't` for the three `contractFor` cases.
+- green: `deepFreeze` in `src/harness/contracts.ts` freezes `CONTRACTS` and `GENERIC_CONTRACT` and everything inside them. The module still imports nothing, as the lint rule for `src/harness/` requires.
+  `pnpm vitest run src/harness/contracts.test.ts` -> 22 passed. `pnpm run check` -> 107 files, 1628 passed, 0 failed.
+- mutants, each applied alone and restored byte for byte: a shallow freeze (no recursion) fails all 4 U1478 tests; the generic row left unfrozen fails 2; the table left unfrozen fails 3.
+- refactor: none needed. No existing assertion changed.

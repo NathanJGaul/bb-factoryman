@@ -149,6 +149,33 @@ describe("row invariants", () => {
   });
 });
 
+/** The path of every object or array under `value` (and `value` itself) that is not frozen. */
+function unfrozenPaths(value: unknown, path: string): string[] {
+  if (typeof value !== "object" || value === null) return [];
+  const own = Object.isFrozen(value) ? [] : [path];
+  return own.concat(Object.entries(value).flatMap(([key, child]) => unfrozenPaths(child, `${path}.${key}`)));
+}
+
+describe("frozen rows", () => {
+  it("[U1478] freezes the table, every row, and everything inside the rows", () => {
+    expect(unfrozenPaths(CONTRACTS, "CONTRACTS")).toEqual([]);
+    expect(unfrozenPaths(GENERIC_CONTRACT, "GENERIC_CONTRACT")).toEqual([]);
+  });
+
+  it.each([
+    ["claude-code", CLAUDE_CODE],
+    ["pi", PI],
+    ["no-such-provider", GENERIC],
+  ])("[U1478] refuses a change to the row that contractFor returns for %s", (id, expected) => {
+    const row = contractFor(id) as unknown as { sandbox: string; failureCause: string[] };
+    expect(() => {
+      row.sandbox = "available";
+    }).toThrow(TypeError);
+    expect(() => row.failureCause.push("system/error")).toThrow(TypeError);
+    expect(contractFor(id)).toEqual(expected);
+  });
+});
+
 describe("contractFor", () => {
   it("[U1309] returns the row whose provider equals the ID", () => {
     for (const row of [CLAUDE_CODE, CODEX, PI, OMP]) expect(contractFor(row.provider).provider).toBe(row.provider);
