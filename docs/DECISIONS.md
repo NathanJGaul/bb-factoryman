@@ -1197,11 +1197,12 @@ It removes only the directory it made, and it does not delete directories that e
 One full run of the suite left 394 `bb-fake-plugin-host-*` directories before the change and none after it.
 `test/acceptance/tmpdir-leak.test.ts` proves it in a child `vitest` process with a private `TMPDIR`, because the cleanup runs after the test file and cannot be seen from inside it.
 
-### D-122: Four behaviors came after their behavior, with killing mutants (Deviation, waits for the captain's acceptance)
+### D-122: Eleven behaviors came after their behavior, with killing mutants (Deviation, waits for the captain's acceptance)
 
 Constitution principle V says that every behavior change is driven by a test that failed first.
 The TDD audit of this feature (`specs/010-conformance-followup/tdd/verification.md`) classes four of its 43 behaviors `TEST_AFTER`, because no red is recorded for them.
 Each passed on its first run, because the behavior was already true when the test was written.
+The seven behaviors that the audit's remediation added (U1530 to U1535 and A1515) are in the same class: each describes code that already worked, passed on its first run, and has a mutant that fails it, so the count is eleven.
 U1506 pins that the omp unsupported profile differs from its profile in the permission mode only, which the driver already had.
 U1509 pins that S4 in `local-only` sends no pull request, which was the old path.
 U1529 pins that every harness driver's mode is admitted by its contract, which was true once Pi named `direct-PR`.
@@ -1209,4 +1210,5 @@ A1509 pins that the decision log has no duplicate number, which was already true
 In place of a red, `tdd/cycle-log.md` records a killing mutant for each: the omp unsupported profile with a second differing key (U1506), the S4 scenario that always sends `pr=` (U1509, killed once the fake lab refused that report in `local-only`), Pi set to `local-only` (U1529), and a second heading with an existing number (A1509).
 The repository commits only at green (D-099), so the history cannot show a test before its code in any case.
 The audit's rule fails the feature for this, and the same position was taken for the earlier features (D-107 and D-116).
-This entry records the deviation and does not accept it: the captain accepts or rejects it, and the pull request description names the four behaviors.
+The seven of the remediation are pinned by the mutants that the audit found alive: the fake lab's `local-only` rule, the columns of the project row, the root config's setup file, the fake lab's wording of a blocked profile, the empty `TMPDIR`, the restore guard, and the heading pattern of the guard.
+This entry records the deviation and does not accept it: the captain accepts or rejects it, and the pull request description names the eleven behaviors.

@@ -140,7 +140,7 @@ The audit above was verified at `5055faa`. The remediation tasks T051 to T059 ra
 
 | Finding | Status |
 | --- | --- |
-| 1 (`TEST_AFTER`: U1506, U1509, U1529, A1509) | Open by nature. A test cannot fail first against behavior that was already true. D-122 records it and waits for the captain's acceptance |
+| 1 (`TEST_AFTER`: U1506, U1509, U1529, A1509) | Open by nature. A test cannot fail first against behavior that was already true. D-122 records it and waits for the captain's acceptance. The seven behaviors that the remediation added (U1530 to U1535, A1515) are in the same class, so D-122 counts eleven |
 | 2 (M9, fake lab rule) | Closed by U1530. The mutant now fails the suite |
 | 3 (M11, project row columns) | Closed by U1531, which runs the script against the plugin's own schema. The mutant now fails the suite |
 | 4 (M12, root config) | Closed by U1532. The mutant now fails the suite |

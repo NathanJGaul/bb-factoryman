@@ -119,7 +119,7 @@ No foundational task. The five user stories touch separate files and do not bloc
 - [X] T039 Run `/speckit.tdd.verify`, which writes `tdd/verification.md` (test-first evidence, test smells, deliberate mutants, acceptance coverage).
 - [X] T040 Run `/speckit.implement` for the tasks that no behavior covers (phases 8 and 9) and for the remediation tasks of the verification.
 - [X] T041 Run `/speckit.checklist`, which writes `checklist.md`.
-- [ ] T042 Run `/speckit.analyze`, which writes `analyze.md`.
+- [X] T042 Run `/speckit.analyze`, which writes `analyze.md`.
 - [ ] T043 Run `/speckit.converge`, which writes `converge.md` with the verdict table of the five runs, the merge readiness, the risk, and any remaining work.
 - [ ] T044 Run `pnpm run check` a last time, leave the worktree clean, commit, and append the `done` status line.
 
