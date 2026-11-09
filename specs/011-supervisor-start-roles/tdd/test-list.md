@@ -236,7 +236,7 @@ Table-driven tests cover the lines that name several inputs, and the cycle log r
 | U1723 | `READ_SCRIPT` run by a real `sh` prints the configuration file and exits 0 when the file exists | US4.1, FR-016 | example | DONE | `src/validator/agent.shell.test.ts::[U1723]` |
 | U1724 | `READ_SCRIPT` run by a real `sh` exits 3 and prints nothing when the file does not exist | US4.4, FR-016 | example | DONE | `src/validator/agent.shell.test.ts::[U1724]` |
 | U1725 | `READ_SCRIPT` reads `$NM_HOME/config.yaml` when `NM_HOME` is set, and `$HOME/.no-mistakes/config.yaml` when it is not | FR-016 | example | DONE | `src/validator/agent.shell.test.ts::[U1725]` |
-| U1726 | `READ_SCRIPT` writes and changes nothing in the home directory or in the no-mistakes directory | US4.11, FR-015 | example | DONE | `src/validator/agent.shell.test.ts::[U1726]` |
+| U1726 | `READ_SCRIPT` writes and changes nothing in the home directory or in the no-mistakes directory | US4.11, FR-015, SC-006 | example | DONE | `src/validator/agent.shell.test.ts::[U1726]` |
 
 ### Acceptance gaps found by tdd.verify
 

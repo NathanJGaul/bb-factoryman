@@ -102,3 +102,19 @@ The restatement of a requirement in an acceptance scenario (for example `US4.5` 
 - **C1** needs the captain: accept D-133 or ask for rework. It cannot be fixed by an edit.
 - **C2, I1 to I5, A1, E1, S1** are edits to documents and one trace, and none changes behavior. `/speckit.converge` records them as tasks, and they are done in the same session.
 - **U1** is the reviewer's list. Nothing here depends on it, and CHK013 is the one question that deserves the captain's eyes before Pi is used as a supervisor on a `local-only` project.
+
+## Resolution after convergence
+
+`/speckit.converge` turned the findings into tasks `T065` to `T071` of `tasks.md`.
+The status below is as of the commit that carries this section.
+
+| Finding | Status |
+| --- | --- |
+| C1 | Open. `T065` waits for the captain's decision on D-133. |
+| C2 | Resolved by `T066`: D-133 names the retired and replaced tests with their reasons. |
+| I1, I2 | Resolved by `T067` and `T068`: the data model and the contract describe the built shape and text. |
+| I3, I6 | Not fixable by an edit, because existing tasks are never reworded or renumbered. `plan.md` records the right ids under "Amendments after implementation" (`T069`). |
+| I4, I5, A1 | Recorded in the same amendments section (`T069`); the approved plan text is not reworded. |
+| E1 | Resolved by `T071`: `U1726` traces to `SC-006`. |
+| S1 | Resolved by `T070`: the lines were split with no change in wording. |
+| U1, E2 | Unchanged: they belong to the reviewer, the maintainer, and the captain. |

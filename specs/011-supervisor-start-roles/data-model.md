@@ -50,27 +50,28 @@ Output: one string, a few lines, that always names the thread.
 ## Pure: validator observation (new, `src/validator/agent.ts`)
 
 ```text
-AgentSetting   = { kind: "auto" } | { kind: "agents"; names: string[] }
-ParseResult    = { ok: true; setting: AgentSetting } | { ok: false; reason: string }
+ParseResult    = { ok: true; names: string[] } | { ok: false; reason: string }
 
 AgentReadiness = { kind: "ready"; provider: string }
                | { kind: "not_ready"; provider: string; problem: string }
                | { kind: "unchecked"; reason: string }
+               | { kind: "auto"; readyProviders: string[] }
 
 ObservedAgent  = { name: string; readiness: AgentReadiness }
 
-Observation    = { status: "observed"; source: "file" | "default"; auto: boolean;
-                   agents: ObservedAgent[]; readyProviders: string[]; ready: boolean }
+Observation    = { status: "observed"; source: "file" | "default"; agents: ObservedAgent[]; ready: boolean }
                | { status: "unobserved"; reason: string }
 ```
+
+`names` holds the agents in the order of the file, and `auto` is a name like any other.
+A file with no `agent` line reads as the one name `auto`.
 
 | Field | Meaning |
 | --- | --- |
 | `source` | `file` when the configuration file was read, `default` when the host has none. |
-| `auto` | True when the setting is `auto`, alone or in a list. |
-| `agents` | The named agents in order, each with its readiness. Empty for plain `auto`. |
-| `readyProviders` | For `auto`: the mapped providers that bb reports ready on the host. |
-| `ready` | True when at least one agent is `ready`, or, for `auto`, when `readyProviders` is not empty. |
+| `agents` | The named agents in order, each with its readiness. `auto` is an entry of kind `auto`, alone or inside a list. |
+| `readyProviders` | On an `auto` entry: the mapped providers that bb reports ready on the host. |
+| `ready` | True when at least one entry is `ready`, or is an `auto` entry whose `readyProviders` is not empty. |
 | `reason` (unobserved) | Why the read or the parse failed, in plain words. |
 
 Validation rules:

@@ -11,7 +11,9 @@ This file records the facts that the plan rests on, where each came from, and wh
   - The shipped file (`~/.no-mistakes/config.yaml` of 1.84.0) documents `agent` as "an ordered fallback list, for example: agent: [codex, grok]" with the options "auto, claude, codex, grok, rovodev, opencode, pi, copilot, cursor, acp:<target>", and the file sets `agent: auto`.
   - The binary's error text says "choose an available agent in ~/.no-mistakes/config.yaml" and "set 'agent' in ~/.no-mistakes/config.yaml", and its list of valid names adds `devin` and `antigravity`.
   - The binary reads `NM_HOME` for its data root ("a no-mistakes daemon is already running for this NM_HOME").
-  - The `.no-mistakes.yaml` of a repository overrides some keys and not others (the file says three evidence keys are "global-only"). Nothing in the file or the binary text says that `agent` is a repository key. The plan reads the global file and records the limit in D-126.
+  - The `.no-mistakes.yaml` of a repository overrides some keys and not others (the file says three evidence keys are "global-only").
+  Nothing in the file or the binary text says that `agent` is a repository key.
+  The plan reads the global file and records the limit in D-126.
 - **Alternatives rejected**:
   - `no-mistakes doctor`: its output is for people, it prints one runnable agent and no list, and a change to its wording would break the plugin silently.
   - A YAML library: a new dependency for one key, and the repository adds no dependency without the owner.

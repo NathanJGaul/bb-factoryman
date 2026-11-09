@@ -72,7 +72,7 @@ One line, appended after the worker's evidence with a blank line between them.
 | List | `Validator agents, in order: codex (bb provider codex) is ready on <host>; grok (bb provider acp-grok) is not ready on <host>: <problem>` |
 | `auto`, some ready | `Validator agent: auto. no-mistakes picks the first runnable agent when the run starts. bb reports ready on <host>: claude-code, codex.` |
 | `auto`, none ready | `Validator agent: auto. no-mistakes picks the first runnable agent when the run starts. bb reports no ready provider that no-mistakes can use on <host>.` |
-| Default (no file) | The `auto` line, with `The host has no no-mistakes configuration file, so the default (auto) applies.` before it. |
+| Default (no file) | The `auto` line with `(the host has no no-mistakes configuration file, so the default applies)` after the word `auto`, so that the line still starts with `Validator agent:`. |
 | Unmapped agent | `Validator agent: <name> has no known bb provider, so its readiness was not checked.` |
 | Unobserved | `Validator agent: could not be observed on <host> (<reason>), so its readiness is not known.` |
 

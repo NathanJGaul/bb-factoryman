@@ -241,13 +241,31 @@ The command goes beside the other commands in `src/tools/`.
 
 - **The seeded role may not reach a harness's first turn.**
   The report observed it for workers on all four harnesses, and not for supervisors.
-  The live S9 run decides it. If a harness fails, the feature records the conflict in `docs/DECISIONS.md` and does not hide it.
+  The live S9 run decides it.
+  If a harness fails, the feature records the conflict in `docs/DECISIONS.md` and does not hide it.
 - **omp and Codex may need the clear even with a seeded role.**
-  The report says the role cannot change after the first session, and says nothing about a role that is present at the first session. The live run decides.
+  The report says the role cannot change after the first session, and says nothing about a role that is present at the first session.
+  The live run decides.
 - **The no-mistakes configuration may live elsewhere on a host.**
-  The plugin reads the file as its own commands see `NM_HOME` and `HOME`, and the daemon may run with another environment. The evidence names the file it read, so a mismatch is visible, and D-126 records the limit.
+  The plugin reads the file as its own commands see `NM_HOME` and `HOME`, and the daemon may run with another environment.
+  The evidence names the file it read, so a mismatch is visible, and D-126 records the limit.
 - **A hand-off test may assert an exact list of `exec` calls.**
-  The new read adds one call for a no-mistakes hand-off. Such a test is updated with the reason in the cycle log, and no assertion is loosened.
+  The new read adds one call for a no-mistakes hand-off.
+  Such a test is updated with the reason in the cycle log, and no assertion is loosened.
 - **A change to a worker evidence string.**
-  The `validating` evidence now has a second line. Tests and tools that read it by prefix still match.
-- **The live runs take about 30 minutes** and need the pinned bb and its toolchain. A copy of the pin from an earlier lab avoids the network.
+  The `validating` evidence now has a second line.
+  Tests and tools that read it by prefix still match.
+- **The live runs take about 30 minutes** and need the pinned bb and its toolchain.
+  A copy of the pin from an earlier lab avoids the network.
+
+## Amendments after implementation
+
+The text above is the plan that was approved, and it is not reworded.
+These points record where the built feature differs from it or adds to it, and where the reason is written down.
+
+- **Q6, the advice module.** `src/harness/` imports nothing, and the lint rule forbids even a type import. So `roleAdvice` takes a structural type (`RoleChangeFacts`) that a contract row fits, and the plan's sentence "it imports only the contract types" is superseded. See `tdd/cycle-log.md`, group 4.
+- **Project structure.** The built feature also has `src/validator/agent.shell.test.ts` (it runs `READ_SCRIPT` under a real `sh`), `test/fixtures/validator-read.ts` (the one helper that routes the read), `test/acceptance/roles-config.test.ts`, `tools/conformance/wait.ts` with `wait.test.ts`, and edits to the fixtures `test/fixtures/runtime.ts` and `test/fixtures/bb-cli.json`.
+- **The lab wait.** The spec and the plan do not call for a wait for bb's model catalog. The first live Pi run failed ten scenarios because the catalog was empty at the first dispatch, so the lab now waits up to 60 seconds for a model. D-132 records the reason.
+- **Wording.** "First session" in the spec and "first turn" name the same moment: the session that bb builds for the thread's first turn.
+- **Task references.** Two lines of `tasks.md` name the live-run tasks as `T038` to `T041` and `T038` to `T042`. After the rewrite of the task list they are `T040` to `T043`. Tasks `T053` and `T054` were added after the live runs and sit in phase 7 out of id order, because ticked tasks are never renumbered.
+- **Data model and contract.** `data-model.md` and `contracts/validator-observation.md` now describe the observation shape and the no-file line as built.

@@ -1319,7 +1319,8 @@ A second run with the same lab and code passed, so the failure was transient: bb
 The cause could not be proved afterwards, because the next run resets the lab, but the evidence points at a catalog that had not finished loading when the first dispatch came.
 The lab now waits up to 60 seconds for `bb provider models <provider> --json` to list a model, and prints a notice when it lists none.
 The wait is a tested helper (`waitUntil`), and its call in `real-lab.ts` is checked by the live runs only.
-The Pi result file comes from the rerun on the commit that has the wait. Its code differs from the commit of the other four runs only in `tools/conformance`, and `src/` is identical in both.
+The Pi result file comes from the rerun on the commit that has the wait.
+Its code differs from the commit of the other four runs only in `tools/conformance`, and `src/` is identical in both.
 
 ### D-133: Thirteen behaviors passed on their first run, and the loop ran in groups (Deviation, awaiting the captain)
 
@@ -1337,6 +1338,13 @@ The position is the one taken for D-099, D-107, D-116, and D-122: the rubric fai
 The captain could accept the thirteen as a recorded deviation, or ask for rework.
 Rework would mean new history for tests that already fail when their property is removed, and this entry does not recommend it.
 This entry does not record an acceptance: the captain has not given one.
+
+The loop also retired or replaced some tests, each for a stated reason, and `tdd/cycle-log.md` has the detail.
+`U1519` was deleted because it asserted that three closed checks are absent from a gap list that is now empty, so it could not fail; `U1717` and `A1507` pin the empty list.
+`A1508` (every run exits 0 while S9 fails as a known gap) was removed because the S9 gaps are gone; `A1614` runs the same five argument lists with S9 passing.
+`U1397` and `U1398` pinned the old four S9 checks, and `U1711` to `U1716` replace them with the five checks of the strengthened scenario.
+`U1520` and the earlier `A1507` pinned the three S9 gap entries, and they now pin an empty list, because FR-025 removes the entries.
+The existing tests that gained an expected field or an assertion, and lost none, are listed in `tdd/verification.md` under "What the diff did to tests that already existed".
 
 The audit's other findings are fixed in the remediation phase of `tasks.md` (T055 to T063): the shell read now runs under a real `sh` (the one surviving mutant, `M17`, is caught), two expectations that rebuilt their text with the code under test are literal, the conditionals inside tests are gone, the eager tests are split, and the read-routing helper is shared.
 Two audit points were not followed: the order check in `U1639` stays, because removing an assertion adds nothing, and `A1613` stays one test, because it is one flow.
