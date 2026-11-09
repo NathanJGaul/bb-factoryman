@@ -35,6 +35,8 @@ export interface PluginOptions {
   files?: Files;
   /** Replaces the rules-table dispatch resolver (D-051 style injection). */
   resolver?: DispatchResolver;
+  /** Give a worker the one-line tool hint of its harness. The default is off (task H14 decides later). */
+  toolHints?: boolean;
   /** Polling for commands on remote machines. */
   remote?: { pollMs?: number; timeoutMs?: number };
   /** How often the machine monitor reads the machines, in milliseconds. The default comes from the `machinePollSeconds` setting. */
@@ -141,7 +143,7 @@ export function createPlugin(options: PluginOptions = {}): (bb: BbPluginApi) => 
     hooks.afterSettings = () => void drain(rt);
     registerReadRpc(bb, store);
     registerHandlers(bb, new EventHandlers(rt, notifier, bb.pluginId));
-    registerTools(bb, rt, createMergeExecutor(exec));
+    registerTools(bb, rt, createMergeExecutor(exec), { toolHints: options.toolHints === true });
 
     // bb.sdk is bound once the factory returns, so the live-state comparison runs in a service.
     bb.background.service("factoryman-startup", {

@@ -1,6 +1,7 @@
 import type { BbPluginApi, PluginAgentToolResult } from "@get-bb/plugin-sdk";
 import { z } from "zod";
 import type { MergeExecutor } from "../git/merge";
+import { contractFor } from "../harness/contracts";
 import type { Runtime } from "../runtime";
 import { dispatch, dispatchSchema, type Caller } from "./dispatch";
 import { merge, mergeSchema } from "./merge";
@@ -46,7 +47,15 @@ function jsonSchema(schema: z.ZodType): Record<string, unknown> {
   return rest;
 }
 
-export function registerTools(bb: BbPluginApi, rt: Runtime, executor: MergeExecutor): void {
+export interface RegisterOptions {
+  /**
+   * Give a worker the one-line tool hint of its harness (the `toolHint` of its contract row) in the dynamic
+   * instructions. Off by default: whether a real model needs it is a tier 2 question (task H14).
+   */
+  toolHints?: boolean;
+}
+
+export function registerTools(bb: BbPluginApi, rt: Runtime, executor: MergeExecutor, options: RegisterOptions = {}): void {
   const caller = (ctx: { threadId: string; projectId: string; signal: AbortSignal }): Caller => ({ threadId: ctx.threadId, projectId: ctx.projectId, signal: ctx.signal });
   const define = (name: string, description: string, instructions: string, schema: z.ZodType, run: (caller: Caller, params: unknown) => Promise<ToolOutcome>) =>
     bb.agents.registerTool({
@@ -93,5 +102,11 @@ export function registerTools(bb: BbPluginApi, rt: Runtime, executor: MergeExecu
     (c, params) => report(rt, c, params),
   );
 
-  bb.agents.configure((context) => ({ tools: toolsForMetadata(context.pluginMetadata), skills: skillsForMetadata(context.pluginMetadata) }));
+  bb.agents.configure((context) => {
+    const selection = { tools: toolsForMetadata(context.pluginMetadata), skills: skillsForMetadata(context.pluginMetadata) };
+    // Like the tools, the hint follows the thread's role metadata. It is a constant of the table, never a metadata value.
+    if (options.toolHints !== true || context.pluginMetadata["role"] !== "worker") return selection;
+    const hint = contractFor(context.provider.id).toolHint;
+    return hint === null ? selection : { ...selection, instructions: hint };
+  });
 }

@@ -136,3 +136,30 @@ describe("browser-side isolation from the server", () => {
     expect(await importRestrictions(file, fixtureImport)).toEqual([]);
   });
 });
+
+describe("harness table isolation", () => {
+  const rejected: Array<[string, string]> = [
+    ["an @get-bb module", 'import type { BbPluginApi } from "@get-bb/plugin-sdk";\nexport type Api = BbPluginApi;\n'],
+    ["a node: built-in", 'import { readFileSync } from "node:fs";\nexport const read = readFileSync;\n'],
+    ["a bare node built-in", 'import { join } from "path";\nexport const j = join;\n'],
+    ["a package", 'import { z } from "zod";\nexport const s = z;\n'],
+    ["a sibling module", 'import { other } from "./other";\nexport const o = other;\n'],
+    ["another plugin layer", 'import { TaskLog } from "../store/task-log";\nexport const log = TaskLog;\n'],
+    ["a type from another layer", 'import type { Profile } from "../machine/types";\nexport type P = Profile;\n'],
+    ["a dynamic import", 'export const load = () => import("./other");\n'],
+    ["a re-export", 'export * from "./other";\n'],
+  ];
+
+  it.each(rejected)("[A1312] fails lint on src/harness importing %s", async (_name, code) => {
+    expect((await importRestrictions("src/harness/probe.ts", code)).length).toBeGreaterThan(0);
+  });
+
+  it.each(rejected)("[A1312] passes lint on %s in another server layer", async (_name, code) => {
+    expect(await importRestrictions("src/dispatch/probe.ts", code)).toEqual([]);
+  });
+
+  it("[A1312] passes lint on any import in the table's own test file", async () => {
+    const code = 'import { describe } from "vitest";\nimport { contractFor } from "./contracts";\nexport const t = [describe, contractFor];\n';
+    expect(await importRestrictions("src/harness/probe.test.ts", code)).toEqual([]);
+  });
+});

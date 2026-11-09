@@ -141,6 +141,8 @@ export interface WorldOptions {
   projectList?: Array<{ id: string; name: string }>;
   /** Replace the rules-table resolver. */
   resolver?: DispatchResolver;
+  /** Switch the worker tool hint on. The plugin's default is off. */
+  toolHints?: boolean;
   /** Run some commands for real. Return undefined to fall back to the scripted handler. */
   exec?: (command: string, args: readonly string[], cwd: string | undefined) => Promise<ExecResult> | undefined;
 }
@@ -323,6 +325,7 @@ export async function loadWorld(options: WorldOptions = {}): Promise<World> {
     sleep: async (ms) => (world.sleepHook ? world.sleepHook(ms) : new Promise<void>((resolve) => setTimeout(resolve, 1))),
     validator: options.validator,
     resolver: options.resolver,
+    toolHints: options.toolHints,
     fetch: async (url, init) => {
       webhook.calls.push({ url, init });
       if (webhook.result instanceof Error) throw webhook.result;

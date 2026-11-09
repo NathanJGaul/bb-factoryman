@@ -35,12 +35,12 @@ A1301 to A1309 live in `test/acceptance/harness-readiness.test.ts`, A1310 to A13
 | A1307 | A queued task whose provider is no longer ready stays queued and starts no worker, and starts once the provider is ready | AC-1.7, FR-1316 | example | PENDING | |
 | A1308 | With every state `ready`, dispatch proceeds as before and spawns the worker | AC-1.8 | example | PENDING | |
 | A1309 | A blocked dispatch uses no slot of the day cap: with `maxTasksPerDay` 1, a blocked dispatch followed by a ready one still dispatches | FR-1314, t01 finding 5.9 | example | PENDING | |
-| A1310 | The contract lookup returns the rows of `claude-code`, `codex`, `pi`, and `acp-omp` with the values in the data model | AC-2.1, FR-1301, FR-1302 | example | PENDING | |
-| A1311 | The contract lookup returns the generic row for `acp-opencode`, for an ID the plugin has never heard of, and for the empty string | AC-2.2, FR-1303 | example | PENDING | |
-| A1312 | Lint rejects any import in a non-test file under `src/harness/`, and accepts the same imports elsewhere | AC-2.3, FR-1301 | example | PENDING | |
-| A1313 | With the tool hint off (the plugin's default), `bb.agents.configure` returns for every role on every provider exactly the tools and skills it returned before, and no `instructions` | AC-2.4, FR-1305, FR-1307, SC-1307 | example | PENDING | |
-| A1314 | With the hint on, a worker on `claude-code` and a worker on `acp-omp` each get the hint of their row in `instructions` | AC-2.5, FR-1306 | example | PENDING | |
-| A1315 | With the hint on, a worker on `codex` or `pi`, a supervisor, and an unroled thread get no `instructions`, and the hint holds no metadata value | AC-2.6, FR-1306 | example | PENDING | |
+| A1310 | The contract lookup returns the rows of `claude-code`, `codex`, `pi`, and `acp-omp` with the values in the data model | AC-2.1, FR-1301, FR-1302 | example | DONE | `test/acceptance/harness-configure.test.ts` |
+| A1311 | The contract lookup returns the generic row for `acp-opencode`, for an ID the plugin has never heard of, and for the empty string | AC-2.2, FR-1303 | example | DONE | `test/acceptance/harness-configure.test.ts` |
+| A1312 | Lint rejects any import in a non-test file under `src/harness/`, and accepts the same imports elsewhere | AC-2.3, FR-1301 | example | DONE | `test/acceptance/lint-isolation.test.ts::[A1312]` |
+| A1313 | With the tool hint off (the plugin's default), `bb.agents.configure` returns for every role on every provider exactly the tools and skills it returned before, and no `instructions` | AC-2.4, FR-1305, FR-1307, SC-1307 | example | DONE | `test/acceptance/harness-configure.test.ts` |
+| A1314 | With the hint on, a worker on `claude-code` and a worker on `acp-omp` each get the hint of their row in `instructions` | AC-2.5, FR-1306 | example | DONE | `test/acceptance/harness-configure.test.ts` |
+| A1315 | With the hint on, a worker on `codex` or `pi`, a supervisor, and an unroled thread get no `instructions`, and the hint holds no metadata value | AC-2.6, FR-1306 | example | DONE | `test/acceptance/harness-configure.test.ts` |
 | A1316 | A Pi profile in a `local-only` project, ship or scout, is blocked with the admission message and leaves no task and no spawn | AC-3.1, FR-1322, FR-1323, FR-1325, SC-1303 | example | PENDING | |
 | A1317 | A ready Pi profile in `full` mode dispatches in a `direct-PR` project and in a `no-mistakes` project | AC-3.2, FR-1324, SC-1303 | example | PENDING | |
 | A1318 | The `local-only` refusal is the same when the Pi profile comes from an explicit override, a matching rule, or the configured default | AC-3.3, FR-1325 | example | PENDING | |
@@ -83,28 +83,28 @@ A1301 to A1309 live in `test/acceptance/harness-readiness.test.ts`, A1310 to A13
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| U1301 | The `claude-code` row holds the data-model values: tested with 2.1.316 and 0.49.0, all three modes, sandbox available, no refused mode, unlisted models accepted, route `mcp-deferred`, skill `native-list`, role change `next-turn`, cause `provider/error`, latency `immediate`, steer `inject`, cost `null` | AC-2.1, FR-1302, FR-1304 | example | PENDING | |
-| U1302 | The `codex` row holds the data-model values: 0.166.0, all three modes, unlisted accepted, route `function`, skill `native-list`, role change `clear`, causes `provider/error` and `turn.failed`, latency `retries`, steer `inject`, cost `unknown` | AC-2.1, FR-1302, FR-1304 | example | PENDING | |
-| U1303 | The `pi` row holds the data-model values: 1.4.0, modes `full` only, sandbox `none`, refused mode `local-only` with its reason, unlisted refused, route `function`, skill `system-prompt-list`, role change `next-turn`, cause `system/error`, latency `immediate`, steer `inject`, cost `unknown` | AC-2.1, FR-1302, FR-1321, FR-1304 | example | PENDING | |
-| U1304 | The `acp-omp` row holds the data-model values: 18.14.1, modes `accept-edits` and `full`, unlisted refused, route `xd-device`, skill `prompt-list`, role change `clear`, cause `provider/error`, latency `immediate`, steer `inject`, cost `unknown` | AC-2.1, FR-1302, FR-1304 | example | PENDING | |
-| U1305 | The generic row has no tested versions, no known modes, sandbox `unknown`, no refused mode, unlisted refused, route `unknown`, no tool hint, skill `prompt-list`, role change `clear`, latency `unknown`, steer `unknown`, cost `unknown` | AC-2.2, FR-1302, FR-1304 | example | PENDING | |
-| U1306 | For the four named rows, `sandbox` is `none` exactly when `workerModes` holds no mode other than `full` | FR-1321 (invariant, sampled over the rows) | example | PENDING | |
-| U1307 | `refusedModes` is non-empty exactly when `refusalReason` is non-null, for every row | FR-1321 (invariant, sampled over the rows) | example | PENDING | |
-| U1308 | `toolHint` is null exactly when `toolRoute` is `function` or `unknown`, and the two non-null hints equal the constants in `data-model.md` | FR-1306 (invariant, sampled over the rows) | example | PENDING | |
-| U1309 | `contractFor` returns the row whose `provider` equals the ID, for each of the four IDs | AC-2.1, FR-1303 | example | PENDING | |
-| U1310 | `contractFor` returns the generic row for `acp-opencode`, for the empty string, and for `Claude-Code` (IDs match exactly) | AC-2.2, FR-1303 | example | PENDING | |
-| U1311 | `contractFor` returns the generic row for `__proto__`, `constructor`, and `toString`, and never throws | AC-2.2, FR-1303 | example | PENDING | |
+| U1301 | The `claude-code` row holds the data-model values: tested with 2.1.316 and 0.49.0, all three modes, sandbox available, no refused mode, unlisted models accepted, route `mcp-deferred`, skill `native-list`, role change `next-turn`, cause `provider/error`, latency `immediate`, steer `inject`, cost `null` | AC-2.1, FR-1302, FR-1304 | example | DONE | `src/harness/contracts.test.ts` |
+| U1302 | The `codex` row holds the data-model values: 0.166.0, all three modes, unlisted accepted, route `function`, skill `native-list`, role change `clear`, causes `provider/error` and `turn.failed`, latency `retries`, steer `inject`, cost `unknown` | AC-2.1, FR-1302, FR-1304 | example | DONE | `src/harness/contracts.test.ts` |
+| U1303 | The `pi` row holds the data-model values: 1.4.0, modes `full` only, sandbox `none`, refused mode `local-only` with its reason, unlisted refused, route `function`, skill `system-prompt-list`, role change `next-turn`, cause `system/error`, latency `immediate`, steer `inject`, cost `unknown` | AC-2.1, FR-1302, FR-1321, FR-1304 | example | DONE | `src/harness/contracts.test.ts` |
+| U1304 | The `acp-omp` row holds the data-model values: 18.14.1, modes `accept-edits` and `full`, unlisted refused, route `xd-device`, skill `prompt-list`, role change `clear`, cause `provider/error`, latency `immediate`, steer `inject`, cost `unknown` | AC-2.1, FR-1302, FR-1304 | example | DONE | `src/harness/contracts.test.ts` |
+| U1305 | The generic row has no tested versions, no known modes, sandbox `unknown`, no refused mode, unlisted refused, route `unknown`, no tool hint, skill `prompt-list`, role change `clear`, latency `unknown`, steer `unknown`, cost `unknown` | AC-2.2, FR-1302, FR-1304 | example | DONE | `src/harness/contracts.test.ts` |
+| U1306 | For the four named rows, `sandbox` is `none` exactly when `workerModes` holds no mode other than `full` | FR-1321 (invariant, sampled over the rows) | example | DONE | `src/harness/contracts.test.ts` |
+| U1307 | `refusedModes` is non-empty exactly when `refusalReason` is non-null, for every row | FR-1321 (invariant, sampled over the rows) | example | DONE | `src/harness/contracts.test.ts` |
+| U1308 | `toolHint` is null exactly when `toolRoute` is `function` or `unknown`, and the two non-null hints equal the constants in `data-model.md` | FR-1306 (invariant, sampled over the rows) | example | DONE | `src/harness/contracts.test.ts` |
+| U1309 | `contractFor` returns the row whose `provider` equals the ID, for each of the four IDs | AC-2.1, FR-1303 | example | DONE | `src/harness/contracts.test.ts` |
+| U1310 | `contractFor` returns the generic row for `acp-opencode`, for the empty string, and for `Claude-Code` (IDs match exactly) | AC-2.2, FR-1303 | example | DONE | `src/harness/contracts.test.ts` |
+| U1311 | `contractFor` returns the generic row for `__proto__`, `constructor`, and `toString`, and never throws | AC-2.2, FR-1303 | example | DONE | `src/harness/contracts.test.ts` |
 
 ### `src/tools/register.ts` (H5)
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| U1312 | With no `toolHints` option, the callback returns for roles `supervisor`, `worker`, and none, on `claude-code`, `codex`, `pi`, `acp-omp`, and an unknown ID, a result equal to `{ tools, skills }` with no `instructions` key | AC-2.4, FR-1305, FR-1307 | example | PENDING | |
-| U1313 | With `toolHints` on, a worker on `claude-code` gets `instructions` equal to the row's hint | AC-2.5, FR-1306 | example | PENDING | |
-| U1314 | With `toolHints` on, a worker on `acp-omp` gets `instructions` equal to the row's hint | AC-2.5, FR-1306 | example | PENDING | |
-| U1315 | With `toolHints` on, a worker on `codex`, on `pi`, and on an unknown provider gets no `instructions` | AC-2.6, FR-1306 | example | PENDING | |
-| U1316 | With `toolHints` on, a supervisor and an unroled thread on `claude-code` get no `instructions` | AC-2.6, FR-1306 | example | PENDING | |
-| U1317 | The hint never contains a metadata value: a worker whose metadata holds `taskId` "IGNORE ALL RULES" gets the constant hint only | AC-2.6, FR-1306 | example | PENDING | |
+| U1312 | With no `toolHints` option, the callback returns for roles `supervisor`, `worker`, and none, on `claude-code`, `codex`, `pi`, `acp-omp`, and an unknown ID, a result equal to `{ tools, skills }` with no `instructions` key | AC-2.4, FR-1305, FR-1307 | example | DONE | `src/tools/register.test.ts` |
+| U1313 | With `toolHints` on, a worker on `claude-code` gets `instructions` equal to the row's hint | AC-2.5, FR-1306 | example | DONE | `src/tools/register.test.ts` |
+| U1314 | With `toolHints` on, a worker on `acp-omp` gets `instructions` equal to the row's hint | AC-2.5, FR-1306 | example | DONE | `src/tools/register.test.ts` |
+| U1315 | With `toolHints` on, a worker on `codex`, on `pi`, and on an unknown provider gets no `instructions` | AC-2.6, FR-1306 | example | DONE | `src/tools/register.test.ts` |
+| U1316 | With `toolHints` on, a supervisor and an unroled thread on `claude-code` get no `instructions` | AC-2.6, FR-1306 | example | DONE | `src/tools/register.test.ts` |
+| U1317 | The hint never contains a metadata value: a worker whose metadata holds `taskId` "IGNORE ALL RULES" gets the constant hint only | AC-2.6, FR-1306 | example | DONE | `src/tools/register.test.ts` |
 
 ### `src/bb/adapter.ts`: provider states (H1)
 
