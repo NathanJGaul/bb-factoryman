@@ -14,7 +14,8 @@ bb factoryman dispatch init --provider <id> [--project <id>] [--model <id>] [--l
 | `--level` | no | Replaces the model's default reasoning level. |
 | `--mode` | no | Replaces the chosen permission mode. |
 
-A flag without a value, a blank value, a repeated flag, an unknown flag, or a missing required value prints the usage text on stderr and exits with code 2.
+A flag without a value, a flag whose value is another flag (`--provider --model`), a blank value, a repeated flag, an unknown flag, or a missing required value prints the usage text on stderr and exits with code 2.
+`src/dispatch/init.ts` (`parseFlags`) refuses all of them, and `[U1412]` to `[U1417]` pin each one.
 The usage text gains `Usage: bb factoryman dispatch init --provider <id> [--project <id>] [--model <id>] [--level <id>] [--mode <mode>]`.
 `server.ts` registers a `dispatch` entry in `bb.cli.register` with that usage.
 
