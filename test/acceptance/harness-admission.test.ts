@@ -11,6 +11,8 @@ const PI_PROFILE = { provider: "pi", model: "openai/gpt-6-luna", reasoningLevel:
 const PROVIDERS = [providerFixture("pi", { capabilities: { permissionModes: ["full"] }, reasoningLevels: [{ id: "medium", label: "medium" }] }), providerFixture("claude"), providerFixture("claude-code")];
 const TASK = { description: "Add a --json flag to the status command." } as const;
 const CONFIG = { version: 1, profiles: { pi: PI_PROFILE }, default: "pi", rules: [{ id: "any-work", when: { kind: "ship" }, profile: "pi" }, { id: "any-scout", when: { kind: "scout" }, profile: "pi" }] };
+// With no rule at all, only `default` can supply the Pi profile, so a refusal proves that the default leg is judged.
+const CONFIG_DEFAULT_ONLY = { version: 1, profiles: { pi: PI_PROFILE }, default: "pi", rules: [] };
 
 async function worldIn(mode: Mode, options: Parameters<typeof loadWorld>[0] = {}): Promise<World> {
   // Pi refuses a model that bb does not list (feature 009, H2), so bb lists the one the profile names.
@@ -45,11 +47,11 @@ describe("the Pi admission rule through the plugin factory", () => {
   });
 
   it.each([
-    ["an explicit override", { profile: PI_PROFILE }],
-    ["a matching rule", { rule: "any-work" }],
-    ["the configured default", {}],
-  ])("[A1318] refuses Pi in a local-only project when the profile comes from %s", async (_label, choice) => {
-    const world = await worldIn("local-only", { checkout: makeCheckout({ dispatch: CONFIG }) });
+    ["an explicit override", { profile: PI_PROFILE }, CONFIG],
+    ["a matching rule", { rule: "any-work" }, CONFIG],
+    ["the configured default", {}, CONFIG_DEFAULT_ONLY],
+  ])("[A1318] refuses Pi in a local-only project when the profile comes from %s", async (_label, choice, dispatch) => {
+    const world = await worldIn("local-only", { checkout: makeCheckout({ dispatch }) });
     const result = await world.call("factoryman_dispatch", { ...TASK, kind: "ship", ...choice });
     expect(result.isError).toBe(true);
     expect(result.text).toContain(refusedText);
@@ -88,7 +90,7 @@ describe("the Pi admission rule through the plugin factory", () => {
   });
 
   it("[A1321] spawns no worker on any other provider when it refuses Pi", async () => {
-    const world = await worldIn("local-only", { checkout: makeCheckout({ dispatch: CONFIG }) });
+    const world = await worldIn("local-only", { checkout: makeCheckout({ dispatch: CONFIG_DEFAULT_ONLY }) });
     const result = await world.call("factoryman_dispatch", { ...TASK, kind: "ship" });
     expect(result.isError).toBe(true);
     expect(result.text).toContain("No other provider was tried.");
