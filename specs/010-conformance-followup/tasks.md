@@ -152,3 +152,22 @@ No foundational task. The five user stories touch separate files and do not bloc
 - MVP: user story 1 plus the known-gap edit (US3), because those two turn tier 1 and the Pi run green.
 - Then US2 (omp), US5 (the leak, which protects every later `pnpm run check`), and US4 (the guard).
 - Run the live runs once, at the end, on committed code. A run costs about 30 minutes in all.
+
+## Phase 11: TDD remediation
+
+The verification (`tdd/verification.md`, verdict `FAIL`) lists findings.
+The feature is not done until findings 2, 3, and 4 are cleared and the captain has accepted or rejected finding 1 (D-122).
+Each task below names its finding.
+Each test is written first and seen failing (a mutant stands in for the red where the code already works), and the failure goes in `tdd/cycle-log.md`.
+
+- [ ] T051 [US1] Finding 2: write [U1530] in `test/fixtures/conformance-lab.test.ts`, which asserts that a fake `local-only` ship task whose flag carries `pr=` stays `working` with a refused `mode_check_failed` event. Prove it with mutant M9 (`if (false)` in place of the `local-only` and `pr=` condition of `test/fixtures/conformance-lab.ts`). Done when `pnpm vitest run test/fixtures/conformance-lab.test.ts` fails with the mutant and passes without it.
+- [ ] T052 [US1] Finding 3: write [U1531] in `test/acceptance/conformance-project-row.test.ts` (new): make a database with `openSqliteStore`, run the script of `projectRowScript("proj_x", "direct-PR")` with `node -e` in the repository root with `BB_DATA_DIR` set, and expect `getProjectConfig("proj_x")` to return mode `direct-PR`, base branch `main`, and `yolo` false. Prove it with mutant M11 (swap the first two column names in `tools/conformance/lab-env.ts`). Done when it fails with the mutant and passes without it.
+- [ ] T053 [US5] Finding 4: write [U1532] in `test/acceptance/private-tmpdir-wired.test.ts` (new): the test file asserts that `process.env.TMPDIR` names an existing directory whose base name starts with `bb-factoryman-test-`. Prove it with mutant M12 (drop `setupFiles` from `vitest.config.ts`). Done when it fails with the mutant and passes without it.
+- [ ] T054 [US5] Finding 5: remove the `process.once("exit", ...)` line from `test/setup/private-tmpdir.setup.ts`, and change D-121 in `docs/DECISIONS.md` so it no longer says that the directory is removed again when the worker exits. Done when `pnpm vitest run test/acceptance/tmpdir-leak.test.ts` still passes.
+- [ ] T055 [US2] Finding 6: write [U1533] in `test/fixtures/conformance-lab.test.ts`, which asserts that the unsupported profile of Claude Code is blocked with text that names the reasoning level, and that of omp with text that names the permission mode. Prove it with a mutant that swaps the two branches of `what` in `test/fixtures/conformance-lab.ts`. Done when it fails with the mutant and passes without it.
+- [ ] T056 [US5] Finding 7: write [U1534] and [U1535] in `test/setup/private-tmpdir.test.ts`. [U1534] sets `TMPDIR` to the empty string and expects the directory inside `os.tmpdir()`; prove it with a mutant that drops `earlier === ""` from `test/setup/private-tmpdir.ts`. [U1535] changes `TMPDIR` between two `restore` calls and expects the second call to leave it alone; prove it with a mutant that removes the `restored` guard. Done when both fail with their mutant and pass without it.
+- [ ] T057 [US4] Finding 8: write [A1515] in `test/acceptance/decision-log.test.ts`, which asserts that `headingNumbers` finds `D-001` first and a number of at least `D-117` last. Prove it with a mutant that changes the heading pattern in `test/fixtures/decision-log.ts` to `^## `. Done when it fails with the mutant and passes without it.
+- [ ] T058 [US5] Finding 9 and 11: remove the dead `mkdirSync(tmp, ...)` line in `test/acceptance/tmpdir-leak.test.ts`, and drop the `.ts` extension from the fixture import in `test/acceptance/decision-log.test.ts`. Done when `pnpm run check` passes.
+- [ ] T059 Finding 1: record in `docs/DECISIONS.md` (D-122) that U1506, U1509, U1529, and A1509 came after their behavior, with the mutants that kill them, as a deviation that waits for the captain's acceptance. Done when the entry exists and the decision-log guard passes.
+- [X] T060 Finding 13: `spec_criteria` in `tdd/test-list.md` reads 18 (done in the plan refresh that added U1530 to U1535 and A1515).
+
