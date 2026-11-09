@@ -228,6 +228,13 @@ Table-driven tests cover the lines that name several inputs, and the cycle log r
 | U1717 | The committed `conformance/known-gaps.json` has no entry, and `loadGaps` returns an empty list | US6.6, FR-025 | example | DONE | `tools/conformance/gaps.test.ts::[U1717]` |
 | U1718 | A gap entry that now passes still fails the run as stale | FR-025 | characterization | DONE | `tools/conformance/verdict.test.ts::[U1305]`, `test/acceptance/conformance-gaps.test.ts::[A1309]` (existing, unchanged) |
 
+### `tools/conformance/wait.ts` (found by the first live Pi run; tests in `tools/conformance/wait.test.ts`)
+
+| id | behavior | traces | kind | state | test |
+| --- | --- | --- | --- | --- | --- |
+| U1720 | `waitUntil` returns true as soon as a read says so, sleeping the delay between reads and not before the first | US6.8, FR-026 | example | DONE | `tools/conformance/wait.test.ts::[U1720]` |
+| U1721 | `waitUntil` returns false after the attempts run out, having read once per attempt and slept between them, and a read that throws counts as not yet | US6.8, FR-026 | example | DONE | `tools/conformance/wait.test.ts::[U1721]` |
+
 ## Invariants and edge cases still to place
 
 - A thread ID that is the word `start` cannot be stamped with the old command. This is the documented effect of the routing in U1642, and no test pins it beyond U1642.

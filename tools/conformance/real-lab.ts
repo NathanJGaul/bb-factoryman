@@ -9,6 +9,7 @@ import type { DispatchOptions, EventRow, Lab, Offers, ProviderState, TaskRow, Th
 import { fakeOffers, readWakes, startedThreadId, stubOffers, type LogLine, type ThreadEvent } from "./readers.ts";
 import type { Isolation, LabSession } from "./run.ts";
 import { ansi, exec } from "./shell.ts";
+import { waitUntil } from "./wait.ts";
 
 /** The bb build that tier 1 and tier 1.5 run on. The report found that the bb on the PATH is older than the owner's server. */
 export const BB_VERSION = "0.49.0";
@@ -356,6 +357,19 @@ export async function openRealLab(init: RealLabInit): Promise<LabSession> {
     lab.projectId = project.id;
     const row = await lab.inLab(["bash", "-c", `cd ${src} && node -e "${projectRowScript(project.id, deliveryModeOf(driver))}"`]);
     if (row.code !== 0) throw new Error(`Could not write the project row: ${row.stderr.trim()}`);
+
+    // bb loads a provider's model catalog after the server starts. A first dispatch that comes before the load finishes
+    // is blocked as "not listed", and every scenario then fails for a reason that is not the harness's (found by a live Pi run).
+    progress(`Waiting for bb to list the models of ${driver.provider}`);
+    const listed = await waitUntil(
+      async () => {
+        const out = await lab.bb(["provider", "models", driver.provider, "--json"]);
+        const models: unknown = out.code === 0 ? JSON.parse(out.stdout) : [];
+        return Array.isArray(models) && models.length > 0;
+      },
+      { attempts: 30, delayMs: 2000, sleep },
+    );
+    if (!listed) progress(`bb listed no model of ${driver.provider} after 60 seconds, so the scenarios that dispatch will say so.`);
 
     progress("Starting the driver supervisor (the stub)");
     const driverThread = JSON.parse((await lab.bb(["thread", "spawn", "--project", project.id, "--provider", "acp-stub", "--model", "acp-default", "--new-environment", "worktree", "--base-branch", "main", "--prompt", "[conformance:sup=driver]\nhello", "--json"])).stdout) as { id: string };

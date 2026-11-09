@@ -107,6 +107,11 @@ Commands run from the repository root.
 - [ ] T042 [US6] [A1617] Read the S9 evidence and the isolation block of each result file: the started supervisor's tools and skill on its first request, the stamp text for Codex and omp, `isolation.clean` true, no tripwire event. If a harness contradicts the plan (for example Codex needs a clear even with a seeded role), stop and record the conflict in `docs/DECISIONS.md` before any further change. Then run `pnpm run conformance:docs` and commit the results.
 - [ ] T043 [US6] Run [A1614] [A1615] [A1616] [A1617] and see them green. Story 6 is done only when they are.
 
+### Lab bring-up hardening (found by the first live Pi run)
+
+- [X] T053 [US6] Write the tests in `tools/conformance/wait.test.ts`: [U1720] `waitUntil` returns true on the first read that says so, with the delay between reads and none before the first; [U1721] it returns false after the attempts run out, with one read per attempt and a sleep between them, and a read that throws counts as not yet.
+- [X] T054 [US6] Create `tools/conformance/wait.ts` with `waitUntil`, and make `openRealLab` in `tools/conformance/real-lab.ts` wait up to 60 seconds for bb to list at least one model of the driver's provider before it runs a scenario, and say so when it does not. Covers [U1720] [U1721].
+
 ## Phase 8: User story 7 - The change is recorded (P2)
 
 **Goal**: The decisions, the constitution amendment, and the text that this change makes wrong are written down.

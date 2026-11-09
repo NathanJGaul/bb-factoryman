@@ -224,3 +224,24 @@ The unit and acceptance tests against the real contract table (`[U1645]`, `[A160
 - The glue of `real-lab.ts` (the call to `bb`, the project setup) has no unit test. The live runs (T040 to T043) are its check.
 - refactor: none needed.
 - commit: see the commit that carries this entry.
+
+## Group 7: the lab waits for bb's model catalog (U1720, U1721)
+
+The first live Pi run at tier 1.5 failed S2 to S12, with the same message in each: `The model \`mock/mock-1\` is not listed for the provider \`pi\` on the default host. It lists: no models.`
+Claude Code, Codex, and omp passed S9 in the same session.
+A second run of Pi with the same lab and the same code passed S2, so the failure was transient: bb answered with an empty model list and no load error, which is what an unfinished catalog load looks like.
+The lab never waited for the catalog, so one slow start turned into ten failures, each blaming the harness.
+The cause cannot be proved after the fact, because the lab directory is reset by the next run and the first Pi run's logs are gone.
+The fix is cheap and bounded, and the captain's standard says to fix flakiness when it is seen, so the lab now waits up to 60 seconds for `bb provider models <provider> --json` to list a model before it runs a scenario, and says so when it does not.
+The wait is a pure helper with tests; the call in `real-lab.ts` is glue that only a live run exercises.
+
+- red: `pnpm vitest run tools/conformance/wait.test.ts` -> 2 failed
+  - U1720 `Error: not implemented: waitUntil`
+  - U1721 `Error: not implemented: waitUntil`
+- green: `waitUntil(read, { attempts, delayMs, sleep })` reads up to `attempts` times, sleeps between reads and not before the first, counts a throwing read as not yet, and returns whether a read said true; `openRealLab` calls it with 30 attempts and 2 seconds and prints a notice when bb lists nothing.
+  A type error (the lab's `sleep` returns `Promise<unknown>`) was fixed by loosening the helper's parameter type.
+  `pnpm vitest run tools/conformance` -> 13 files, 111 passed. `pnpm run typecheck` and `pnpm run lint` clean.
+  The full suite is red in two tests on purpose at this point: the working tree holds the result files that the live runs wrote, and `docs/HARNESS-SUPPORT.md` is regenerated after the last run (`[A1329]` and `[A1619]` compare the two).
+- The result files of the first live runs (tier 1, and tier 1.5 for Claude Code, Codex, and omp) record the plugin commit `5042e16`. The plugin code is unchanged by this group, which touches only the lab tooling, so they stay valid. The Pi result file is overwritten by the rerun.
+- refactor: none needed.
+- commit: see the commit that carries this entry.
