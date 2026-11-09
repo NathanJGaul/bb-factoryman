@@ -53,10 +53,9 @@ Each row is a claim that the documents will make, the file that proves it, and t
   **Rationale**: The way a key reaches Codex, Pi, and omp inside the lab is unexercised (R33). A shell block would state a procedure nobody has run.
   The table names the variable, and the stop rule says what to do when the provider is not ready.
   **Alternative**: Add `codex login --with-api-key` steps. Rejected: unverified command.
-- **Decision**: The ship task in tier 2 runs in `local-only` for harnesses other than Pi, and in `direct-PR` for Pi, as the conformance driver does (D-118).
-  **Rationale**: R27.
-  **Alternative**: Skip Pi. Rejected: the harness is supported at tier 1.5 in `direct-PR`.
-  The `direct-PR` ship task cannot finish against a local bare origin (the old runbook says so), so the Pi tier 2 ship task stops at `review_ready`, which the runbook states.
+- **Decision**: The tier 2 project mode is a variable (`MODE`). It is `local-only` for Claude Code, Codex, and omp, and `direct-PR` for Pi, and Pi runs the scout task only.
+  **Rationale**: R27. The plugin refuses Pi in `local-only` for scout tasks too (D-111), so Pi cannot share the lab's one `local-only` project. A ship task in `direct-PR` needs a real pull request, which a local bare origin cannot give, so the runbook lists the Pi ship task as not covered (section 9).
+  **Alternative**: Run a conformance-style made-up pull request URL. Rejected: a real model would not produce one, and the run would prove nothing.
 - **Decision**: Do not touch `skills/`.
   **Rationale**: The skills name no harness (grep found no "Claude" in them), and the brief says no code changes.
 

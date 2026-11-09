@@ -97,7 +97,7 @@ The gap is that D-092 and D-093 still read as current.
   Wording that is true of Claude Code only MUST say so.
 - **FR-010**: Every claim MUST be checked against the code or the tool it names, and the check recorded in `research.md`.
 - **FR-011**: No file under `src/`, `tools/`, `skills/`, `conformance/`, or the generated support document changes.
-  The only test change is to the runbook guard and the decision-log guard, which pin the documents.
+  The only test changes are to the runbook guard and the decision-log guard, which pin the documents, and one new guard for the design (`test/acceptance/design-profiles.test.ts`).
 - **FR-012**: `pnpm run check` MUST pass.
   The documents follow the Google developer documentation style: sentence case headings, active voice, short sentences, one sentence per line.
 
