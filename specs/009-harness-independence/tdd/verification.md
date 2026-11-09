@@ -2,182 +2,142 @@
 feature: 009-harness-independence
 verdict: FAIL
 standard: .specify/extensions/tdd/templates/tdd-test-quality-rubric.md
-verified_at: 8ef693a
-behaviors: 223
-proven: 136
+verified_at: 2c4ee15
+behaviors: 227
+proven: 137
 likely: 0
 test_after: 71
 no_test: 0
-not_applicable: 16
-high_smells: 2
+not_applicable: 19
+high_smells: 0
 criteria_total: 47
-criteria_covered: 46
-criteria_partial: 1
-mutation_score: unmeasured (no mutation tool in the profile; 20 deliberate mutants sampled in this audit, 20 killed; the cycle log records more per group)
-mutants_survived: 0 (one survived at acceptance level and was killed by a unit test, finding 6)
-suite: 1604 passed, 0 failed, 106 files, 31s
+criteria_covered: 47
+mutation_score: unmeasured (no mutation tool in the profile). Deliberate mutants only: 58 in the revert-red ledger (every one killed), 20 in the first audit and 9 in this one (every one killed)
+mutants_survived: 0 (two survived a first version of a test in the loop, and one survived at acceptance level in the first audit; all were killed after the test was strengthened)
+suite: 1626 passed, 0 failed, 107 files, 33 to 48 s
 ---
 
-# TDD verification: Agent-harness independence
+# TDD verification: Agent-harness independence (second run)
 
-**Verdict: FAIL.** 71 of 223 behaviors have no recorded red, because their tests passed on the first run (42 acceptance tests written after their code, 29 unit tests that pin what stays true), and two `HIGH` smells and a completion claim on `BASELINE` behaviors need repair.
-Every sampled mutant was killed, every criterion has a test, and no existing assertion was weakened.
-The blocking items are test-evidence and test-quality items. None of them shows a defect in the product code.
+**Verdict: FAIL.** One rule still blocks: 71 of 227 behaviors have no recorded red, because their tests passed on the first run (42 acceptance tests written after their code and 29 unit tests that pin what stays true), and only the captain can accept that as a recorded deviation (D-108), as feature 008 did with D-099.
+Everything else the first run found is repaired: no `HIGH` smell is open, no ticked task names a behavior that is not `DONE`, every acceptance criterion (47 of 47) reaches a test through its real entry point, no existing test was weakened, and every deliberate mutant that was run was killed.
+Eleven new findings of `MED` and `LOW` severity are open.
+None blocks, and each is a change to a test or a record.
 
 **This audit was not fully independent.**
-The session that wrote the tests ran the audit.
-It re-read every file it assessed, and it delegated the smell pass to a fresh-context read-only subagent, which read all 16 new test files in full.
-Every finding of the subagent that appears below was verified against the cited line by the auditor.
-The subagent ran no mutants and judged no test order.
+The session that wrote the code and the tests ran it.
+It re-read every file it assessed, and a fresh-context read-only subagent did the smell pass over the remediation diff (`e25b94a..2c4ee15`, 26 files) and re-checked the 16 earlier findings.
+The auditor opened the lines it cites for the new `MED` findings.
+The subagent ran no mutants.
 
 ## Test-first evidence
 
-The repository commits only on green (D-099), and each group is one commit with its tests, its code, and its cycle-log entry.
-Git history therefore cannot show a test before its code, and the log is the only evidence of order.
-No commit puts source ahead of its test, and no log entry claims a red that its commit contradicts.
-Where the log records the red command and its failure output for a behavior, the class is `PROVEN` (the commit holds the test and the code together).
+The repository commits only on green (D-099), so the history shows each group's tests and code in one commit, and the cycle log is the only record of order.
+No commit puts source before its test, and no log entry claims a red that its commit contradicts.
+The remediation range changed no production code (`git diff e25b94a..HEAD -- src ':!*.test.ts'` is empty).
 
 | Class | Count | Behaviors |
 | --- | --- | --- |
-| `PROVEN` | 136 | Every other `DONE` behavior: its test failed against a stub or the old code, and the cycle log of its group records the command and the failure line |
-| `TEST_AFTER` | 71 | See the two lists below |
-| `NOT_APPLICABLE` | 16 | 15 `BASELINE` behaviors (existing tests that pass against untouched behavior) and A1349 (a manual run of the build) |
+| `PROVEN` | 137 | Every behavior whose test failed against a stub or the old code, with the command and the failure line in the cycle log of its group (including U1477, whose red is the one that group 6 recorded under the old tag U1411) |
+| `TEST_AFTER` | 71 | The same 71 as in the first run, listed below |
+| `NOT_APPLICABLE` | 19 | 15 formerly `BASELINE` behaviors, now `DONE` with their existing test named (they hold against code that this feature did not change); U1474 to U1476 (characterization of existing branches, `BASELINE`); A1349 (a manual run of the build) |
 | `NO_TEST` | 0 | None |
 
-`TEST_AFTER`, acceptance tests written after their code and green on their first run (42): A1310, A1311, A1313, A1301 to A1309, A1316 to A1321, A1322 to A1329, A1330 to A1338, A1339 to A1344, A1350.
-For all of them the cycle log says so ("passed on the first run") and lists the mutants that show the test can fail.
-
+`TEST_AFTER`, acceptance tests written after their code (42): A1301 to A1311, A1313, A1316 to A1344, A1350.
 `TEST_AFTER`, unit tests that passed on their first run (29): U1306, U1307, U1312, U1315, U1316, U1336, U1346, U1357, U1359 to U1362, U1368, U1376 to U1378, U1383 to U1385, U1389, U1391, U1395, U1396, U1407, U1445, U1447, U1455, U1469, and U1473.
-Most of them pin a behavior that was already true (the hint stays off, a ready provider passes, Pi stays admitted in the other modes).
-The log records them as "pass by design" and not as a red.
-By the rubric, a test with no recorded red is `TEST_AFTER`, whatever the reason.
-
-Mutant evidence for the 71 (the log plus this audit):
-
-| | Behaviors |
-| --- | --- |
-| Killed by a recorded mutant (59) | all except the twelve below |
-| No mutant has been run against them (12) | A1308, A1309, A1310, A1323, A1335 (at acceptance level, see finding 6), U1362, U1376, U1389, U1395, U1445, U1455, U1469 |
-
-The precedent is D-099 (seven guard tests that came after their code, accepted by the captain as a recorded deviation, each with a revert-red and at least one killing mutant).
-The count is ten times larger here, and the captain has not accepted it.
+In place of a red, `tdd/cycle-log.md` ("Remediation 1") holds a ledger with one killing mutant for each of the 71 (58 mutants, no survivor).
+This audit counted 71 rows and re-ran 9 of its mutants (see "Mutation results").
+D-108 in `docs/DECISIONS.md` records the deviation and leaves the choice (accept, or order the 71 redone test-first) to the captain.
+The ledger does not make them test-first, and the rubric has no class for "accepted deviation".
 
 ### What the feature did to tests that already existed
 
-No assertion was weakened, no test skipped, no filter or threshold changed, and `vitest.config.ts`, `package.json`, and `tsconfig.json` have no diff.
-A search of every new and changed test file found no `.skip`, `.only`, `.todo`, or `xit`.
-Removed or replaced assertions, all forced by D-104 or D-101 (each is in the log and in D-107):
-
-| File and test | Before | After |
-| --- | --- | --- |
-| `src/dispatch/availability.test.ts` U730 to U735 | `checkProfile(profile, [provider()])` | `checkProfile(profile, facts())`, same assertions |
-| `src/dispatch/resolver.test.ts` U717 | `resolve(config())` is clear with source `builtin`, and `BUILTIN_PROFILE` is pinned | replaced by U1408 (blocked, full message) and U1410 |
-| `src/dispatch/resolver.test.ts:61` (U811) | `toMatchObject({ source: "builtin", machine: null })` | `{ status: "blocked", code: "no_default_profile" }`; the comment still says "carries no machine" and nothing asserts it |
-| `src/dispatch/resolver.test.ts` U710, U726 | titles name the built-in default | titles changed, assertions unchanged |
-| `test/acceptance/dispatch-resolver.test.ts` A706, A713 | dispatch succeeds with `claude-code` | blocked with `no_default_profile`, no spawn |
-| `test/acceptance/dispatch-resolver.test.ts` A710 rows 1 and 2 | "not available" | "is not installed", and "bb reports no state for the provider \`claude\`" |
-| `test/acceptance/dispatch-resolver.test.ts` A717 | the untagged case relies on the built-in | the config has a `default` |
-| `test/acceptance/limits-queue.test.ts` A1025, A1026 | the config has no default | the config has a `default` |
-| `test/acceptance/machine-placement.test.ts` A826 | no profile in the call | an explicit profile |
-
-These are behavior changes with their own list items (U1408, A1322), not weakened tests.
-Finding 12 notes one coverage side effect of the A710 change.
+The first run's table stands: no assertion was weakened, no test skipped, and `vitest.config.ts`, `package.json`, and `tsconfig.json` have no diff.
+The remediation range removed no test.
+A comparison of every test title before and after found these successors: the eight argument rows of `dispatch init` became eight tests with ids U1412 to U1417; U1418 became two tests; U1446 became five; U1451 became two; the second U1348 is U1349; the second U1411 is U1477; A1313, A1335, and A1345 have new titles and stronger assertions; U1340 gained a second test (finding 17).
+One assertion was loosened: finding 20.
 
 ### Task checkboxes against the list
 
-No task is ticked whose behaviors are `PENDING`, and no behavior is `DONE` while its task is open.
-Thirteen ticked tasks name behaviors whose state is `BASELINE` and not `DONE` (finding 4): T1324, T1326, T1327, T1330, T1333, T1334, T1353, T1354, T1359, T1372, T1377, T1383, T1385.
-The cycle log discloses it.
-The run command's own rule says a behavior covered by an existing passing test is marked `DONE` with the test named, so the state, and not the tick, is what should change.
+All 84 tasks are ticked, and no ticked task names a behavior whose state is not `DONE` (a script check of every `[Uxxxx]` and `[Axxxx]` marker).
+T1414 is ticked although its proof ("three red entries") is not met as written (finding 22).
 
-## Findings
+## The 16 findings of the first run
 
-Verified by the auditor at the cited line. Ordered by severity.
+| # | Status | Evidence |
+| --- | --- | --- |
+| 1 | OPEN, by design | 71 `TEST_AFTER`; D-108 waits for the captain (`docs/DECISIONS.md`) |
+| 2 | FIXED | `harness-docs.test.ts:39-56` checks each task in its own sentence with word boundaries; dropping H1 and swapping the two lists both fail it |
+| 3 | FIXED | literal tool and skill lists in `register.test.ts:107-128`; literal fragment in `gate.test.ts:98-102` |
+| 4 | CHANGED | the 15 formerly `BASELINE` behaviors are `DONE`; U1474 to U1476 are `BASELINE` and T1414 is ticked (finding 22) |
+| 5 | FIXED | `harness-admission.test.ts:15,52,94`: `CONFIG_DEFAULT_ONLY` has no rules; a resolver that ignores `default` fails A1318 and A1321 |
+| 6 | FIXED | `harness-models.test.ts:81-91`: the array ends in `ultra`; mutant L37 fails A1335 |
+| 7 | FIXED | `init.test.ts:52`: the row reaches the guard; removing the guard fails U1414 |
+| 8 | FIXED, residual | one model list (`test/fixtures/models.ts`) and `test/fixtures/defaults.test.ts`; finding 18 says what the pin does not catch |
+| 9 | OPEN (LOW to MED) | the redundant tests were kept (finding 19) |
+| 10 | FIXED | A1329 asserts the exact SDK path set and the shape of the written file; U1440 is an allowlist (but see finding 20) |
+| 11 | FIXED | exact message count and wording in the lint cases, the full runbook sentence, and all 18 role and provider pairs in A1313 |
+| 12 | FIXED | two A710 cases script a ready state beside an unavailable and an unlisted provider |
+| 13 | FIXED | `init.test.ts` uses `providerState()` |
+| 14 | FIXED | ids U1412 to U1417 each have a test; U1477 and U1349 are retagged |
+| 15 | MOSTLY FIXED | U1446, U1454, U1467, U1468, U1418, U1410, U1407 (first assertion), `harness-failure.test.ts:16`, and the config regexes are fixed; U1451, the magic numbers, and U1340 remain (findings 17, 21, 23) |
+| 16 | FIXED | U1474, U1475, and two U1476 tests in `init.test.ts:180-208`; the four mutants fail them |
+
+## Findings (open)
+
+Ordered by severity. The auditor opened the lines of findings 17 to 20.
 
 | # | Severity | Finding | Evidence |
 | --- | --- | --- | --- |
-| 1 | HIGH (rubric: any `TEST_AFTER`) | 71 behaviors have no recorded red: 42 acceptance tests written after their code and 29 unit tests that passed on the first run. 59 have a killing mutant, 12 have none. This is a deviation from constitution principle V that only the captain can accept | cycle log groups 1 to 7; lists above |
-| 2 | HIGH, vacuous assertion | A1345 asserts that D-100 contains `"H1"`, which passes through `"H10"` to `"H14"`. The regex `/stay[s]? open|not built|open/i` is `/open/i`. Swapping the built and the open lists would pass. It should split D-100 at "This release builds" and "stay open" and check each task in its own sentence with word boundaries | `test/acceptance/harness-docs.test.ts:38-41` |
-| 3 | HIGH, re-implemented expectation | U1312 builds its expected tools and skills with `toolsForMetadata` and `skillsForMetadata`, the functions the callback calls. U1363 expects `message` equal to `admit("pi","local-only")`, the function the gate calls. Literal pins exist elsewhere (U1364, the old tests of the two functions, A1313's tool names), so the exposure is low. It should assert literal lists and a literal message fragment | `src/tools/register.test.ts:126-127`, `src/dispatch/gate.test.ts:99` |
-| 4 | HIGH, completion claim | 13 ticked tasks name 15 behaviors that are `BASELINE` and not `DONE`. Mark each `DONE` with its named existing test (U1322, U1333 to U1335, U1337, U1338, U1349, U1353, U1354, U1394, U1399, U1404, U1409, U1465, U1472) | `tasks.md`, `tdd/test-list.md` |
-| 5 | MED, wrong reason | A1318's "the configured default" case sends a `ship` task to a config that has a `ship` rule, so the profile comes from the rule and the default leg of AC-3.3 is never exercised. A1321 has the same property. It should use a config with no rule that matches (or no rules) | `test/acceptance/harness-admission.test.ts:13,50,90` |
-| 6 | MED, weak acceptance test | A1335 (AC-5.6, "an array behaves as before") uses an array equal to the default ladder, so a mutant that ignores arrays (`ladderFor` returns the default) survives at acceptance level and only U1396 kills it. It should use an array that differs from the default | `test/acceptance/harness-models.test.ts:83-89`; audit mutant S8 |
-| 7 | MED, wrong reason | The "a flag whose value is another flag" row has an odd number of arguments, so `parseFlags` returns null at the length check and the `startsWith("--")` guard is not reached. It should use an even-length input, for example `["--provider","--project","--model","x"]` | `src/dispatch/init.test.ts:44`, `src/dispatch/init.ts:28,32` |
-| 8 | MED, mystery guest and fail-open defaults | `FakeBbPort` derives every state as `ready` and lists a generous model list for every provider, and `loadWorld` supplies `TEST_DEFAULT_DISPATCH` with `standingPermission.lowerReasoning: true`. A1319 and A1323 pass only because `opus`, `sonnet`, `haiku`, and `m` are in the unscripted list, and that dependence is invisible in them. A test that forgets to script a gate passes silently. The generous list is defined twice and can drift. The defaults are documented in the fixtures and in `tdd-profile.md`. It should add a fixture self-test that pins the defaults, define the list once, and comment the dependence where a test relies on it | `test/fixtures/bb-port.ts:14,193-212`, `test/fixtures/plugin-host.ts:59,219-233` |
-| 9 | MED, redundant tests | U1306 to U1309 repeat what U1301 to U1305 pin; A1310 and A1311 sit at the level of U1301 to U1304 and U1310; U1322 equals U730; the second A1324 case repeats the directory creation that the first case covers | `src/harness/contracts.test.ts:131-155`, `test/acceptance/harness-configure.test.ts:15-24`, `src/dispatch/availability.test.ts:123`, `test/acceptance/harness-default.test.ts:163-170` |
-| 10 | MED, weak negative predicates | U1440 keeps a denylist of write methods and an exact set of read methods, so a new write method is missed and an extra read fails it. A1329 uses a regex denylist of SDK paths and scans the file for credential words, which cannot find a real secret. Both should assert an allowlist of the exact reads | `src/dispatch/init.test.ts:243-245`, `test/acceptance/harness-default.test.ts:158-160` |
-| 11 | MED, predicates that claim more than they assert | The harness lint case asserts `length > 0` where the sibling tests assert one message that names the module. The docs case "tells the runbook reader to stop..." only checks that `no_default_profile` appears. A1313 says "exactly the tools and skills as before" and asserts tool names for 2 of 18 combinations and never asserts skills | `test/acceptance/lint-isolation.test.ts:154`, `test/acceptance/harness-docs.test.ts:74-76`, `test/acceptance/harness-configure.test.ts:28-39` |
-| 12 | MED, coverage side effect | After A710 rows 1 and 2 changed, no acceptance test reaches the `!found.available` branch of `checkProfile`, because the state check answers first. U731 and U732 still cover it. It should script `providerStates` as ready next to an unavailable or unlisted provider | `test/acceptance/dispatch-resolver.test.ts:131-132`, `src/dispatch/availability.ts:62` |
-| 13 | MED, bypassed utility | An inline `ProviderState` literal where `providerState()` exists | `src/dispatch/init.test.ts:234` |
-| 14 | LOW, wrong or missing ids | U1413 to U1417 carry no id of their own (all eight argument rows are tagged U1412). The test at `src/tools/dispatch.test.ts:238` is tagged U1411 and asserts the block (U1408 and A1322). The test at `src/machines/preflight.test.ts:80` is tagged U1348 and asserts U1349's behavior | `src/dispatch/init.test.ts:39-48`, `src/tools/dispatch.test.ts:238`, `src/machines/preflight.test.ts:80` |
-| 15 | LOW | U1451's first assertion matches no sign-in pattern, so only its second tests precedence; U1454's second assertion tests a text pattern and not the category; U1446 packs six rules into one input; the first A1341 case cannot exceed 600 characters, so only the second A1341 case, U1470, and U1471 kill the limit mutant; U1468 is named "reads the cause once" and never counts reads; U1340 and U1418 test several behaviors; U1410 has an `if` in a loop, with an unconditional final assertion; U1407's second assertion depends on the OS name limit (`ENAMETOOLONG`); magic values (800, `+ 4`, 3); loose regexes in U1391 and U1392; `world.sent(...).length = 0` mutates a live array | `failure-cause.test.ts:19-21,44-48,58-61`, `harness-failure.test.ts:16,55-63,72`, `handlers.test.ts:125-135`, `gate.test.ts:15-26`, `init.test.ts:56-63`, `resolver.test.ts:103-111`, `files.test.ts:55-61`, `config.test.ts` |
-| 16 | LOW, untested fail-closed branches | `init.ts` has no test for `getProjectCheckout` throwing (`:55-57`), `listProviders` throwing (`:61-65`), or the provider-wide level fallback (`:80`). The test list does not name them | `src/dispatch/init.ts` |
+| 1 | HIGH by rule | 71 behaviors `TEST_AFTER` (see above) | cycle log, ledger; D-108 |
+| 17 | MED, redundant test with a misleading name | The second `[U1340]` runs `gateProfile(new FakeBbPort(), ...)` and expects `{ok:true}`, which is U1339 again. Its title claims a contrast with the remote machine, but it shares no `bb` with the first U1340 | `src/dispatch/gate.test.ts:26-28` against `:12-14` |
+| 18 | MED, the pin checks the wiring, not the content | `defaults.test.ts` compares the fakes' model IDs with `DEFAULT_MODEL_IDS`, which it imports from `models.ts`. Removing `"m"` from the list passes this file (A1319 and A1323 fail instead), and removing `"opus"` fails it only through the dispatch case. The T1407 proof overclaims. It should assert the literal IDs that the tests rely on | `test/fixtures/defaults.test.ts:28-48`, `test/fixtures/models.ts:6` |
+| 19 | MED, redundant tests | U1410 repeats U811's source assertions, so only the "no `BUILTIN_PROFILE` export" line is new; U1306 to U1309 repeat U1301 to U1305; A1310 and A1311 sit at the level of U1301 to U1304; U1322 equals U730; the second A1324 case repeats the first | `resolver.test.ts:103-109` and `:58-62`, `contracts.test.ts:131-165`, `harness-configure.test.ts:15-24`, `availability.test.ts:123`, `harness-default.test.ts:167-174` |
+| 20 | MED, assertion loosened | At `e25b94a` U1440 asserted that the set of methods called equals `{getProjectCheckout, listProviders, listModels}`. Now any extra read passes. The loosening is not recorded, and A1329 catches it only at the SDK path level | `src/dispatch/init.test.ts:276-284` |
+| 21 | LOW | `lint-isolation.test.ts:156` keys the expected message count on a display label (`name === "a bare node built-in" ? 2 : 1`); `config.test.ts:92` pins a path that comes from zod's union error; `failure-cause.test.ts:60-62` is titled as a precedence case but `OMP_NO_MODEL` matches no sign-in pattern, so only `:64-66` tests precedence; leftover magic numbers in `harness-failure.test.ts` (`+ 200`, `.repeat(4)`, 400, 500) and the filesystem name limit in `files.test.ts:61` | as cited |
+| 22 | LOW | U1474 to U1476 stay `BASELINE` and T1414 is ticked, though its proof ("three red entries") is not met; only the cycle log says so. The second U1476 test cannot tell the provider-wide fallback from the model's own levels, because all three agree on `medium` (`init.test.ts:204-208`), and the first packs two scenarios into one test | `tdd/test-list.md:307-309`, `tasks.md:198` |
+| 23 | LOW | `init.test.ts:40-47` builds tests with a helper where the exemplar (`guards.test.ts:7,12`) uses `it.each`; the `test` column of U1349 points at `[U839]` and that of U1322 at `[U730]`, although tests with the new ids exist; `tdd-profile.md:64` still says feature 009 adds "no new file", and `test/fixtures/models.ts` and `defaults.test.ts` are new; `harness-docs.test.ts:35` accepts a missing D-108 and would fail on a D-109 | as cited |
+| 24 | LOW | The mutant list and the runner of the ledger are in a scratch directory outside the repository, so a reader can confirm the 71 rows but not re-run the 58 mutants from the repository | `tdd/cycle-log.md`, "Remediation 1" |
 
-Properties: the suite is deterministic (no real clock, network, or sleep), isolated (each test builds its own world), and fast (31 seconds for 1604 tests, about 2 seconds for the 16 new files).
-The new tests are mostly specific about what broke (exact messages), and mostly coupled to behavior and not to structure.
-Several tests match log strings (U1351, U1352) where the test list requires the log to name the message.
+Properties: deterministic (no real clock, network, or sleep), isolated, and fast (107 files in 33 to 48 seconds).
+The fixtures still fail open by design (a ready state, a generous model list, a default `dispatch.json`), and the defaults are now pinned and documented where tests rely on them.
 
 ## Mutation results
 
-No mutation tool is installed (the profile says so), so test strength is a sample of deliberate mutants.
-This audit applied 20 of its own, one at a time, each restored byte for byte (a hash check in the runner) and followed by a green suite.
-Scope: the production files of the feature.
-Not an exhaustive or a tool-measured score.
+No mutation tool is installed (the profile says so).
+Scope: the production files of the feature, by deliberate mutants, one at a time, each restored and followed by a green suite.
+This run re-ran nine mutants on behaviors that the remediation re-tested.
 
 | Mutant | Killed by | Judgment |
 | --- | --- | --- |
-| S1 tool hint on by default at the plugin factory (`server.ts`) | A1313 | Caught |
-| S2 an unknown provider gets the claude-code row | A1311, A1315, A1350, U1310, U1311, U1315, U1382, U1473 | Caught |
-| S3 a hint for every worker | A1315, U1315 | Caught |
-| S4a expired counts as ready | A1302, U1326, U1331, U1345, U1368 | Caught |
-| S4b too-old version counts as ready | A1303, U1327, U1328 | Caught |
-| S4c status unknown counts as ready | A1304, U1329 | Caught |
-| S6 codex refused in local-only | A1319, U1302, U1361 | Caught |
-| S7 a model with unknown levels judged by its listed levels | A1334, A710, U1377, U1378 | Caught |
-| S8 an array ladder is ignored | U1396 only | Caught by a unit test; A1335 survived (finding 6) |
-| S9 the queue start ignores the gate | A1307, A1320, A1350, U1351, U1352, U1367, U1368, U1473 | Caught |
-| S11 init does not check that the provider is listed | A1327, U1432 | Caught |
-| S12 init changes state in bb | A1329, U1440 | Caught |
-| S13 no remedy line | A1341, A1342, U1449, U1450, U1451, U1464 | Caught |
-| S17 the queue start fails a task on any block | A1307, A1350, U1351, U1352, U1368, U1473 | Caught |
-| S18 a ready named provider gives a preflight problem | 31 tests, among them A1305, U1346 | Caught |
-| S19 dispatch reads provider states before it places the machine | A1304, U1356, U1357 | Caught |
-| S20 the level check runs before the mode check | A1330, U1336, U1374, U1375, U1386 to U1388 | Caught |
-| S21 the failed wake limit is 600 | A1341, U1470, U1471 | Caught |
-| S22 queue admission checks the wrong mode | A1320, U1367 | Caught |
-| S23 a supervisor-like role also gets the hint | A1315, U1316 | Caught |
+| an array ladder is ignored | A1335, U1396 | Caught (A1335 could not catch it in the first run) |
+| the resolver ignores `default` | A1318, A1321, A1323, A1325, U1410, U1411 | Caught |
+| `dispatch init` sends a message | A1329, U1440 | Caught |
+| `boundCause` cuts at 299 | A1341, U1447 | Caught |
+| the queue start fails a task on any block | A1307, A1350, U1351, U1352, U1368, U1473 | Caught |
+| the value-is-a-flag guard removed | U1414 | Caught |
+| the cut is one character too long | U1448, U1467 | Caught |
+| `loadWorld` lists an unavailable provider as ready | the `defaults` case "answers providerStates..." | Caught |
+| the default model list loses `opus` | the `defaults` case "dispatches the explicit test profile" | Caught, but not by the list pin (finding 18) |
 
-The cycle log records the mutants of each group (M1 to M20 of the test list, among them M7 and M13, which survived the first version of a test and were killed after it was strengthened).
-No survivor sits inside a `DONE` behavior after the strengthening.
+The ledger and the first audit hold 78 more, with no survivor.
 Coverage was not run (none installed).
 
 ## Traceability
 
-All 47 acceptance criteria map to at least one `A` behavior, and every claimed test exists (a search found a test name that carries each `DONE` id, except U1413 to U1417, finding 14).
-All 45 requirements and all 9 success criteria are named in the list's `traces` column.
-
-| Criteria | Behaviors | End to end |
-| --- | --- | --- |
-| AC-1.1 to AC-1.8 | A1301 to A1308, U1323 to U1357 | Yes, through `loadWorld` and the registered tool, command, and handlers |
-| AC-2.1, AC-2.2 | A1310, A1311 | The module's public function (the table has no other entry point) |
-| AC-2.3 | A1312 | Yes, through ESLint's API |
-| AC-2.4 to AC-2.6 | A1313 to A1315 | Yes, through `resolveAgentConfiguration` |
-| AC-3.1, AC-3.2, AC-3.4 to AC-3.6 | A1316, A1317, A1319 to A1321 | Yes |
-| AC-3.3 | A1318 | **Partial**: the override and rule legs, not the default leg (finding 5) |
-| AC-4.1 to AC-4.8 | A1322 to A1329 | Yes, including the registered CLI command and a real temporary checkout |
-| AC-5.1 to AC-5.9 | A1330 to A1338 | Yes. AC-5.6's test cannot tell an ignored array from a used one (finding 6) |
-| AC-6.1 to AC-6.6 | A1339 to A1344 | Yes, through `thread.failed` |
-| AC-7.1 to AC-7.4 | A1345 to A1348 | Reads the docs files (finding 2 and 11 weaken A1345) |
-
-Untested criteria: none. Tests tracing to nothing: a few cases carry no id (the "four named rows" count, the Pi pass-through case in `gate.test.ts`, the `readinessProblem` case, and the pass cases of the lint tests); each guards a part of a listed behavior.
+All 47 acceptance criteria map to at least one `A` behavior and to a test that exists and runs (a script search found a test name that carries each `DONE` behavior's id, except the 15 formerly `BASELINE` behaviors, whose `test` column names the existing tests).
+All 45 requirements and all 9 success criteria are named in the list.
+AC-3.3's default leg, which the first run found unexercised, is now judged by A1318 and A1321 with a config that has no rule.
+Untested criteria: none.
+Tests tracing to nothing: a few cases carry no id (the "four named rows" count, the Pi pass-through case in `gate.test.ts`, the `readinessProblem` case, the lint pass cases, the fixture defaults); each guards a part of a listed behavior or a fixture.
 
 ## What was not audited
 
-- Mutation was not measured by a tool. 20 mutants were sampled in this audit, and the log adds the mutants of each group. About 12 `TEST_AFTER` behaviors have no mutant yet.
+- Mutation was not measured by a tool. At least 87 deliberate mutants were run in total (58 in the ledger, 20 in the first audit, 9 in this one, and more in the loop), and none survives, but the sample is not exhaustive.
 - Coverage: not installed.
-- The unchanged remainder of the pre-existing test files that the feature edited. The subagent read the diffs with context.
+- The unchanged remainder of the pre-existing test files that the feature edited.
 - Whether bb's real `providerStates`, `providers.models`, and `threads.events.list` answers have the shapes the fakes use, and whether a spawn resolves a model by `id` or by `model`. That is the owner's live check (`quickstart.md`, part 2).
-- The distinction between `instructions: null` and an absent key (the fake host reports both as null).
+- The difference between `instructions: null` and an absent key (the fake host reports both as null).
+- The mutants of the ledger, which this audit could not re-run from the repository (finding 24).
 - Performance and load: no criterion, no test.
-- The browser side (`src/app`), which this feature did not touch.
 - Independence: the author ran the audit (see the note at the top).
