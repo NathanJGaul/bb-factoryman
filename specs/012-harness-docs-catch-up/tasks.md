@@ -60,3 +60,14 @@ T009 to T011 last.
 
 US1 first (the largest gap), then US2, then US3.
 Commit after each green phase.
+
+## Phase 7: TDD remediation
+
+The audit verdict is `FAIL` for one `TEST_AFTER` behavior (finding 1).
+The feature is not done until the captain accepts that finding as a recorded deviation (D-135) or it is cleared.
+
+- [ ] T015 Finding 2: in `test/acceptance/design-profiles.test.ts:25`, replace the check of the `config.ts` source text with a call to `parseDispatchConfig` that accepts `roles.supervisor.profile`. Prove it with `pnpm vitest run test/acceptance/design-profiles.test.ts`.
+- [ ] T016 Finding 3: in `test/acceptance/design-profiles.test.ts:26`, assert the "Roles" bullet and the "Supervisor start" paragraph separately, so mutant M16 fails. Prove it with a restored mutant.
+- [ ] T017 Finding 4: in `test/acceptance/live-check.test.ts` (`[A1708]`), replace the ratio with an exact list of the section 7 lines that name Claude. Prove it with `pnpm vitest run test/acceptance/live-check.test.ts`.
+- [ ] T018 Finding 5: in `test/acceptance/design-profiles.test.ts:15`, read the statuses from the `ProviderState` type or from `readinessProblem` for each status. Prove it with `pnpm vitest run test/acceptance/design-profiles.test.ts`.
+- [ ] T019 Finding 1: record the `TEST_AFTER` behavior `[A1109]` and its killing mutants M17 and M18 in D-135, as D-133 does, and name the captain's decision as pending.
