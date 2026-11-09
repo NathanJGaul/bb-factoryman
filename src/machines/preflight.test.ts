@@ -2,7 +2,8 @@ import { describe, expect, it } from "vitest";
 import { FakeBbPort, providerState } from "../../test/fixtures/bb-port";
 import type { Exec, ExecResult } from "../exec";
 import type { DeliveryMode } from "../machine/types";
-import { preflightOnce, reportText, runPreflight, type PreflightInput } from "./preflight";
+import { READ_SCRIPT } from "../validator/agent";
+import { preflightOnce, preflightReport, reportText, runPreflight, type PreflightInput } from "./preflight";
 
 const HOST = { id: "host_gpu", name: "gpu-box", status: "connected", phase: "active", online: true };
 
@@ -21,13 +22,16 @@ function setup(failures: Record<string, Partial<ExecResult>> = {}) {
 const NM_INSTALLED = "sh -c command -v no-mistakes";
 const NM_INIT = "git remote get-url no-mistakes";
 const GH = "gh auth status";
+const READ = `sh -c ${READ_SCRIPT}`;
 
 describe("runPreflight", () => {
   it("[U838] gives an empty problem list for a machine that passes every check, and runs each check on the host", async () => {
     const { bb, exec, calls, input } = setup();
     expect(await runPreflight({ bb, exec }, input("no-mistakes"))).toEqual([]);
-    expect(calls.map((call) => call.line)).toEqual(["git --version", NM_INSTALLED, NM_INIT, GH]);
-    expect(calls.every((call) => call.host === "host_gpu" && call.cwd === "/work/gpu")).toBe(true);
+    // The validator read (feature 011) sits between the gate checks and the gh check, and it needs no working directory.
+    expect(calls.map((call) => call.line)).toEqual(["git --version", NM_INSTALLED, NM_INIT, READ, GH]);
+    expect(calls.every((call) => call.host === "host_gpu")).toBe(true);
+    expect(calls.filter((call) => call.line !== READ).every((call) => call.cwd === "/work/gpu")).toBe(true);
     expect(bb.callsTo("listProviders")).toEqual([["host_gpu"]]);
   });
 
@@ -126,6 +130,51 @@ describe("runPreflight", () => {
   });
 });
 
+describe("preflightReport: the validator agent", () => {
+  const states = (...extra: ReturnType<typeof providerState>[]) => [providerState("claude"), providerState("claude-code"), ...extra];
+
+  it("[U1690] adds a validator_agent problem with the agent's line when the agent is not ready", async () => {
+    const { bb, exec, input } = setup({ [READ]: { stdout: "agent: codex\n" } });
+    bb.states = states(providerState("codex", { status: "unauthenticated", localLoginCommand: "codex login" }));
+    const report = await preflightReport({ bb, exec }, input("no-mistakes"));
+    expect(report.problems).toEqual([{ check: "validator_agent", message: expect.stringContaining("codex (bb provider codex) is not ready on gpu-box") }]);
+    expect(report.problems[0]?.message).toContain("Run `codex login` on that machine");
+    expect(report.notes).toEqual([]);
+  });
+
+  it("[U1691] adds a validator_agent problem when the agent cannot be observed", async () => {
+    const { bb, exec, input } = setup({ [READ]: { code: 1, stderr: "Permission denied" } });
+    const report = await preflightReport({ bb, exec }, input("no-mistakes"));
+    expect(report.problems).toEqual([{ check: "validator_agent", message: expect.stringContaining("could not be observed on gpu-box") }]);
+    expect(report.problems[0]?.message).toContain("Permission denied");
+  });
+
+  it("[U1692] adds no problem and returns the agent's line as a note when the agent is ready, and runPreflight returns the problems only", async () => {
+    const { bb, exec, input } = setup({ [READ]: { stdout: "agent: claude\n" } });
+    const report = await preflightReport({ bb, exec }, input("no-mistakes"));
+    expect(report).toEqual({ problems: [], notes: ["Validator agent: claude (bb provider claude-code) is ready on gpu-box."] });
+    expect(await runPreflight({ bb, exec }, input("no-mistakes"))).toEqual([]);
+  });
+
+  it("[U1693] runs no observation for direct-PR and local-only projects", async () => {
+    for (const mode of ["direct-PR", "local-only"] as const) {
+      const { bb, exec, calls, input } = setup();
+      const report = await preflightReport({ bb, exec }, input(mode));
+      expect(calls.map((call) => call.line), mode).not.toContain(READ);
+      expect(report.notes, mode).toEqual([]);
+    }
+  });
+
+  it("[U1692] reads the host's own provider states", async () => {
+    const { bb, exec, input } = setup({ [READ]: { stdout: "agent: codex\n" } });
+    bb.statesByHost.set("host_gpu", states(providerState("codex")));
+    bb.states = states(providerState("codex", { status: "not_installed" }));
+    const report = await preflightReport({ bb, exec }, input("no-mistakes"));
+    expect(report.problems).toEqual([]);
+    expect(report.notes[0]).toContain("codex (bb provider codex) is ready on gpu-box");
+  });
+});
+
 describe("preflightOnce", () => {
   it("[U844] caches a pass for the same project and mode, and runs again for another mode or project", async () => {
     const { bb, exec, calls, input } = setup();
@@ -167,6 +216,15 @@ describe("reportText", () => {
 
   it("[U871] says so when nothing is missing", () => {
     expect(reportText(HOST, "local-only", [])).toMatch(/ready/);
+  });
+
+  it("[U1695] prints the notes after the headline, for a ready machine and for a machine with another problem", () => {
+    const note = "Validator agent: claude (bb provider claude-code) is ready on gpu-box.";
+    const ready = reportText(HOST, "no-mistakes", [], [note]);
+    expect(ready.split("\n")).toEqual(["Machine gpu-box (host_gpu) is ready for no-mistakes mode work.", note]);
+    const problem = reportText(HOST, "no-mistakes", [{ check: "gh_credentials", message: "gh has no credentials." }], [note]);
+    expect(problem).toContain("- gh_credentials: gh has no credentials.");
+    expect(problem.indexOf(note)).toBeGreaterThan(problem.indexOf("gh_credentials"));
   });
 });
 

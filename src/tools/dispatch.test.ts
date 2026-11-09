@@ -3,6 +3,7 @@ import { providerState } from "../../test/fixtures/bb-port";
 import { PROFILE } from "../../test/fixtures/machine";
 import { testRuntime } from "../../test/fixtures/runtime";
 import { defaultProjectConfig } from "../store/store";
+import { READ_SCRIPT } from "../validator/agent";
 import type { Caller } from "./dispatch";
 import { dispatch } from "./dispatch";
 
@@ -143,6 +144,19 @@ describe("factoryman_dispatch placement failures", () => {
     expect(outcome.ok).toBe(false);
     expect(outcome.text).toContain("could not read bb's machines");
     expect(outcome.text).toContain("No task was created");
+    expect(t.bb.callsTo("spawnWorker")).toEqual([]);
+    expect(t.runtime.deps.store.listTasks()).toEqual([]);
+  });
+
+  it("[U1697] refuses a dispatch to a remote machine whose validator agent is not ready, with preflight_failed, and creates no task", async () => {
+    const t = remote();
+    t.bb.statesByHost.set("host_gpu", [providerState("claude"), providerState("codex", { status: "unauthenticated" })]);
+    t.execHandler = (command, args) => (command === "sh" && args[1] === READ_SCRIPT ? { code: 0, stdout: "agent: codex\n", stderr: "" } : { code: 0, stdout: "", stderr: "" });
+    const outcome = await dispatch(t.runtime, supervisor, { ...valid, machine: "gpu-box" });
+    expect(outcome.ok).toBe(false);
+    expect(outcome.text).toContain("Dispatch blocked (preflight_failed)");
+    expect(outcome.text).toContain("validator_agent: codex (bb provider codex) is not ready on gpu-box");
+    expect(outcome.text).toContain("No task was created.");
     expect(t.bb.callsTo("spawnWorker")).toEqual([]);
     expect(t.runtime.deps.store.listTasks()).toEqual([]);
   });

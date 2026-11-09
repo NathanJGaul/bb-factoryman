@@ -187,15 +187,15 @@ Table-driven tests cover the lines that name several inputs, and the cycle log r
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| U1690 | For a `no-mistakes` project, an agent that is not ready adds a `validator_agent` problem with the agent's line | US4.8, FR-022 | example | PENDING | |
-| U1691 | For a `no-mistakes` project, an unobserved agent adds a `validator_agent` problem | US4.8, FR-022 | example | PENDING | |
-| U1692 | For a `no-mistakes` project, a ready agent adds no problem and `preflightReport` returns the line as a note | US4.9, FR-022 | example | PENDING | |
-| U1693 | For `direct-PR` and `local-only` projects no observation runs | US4.10, FR-022 | example | PENDING | |
-| U1694 | `runPreflight` returns only the problems, and `preflightOnce` caches only a pass as before | FR-022 | characterization | BASELINE | `src/machines/preflight.test.ts::[U838]`, `[U844]` (their exact `exec` lists change for a `no-mistakes` project and are updated with the reason in the cycle log) |
-| U1695 | `reportText` prints the notes after the headline, for a ready machine and for a machine with another problem | US4.9, FR-022 | example | PENDING | |
-| U1696 | The `preflight` command exits 1 for a `validator_agent` problem and exits 0 and names the agent when it is ready, and the host that holds the clone is still skipped | US4.8, US4.9, FR-022 | example | PENDING | `src/tools/supervisor-command.test.ts::[U874]` covers the skip |
-| U1697 | A dispatch to a remote machine whose validator agent is not ready is refused with `preflight_failed` and creates no task | FR-023 | example | PENDING | |
-| U1698 | A queued task for such a machine stays queued, as for any preflight problem | FR-023 | example | PENDING | |
+| U1690 | For a `no-mistakes` project, an agent that is not ready adds a `validator_agent` problem with the agent's line | US4.8, FR-022 | example | DONE | `src/machines/preflight.test.ts::[U1690]` |
+| U1691 | For a `no-mistakes` project, an unobserved agent adds a `validator_agent` problem | US4.8, FR-022 | example | DONE | `src/machines/preflight.test.ts::[U1691]` |
+| U1692 | For a `no-mistakes` project, a ready agent adds no problem and `preflightReport` returns the line as a note | US4.9, FR-022 | example | DONE | `src/machines/preflight.test.ts::[U1692]` |
+| U1693 | For `direct-PR` and `local-only` projects no observation runs | US4.10, FR-022 | example | DONE | `src/machines/preflight.test.ts::[U1693]` |
+| U1694 | `runPreflight` returns only the problems, and `preflightOnce` caches only a pass as before | FR-022 | characterization | DONE | `src/machines/preflight.test.ts::[U838]` (updated for the new read), `[U844]` (unchanged) |
+| U1695 | `reportText` prints the notes after the headline, for a ready machine and for a machine with another problem | US4.9, FR-022 | example | DONE | `src/machines/preflight.test.ts::[U1695]` |
+| U1696 | The `preflight` command exits 1 for a `validator_agent` problem and exits 0 and names the agent when it is ready, and the host that holds the clone is still skipped | US4.8, US4.9, FR-022 | example | DONE | `src/tools/supervisor-command.test.ts::[U1696]`, `[U874]` covers the clone-host skip |
+| U1697 | A dispatch to a remote machine whose validator agent is not ready is refused with `preflight_failed` and creates no task | FR-023 | example | DONE | `src/tools/dispatch.test.ts::[U1697]` |
+| U1698 | A queued task for such a machine stays queued, as for any preflight problem | FR-023 | example | DONE | `src/limits/queue.test.ts::[U1698]` |
 
 ### `src/tools/report.ts` (tests in `src/tools/report.test.ts`)
 

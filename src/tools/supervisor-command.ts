@@ -1,6 +1,6 @@
 import { INIT_USAGE, runDispatchInit } from "../dispatch/init";
 import { pickMachine } from "../dispatch/placement";
-import { reportText, runPreflight } from "../machines/preflight";
+import { preflightReport, reportText } from "../machines/preflight";
 import { protectionSteps } from "../limits/protection";
 import { parseRegistry, type RegistryEntry } from "../limits/registry";
 import { errorText, type Runtime } from "../runtime";
@@ -105,8 +105,8 @@ async function preflight(rt: Runtime, args: string[], ctx: CommandContext): Prom
     if (isClone) return { exitCode: 0, stdout: `Machine ${machine.name} (${machine.id}) holds the project's clone, so no remote preflight applies.\n` };
     const mode = store.getProjectConfig(parsed.projectId).deliveryMode;
     const sourcePath = sources.find((source) => source.hostId === machine.id)?.path ?? "";
-    const problems = await runPreflight({ bb, exec }, { host: machine, sourcePath, mode, provider: parsed.provider });
-    return { exitCode: problems.length === 0 ? 0 : 1, stdout: `${reportText(machine, mode, problems)}\n` };
+    const { problems, notes } = await preflightReport({ bb, exec }, { host: machine, sourcePath, mode, provider: parsed.provider });
+    return { exitCode: problems.length === 0 ? 0 : 1, stdout: `${reportText(machine, mode, problems, notes)}\n` };
   } catch (error) {
     return { exitCode: 1, stderr: `Preflight could not run: ${errorText(error)}\n` };
   }

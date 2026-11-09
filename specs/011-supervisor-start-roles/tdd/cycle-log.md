@@ -139,3 +139,23 @@ The shape simplified from `data-model.md`: an `auto` entry is one more entry of 
   Suite `pnpm test` -> 148 files, 1975 passed, 0 failed (26 s). `pnpm run typecheck` and `pnpm run lint` clean.
 - refactor: none needed.
 - commit: see the commit that carries this entry.
+
+## Group 5b: the preflight and its consumers (U1690 to U1698)
+
+A stub came first: `preflightReport` threw `not implemented: preflightReport`, and `reportText` ignored a fourth argument.
+Two existing tests pin the exact `exec` calls of a `no-mistakes` preflight, and both were adapted for the new read in the same red step, with the reason: `[U838]` (the list of command lines) now expects the read between the gate checks and the gh check, and `[U856]` (every call ran in the source path) now exempts the read, which opens a file under the home directory and needs no working directory, and requires exactly one read.
+No assertion was loosened: each test gained the read, and `[U856]` gained a check that exactly one read happened.
+
+- red: `pnpm vitest run src/machines/preflight.test.ts src/tools/supervisor-command.test.ts src/tools/dispatch.test.ts src/limits/queue.test.ts` -> 10 failed, 93 passed
+  - U838 (adapted) `AssertionError: expected [ 'git --version', …(3) ] to deeply equal [ 'git --version', …(4) ]`
+  - U1690, U1691, U1692 (two tests), U1693 `Error: not implemented: preflightReport`
+  - U1695 `AssertionError: expected [ Array(1) ] to deeply equal [ …(2) ]`
+  - U1696 `AssertionError: expected +0 to be 1` (the preflight command printed a ready report for an unready agent)
+  - U1697 `AssertionError: expected true to be false` (the dispatch went through)
+  - U1698 `AssertionError: expected 'working' to be 'queued'` (the queued task started)
+- green: `preflightReport` is the old `runPreflight` body plus, for `no-mistakes` projects only, `observeValidatorAgent` on the machine, a `validator_agent` problem when `validatorProblem` finds one and a note (`describeObservation`) when the agent is ready; `runPreflight` returns its problems, so dispatch, the queue, and `preflightOnce` are unchanged and inherit the check; `reportText` prints the notes after the headline and the problems; the `preflight` command uses `preflightReport`.
+  A bad string replacement in my edit script broke the file once (the doc comment differed from what I matched), and I repaired it by hand before the first green run.
+  Suite `pnpm test` -> 148 files, 1984 passed, 0 failed (26 s). `pnpm run typecheck` and `pnpm run lint` clean.
+- U1694 is credited to the adapted `[U838]` and to `[U844]`, which is unchanged.
+- refactor: none needed.
+- commit: see the commit that carries this entry.
