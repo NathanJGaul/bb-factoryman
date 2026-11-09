@@ -1,7 +1,7 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { HARNESS_IDS, resolveDriver } from "./index.ts";
-import type { Driver } from "./types.ts";
+import { deliveryModeOf, type Driver } from "./types.ts";
 
 const PORT = 48898;
 const URL_BASE = `http://127.0.0.1:${PORT}`;
@@ -118,5 +118,31 @@ describe("the harness drivers", () => {
     expect(missing.ok).toBe(false);
     if (!missing.ok) expect(missing.message).toMatch(/codex.*not installed/i);
     expect(driver("stub").bindCli(() => null)).toEqual({ ok: true, binds: [], links: [] });
+  });
+});
+
+describe("the delivery mode of a driver", () => {
+  it("[U1501] is local-only for a driver that names no mode", () => {
+    const bare: Driver = { ...driver("stub") };
+    expect("deliveryMode" in bare).toBe(false);
+    expect(deliveryModeOf(bare)).toBe("local-only");
+  });
+
+  it("[U1502] is the mode that a driver names", () => {
+    expect(deliveryModeOf({ ...driver("stub"), deliveryMode: "no-mistakes" })).toBe("no-mistakes");
+    expect(deliveryModeOf({ ...driver("stub"), deliveryMode: "direct-PR" })).toBe("direct-PR");
+    expect(deliveryModeOf({ ...driver("stub"), deliveryMode: "local-only" })).toBe("local-only");
+  });
+
+  it("[U1503] is direct-PR for Pi, which the plugin refuses in local-only", () => {
+    expect(driver("pi").deliveryMode).toBe("direct-PR");
+    expect(deliveryModeOf(driver("pi"))).toBe("direct-PR");
+  });
+
+  it("[U1504] is not named by Claude Code, Codex, omp, or the stub, so those projects stay local-only", () => {
+    for (const id of ["claude-code", "codex", "omp", "stub"]) {
+      expect(driver(id).deliveryMode, id).toBeUndefined();
+      expect(deliveryModeOf(driver(id)), id).toBe("local-only");
+    }
   });
 });

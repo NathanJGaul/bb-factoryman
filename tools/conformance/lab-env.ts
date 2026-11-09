@@ -1,5 +1,6 @@
 import { existsSync, readdirSync, rmSync } from "node:fs";
 import { join } from "node:path";
+import type { DeliveryMode } from "./drivers/types.ts";
 
 export interface LabPaths {
   bblab: string;
@@ -106,4 +107,9 @@ export function resetLab(labDir: string): void {
       if (!/^toolchain-[\d.-]+$/.test(plugin)) rmSync(join(labDir, "data/plugins", plugin), { recursive: true, force: true });
     }
   }
+}
+
+/** The `node -e` source that writes the `project_config` row of the lab project. */
+export function projectRowScript(projectId: string, mode: DeliveryMode): string {
+  return `const D=require('better-sqlite3');const db=new D(process.env.BB_DATA_DIR+'/plugins/bb-factoryman/data.db');db.prepare('INSERT OR REPLACE INTO project_config (project_id, delivery_mode, yolo, branch_prefix, base_branch, default_machine) VALUES (?, ?, 0, NULL, ?, NULL)').run('${projectId}','${mode}','main');`;
 }

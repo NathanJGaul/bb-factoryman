@@ -2,7 +2,7 @@ import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { tmpDir } from "../../test/fixtures/git-repo.ts";
-import { labEnv, labPaths, offlineProof, pluginBuildCommand, pluginCopyArgs, resetLab, type LabSettings } from "./lab-env.ts";
+import { labEnv, labPaths, offlineProof, pluginBuildCommand, pluginCopyArgs, projectRowScript, resetLab, type LabSettings } from "./lab-env.ts";
 
 const settings: LabSettings = {
   labDir: "/var/tmp/bblab-conformance",
@@ -64,5 +64,19 @@ describe("resetLab", () => {
     for (const kept of ["pin/node_modules/bb-app/dist/bb.js", "pinhome/.npm/cache", "data/plugins/toolchain-0.28.2-4.3.0/node_modules/esbuild/package.json", "evidence/before/time.txt"]) expect(existsSync(join(lab, kept)), kept).toBe(true);
     for (const gone of ["data/bb.db", "data/plugins/bb-factoryman", "data/plugins/provider-acp", "data/plugins/toolchain-0.28.2-4.3.0.staging-abc", "repos", "home", "stub", "model", "plugin-src", "logs", "run"]) expect(existsSync(join(lab, gone)), gone).toBe(false);
     expect(() => resetLab(join(lab, "does-not-exist"))).not.toThrow();
+  });
+});
+
+describe("projectRowScript", () => {
+  it("[U1507] writes the project row with the mode direct-PR, the project ID, base branch main, and yolo 0, and no local-only literal", () => {
+    const script = projectRowScript("proj_abc123", "direct-PR");
+    expect(script).toContain("INSERT OR REPLACE INTO project_config");
+    expect(script).toContain("'proj_abc123','direct-PR','main'");
+    expect(script).toContain("VALUES (?, ?, 0, NULL, ?, NULL)");
+    expect(script).not.toContain("local-only");
+  });
+
+  it("[U1508] writes the mode local-only when the driver stays on the default", () => {
+    expect(projectRowScript("proj_abc123", "local-only")).toContain("'proj_abc123','local-only','main'");
   });
 });

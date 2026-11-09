@@ -1,5 +1,8 @@
 export type PermissionMode = "accept-edits" | "auto" | "full";
 
+/** The delivery modes of a project. The tools do not import `src/`, so this repeats `DeliveryModeId` of `src/harness/contracts.ts`. */
+export type DeliveryMode = "local-only" | "direct-PR" | "no-mistakes";
+
 /** The profile that `factoryman_dispatch` takes. */
 export interface Profile {
   provider: string;
@@ -45,6 +48,8 @@ export interface Driver {
   failure: { code: number; timeoutMs: number; mode: "fails" | "ends-turn" };
   /** What a late supervisor stamp needs before the tools and the skill appear (S9). */
   roleChangeStep: "next-turn" | "clear";
+  /** The delivery mode of the lab project. Absent means `local-only`. */
+  deliveryMode?: DeliveryMode;
   /** The command-line tool this driver runs, or null for the stub. */
   cli: { command: string; versionArgs: string[] } | null;
   /** The files to write under the lab home so the CLI talks to the fake model on this loopback port. */
@@ -53,4 +58,9 @@ export interface Driver {
   setupCommands(modelPort: number): string[][];
   /** Resolve the CLI on this machine. `which` returns the real path of a command, or null. */
   bindCli(which: (command: string) => string | null): BindResult;
+}
+
+/** The delivery mode of the lab project for this driver. */
+export function deliveryModeOf(driver: Driver): DeliveryMode {
+  return driver.deliveryMode ?? "local-only";
 }
