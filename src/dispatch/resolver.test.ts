@@ -102,13 +102,10 @@ describe("RulesTableResolver precedence", () => {
 
   it("[U1410] exports no BUILTIN_PROFILE, and no resolution has the source builtin", () => {
     expect(Object.keys(resolverModule)).not.toContain("BUILTIN_PROFILE");
-    const sources = new Set<string>();
-    for (const cfg of [config(), config([rule("r", { kind: "ship" })]), config([], { default: "steady" })]) {
-      const result = resolve(cfg);
-      if (result.status === "clear") sources.add(result.source);
-    }
-    expect(resolve(config(), {}, { profile: deep })).toMatchObject({ source: "override" });
-    expect([...sources].sort()).toEqual(["default", "rule"]);
+    expect(resolve(config())).toMatchObject({ status: "blocked" });
+    expect(resolve(config([rule("r", { kind: "ship" })]))).toMatchObject({ status: "clear", source: "rule" });
+    expect(resolve(config([], { default: "steady" }))).toMatchObject({ status: "clear", source: "default" });
+    expect(resolve(config(), {}, { profile: deep })).toMatchObject({ status: "clear", source: "override" });
   });
 });
 

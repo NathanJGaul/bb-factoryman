@@ -13,7 +13,7 @@ const MODEL_REMEDY = "Pick a model that `bb provider models <provider>` lists fo
 async function oneTask(): Promise<World> {
   const world = await loadWorld();
   await world.call("factoryman_dispatch", DISPATCH);
-  world.sent("thr-sup").length = 0;
+  expect(world.sent("thr-sup"), "dispatch sends the supervisor nothing").toEqual([]);
   return world;
 }
 
@@ -69,7 +69,9 @@ describe("the cause of a failure through the plugin factory", () => {
     logCause(world, "provider/error", { message: "failed", detail: cause });
     await world.emit("thread.failed", "thr-w1", { error: "e".repeat(400) });
     const [message] = world.sent("thr-sup");
-    expect(message?.length).toBeGreaterThan(800);
+    // The old limit for the evidence in a wake message was 600 characters; the evidence here is well past it.
+    const OLD_WAKE_LIMIT = 600;
+    expect(message?.length).toBeGreaterThan(OLD_WAKE_LIMIT + 200);
     expect(message).toContain(`Provider-reported cause: "${cause}"`);
     expect(message).toContain(`Remedy: ${SIGN_IN_REMEDY}`);
   });

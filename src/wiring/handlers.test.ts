@@ -119,18 +119,20 @@ describe("thread.failed", () => {
       expect(evidence.split("\n")).toHaveLength(1);
       expect(evidence).toContain('Provider-reported cause: "first line second line xxx');
       expect(evidence.endsWith('..."')).toBe(true);
-      expect(evidence.length).toBeLessThan("worker thread failed: Provider crashed. Provider-reported cause: ".length + 300 + 4);
+      // The prefix, the quote that opens the cause, the cause cut to its limit, and the quote that closes it.
+      const CAUSE_LIMIT = 300;
+      expect(evidence).toHaveLength('worker thread failed: Provider crashed. Provider-reported cause: "'.length + CAUSE_LIMIT + '"'.length);
     });
 
     it("[U1468] reads the cause once, after the wait for an empty error text", async () => {
       const { t, handlers } = await inState("working");
-      let sleepsWhenRead = -1;
+      const sleepsWhenRead: number[] = [];
       t.bb.getFailureCause = async () => {
-        sleepsWhenRead = t.sleeps.length;
+        sleepsWhenRead.push(t.sleeps.length);
         return LOGIN;
       };
       await handlers.threadFailed({ ...thread, error: null });
-      expect(sleepsWhenRead).toBe(1);
+      expect(sleepsWhenRead).toEqual([1]);
       expect(t.sleeps).toEqual([500]);
     });
 

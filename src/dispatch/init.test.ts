@@ -55,9 +55,13 @@ describe("dispatch init: the arguments", () => {
   usageCase("[U1417]", "an unknown flag", ["--provider", "codex", "--project", "proj-1", "--force", "yes"]);
   usageCase("[U1417]", "a stray word", ["codex", "--project", "proj-1"]);
 
-  it("[U1418] takes the project from the context when --project is absent, and --project wins when both are set", async () => {
+  it("[U1418] takes the project from the context when --project is absent", async () => {
     const t = setup();
     expect((await run(t, ["--provider", "codex"], { projectId: "proj-1" })).exitCode).toBe(0);
+    expect(t.files.writes).toEqual([FILE]);
+  });
+
+  it("[U1418] lets --project win over the project in the context", async () => {
     const other = setup();
     other.bb.checkouts.set("proj-9", "/work/other");
     expect((await run(other, ["--provider", "codex", "--project", "proj-9"], { projectId: "proj-1" })).exitCode).toBe(0);

@@ -75,7 +75,7 @@ describe("the decision record of the harness work", () => {
 
   it("[A1348] names no built-in default profile in the docs outside the decision log, nor in the skills", () => {
     const files = [...markdownIn("docs"), ...markdownIn("skills")].filter((path) => path !== "docs/DECISIONS.md");
-    expect(files.length).toBeGreaterThan(3);
+    expect(files).toEqual(expect.arrayContaining(["docs/DESIGN.md", "docs/LIVE-CHECK.md", "skills/factoryman-worker/SKILL.md", "skills/factoryman-supervisor/SKILL.md"]));
     for (const path of files) expect(read(path), path).not.toMatch(/built-in default/i);
   });
 

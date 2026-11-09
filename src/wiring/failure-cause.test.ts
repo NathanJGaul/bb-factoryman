@@ -16,8 +16,24 @@ describe("boundCause", () => {
     expect(boundCause(cause)).toBe(cause);
   });
 
-  it("[U1446] replaces each run of control characters, line breaks, and tabs with one space, collapses repeated spaces, and trims", () => {
-    expect(boundCause("  first line\r\n\r\nsecond\tline\u0000\u001b[31mred   done \u007f ")).toBe("first line second line [31mred done");
+  it("[U1446] replaces a line break with one space", () => {
+    expect(boundCause("first\r\n\r\nsecond")).toBe("first second");
+  });
+
+  it("[U1446] replaces a tab with one space", () => {
+    expect(boundCause("first\tsecond")).toBe("first second");
+  });
+
+  it("[U1446] replaces other control characters, the escape character and the delete character among them, with one space", () => {
+    expect(boundCause("first\u0000\u001bsecond\u007fthird")).toBe("first second third");
+  });
+
+  it("[U1446] collapses repeated spaces", () => {
+    expect(boundCause("first    second")).toBe("first second");
+  });
+
+  it("[U1446] trims the ends", () => {
+    expect(boundCause("   first second \n")).toBe("first second");
   });
 
   it("[U1447] leaves a text of exactly 300 characters unchanged", () => {
@@ -41,14 +57,17 @@ describe("remedyFor", () => {
     expect(remedy(PI_MODEL)).toBe(MODEL_REMEDY);
   });
 
-  it("[U1451] gives the model remedy, and not the sign-in remedy, for a no-model cause that also says /login and API key", () => {
+  it("[U1451] gives the model remedy, and not the sign-in remedy, for the omp text that also says /login and API key", () => {
     expect(remedy(OMP_NO_MODEL)).toBe(MODEL_REMEDY);
-    // A cause that matches both families is still a model problem.
+  });
+
+  it("[U1451] gives the model remedy when a cause matches both the model family and the sign-in family", () => {
     expect(remedy("No model selected. Not logged in · Please run /login")).toBe(MODEL_REMEDY);
   });
 
-  it("[U1452] gives the sign-in remedy for a login prompt", () => {
+  it("[U1452] gives the sign-in remedy for a login prompt and for an Unauthorized text", () => {
     expect(remedy(CLAUDE_LOGIN)).toBe(SIGN_IN_REMEDY);
+    expect(remedy(CODEX_401)).toBe(SIGN_IN_REMEDY);
   });
 
   it("[U1453] gives the sign-in remedy for HTTP 401 with unrelated text", () => {
@@ -57,7 +76,6 @@ describe("remedyFor", () => {
 
   it("[U1454] gives the sign-in remedy for the category unauthorized", () => {
     expect(remedy("request rejected", "unauthorized")).toBe(SIGN_IN_REMEDY);
-    expect(remedy(CODEX_401)).toBe(SIGN_IN_REMEDY);
   });
 
   it("[U1455] gives nothing for unrelated text with status 500 and another category", () => {

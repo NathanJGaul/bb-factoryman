@@ -55,7 +55,8 @@ describe("nodeFiles.writeNew", () => {
   it("[U1407] rethrows a failure that is not exists", async () => {
     const dir = tempDir();
     writeFileSync(join(dir, "a-file"), "x");
-    await expect(nodeFiles.writeNew(join(dir, "a-file", "below.json"), "x")).rejects.toThrow();
+    // `mkdir` fails first with EEXIST (a file is in the way), and that error must not be read as "the file exists".
+    await expect(nodeFiles.writeNew(join(dir, "a-file", "below.json"), "x")).rejects.toMatchObject({ code: "EEXIST" });
     // The directory is fine here and the write itself fails, so only the write's own error handling is tested.
     await expect(nodeFiles.writeNew(join(dir, "x".repeat(300)), "x")).rejects.toMatchObject({ code: "ENAMETOOLONG" });
   });
