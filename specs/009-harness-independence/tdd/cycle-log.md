@@ -237,3 +237,28 @@ Commit subject: "docs: record the harness-independence decisions D-100 to D-107"
   The note on the tdd profile (`.specify/memory/tdd-profile.md`, task T1393) lists the new fixtures and options.
 - suite: `pnpm run check` -> 106 files, 1604 passed, 0 failed.
 - refactor: none needed.
+
+## Group 9: the final gate and the notes (tasks T1395 to T1397)
+
+- gate: `pnpm run check` -> type check, lint, and 106 files, 1604 passed, 0 failed.
+  `pnpm run build` (`bb plugin build`, bb CLI 0.48.1) -> `dist/server.js`, `dist/app.js`, and their maps were written, no error.
+  Behavior A1349 is this manual run.
+- diff size: 55 files and about 3300 added lines outside `specs/` (about 2500 of them tests and fixtures), 2000 added lines under `specs/`, 143 under `docs/` and `.specify/`.
+  The six tasks share one function, `gateProfile`, and the tests of each build on the fixtures of the one before, so a split would make two stacked branches that cannot pass on their own.
+  The work ships as one pull request.
+- final checks (T1397): `git status` clean; `CLAUDE.md` and `CHANGELOG.md` have no change since `b4e462a`; no commit carries a co-author line; nothing outside the worktree changed except the status file and the scratch directory.
+- deliberate mutants (M1 to M20 of the test list), all run and all killed: M1, M2, M3, M4, M5, M6, M7 (after a stronger U1451), M8, M9, M10, M11, M12 (through U1447 and U1448), M13 (after a stronger A1341), M14, M15, M16, M17, M18, M19 (21 tests fail), and M20 (U1340, U1341, U1342, U1365 fail).
+
+### Notes and deviations
+
+- The header of this log says that tests are committed with stubs first.
+  They were not: the repository commits only on green (D-099), so each group is one commit with its tests, its code, and its entry, and the red evidence is in the entry.
+  A group's tests ran red against a stub or against the old code before the code was written, except where an entry says otherwise.
+- Group 6 says that "about forty" acceptance tests relied on the built-in profile.
+  That number is an estimate and not a count.
+  The first run after the removal showed more than twenty failing acceptance tests, and I did not count the rest because the test world's default made them pass again.
+- Tasks that name a `BASELINE` behavior were ticked as well as tasks whose behaviors are all `DONE`.
+  The rule in the run command ticks only `DONE`, and a task such as T1324 (which names U1322) would otherwise stay open for ever, and `/speckit.implement` would redo it.
+- Acceptance files written after their code (harness-readiness, harness-admission, harness-models, harness-default, harness-failure) passed on the first run, and the entries above list the mutants that show each one can fail.
+  Eight times a mutant survived the first version of a test (U1407, U1442, U1451, A1341, the `\p{Cc}` regex aside); each time the test was strengthened in a step of its own and the mutant then failed.
+- Not done here, by design: the live check of `quickstart.md`, part 2, which is the owner's step.

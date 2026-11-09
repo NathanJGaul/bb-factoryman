@@ -128,9 +128,9 @@ H2 comes before H10 because `dispatch init` reads bb's model list (`research.md`
 
 ## Phase 9: Polish and the final gate
 
-- [ ] T1395 [A1349] Run `pnpm run check`, then `pnpm run build` (it needs the `bb` CLI). Record the counts and the result in `tdd/cycle-log.md`, and fix any red that is found, whatever caused it.
-- [ ] T1396 Review the diff size. If the diff is too large to review in one pull request, split it at the end of Phase 6 (stories 2, 1, 3, 5, 4 in one, story 6 and the docs in the other) and record the split in the final status line.
-- [ ] T1397 Confirm that `git status` is clean, that `CLAUDE.md` and `CHANGELOG.md` are unchanged, that no commit carries a co-author line, and that no file outside the worktree changed except the task's data directory and the status file.
+- [X] T1395 [A1349] Run `pnpm run check`, then `pnpm run build` (it needs the `bb` CLI). Record the counts and the result in `tdd/cycle-log.md`, and fix any red that is found, whatever caused it.
+- [X] T1396 Review the diff size. If the diff is too large to review in one pull request, split it at the end of Phase 6 (stories 2, 1, 3, 5, 4 in one, story 6 and the docs in the other) and record the split in the final status line.
+- [X] T1397 Confirm that `git status` is clean, that `CLAUDE.md` and `CHANGELOG.md` are unchanged, that no commit carries a co-author line, and that no file outside the worktree changed except the task's data directory and the status file.
 
 ## Owner steps (not built here)
 

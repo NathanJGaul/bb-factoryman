@@ -74,7 +74,7 @@ A1301 to A1309 live in `test/acceptance/harness-readiness.test.ts`, A1310 to A13
 | A1346 | D-063 keeps its text and carries an "Amended by" line | AC-7.2, FR-1361 | example | DONE | `test/acceptance/harness-docs.test.ts` |
 | A1347 | D-064 carries an "Amended by" line that records the per-provider ladder | AC-7.3, FR-1361 | example | DONE | `test/acceptance/harness-docs.test.ts` |
 | A1348 | No file under `docs/` (outside the decision log, which records the history) or under `skills/` says that the plugin has a built-in default profile; `CLAUDE.md` stays unchanged, which the final gate checks against the base commit (T1397) | AC-7.4, FR-1362 | example | DONE | `test/acceptance/harness-docs.test.ts` |
-| A1349 | `pnpm run build` (`bb plugin build`) passes, and `pnpm run check` passes. This is a manual run at the final gate, logged in the cycle log | SC-1308 | example | PENDING | manual: task T1395 |
+| A1349 | `pnpm run build` (`bb plugin build`) passes, and `pnpm run check` passes. This is a manual run at the final gate, logged in the cycle log | SC-1308 | example | DONE | manual: `pnpm run check` and `pnpm run build` at the final gate, cycle-log group 9 |
 | A1350 | A queued task whose model bb no longer lists for a provider that refuses unlisted models stays queued and spawns no worker | FR-1347 | example | DONE | `test/acceptance/harness-models.test.ts` |
 
 ## Inner loop: unit behaviors
