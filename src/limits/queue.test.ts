@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { providerState } from "../../test/fixtures/bb-port";
+import { modelEntry, providerState } from "../../test/fixtures/bb-port";
 import { PROFILE_OK_FOR_QUEUE } from "../../test/fixtures/queue";
 import { testRuntime, type TestRuntime } from "../../test/fixtures/runtime";
 import type { TaskRow } from "../store/types";
@@ -154,6 +154,19 @@ describe("drain", () => {
     t.bb.states = [providerState(PROFILE_OK_FOR_QUEUE.provider, { status: "expired" })];
     await drain(t.runtime);
     expect(state(t, id)).toBe("queued");
+  });
+
+  it("[U1473] leaves a queued task queued, spawns nothing, and logs the message when bb no longer lists its model", async () => {
+    const t = setup();
+    const id = queue(t);
+    t.bb.models.set(PROFILE_OK_FOR_QUEUE.provider, { models: [modelEntry("some-other-model")], loadError: null });
+    await drain(t.runtime);
+    expect(state(t, id)).toBe("queued");
+    expect(t.bb.callsTo("spawnWorker")).toEqual([]);
+    expect(warnings(t).join("\n")).toContain(`The model \`${PROFILE_OK_FOR_QUEUE.model}\` is not listed`);
+    t.bb.models.clear();
+    await drain(t.runtime);
+    expect(state(t, id)).toBe("working");
   });
 
   it("[U1009] drains when a task leaves the running states, and not otherwise", async () => {

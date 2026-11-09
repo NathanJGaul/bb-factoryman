@@ -246,6 +246,64 @@ describe("createBbPort", () => {
     });
   });
 
+  describe("listModels", () => {
+    const model = (overrides: Record<string, unknown> = {}) => ({
+      id: "openai/gpt-6-luna",
+      model: "gpt-6-luna",
+      displayName: "GPT 6 Luna",
+      description: "",
+      isDefault: true,
+      defaultReasoningEffort: "medium",
+      reasoningDiscovery: "known",
+      supportedReasoningEfforts: [
+        { reasoningEffort: "low", description: "" },
+        { reasoningEffort: "medium", description: "" },
+      ],
+      ...overrides,
+    });
+    const answer = (models: unknown[], modelLoadError: unknown = null) => ({ models, modelLoadError, selectedOnlyModels: [], providers: [] });
+
+    it("[U1369] passes the provider ID, and passes the host ID only when one is given", async () => {
+      const { port, sdk } = setup({ providers: { models: async () => answer([]) } } as FakeSdkOverrides);
+      await port.listModels("pi");
+      await port.listModels("pi", "h2");
+      expect(sdk.callsTo("providers.models")).toEqual([[{ providerId: "pi" }], [{ providerId: "pi", hostId: "h2" }]]);
+    });
+
+    it("[U1370] keeps the ID, the model name, the default flag, the default level, and the levels of each model", async () => {
+      const { port } = setup({ providers: { models: async () => answer([model(), model({ id: "other", model: "other", isDefault: false, defaultReasoningEffort: "", supportedReasoningEfforts: [] })]) } } as FakeSdkOverrides);
+      expect((await port.listModels("pi")).models).toEqual([
+        { id: "openai/gpt-6-luna", model: "gpt-6-luna", isDefault: true, defaultReasoningLevel: "medium", reasoningLevels: ["low", "medium"], reasoningKnown: true },
+        { id: "other", model: "other", isDefault: false, defaultReasoningLevel: "", reasoningLevels: [], reasoningKnown: true },
+      ]);
+    });
+
+    it("[U1371] reads reasoningDiscovery known as true and unknown as false", async () => {
+      const { port } = setup({ providers: { models: async () => answer([model({ reasoningDiscovery: "known" }), model({ id: "b", reasoningDiscovery: "unknown" })]) } } as FakeSdkOverrides);
+      expect((await port.listModels("pi")).models.map((entry) => entry.reasoningKnown)).toEqual([true, false]);
+    });
+
+    it("[U1372] reads a model load error as code and detail, and an absent one as null", async () => {
+      const failed = setup({ providers: { models: async () => answer([], { code: "auth_required", detail: "Run pi login", providerId: "pi" }) } } as FakeSdkOverrides);
+      expect((await failed.port.listModels("pi")).loadError).toEqual({ code: "auth_required", detail: "Run pi login" });
+      const noDetail = setup({ providers: { models: async () => answer([], { code: "timeout", detail: null, providerId: "pi" }) } } as FakeSdkOverrides);
+      expect((await noDetail.port.listModels("pi")).loadError).toEqual({ code: "timeout", detail: null });
+      const fine = setup({ providers: { models: async () => answer([model()]) } } as FakeSdkOverrides);
+      expect((await fine.port.listModels("pi")).loadError).toBeNull();
+    });
+
+    it("[U1373] does not catch an SDK error", async () => {
+      const { port } = setup({
+        providers: {
+          models: async () => {
+            throw new Error("HTTP 500");
+          },
+        },
+      } as FakeSdkOverrides);
+      await expect(port.listModels("pi")).rejects.toThrow("HTTP 500");
+    });
+  });
+
   it("[U819] lists machines with ID, name, status, phase, and an online flag", async () => {
     const host = (id: string, status: string, phase: string) => ({ id, name: `name-${id}`, status, lifecycle: { phase } });
     const { port } = setup({

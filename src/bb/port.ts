@@ -59,6 +59,8 @@ export interface BbPort {
   listProviders(hostId?: string): Promise<ProviderAvailability[]>;
   /** What bb says about each provider's readiness on `hostId`, or on the default host when it is absent. */
   getProviderStates(hostId?: string): Promise<ProviderState[]>;
+  /** The models that bb lists for a provider on `hostId`, or on the default host when it is absent. */
+  listModels(providerId: string, hostId?: string): Promise<ModelList>;
   /** Every machine bb knows. */
   listMachines(): Promise<MachineInfo[]>;
   /** The cost bb recorded for a thread, or null when the provider reports none. */
@@ -94,6 +96,26 @@ export interface ProviderState {
   /** The command to run on the host that holds the CLI, or null when bb gives none. */
   localLoginCommand: string | null;
   statusMessage: string | null;
+}
+
+/** One model as bb lists it for a provider. */
+export interface ModelEntry {
+  id: string;
+  /** The model name. A profile names a model by `id` or by this. */
+  model: string;
+  isDefault: boolean;
+  /** The reasoning level bb picks for the model. May be empty. */
+  defaultReasoningLevel: string;
+  /** The levels the model lists. */
+  reasoningLevels: string[];
+  /** True when bb knows the model's levels. When false, only the provider-wide list applies. */
+  reasoningKnown: boolean;
+}
+
+/** What bb answers when asked for a provider's models. An empty list with a load error means bb could not read the catalog. */
+export interface ModelList {
+  models: ModelEntry[];
+  loadError: { code: string; detail: string | null } | null;
 }
 
 /** A machine as bb reports it: an enrolled host (spike items 6 and 7). */

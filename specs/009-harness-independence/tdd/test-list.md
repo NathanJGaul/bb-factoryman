@@ -55,15 +55,15 @@ A1301 to A1309 live in `test/acceptance/harness-readiness.test.ts`, A1310 to A13
 | A1327 | The command exits with a clear message and writes nothing for an unknown provider, an unknown checkout, a provider with no model and no `--model`, and a missing flag | AC-4.6, FR-1333 | example | PENDING | |
 | A1328 | `--model`, `--level`, and `--mode` replace the values taken from bb, and a value that bb would block stops the write | AC-4.7, FR-1336 | example | PENDING | |
 | A1329 | The command calls no bb method that changes state and reads no credential | AC-4.8, FR-1337 | example | PENDING | |
-| A1330 | A profile on omp with level `off` dispatches when the model lists `off` and the provider-wide list does not | AC-5.1, FR-1344, SC-1305 | example | PENDING | |
-| A1331 | A level that the named model does not list is refused, and the message names the model and the levels it lists | AC-5.2, FR-1344, SC-1305 | example | PENDING | |
-| A1332 | An unlisted model on Pi is refused with the list of models bb offers, or with "no models" and the load error | AC-5.3, FR-1345, SC-1305 | example | PENDING | |
-| A1333 | An unlisted model on `claude-code` or `codex` is judged by the provider-wide level list | AC-5.4, FR-1345 | example | PENDING | |
-| A1334 | A model whose levels are `unknown` is judged by the provider-wide level list | AC-5.5, FR-1344 | example | PENDING | |
-| A1335 | A `reasoningLevels` array in `dispatch.json` behaves as it did, for every provider | AC-5.6, FR-1341 | example | PENDING | |
-| A1336 | With a Codex ladder that ends in `ultra`, an explicit Codex profile at `ultra` clears against a baseline at `high`, and a lowered level blocks with `reasoning_lowered` | AC-5.7, FR-1342, SC-1305 | example | PENDING | |
-| A1337 | A provider with no entry in a `reasoningLevels` record is ranked in the default ladder | AC-5.8, FR-1342 | example | PENDING | |
-| A1338 | A failed read of the model list blocks the dispatch and leaves no task | AC-5.9, FR-1346 | example | PENDING | |
+| A1330 | A profile on omp with level `off` dispatches when the model lists `off` and the provider-wide list does not | AC-5.1, FR-1344, SC-1305 | example | DONE | `test/acceptance/harness-models.test.ts` |
+| A1331 | A level that the named model does not list is refused, and the message names the model and the levels it lists | AC-5.2, FR-1344, SC-1305 | example | DONE | `test/acceptance/harness-models.test.ts` |
+| A1332 | An unlisted model on Pi is refused with the list of models bb offers, or with "no models" and the load error | AC-5.3, FR-1345, SC-1305 | example | DONE | `test/acceptance/harness-models.test.ts` |
+| A1333 | An unlisted model on `claude-code` or `codex` is judged by the provider-wide level list | AC-5.4, FR-1345 | example | DONE | `test/acceptance/harness-models.test.ts` |
+| A1334 | A model whose levels are `unknown` is judged by the provider-wide level list | AC-5.5, FR-1344 | example | DONE | `test/acceptance/harness-models.test.ts` |
+| A1335 | A `reasoningLevels` array in `dispatch.json` behaves as it did, for every provider | AC-5.6, FR-1341 | example | DONE | `test/acceptance/harness-models.test.ts` |
+| A1336 | With a Codex ladder that ends in `ultra`, an explicit Codex profile at `ultra` clears against a baseline at `high`, and a lowered level blocks with `reasoning_lowered` | AC-5.7, FR-1342, SC-1305 | example | DONE | `test/acceptance/harness-models.test.ts` |
+| A1337 | A provider with no entry in a `reasoningLevels` record is ranked in the default ladder | AC-5.8, FR-1342 | example | DONE | `test/acceptance/harness-models.test.ts` |
+| A1338 | A failed read of the model list blocks the dispatch and leaves no task | AC-5.9, FR-1346 | example | DONE | `test/acceptance/harness-models.test.ts` |
 | A1339 | A worker that fails with a `provider/error` or `system/error` event in its log gets `fail` evidence that holds today's text and then the latest event's detail | AC-6.1, FR-1351, FR-1352 | example | PENDING | |
 | A1340 | The four causes of the report (Claude Code login, omp no model, Pi model resolution, Codex 401 with a cause event) each appear verbatim in the evidence | AC-6.2, SC-1306 | example | PENDING | |
 | A1341 | The wake message to the supervisor carries the cause and the remedy of a failed task whole | AC-6.3, FR-1353, SC-1306 | example | PENDING | |
@@ -75,7 +75,7 @@ A1301 to A1309 live in `test/acceptance/harness-readiness.test.ts`, A1310 to A13
 | A1347 | D-064 carries an "Amended by" line that records the per-provider ladder | AC-7.3, FR-1361 | example | PENDING | |
 | A1348 | No file under `docs/` or `skills/` says that the plugin has a built-in default profile, and `CLAUDE.md` is unchanged | AC-7.4, FR-1362 | example | PENDING | |
 | A1349 | `pnpm run build` (`bb plugin build`) passes, and `pnpm run check` passes. This is a manual run at the final gate, logged in the cycle log | SC-1308 | example | PENDING | manual: task T1395 |
-| A1350 | A queued task whose model bb no longer lists for a provider that refuses unlisted models stays queued and spawns no worker | FR-1347 | example | PENDING | |
+| A1350 | A queued task whose model bb no longer lists for a provider that refuses unlisted models stays queued and spawns no worker | FR-1347 | example | DONE | `test/acceptance/harness-models.test.ts` |
 
 ## Inner loop: unit behaviors
 
@@ -146,7 +146,7 @@ A1301 to A1309 live in `test/acceptance/harness-readiness.test.ts`, A1310 to A13
 | U1341 | With no machine, the gate reads with no host ID | AC-1.8 | example | DONE | `src/dispatch/gate.test.ts` |
 | U1342 | A throw from the providers read returns `read_failed` with "could not read bb's providers (<error>)" | AC-1.4, FR-1312 | example | DONE | `src/dispatch/gate.test.ts` |
 | U1343 | A throw from the states read returns `read_failed` with "could not read bb's provider states (<error>)" | AC-1.4, FR-1312 | example | DONE | `src/dispatch/gate.test.ts` |
-| U1344 | A throw from the models read returns `read_failed` with "could not read bb's models (<error>)" | AC-5.9, FR-1346 | example | PENDING | |
+| U1344 | A throw from the models read returns `read_failed` with "could not read bb's models (<error>)" | AC-5.9, FR-1346 | example | DONE | `src/dispatch/gate.test.ts` |
 | U1345 | A not-ready provider returns code `provider_unavailable` with `permanent` false | FR-1312, FR-1316 | example | DONE | `src/dispatch/gate.test.ts` |
 
 ### `src/machines/preflight.ts` (H1)
@@ -201,56 +201,56 @@ A1301 to A1309 live in `test/acceptance/harness-readiness.test.ts`, A1310 to A13
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| U1369 | `listModels` passes `providerId`, and passes `hostId` only when one is given | FR-1343 | example | PENDING | |
-| U1370 | Each model keeps `id`, `model`, `isDefault`, `defaultReasoningLevel` (from `defaultReasoningEffort`), and `reasoningLevels` (the `reasoningEffort` of each supported entry) | FR-1343 | example | PENDING | |
-| U1371 | `reasoningKnown` is true for `reasoningDiscovery` "known" and false for "unknown" | FR-1343, FR-1344 | example | PENDING | |
-| U1372 | `modelLoadError` becomes `loadError` with `code` and `detail`, and an absent one becomes null | FR-1345 | example | PENDING | |
-| U1373 | An SDK error is not caught | FR-1346 | example | PENDING | |
+| U1369 | `listModels` passes `providerId`, and passes `hostId` only when one is given | FR-1343 | example | DONE | `src/bb/adapter.test.ts` |
+| U1370 | Each model keeps `id`, `model`, `isDefault`, `defaultReasoningLevel` (from `defaultReasoningEffort`), and `reasoningLevels` (the `reasoningEffort` of each supported entry) | FR-1343 | example | DONE | `src/bb/adapter.test.ts` |
+| U1371 | `reasoningKnown` is true for `reasoningDiscovery` "known" and false for "unknown" | FR-1343, FR-1344 | example | DONE | `src/bb/adapter.test.ts` |
+| U1372 | `modelLoadError` becomes `loadError` with `code` and `detail`, and an absent one becomes null | FR-1345 | example | DONE | `src/bb/adapter.test.ts` |
+| U1373 | An SDK error is not caught | FR-1346 | example | DONE | `src/bb/adapter.test.ts` |
 
 ### `src/dispatch/availability.ts`: model and level (H2)
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| U1374 | A listed model with known levels passes a level that the provider-wide list lacks (omp `off`) | AC-5.1, FR-1344 | example | PENDING | |
-| U1375 | A listed model with known levels refuses a level it does not list, and the message names the model, the provider, and the levels | AC-5.2, FR-1344 | example | PENDING | |
-| U1376 | A listed model with known levels passes a level that is on both lists | AC-5.2 (boundary) | example | PENDING | |
-| U1377 | A listed model with unknown levels uses the provider-wide list and refuses a level outside it | AC-5.5, FR-1344 | example | PENDING | |
-| U1378 | A listed model with unknown levels passes a level on the provider-wide list | AC-5.5 (boundary) | example | PENDING | |
-| U1379 | An unlisted model on `pi` is refused, and the message lists the model IDs | AC-5.3, FR-1345 | example | PENDING | |
-| U1380 | An unlisted model when bb lists no models says "It lists: no models." | AC-5.3, FR-1345 | example | PENDING | |
-| U1381 | An unlisted model with a load error adds "bb could not load the models (<code>: <detail>)" | AC-5.3, FR-1345 | example | PENDING | |
-| U1382 | An unlisted model on `acp-omp` and on an unknown provider is refused | AC-5.3, FR-1345 | example | PENDING | |
-| U1383 | An unlisted model on `claude-code` passes when the level is on the provider-wide list | AC-5.4, FR-1345 | example | PENDING | |
-| U1384 | An unlisted model on `codex` is refused with today's level message when the level is off the provider-wide list | AC-5.4, FR-1345 | example | PENDING | |
-| U1385 | An unlisted model on `claude-code` with a load error falls back to the provider-wide list | FR-1345, research: model list failures | example | PENDING | |
-| U1386 | A profile's model matches a listed model by its `id` | FR-1343 | example | PENDING | |
-| U1387 | A profile's model matches a listed model by its `model` field when that differs from `id` | FR-1343, research: model matching | example | PENDING | |
-| U1388 | A listed model is used even when bb also reports a load error | research: model list failures | example | PENDING | |
+| U1374 | A listed model with known levels passes a level that the provider-wide list lacks (omp `off`) | AC-5.1, FR-1344 | example | DONE | `src/dispatch/availability.test.ts` |
+| U1375 | A listed model with known levels refuses a level it does not list, and the message names the model, the provider, and the levels | AC-5.2, FR-1344 | example | DONE | `src/dispatch/availability.test.ts` |
+| U1376 | A listed model with known levels passes a level that is on both lists | AC-5.2 (boundary) | example | DONE | `src/dispatch/availability.test.ts` |
+| U1377 | A listed model with unknown levels uses the provider-wide list and refuses a level outside it | AC-5.5, FR-1344 | example | DONE | `src/dispatch/availability.test.ts` |
+| U1378 | A listed model with unknown levels passes a level on the provider-wide list | AC-5.5 (boundary) | example | DONE | `src/dispatch/availability.test.ts` |
+| U1379 | An unlisted model on `pi` is refused, and the message lists the model IDs | AC-5.3, FR-1345 | example | DONE | `src/dispatch/availability.test.ts` |
+| U1380 | An unlisted model when bb lists no models says "It lists: no models." | AC-5.3, FR-1345 | example | DONE | `src/dispatch/availability.test.ts` |
+| U1381 | An unlisted model with a load error adds "bb could not load the models (<code>: <detail>)" | AC-5.3, FR-1345 | example | DONE | `src/dispatch/availability.test.ts` |
+| U1382 | An unlisted model on `acp-omp` and on an unknown provider is refused | AC-5.3, FR-1345 | example | DONE | `src/dispatch/availability.test.ts` |
+| U1383 | An unlisted model on `claude-code` passes when the level is on the provider-wide list | AC-5.4, FR-1345 | example | DONE | `src/dispatch/availability.test.ts` |
+| U1384 | An unlisted model on `codex` is refused with today's level message when the level is off the provider-wide list | AC-5.4, FR-1345 | example | DONE | `src/dispatch/availability.test.ts` |
+| U1385 | An unlisted model on `claude-code` with a load error falls back to the provider-wide list | FR-1345, research: model list failures | example | DONE | `src/dispatch/availability.test.ts` |
+| U1386 | A profile's model matches a listed model by its `id` | FR-1343 | example | DONE | `src/dispatch/availability.test.ts` |
+| U1387 | A profile's model matches a listed model by its `model` field when that differs from `id` | FR-1343, research: model matching | example | DONE | `src/dispatch/availability.test.ts` |
+| U1388 | A listed model is used even when bb also reports a load error | research: model list failures | example | DONE | `src/dispatch/availability.test.ts` |
 
 ### `src/dispatch/config.ts` (H2)
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| U1389 | `reasoningLevels` as an array is accepted and kept | AC-5.6, FR-1341 | example | PENDING | |
-| U1390 | `reasoningLevels` as a record from provider ID to array is accepted and kept | FR-1341 | example | PENDING | |
-| U1391 | A record with a blank key is rejected | FR-1341 | example | PENDING | |
-| U1392 | An empty array is rejected, at the top level and inside a record, and an array of one level is accepted | FR-1341 (boundary) | example | PENDING | |
-| U1393 | A record entry with a repeated level is rejected | FR-1341 | example | PENDING | |
+| U1389 | `reasoningLevels` as an array is accepted and kept | AC-5.6, FR-1341 | example | DONE | `src/dispatch/config.test.ts` |
+| U1390 | `reasoningLevels` as a record from provider ID to array is accepted and kept | FR-1341 | example | DONE | `src/dispatch/config.test.ts` |
+| U1391 | A record with a blank key is rejected | FR-1341 | example | DONE | `src/dispatch/config.test.ts` |
+| U1392 | An empty array is rejected, at the top level and inside a record, and an array of one level is accepted | FR-1341 (boundary) | example | DONE | `src/dispatch/config.test.ts` |
+| U1393 | A record entry with a repeated level is rejected | FR-1341 | example | DONE | `src/dispatch/config.test.ts` |
 | U1394 | An array with a repeated level is rejected (today's rule) | FR-1341 | example | BASELINE | `src/dispatch/config.test.ts::[U707]` |
-| U1395 | A value that is neither an array nor a record (a string, a number, null) is rejected | FR-1341 | example | PENDING | |
-| U1396 | `ladderFor` returns the array for any provider when the setting is an array | AC-5.6, FR-1342 | example | PENDING | |
-| U1397 | `ladderFor` returns the record's entry for a provider that has one | AC-5.7, FR-1342 | example | PENDING | |
-| U1398 | `ladderFor` returns the default ladder for a provider that the record omits | AC-5.8, FR-1342 | example | PENDING | |
+| U1395 | A value that is neither an array nor a record (a string, a number, null) is rejected | FR-1341 | example | DONE | `src/dispatch/config.test.ts` |
+| U1396 | `ladderFor` returns the array for any provider when the setting is an array | AC-5.6, FR-1342 | example | DONE | `src/dispatch/config.test.ts` |
+| U1397 | `ladderFor` returns the record's entry for a provider that has one | AC-5.7, FR-1342 | example | DONE | `src/dispatch/config.test.ts` |
+| U1398 | `ladderFor` returns the default ladder for a provider that the record omits | AC-5.8, FR-1342 | example | DONE | `src/dispatch/config.test.ts` |
 | U1399 | A config that sets nothing keeps the default array (today's rule) | AC-5.6 | example | BASELINE | `src/dispatch/config.test.ts::[U701]` |
 
 ### `src/dispatch/resolver.ts`: ladders (H2)
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| U1400 | With a Codex ladder that ends in `ultra`, an explicit Codex profile at `ultra` clears against a Codex baseline at `high` | AC-5.7, FR-1342 | example | PENDING | |
-| U1401 | An explicit Codex profile below the baseline blocks with `reasoning_lowered` and not "cannot be ranked" | AC-5.7, FR-1342 | example | PENDING | |
-| U1402 | A provider with no record entry is ranked in the default ladder | AC-5.8, FR-1342 | example | PENDING | |
-| U1403 | A baseline level that is not on the explicit profile's ladder blocks with "cannot be ranked", and standing permission lifts the block | FR-1342, D-064 | example | PENDING | |
+| U1400 | With a Codex ladder that ends in `ultra`, an explicit Codex profile at `ultra` clears against a Codex baseline at `high` | AC-5.7, FR-1342 | example | DONE | `src/dispatch/resolver.test.ts` |
+| U1401 | An explicit Codex profile below the baseline blocks with `reasoning_lowered` and not "cannot be ranked" | AC-5.7, FR-1342 | example | DONE | `src/dispatch/resolver.test.ts` |
+| U1402 | A provider with no record entry is ranked in the default ladder | AC-5.8, FR-1342 | example | DONE | `src/dispatch/resolver.test.ts` |
+| U1403 | A baseline level that is not on the explicit profile's ladder blocks with "cannot be ranked", and standing permission lifts the block | FR-1342, D-064 | example | DONE | `src/dispatch/resolver.test.ts` |
 | U1404 | With an array ladder the floor behaves as before: lowered blocks, equal or higher clears, off-ladder blocks | AC-5.6 | example | BASELINE | `src/dispatch/resolver.test.ts::[U722]`, `[U723]`, `[U724]`, `[U725]` |
 
 ### `src/files.ts` (H10)
@@ -365,7 +365,7 @@ A1301 to A1309 live in `test/acceptance/harness-readiness.test.ts`, A1310 to A13
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| U1473 | A queued task whose profile fails the model or level check stays queued, spawns nothing, and the log names the message | FR-1347, AC-5.3 | example | PENDING | |
+| U1473 | A queued task whose profile fails the model or level check stays queued, spawns nothing, and the log names the message | FR-1347, AC-5.3 | example | DONE | `src/limits/queue.test.ts` |
 
 ## Invariants and edge cases still to place
 

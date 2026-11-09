@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { TaskLog } from "../../src/store/task-log";
 import { makeCheckout, removeCheckouts } from "../fixtures/checkout";
-import { loadWorld, providerFixture, type World } from "../fixtures/plugin-host";
+import { loadWorld, modelFixture, providerFixture, type World } from "../fixtures/plugin-host";
 
 afterEach(removeCheckouts);
 
@@ -13,7 +13,9 @@ const TASK = { description: "Add a --json flag to the status command." } as cons
 const CONFIG = { version: 1, profiles: { pi: PI_PROFILE }, default: "pi", rules: [{ id: "any-work", when: { kind: "ship" }, profile: "pi" }, { id: "any-scout", when: { kind: "scout" }, profile: "pi" }] };
 
 async function worldIn(mode: Mode, options: Parameters<typeof loadWorld>[0] = {}): Promise<World> {
-  const world = await loadWorld({ providers: PROVIDERS, ...options });
+  // Pi refuses a model that bb does not list (feature 009, H2), so bb lists the one the profile names.
+  const models = { pi: { models: [modelFixture(PI_PROFILE.model, { supportedReasoningEfforts: [{ reasoningEffort: "medium", description: "" }] })] } };
+  const world = await loadWorld({ providers: PROVIDERS, models, ...options });
   world.setProject({ deliveryMode: mode });
   return world;
 }

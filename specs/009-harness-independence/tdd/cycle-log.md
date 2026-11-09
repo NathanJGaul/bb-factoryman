@@ -114,3 +114,36 @@ Commit subject: "feat: refuse Pi in local-only projects (H11)".
   Mutants: Pi refuses `direct-PR` instead of `local-only` -> A1316, A1317 and the unit cases fail (M3 killed); the queue start does not fail a permanently refused task -> U1367 and A1320 fail (M4 killed); the gate with no admission call -> 11 tests fail, among them A1316, A1318, A1320 (M20 killed through U1365 as well); dispatch passes a fixed mode to the gate -> A1316, A1318, A1321 fail (M19-style).
 - suite: `pnpm run check` -> 100 files, 1436 passed, 0 failed.
 - refactor: none needed. A leftover string `replace` in the first draft of `admit` was removed before the commit.
+
+## Group 5: model-aware checks and per-provider ladders (tasks T1350 to T1361 and T1398, H2)
+
+Behaviors: U1344, U1369 to U1393, U1395 to U1403, U1473, A1330 to A1338, A1350.
+BASELINE behaviors carried by this group: U1394 (`[U707]`), U1399 (`[U701]`), U1404 (`[U722]` to `[U725]`).
+Commit subject: "feat: check the model and its levels against what bb lists (H2)".
+
+- test: `src/bb/adapter.test.ts` gained a `listModels` block (5 cases) against a stub that throws "not implemented".
+- red: `pnpm vitest run src/bb/adapter.test.ts -t "listModels"` -> `5 failed`; `Error: not implemented`.
+- green: the adapter calls `providers.models` with `{ providerId }` or `{ providerId, hostId }` and maps the fields.
+  The fixtures gained `FakeBbPort.models`, `modelsByHost`, `modelsError`, `modelEntry`, `DEFAULT_MODEL_IDS`, and `loadWorld`'s `models`, `modelsByHost`, `modelsError`, `modelFixture`, `setModels`.
+  The default list holds the model IDs that the existing tests dispatch with, so a test that scripts no list keeps its meaning.
+- test: `src/dispatch/config.test.ts` gained the ladder cases against a stub `ladderFor` that returns its input.
+- red: `pnpm vitest run src/dispatch/config.test.ts` -> `5 failed | 21 passed`; `expected false to deeply equal { Object (codex, claude-code) }` (U1390), `expected false to be true` (U1392), `expected 'Invalid input: expected array, receiv…' to match /duplicate|repeat/i` (U1393), `expected { codex: [...] } to deeply equal [ 'low', 'ultra' ]` (U1397), and U1398.
+  U1391 passed against the old schema only because a record was rejected whole; the mutant check after the green (a record key schema that accepts a blank key) makes U1391 fail.
+- test: `src/dispatch/resolver.test.ts` gained four ladder cases (U1400 to U1403).
+- red: `pnpm vitest run src/dispatch/resolver.test.ts` -> `4 failed`; `TypeError: ladder.indexOf is not a function`, because the resolver handed the record to code that wants an array.
+- test: `src/dispatch/availability.test.ts` gained 14 model cases (U1374 to U1388) after `ProfileFacts` gained `models`.
+- red: `pnpm vitest run src/dispatch/availability.test.ts` -> `11 failed | 25 passed`; the failures are the model texts (`Expected / Received`) and the omp `off` case.
+- test: `src/dispatch/gate.test.ts` gained U1344 and a models assertion in U1340.
+- red: `pnpm vitest run src/dispatch/gate.test.ts` -> `4 failed`; `TypeError: Cannot read properties of undefined (reading 'models')` (the gate passed no model list yet) and `expected [] to deeply equal [ [ 'claude', 'host_gpu' ] ]` (U1340).
+- green: the config accepts an array or a record of provider ID to array (non-blank key, non-empty array, no repeated level), `ladderFor` picks the ladder, the resolver ranks in the explicit profile's provider ladder, `checkProfile` applies R4, and `gateProfile` reads the models with the placed machine's ID.
+  `ladderFor` and `DEFAULT_REASONING_LEVELS` live in `src/dispatch/types.ts`, which has no imports, because test A718 allows the resolver to import only `./types` and `../machine/types`.
+  `config.ts` re-exports them. The first draft imported `./config` into the resolver and A718 failed; I kept A718 as it is and moved the code.
+- test: `src/limits/queue.test.ts` U1473, and `test/acceptance/harness-models.test.ts` (new, 10 cases: A1330 to A1338, A1350).
+  They were written after the code and passed on the first run, so the deliberate-mutant check applies.
+  Mutants, one at a time with the file restored: the provider-wide level list always used -> U1374, U1375, U1386 to U1388, A1330, A1331 fail (M14 killed); Pi accepts unlisted models -> U1379 to U1381 and A1332 fail (M15 killed); `ladderFor` ignores the record entry -> U1397, U1400, A1336 fail (M5 killed); `ladderFor` returns nothing for an omitted provider -> U1398, U1402, A1337 fail (M6 killed); a record key that may be blank -> U1391 fails; models matched by `id` only -> U1387 fails; the models read without the host ID -> U1340 fails; a failed models read that passes -> U1344 and A1338 fail (M17 killed); unlisted models refused for every provider -> A1333, U1383 to U1385 and the old U730, U734, U735 fail.
+- existing tests that changed, forced by the requirement (D-107):
+  `src/dispatch/gate.test.ts` "passes pi in direct-PR and no-mistakes modes on to the other checks" and `test/acceptance/harness-admission.test.ts` [A1317] and [A1318] (both from group 4) now list Pi's model in bb, because Pi refuses a model that bb does not list.
+  `test/acceptance/dispatch-resolver.test.ts` [A710] "a reasoning level it does not list" now scripts a model whose levels are `unknown`, because a model whose levels are known decides, and the provider-wide list is the fallback.
+  No assertion was loosened. The new setups make the old reasons explicit.
+- suite: `pnpm run check` -> 101 files, 1486 passed, 0 failed.
+- refactor: none needed after the green.

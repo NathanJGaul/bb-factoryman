@@ -39,6 +39,24 @@ export function stateFixture(providerId: string, overrides: Record<string, unkno
   };
 }
 
+/** A model as `bb.sdk.providers.models` returns it, cut to the fields the plugin reads. */
+export function modelFixture(id: string, overrides: Record<string, unknown> = {}) {
+  return {
+    id,
+    model: id,
+    displayName: id,
+    description: "",
+    isDefault: false,
+    defaultReasoningEffort: "",
+    reasoningDiscovery: "known",
+    supportedReasoningEfforts: ["low", "medium", "high", "xhigh", "max"].map((reasoningEffort) => ({ reasoningEffort, description: "" })),
+    ...overrides,
+  };
+}
+
+/** The model IDs that the existing tests dispatch with. A fake provider lists them by default. */
+const DEFAULT_MODELS = ["opus", "sonnet", "haiku", "claude-sonnet-5-5", "stub-model", "m", "b", "other", "opus-strict"];
+
 /** A host as `bb.sdk.hosts.list` returns it, cut to the fields the plugin reads. */
 export function hostFixture(id: string, name: string, overrides: { status?: string; phase?: string } = {}) {
   return { id, name, status: overrides.status ?? "connected", lifecycle: { phase: overrides.phase ?? "active" } };
@@ -104,6 +122,8 @@ export interface World {
   costs: Map<string, { amount: number; currency: string }>;
   /** The webhook receiver. */
   webhook: WebhookFake;
+  /** Change the models `providers.models` lists for one provider from now on. Without a list, the default test models apply again. */
+  setModels(providerId: string, list?: { models: unknown[]; modelLoadError?: unknown }): void;
   /** Change what `system.providerStates` returns from now on. Without an argument, the default derived from `providers.list` applies again. */
   setProviderStates(states?: unknown[]): void;
   /** Move the plugin's clock forward by `ms`. */
@@ -152,6 +172,12 @@ export interface WorldOptions {
   sources?: SourceFixture[];
   /** What `providers.list` returns per host ID, instead of `providers`. */
   providersByHost?: Record<string, unknown[]>;
+  /** The models `providers.models` lists, per provider ID. A provider that is missing lists the default test models. */
+  models?: Record<string, { models: unknown[]; modelLoadError?: unknown }>;
+  /** The models `providers.models` lists, keyed `<host>/<provider>`, instead of `models`. */
+  modelsByHost?: Record<string, { models: unknown[]; modelLoadError?: unknown }>;
+  /** Make `providers.models` fail. */
+  modelsError?: Error;
   /** Make `providers.list` fail. */
   providersError?: Error;
   /**
@@ -250,6 +276,13 @@ export async function loadWorld(options: WorldOptions = {}): Promise<World> {
           const byHost = args?.hostId === undefined ? undefined : options.providersByHost?.[args.hostId];
           return byHost ?? options.providers ?? [providerFixture("claude"), providerFixture("claude-code")];
         },
+        models: async (args?: { providerId?: string; hostId?: string }) => {
+          if (options.modelsError) throw options.modelsError;
+          const key = `${args?.hostId ?? ""}/${args?.providerId ?? ""}`;
+          const scripted = options.modelsByHost?.[key] ?? options.models?.[args?.providerId ?? ""];
+          const list = scripted ?? { models: DEFAULT_MODELS.map((id) => modelFixture(id)) };
+          return { modelLoadError: null, selectedOnlyModels: [], providers: [], ...list };
+        },
       },
       system: {
         providerStates: async (args?: { hostId?: string }) => {
@@ -307,6 +340,12 @@ export async function loadWorld(options: WorldOptions = {}): Promise<World> {
     webhook,
     setProviderStates(states) {
       options.providerStates = states;
+    },
+    setModels(providerId, list) {
+      const next = { ...options.models };
+      if (list === undefined) delete next[providerId];
+      else next[providerId] = list;
+      options.models = next;
     },
     skewClock(ms) {
       skew += ms;

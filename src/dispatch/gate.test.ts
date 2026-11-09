@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { MachineInfo } from "../bb/port";
-import { FakeBbPort, providerState } from "../../test/fixtures/bb-port";
+import { FakeBbPort, modelEntry, providerState } from "../../test/fixtures/bb-port";
 import type { Profile } from "../machine/types";
 import { admit, gateProfile } from "./gate";
 
@@ -18,6 +18,7 @@ describe("gateProfile: reads", () => {
     const result = await gateProfile(bb, profile, "direct-PR", GPU);
     expect(bb.callsTo("listProviders")).toEqual([["host_gpu"]]);
     expect(bb.callsTo("getProviderStates")).toEqual([["host_gpu"]]);
+    expect(bb.callsTo("listModels")).toEqual([["claude", "host_gpu"]]);
     expect(result).toMatchObject({ ok: false, code: "provider_unavailable" });
     expect(result).toMatchObject({ message: expect.stringContaining("not signed in on gpu-box") });
     // The default host's states would have passed it.
@@ -43,6 +44,12 @@ describe("gateProfile: reads", () => {
     const bb = new FakeBbPort();
     bb.statesError = new Error("HTTP 404");
     expect(await gateProfile(bb, profile, "direct-PR", null)).toEqual({ ok: false, code: "read_failed", message: "could not read bb's provider states (HTTP 404)" });
+  });
+
+  it("[U1344] returns read_failed when the models read throws", async () => {
+    const bb = new FakeBbPort();
+    bb.modelsError = new Error("HTTP 503");
+    expect(await gateProfile(bb, profile, "direct-PR", null)).toEqual({ ok: false, code: "read_failed", message: "could not read bb's models (HTTP 503)" });
   });
 
   it("[U1345] returns provider_unavailable, not permanent, for a provider that is not ready", async () => {
@@ -108,6 +115,8 @@ describe("gateProfile: admission", () => {
     const bb = new FakeBbPort();
     bb.providers = [{ id: "pi", available: true, permissionModes: ["full"], reasoningLevels: ["medium"] }];
     bb.states = [providerState("pi")];
+    // Pi refuses a model that bb does not list (feature 009, H2), so the model is listed here.
+    bb.models.set("pi", { models: [modelEntry(pi.model, { reasoningLevels: ["medium"] })], loadError: null });
     for (const mode of ["direct-PR", "no-mistakes"] as const) expect(await gateProfile(bb, pi, mode, null), mode).toEqual({ ok: true });
   });
 });

@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from "vitest";
 import type { DispatchResolver } from "../../src/dispatch/types";
 import { makeCheckout, removeCheckouts } from "../fixtures/checkout";
-import { loadWorld, providerFixture } from "../fixtures/plugin-host";
+import { loadWorld, modelFixture, providerFixture } from "../fixtures/plugin-host";
 
 afterEach(removeCheckouts);
 
@@ -123,14 +123,16 @@ describe("dispatch profile resolution through the plugin factory", () => {
     expect(world.store.listTasks()).toEqual([]);
   });
 
-  it.each<[string, unknown[], string]>([
+  // The model's own levels decide when bb knows them (feature 009, H2). This model's levels are unknown, so the provider's list applies.
+  const UNKNOWN_LEVELS = { claude: { models: [modelFixture("opus", { reasoningDiscovery: "unknown" })] } };
+  it.each<[string, unknown[], string, Parameters<typeof loadWorld>[0]]>([
     // Readiness comes first (feature 009): bb's state for the provider explains these two now.
-    ["unavailable", [providerFixture("claude", { available: false })], "is not installed"],
-    ["not listed", [providerFixture("codex")], "bb reports no state for the provider `claude`"],
-    ["a permission mode it does not list", [providerFixture("claude", { capabilities: { permissionModes: ["accept-edits"] } })], "permission mode"],
-    ["a reasoning level it does not list", [providerFixture("claude", { reasoningLevels: [{ id: "low", label: "low" }] })], "reasoning level"],
-  ])("[A710] blocks a provider that bb reports as %s", async (_label, providers, text) => {
-    const { world, result } = await dispatchWith(config(), { ...TASK, profile: EXPLICIT }, { providers });
+    ["unavailable", [providerFixture("claude", { available: false })], "is not installed", {}],
+    ["not listed", [providerFixture("codex")], "bb reports no state for the provider `claude`", {}],
+    ["a permission mode it does not list", [providerFixture("claude", { capabilities: { permissionModes: ["accept-edits"] } })], "permission mode", {}],
+    ["a reasoning level it does not list", [providerFixture("claude", { reasoningLevels: [{ id: "low", label: "low" }] })], "reasoning level", { models: UNKNOWN_LEVELS }],
+  ])("[A710] blocks a provider that bb reports as %s", async (_label, providers, text, extra) => {
+    const { world, result } = await dispatchWith(config(), { ...TASK, profile: EXPLICIT }, { providers, ...extra });
     expect(result.isError).toBe(true);
     expect(result.text).toContain(text);
     expect(world.sdkCalls("threads.spawn")).toEqual([]);

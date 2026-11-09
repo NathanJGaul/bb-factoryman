@@ -22,7 +22,7 @@ export function admit(providerId: string, mode: DeliveryMode): string | null {
   return `The provider \`${providerId}\` is not admitted for ${mode} projects. ${reason}It is allowed in: ${allowed.join(", ") || "none"}. No other provider was tried.`;
 }
 
-type GateBb = Pick<BbPort, "listProviders" | "getProviderStates">;
+type GateBb = Pick<BbPort, "listProviders" | "getProviderStates" | "listModels">;
 
 type Read<T> = { ok: true; value: T } | { ok: false; message: string };
 
@@ -45,9 +45,14 @@ export async function gateProfile(bb: GateBb, profile: Profile, mode: DeliveryMo
   const refusal = admit(profile.provider, mode);
   if (refusal !== null) return { ok: false, code: "provider_not_admitted", message: refusal, permanent: true };
   const hostId = host?.id;
-  const [providers, states] = await Promise.all([read("providers", () => bb.listProviders(hostId)), read("provider states", () => bb.getProviderStates(hostId))]);
+  const [providers, states, models] = await Promise.all([
+    read("providers", () => bb.listProviders(hostId)),
+    read("provider states", () => bb.getProviderStates(hostId)),
+    read("models", () => bb.listModels(profile.provider, hostId)),
+  ]);
   if (!providers.ok) return { ok: false, code: "read_failed", message: providers.message };
   if (!states.ok) return { ok: false, code: "read_failed", message: states.message };
-  const problem = checkProfile(profile, { host: host?.name ?? "the default host", providers: providers.value, states: states.value });
+  if (!models.ok) return { ok: false, code: "read_failed", message: models.message };
+  const problem = checkProfile(profile, { host: host?.name ?? "the default host", providers: providers.value, states: states.value, models: models.value });
   return problem === null ? { ok: true } : { ok: false, code: "provider_unavailable", message: problem, permanent: false };
 }

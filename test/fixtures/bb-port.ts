@@ -1,9 +1,17 @@
-import type { BbPort, InputRequest, InputResult, MachineInfo, ProjectSource, ProviderAvailability, ProviderState, SpawnWorkerRequest, TerminalRead, ThreadInfo } from "../../src/bb/port";
+import type { BbPort, InputRequest, InputResult, MachineInfo, ProjectSource, ModelEntry, ModelList, ProviderAvailability, ProviderState, SpawnWorkerRequest, TerminalRead, ThreadInfo } from "../../src/bb/port";
 
 export interface RecordedCall {
   method: string;
   args: unknown[];
 }
+
+/** A model for a test. The default lists the levels low to max, all known. */
+export function modelEntry(id: string, overrides: Partial<ModelEntry> = {}): ModelEntry {
+  return { id, model: id, isDefault: false, defaultReasoningLevel: "", reasoningLevels: ["low", "medium", "high", "xhigh", "max"], reasoningKnown: true, ...overrides };
+}
+
+/** The model IDs that the existing tests dispatch with. A fake provider lists them by default, so a test that names no model list keeps its meaning. */
+export const DEFAULT_MODEL_IDS = ["opus", "sonnet", "haiku", "claude-sonnet-5-5", "stub-model", "m", "b", "other", "opus-strict"];
 
 /** A provider state for a test. The default is a ready provider with no versions and no login command. */
 export function providerState(providerId: string, overrides: Partial<ProviderState> = {}): ProviderState {
@@ -37,6 +45,11 @@ export class FakeBbPort implements BbPort {
   /** What `getProviderStates` returns for a given host ID, instead of `states`. */
   statesByHost = new Map<string, ProviderState[]>();
   statesError: Error | null = null;
+  /** What `listModels` returns for a provider ID. A provider that is missing lists `DEFAULT_MODEL_IDS`. */
+  models = new Map<string, ModelList>();
+  /** What `listModels` returns for a host ID and a provider ID, keyed `<host>/<provider>`, instead of `models`. */
+  modelsByHost = new Map<string, ModelList>();
+  modelsError: Error | null = null;
   /** Every terminal that `startTerminal` opened. */
   terminalRuns: Array<{ hostId: string; cwd: string | null; argv: string[] }> = [];
   /** The reads `readTerminal` returns, in order. The last one repeats. */
@@ -181,6 +194,13 @@ export class FakeBbPort implements BbPort {
     if (scripted !== null) return scripted;
     const listed = (hostId === undefined ? undefined : this.providersByHost.get(hostId)) ?? this.providers;
     return listed.map((provider) => providerState(provider.id, { status: provider.available ? "ready" : "not_installed" }));
+  }
+
+  async listModels(providerId: string, hostId?: string): Promise<ModelList> {
+    this.calls.push({ method: "listModels", args: [providerId, hostId] });
+    if (this.modelsError) throw this.modelsError;
+    const scripted = (hostId === undefined ? undefined : this.modelsByHost.get(`${hostId}/${providerId}`)) ?? this.models.get(providerId);
+    return scripted ?? { models: DEFAULT_MODEL_IDS.map((id) => modelEntry(id)), loadError: null };
   }
 
   async listMachines(): Promise<MachineInfo[]> {

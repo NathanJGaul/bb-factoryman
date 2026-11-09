@@ -1,4 +1,5 @@
-import type { ProviderAvailability, ProviderState } from "../bb/port";
+import type { ModelList, ProviderAvailability, ProviderState } from "../bb/port";
+import { contractFor } from "../harness/contracts";
 import type { Profile } from "../machine/types";
 
 /** What bb reports about the profile's provider on the host that will run the worker. */
@@ -7,6 +8,8 @@ export interface ProfileFacts {
   host: string;
   providers: readonly ProviderAvailability[];
   states: readonly ProviderState[];
+  /** The models that bb lists for the provider on that host. */
+  models: ModelList;
 }
 
 const NO_OTHER = "No other provider was tried.";
@@ -55,6 +58,18 @@ export function checkProfile(profile: Profile, facts: ProfileFacts): string | nu
   }
   if (!found.permissionModes.includes(profile.permissionMode)) {
     return `The provider \`${profile.provider}\` does not offer the permission mode \`${profile.permissionMode}\`. It offers: ${found.permissionModes.join(", ") || "none"}.`;
+  }
+  // bb lists levels for each model, and the provider-wide list is only a coarse ladder (R4).
+  const listed = facts.models.models.find((entry) => entry.id === profile.model || entry.model === profile.model);
+  if (listed !== undefined && listed.reasoningKnown) {
+    return listed.reasoningLevels.includes(profile.reasoningLevel)
+      ? null
+      : `The model \`${profile.model}\` of the provider \`${profile.provider}\` does not list the reasoning level \`${profile.reasoningLevel}\`. It lists: ${listed.reasoningLevels.join(", ") || "none"}.`;
+  }
+  if (listed === undefined && contractFor(profile.provider).unlistedModels === "refused") {
+    const { loadError } = facts.models;
+    const loadText = loadError === null ? "" : ` bb could not load the models (${loadError.code}${loadError.detail === null ? "" : `: ${loadError.detail}`}).`;
+    return `The model \`${profile.model}\` is not listed for the provider \`${profile.provider}\` on ${facts.host}. It lists: ${facts.models.models.map((entry) => entry.id).join(", ") || "no models"}.${loadText}`;
   }
   if (found.reasoningLevels.length > 0 && !found.reasoningLevels.includes(profile.reasoningLevel)) {
     return `The provider \`${profile.provider}\` does not list the reasoning level \`${profile.reasoningLevel}\`. It lists: ${found.reasoningLevels.join(", ")}.`;

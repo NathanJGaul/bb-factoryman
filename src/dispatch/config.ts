@@ -1,11 +1,10 @@
 import { z } from "zod";
 import { DELIVERY_MODES, TASK_KINDS } from "../machine/types";
-import type { DispatchConfig } from "./types";
+import { DEFAULT_REASONING_LEVELS, type DispatchConfig } from "./types";
 
 export type ParseConfigResult = { ok: true; config: DispatchConfig } | { ok: false; message: string };
 
-/** Lowest to highest. The owner can replace it, because reasoning level IDs belong to each provider (spike item 29). */
-export const DEFAULT_REASONING_LEVELS = ["none", "low", "medium", "high", "xhigh", "max"] as const;
+export { DEFAULT_REASONING_LEVELS, ladderFor } from "./types";
 
 const nonBlank = z.string().refine((value) => value.trim() !== "", "must not be blank");
 
@@ -27,13 +26,15 @@ const when = z
 
 const rule = z.strictObject({ id: nonBlank, when, profile: nonBlank, machine: nonBlank.optional() });
 
+const levelList = z.array(nonBlank).min(1);
+
 const configSchema = z
   .strictObject({
     version: z.literal(1),
     profiles: z.record(nonBlank, profile),
     default: nonBlank.optional(),
     rules: z.array(rule),
-    reasoningLevels: z.array(nonBlank).min(1).default([...DEFAULT_REASONING_LEVELS]),
+    reasoningLevels: z.union([levelList, z.record(nonBlank, levelList)]).default([...DEFAULT_REASONING_LEVELS]),
     standingPermission: z.strictObject({ lowerReasoning: z.boolean() }).default({ lowerReasoning: false }),
   })
   .superRefine((value, ctx) => {
@@ -48,8 +49,11 @@ const configSchema = z
         ctx.addIssue({ code: "custom", path: ["rules", index, "profile"], message: `rule \`${entry.id}\` names the undefined profile \`${entry.profile}\`` });
       }
     });
-    if (new Set(value.reasoningLevels).size !== value.reasoningLevels.length) {
-      ctx.addIssue({ code: "custom", path: ["reasoningLevels"], message: "reasoningLevels repeats a level (duplicate entries have no rank)" });
+    const ladders = Array.isArray(value.reasoningLevels) ? [{ path: ["reasoningLevels"], levels: value.reasoningLevels }] : Object.entries(value.reasoningLevels).map(([provider, levels]) => ({ path: ["reasoningLevels", provider], levels }));
+    for (const { path, levels } of ladders) {
+      if (new Set(levels).size !== levels.length) {
+        ctx.addIssue({ code: "custom", path, message: "reasoningLevels repeats a level (duplicate entries have no rank)" });
+      }
     }
   });
 

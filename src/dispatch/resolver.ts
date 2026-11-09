@@ -1,5 +1,5 @@
 import type { Profile } from "../machine/types";
-import type { Candidate, Choice, DispatchConfig, DispatchResolver, Resolution, Rule, TaskFacts } from "./types";
+import { ladderFor, type Candidate, type Choice, type DispatchConfig, type DispatchResolver, type Resolution, type Rule, type TaskFacts } from "./types";
 
 /**
  * The last resort when nothing else names a profile (D-063). It is not an
@@ -74,7 +74,8 @@ export class RulesTableResolver implements DispatchResolver {
               ? [{ profile: config.profiles[config.default] as Profile, from: "the configured default" }]
               : [];
         for (const { profile, from } of baselines) {
-          const reason = loweredReason(choice.profile.reasoningLevel, profile.reasoningLevel, config.reasoningLevels, from);
+          // Both levels are ranked in the explicit profile's own ladder. A baseline level off that ladder cannot be ranked.
+          const reason = loweredReason(choice.profile.reasoningLevel, profile.reasoningLevel, ladderFor(config.reasoningLevels, choice.profile.provider), from);
           if (reason !== null) return blocked("reasoning_lowered", reason);
         }
       }

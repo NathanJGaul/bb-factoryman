@@ -161,6 +161,44 @@ describe("RulesTableResolver reasoning floor", () => {
     expect(resolve(config(), {}, { profile: fast }).status).toBe("clear");
   });
 
+  describe("a ladder for each provider", () => {
+    const CODEX_LADDER = ["none", "low", "medium", "high", "xhigh", "max", "ultra"];
+    const codexHigh: Profile = { provider: "codex", model: "gpt-6-luna", reasoningLevel: "high", permissionMode: "auto" };
+    const codexConfig = (reasoningLevels: DispatchConfig["reasoningLevels"]) => config([rule("r", { kind: "ship" }, "codexHigh")], { profiles: { codexHigh, deep }, reasoningLevels });
+
+    it("[U1400] clears a Codex profile at ultra against a Codex baseline at high, with a Codex ladder that ends in ultra", () => {
+      const result = resolve(codexConfig({ codex: CODEX_LADDER }), {}, { profile: { ...codexHigh, reasoningLevel: "ultra" } });
+      expect(result.status).toBe("clear");
+    });
+
+    it("[U1401] blocks a lowered Codex level with reasoning_lowered, and not with cannot be ranked, on the same ladder", () => {
+      const result = resolve(codexConfig({ codex: CODEX_LADDER }), {}, { profile: { ...codexHigh, reasoningLevel: "low" } });
+      expect(result).toMatchObject({ status: "blocked", code: "reasoning_lowered" });
+      expect((result as { message: string }).message).toContain("is below");
+      expect((result as { message: string }).message).not.toContain("cannot be ranked");
+    });
+
+    it("[U1402] ranks a provider that the record omits in the default ladder", () => {
+      const cfg = codexConfig({ claude: ["low", "ultracode"] });
+      expect(resolve(cfg, {}, { profile: { ...codexHigh, reasoningLevel: "low" } })).toMatchObject({ status: "blocked", code: "reasoning_lowered" });
+      expect(resolve(cfg, {}, { profile: { ...codexHigh, reasoningLevel: "max" } }).status).toBe("clear");
+      // ultra is off the default ladder, so it cannot be ranked there.
+      const offLadder = resolve(cfg, {}, { profile: { ...codexHigh, reasoningLevel: "ultra" } });
+      expect(offLadder).toMatchObject({ status: "blocked", code: "reasoning_lowered" });
+      expect((offLadder as { message: string }).message).toContain("cannot be ranked");
+    });
+
+    it("[U1403] blocks with cannot be ranked when the baseline's level is not on the explicit profile's ladder, and standing permission lifts the block", () => {
+      const claudeDeepBase: Profile = { provider: "claude-code", model: "m", reasoningLevel: "ultracode", permissionMode: "auto" };
+      const cfg = config([rule("r", { kind: "ship" }, "base")], { profiles: { base: claudeDeepBase }, reasoningLevels: { codex: CODEX_LADDER } });
+      const blocked = resolve(cfg, {}, { profile: { ...codexHigh, reasoningLevel: "max" } });
+      expect(blocked).toMatchObject({ status: "blocked", code: "reasoning_lowered" });
+      expect((blocked as { message: string }).message).toContain("cannot be ranked");
+      const lifted = { ...cfg, standingPermission: { lowerReasoning: true } };
+      expect(resolve(lifted, {}, { profile: { ...codexHigh, reasoningLevel: "max" } }).status).toBe("clear");
+    });
+  });
+
   it("[U727] blocks an explicit level below any candidate when the baseline is ambiguous", () => {
     const cfg = config([rule("a", { kind: "ship" }, "steady"), rule("b", { mode: "no-mistakes" }, "deep")]);
     expect(resolve(cfg, {}, { profile: { ...steady, reasoningLevel: "high" } })).toMatchObject({ status: "blocked", code: "reasoning_lowered" });

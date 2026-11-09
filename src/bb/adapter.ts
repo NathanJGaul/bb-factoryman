@@ -161,6 +161,21 @@ export function createBbPort(bb: BbPluginApi): BbPort {
       }));
     },
 
+    async listModels(providerId, hostId) {
+      const response = await bb.sdk.providers.models(hostId === undefined ? { providerId } : { providerId, hostId });
+      return {
+        models: response.models.map((entry) => ({
+          id: entry.id,
+          model: entry.model,
+          isDefault: entry.isDefault,
+          defaultReasoningLevel: entry.defaultReasoningEffort,
+          reasoningLevels: entry.supportedReasoningEfforts.map((effort) => effort.reasoningEffort),
+          reasoningKnown: entry.reasoningDiscovery === "known",
+        })),
+        loadError: response.modelLoadError === null ? null : { code: response.modelLoadError.code, detail: response.modelLoadError.detail },
+      };
+    },
+
     async getProviderStates(hostId) {
       const response = await bb.sdk.system.providerStates(hostId === undefined ? undefined : { hostId });
       return response.providers.map((state) => ({
