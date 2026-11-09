@@ -28,7 +28,8 @@ The host label in messages is the machine name, or "the default host".
 ## Messages
 
 `<h>` is the host label and `<p>` the provider ID.
-Every `provider_unavailable` message ends with `No other provider was tried.`
+The readiness messages (from `not_installed` to "No state"), the "Not listed" message, and the admission message end with `No other provider was tried.`
+The mode, level, and model messages keep today's text and do not end with it.
 
 | Case | Message |
 | --- | --- |
@@ -38,7 +39,7 @@ Every `provider_unavailable` message ends with `No other provider was tried.`
 | `unsupported_version` | `The provider \`<p>\` is too old on <h> (bb status: unsupported_version): installed <installedVersion or "unknown">, minimum <minimumSupportedVersion or "unknown">. Update its CLI there.` |
 | `unknown` | `The provider \`<p>\` is in a state that bb does not describe on <h> (bb status: unknown)<: statusMessage>.` |
 | No state | `bb reports no state for the provider \`<p>\` on <h>. It reports: <ids or "none">.` |
-| Not listed | `The provider \`<p>\` is not available in bb. Available providers: <ids or "none".>` (today's text, kept) |
+| Not listed | `The provider \`<p>\` is not available in bb. Available providers: <ids or "none">. No other provider was tried.` (today's text, kept) |
 | Mode | `The provider \`<p>\` does not offer the permission mode \`<m>\`. It offers: <modes>.` (today's text, kept) |
 | Coarse level | `The provider \`<p>\` does not list the reasoning level \`<l>\`. It lists: <levels>.` (today's text, kept) |
 | Model unlisted | `The model \`<m>\` is not listed for the provider \`<p>\` on <h>. It lists: <ids, or "no models">.` plus, when bb gives a load error, ` bb could not load the models (<code>: <detail>).` |
