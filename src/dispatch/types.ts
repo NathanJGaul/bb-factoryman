@@ -24,6 +24,16 @@ export interface StandingPermission {
   readonly lowerReasoning: boolean;
 }
 
+/**
+ * The roles block (report task H12, decision D4 option B). `supervisor.profile` names the profile of
+ * `bb factoryman supervisor start`. `validator.agent` has one value, `observe`: the plugin reads the validator's
+ * agent and never writes no-mistakes configuration (D-127).
+ */
+export interface RolesConfig {
+  readonly supervisor: { readonly profile: string | null };
+  readonly validator: { readonly agent: "observe" };
+}
+
 /** The parsed `.bb/factoryman/dispatch.json`. */
 export interface DispatchConfig {
   readonly version: 1;
@@ -37,6 +47,7 @@ export interface DispatchConfig {
    */
   readonly reasoningLevels: readonly string[] | Readonly<Record<string, readonly string[]>>;
   readonly standingPermission: StandingPermission;
+  readonly roles: RolesConfig;
 }
 
 /** The facts about a task that rules can match. */

@@ -31,7 +31,7 @@ Table-driven tests cover the lines that name several inputs, and the cycle log r
 | A1603 | The thread's first prompt is the `--prompt` text when given, and the fixed default (wait for instructions) when not | US1.3, US1.4 | example | PENDING | `test/acceptance/supervisor-start.test.ts::[A1603]` |
 | A1604 | A profile whose provider is not ready, whose permission mode the provider lacks, or whose model or level is not listed makes the command exit 1 with dispatch's reason, spawns nothing, and adds no event or row to the store; a Pi profile in a `local-only` project spawns | US1.5, US1.6, FR-005, SC-007 | example | PENDING | `test/acceptance/supervisor-start.test.ts::[A1604]` |
 | A1605 | The profile is the `--profile` flag, else `roles.supervisor.profile` of the project's `dispatch.json`; with neither, or with an undefined name, or with a missing, unreadable, or invalid file, the command exits 1, names the remedy, and spawns nothing | US2.1, US2.2, US2.3, US2.4, US2.7, FR-004, FR-006, SC-007 | example | PENDING | `test/acceptance/supervisor-start.test.ts::[A1605]` |
-| A1606 | `factoryman_dispatch` for a project whose file has an invalid `roles` block is blocked with `config_invalid` and the path of the field, one whose file has a valid `roles` block dispatches as before, and a file without `roles` is unchanged | US2.5, US2.6, US5.1, US5.2, US5.3, US5.4, FR-012, FR-013, FR-014 | example | PENDING | `test/acceptance/roles-config.test.ts::[A1606]` |
+| A1606 | `factoryman_dispatch` for a project whose file has an invalid `roles` block is blocked with `config_invalid` and the path of the field, one whose file has a valid `roles` block dispatches as before, and a file without `roles` is unchanged | US2.5, US2.6, US5.1, US5.2, US5.3, US5.4, FR-012, FR-013, FR-014 | example | DONE | `test/acceptance/roles-config.test.ts::[A1606]` |
 | A1607 | The registered command `supervisor <thread>` stamps the role and prints the clear advice for Codex and omp threads, the next-turn advice for Claude Code and Pi threads, the clear advice for an unknown or unreadable provider, no advice and exit 1 for a rejected stamp, and a refusal for a worker thread; no output says "from its next session" | US3.1, US3.2, US3.3, US3.4, US3.5, US3.6, FR-009, FR-010, FR-011, SC-003 | example | PENDING | `test/acceptance/tools-supervisor-command.test.ts::[A1607]` |
 | A1608 | The `factoryman_report` hand-off of a `no-mistakes` ship task puts the worker's evidence first and the validator line after a blank line in the `handoff` event, names the agent, its bb provider, and a ready state, and the task becomes `validating` | US4.1, FR-016, FR-017, FR-021, SC-005 | example | PENDING | `test/acceptance/validator-observe.test.ts::[A1608]` |
 | A1609 | The same hand-off for a provider bb reports as `unauthenticated` names the agent and bb's remedy and says it is not ready, and the task still becomes `validating` | US4.2, FR-017, FR-021 | example | PENDING | `test/acceptance/validator-observe.test.ts::[A1609]` |
@@ -74,17 +74,17 @@ Table-driven tests cover the lines that name several inputs, and the cycle log r
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| U1612 | A version 1 file with no `roles` parses and carries `roles` with a null supervisor profile and the validator agent `observe` | US2.6, US5.1, FR-012, FR-014 | example | PENDING | |
-| U1613 | `roles.supervisor.profile` naming a defined profile parses and is carried | US2.1, FR-013 | example | PENDING | |
-| U1614 | `roles.supervisor.profile` naming an undefined profile fails and the message names the profile | US2.5, FR-013 | example | PENDING | |
-| U1615 | A blank `roles.supervisor.profile` fails | FR-013 | example | PENDING | |
-| U1616 | `roles.validator.agent` of `observe` parses | US5.2, FR-014 | example | PENDING | |
-| U1617 | `roles.validator.agent` of `inherit`, `set`, or any other value fails, and the message names the field and the accepted value | US5.3, FR-014 | example | PENDING | |
-| U1618 | An unknown key in `roles`, in `roles.supervisor`, or in `roles.validator` fails | US5.4, FR-012 | example | PENDING | |
-| U1619 | An empty `roles`, an empty `roles.supervisor`, and an empty `roles.validator` parse with the defaults filled in | US2.6, FR-012 | example | PENDING | |
-| U1620 | `emptyDispatchConfig` carries the default roles | FR-012 | example | PENDING | |
-| U1621 | `loadDispatchConfig` blocks a file with an invalid `roles` block with `dispatch.json is invalid` and the field path, and no default replaces it | US2.7, FR-006, FR-029 | example | PENDING | |
-| U1622 | `loadDispatchConfig` gives the default roles for a project with no file | US2.6 | example | PENDING | |
+| U1612 | A version 1 file with no `roles` parses and carries `roles` with a null supervisor profile and the validator agent `observe` | US2.6, US5.1, FR-012, FR-014 | example | DONE | `src/dispatch/config.test.ts::[U1612]` |
+| U1613 | `roles.supervisor.profile` naming a defined profile parses and is carried | US2.1, FR-013 | example | DONE | `src/dispatch/config.test.ts::[U1613]` |
+| U1614 | `roles.supervisor.profile` naming an undefined profile fails and the message names the profile | US2.5, FR-013 | example | DONE | `src/dispatch/config.test.ts::[U1614]` |
+| U1615 | A blank `roles.supervisor.profile` fails | FR-013 | example | DONE | `src/dispatch/config.test.ts::[U1615]` |
+| U1616 | `roles.validator.agent` of `observe` parses | US5.2, FR-014 | example | DONE | `src/dispatch/config.test.ts::[U1616]` |
+| U1617 | `roles.validator.agent` of `inherit`, `set`, or any other value fails, and the message names the field and the accepted value | US5.3, FR-014 | example | DONE | `src/dispatch/config.test.ts::[U1617]` |
+| U1618 | An unknown key in `roles`, in `roles.supervisor`, or in `roles.validator` fails | US5.4, FR-012 | example | DONE | `src/dispatch/config.test.ts::[U1618]` |
+| U1619 | An empty `roles`, an empty `roles.supervisor`, and an empty `roles.validator` parse with the defaults filled in | US2.6, FR-012 | example | DONE | `src/dispatch/config.test.ts::[U1619]` |
+| U1620 | `emptyDispatchConfig` carries the default roles | FR-012 | example | DONE | `src/dispatch/config.test.ts::[U1620]` |
+| U1621 | `loadDispatchConfig` blocks a file with an invalid `roles` block with `dispatch.json is invalid` and the field path, and no default replaces it | US2.7, FR-006, FR-029 | example | DONE | `src/dispatch/load.test.ts::[U1621]` |
+| U1622 | `loadDispatchConfig` gives the default roles for a project with no file | US2.6 | example | DONE | `src/dispatch/load.test.ts::[U1622]` |
 
 ### `src/tools/supervisor-start.ts` (tests in `src/tools/supervisor-start.test.ts`)
 

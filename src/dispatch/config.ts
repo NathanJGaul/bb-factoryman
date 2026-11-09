@@ -28,6 +28,16 @@ const rule = z.strictObject({ id: nonBlank, when, profile: nonBlank, machine: no
 
 const levelList = z.array(nonBlank).min(1);
 
+const VALIDATOR_AGENT_MESSAGE = 'roles.validator.agent must be "observe": the plugin reads the validator\'s agent and never writes no-mistakes configuration';
+
+// `prefault` parses the default through the schema, so the inner defaults are filled in. `default` would return `{}` as it is.
+const roles = z
+  .strictObject({
+    supervisor: z.strictObject({ profile: nonBlank.optional() }).prefault({}),
+    validator: z.strictObject({ agent: z.literal("observe", { error: VALIDATOR_AGENT_MESSAGE }).default("observe") }).prefault({}),
+  })
+  .prefault({});
+
 const configSchema = z
   .strictObject({
     version: z.literal(1),
@@ -36,10 +46,15 @@ const configSchema = z
     rules: z.array(rule),
     reasoningLevels: z.union([levelList, z.record(nonBlank, levelList)]).default([...DEFAULT_REASONING_LEVELS]),
     standingPermission: z.strictObject({ lowerReasoning: z.boolean() }).default({ lowerReasoning: false }),
+    roles,
   })
   .superRefine((value, ctx) => {
     if (value.default !== undefined && !(value.default in value.profiles)) {
       ctx.addIssue({ code: "custom", path: ["default"], message: `default names the undefined profile \`${value.default}\`` });
+    }
+    const supervisorProfile = value.roles.supervisor.profile;
+    if (supervisorProfile !== undefined && !(supervisorProfile in value.profiles)) {
+      ctx.addIssue({ code: "custom", path: ["roles", "supervisor", "profile"], message: `roles.supervisor.profile names the undefined profile \`${supervisorProfile}\`` });
     }
     const seen = new Set<string>();
     value.rules.forEach((entry, index) => {
@@ -66,7 +81,12 @@ export function emptyDispatchConfig(): DispatchConfig {
     rules: [],
     reasoningLevels: [...DEFAULT_REASONING_LEVELS],
     standingPermission: { lowerReasoning: false },
+    roles: defaultRoles(),
   };
+}
+
+function defaultRoles(): DispatchConfig["roles"] {
+  return { supervisor: { profile: null }, validator: { agent: "observe" } };
 }
 
 /** Validate a parsed `dispatch.json`. Never throws. */
@@ -80,6 +100,9 @@ export function parseDispatchConfig(raw: unknown): ParseConfigResult {
     const path = issue && issue.path.length > 0 ? ` at \`${issue.path.join(".")}\`` : "";
     return { ok: false, message: `${issue?.message ?? "unreadable"}${path}` };
   }
-  const { default: defaultName, ...rest } = parsed.data;
-  return { ok: true, config: { ...rest, default: defaultName ?? null } };
+  const { default: defaultName, roles: parsedRoles, ...rest } = parsed.data;
+  return {
+    ok: true,
+    config: { ...rest, default: defaultName ?? null, roles: { supervisor: { profile: parsedRoles.supervisor.profile ?? null }, validator: { agent: parsedRoles.validator.agent } } },
+  };
 }

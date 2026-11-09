@@ -43,3 +43,25 @@ The feature deliberately adds a field, so `[U11]` was updated first to expect `p
 - U1611 is credited to the existing `[U1363]` and `[U1339]`, which pass before and after the split.
 - refactor: none further. The extraction of `spawnThread` was the green step, because the second caller needed it.
 - commit: see the commit that carries this entry.
+
+## Group 2: the roles block in the schema (U1612 to U1622, A1606)
+
+The existing `[U701]` compares the whole parsed config of a minimal file, so it was updated first to expect the default `roles` (reason: the parsed shape is the behavior under change; no assertion was loosened).
+The invalid-roles half of `[A1606]` passed on its first run for the wrong reason, because today `roles` is an unknown key and the whole file is rejected.
+It was made discriminating before the implementation: each case now has to name its own field in the message.
+
+- red: `pnpm vitest run src/dispatch/config.test.ts src/dispatch/load.test.ts test/acceptance/roles-config.test.ts` -> 18 failed, 32 passed
+  - U701 (updated) `AssertionError: expected { ok: true, …(1) } to deeply equal { ok: true, …(1) }`
+  - U1612, U1620, U1622 `AssertionError: expected undefined to deeply equal { supervisor: { profile: null }, …(1) }`
+  - U1613, U1616, U1619 `Error: expected the config to parse: Unrecognized key: "roles"`
+  - U1614 `AssertionError: expected 'Unrecognized key: "roles"' to match /roles\.supervisor\.profile names the …/`
+  - U1615 `AssertionError: expected 'Unrecognized key: "roles"' to match /at \`roles\.supervisor\.profile\`/`
+  - U1617 (four tests: `inherit`, `set`, `anything`, empty) `AssertionError: expected 'Unrecognized key: "roles"' to contain 'roles.validator.agent must be "observ…'`
+  - U1618 (three tests) `AssertionError: expected 'Unrecognized key: "roles"' to match /surprise/`
+  - U1621 `AssertionError: expected 'dispatch.json is invalid: Unrecognize…' to match /dispatch\.json is invalid: roles\.val…/`
+  - A1606 (invalid) `AssertionError: expected 'Dispatch blocked (config_invalid): di…' to contain 'roles.validator.agent must be "observ…'`
+  - A1606 (valid) `AssertionError: …"supervisor":{"profile":"deep"}…: expected true to be false`
+- green: `RolesConfig` and `DispatchConfig.roles` in `src/dispatch/types.ts`; a strict `roles` schema in `src/dispatch/config.ts` whose nested objects use `prefault({})`, because zod 4's `default({})` returns `{}` without parsing the inner defaults; the refinement that checks `roles.supervisor.profile` against `profiles`; the defaults in `emptyDispatchConfig`.
+  Suite `pnpm test` -> 144 files, 1872 passed, 0 failed (26 s). `pnpm run typecheck` and `pnpm run lint` clean: no other `DispatchConfig` literal needed the new field.
+- refactor: none needed. `defaultRoles()` is shared by `emptyDispatchConfig` and was written once.
+- commit: see the commit that carries this entry.
