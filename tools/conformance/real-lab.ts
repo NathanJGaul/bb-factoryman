@@ -4,9 +4,9 @@ import { dirname, join } from "node:path";
 import type { RunArgs } from "./args.ts";
 import { deliveryModeOf, type Driver } from "./drivers/types.ts";
 import { judgeIsolation } from "./isolation.ts";
-import { bblabCommand, labEnv, labPaths, offlineProof, pluginBuildCommand, pluginCopyArgs, projectRowScript, resetLab, type LabPaths, type LabSettings } from "./lab-env.ts";
+import { bblabCommand, labDispatchJson, labEnv, labPaths, offlineProof, pluginBuildCommand, pluginCopyArgs, projectRowScript, resetLab, supervisorPrompt, supervisorStartArgs, type LabPaths, type LabSettings } from "./lab-env.ts";
 import type { DispatchOptions, EventRow, Lab, Offers, ProviderState, TaskRow, ThreadFacts, ToolResult, Wake, Who } from "./port.ts";
-import { fakeOffers, readWakes, stubOffers, type LogLine, type ThreadEvent } from "./readers.ts";
+import { fakeOffers, readWakes, startedThreadId, stubOffers, type LogLine, type ThreadEvent } from "./readers.ts";
 import type { Isolation, LabSession } from "./run.ts";
 import { ansi, exec } from "./shell.ts";
 
@@ -186,7 +186,7 @@ class RealLab implements Lab {
   async spawnSupervisor(label: string): Promise<string> {
     const p = this.tier === "1" ? { provider: "acp-stub", model: "acp-default", reasoningLevel: null, permissionMode: null } : { provider: this.driver.profile.provider, model: this.driver.profile.model, reasoningLevel: this.driver.profile.reasoningLevel, permissionMode: this.driver.profile.permissionMode };
     const flags = ["--provider", p.provider, "--model", p.model, ...(p.reasoningLevel === null ? [] : ["--reasoning-level", p.reasoningLevel]), ...(p.permissionMode === null ? [] : ["--permission-mode", p.permissionMode])];
-    const spawned = await this.bbJson<{ id: string }>(["thread", "spawn", "--project", this.projectId, ...flags, "--new-environment", "worktree", "--base-branch", "main", "--prompt", `[conformance:sup=${label}]\nhello`]);
+    const spawned = await this.bbJson<{ id: string }>(["thread", "spawn", "--project", this.projectId, ...flags, "--new-environment", "worktree", "--base-branch", "main", "--prompt", supervisorPrompt(label)]);
     return spawned.id;
   }
 
@@ -208,9 +208,9 @@ class RealLab implements Lab {
     return { code: out.code, text: `${out.stdout}${out.stderr}`.trim() };
   }
 
-  async startSupervisor(label: string): Promise<{ code: number; text: string }> {
-    const out = await this.bb(["factoryman", "supervisor", "start", "--project", this.projectId, "--label", label]);
-    return { code: out.code, text: `${out.stdout}${out.stderr}`.trim() };
+  async startSupervisor(label: string): Promise<{ code: number; text: string; threadId: string | null }> {
+    const out = await this.bb(supervisorStartArgs(this.projectId, label));
+    return { code: out.code, text: `${out.stdout}${out.stderr}`.trim(), threadId: out.code === 0 ? startedThreadId(out.stdout) : null };
   }
 
   async clear(threadId: string): Promise<void> {
@@ -345,7 +345,7 @@ export async function openRealLab(init: RealLabInit): Promise<LabSession> {
 
     progress("Creating the project");
     const profile = driver.profile;
-    const dispatchJson = JSON.stringify({ version: 1, profiles: { harness: profile }, default: "harness", rules: [] });
+    const dispatchJson = labDispatchJson(profile);
     const made = await lab.inLab([
       "bash",
       "-c",

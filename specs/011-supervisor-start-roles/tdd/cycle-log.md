@@ -191,3 +191,36 @@ It was appended to the list and to task T029, and `[U58]` (existing) already gua
   Suite `pnpm test` -> 149 files, 2000 passed, 0 failed (27 s). `pnpm run typecheck` and `pnpm run lint` clean.
 - refactor: none needed.
 - commit: see the commit that carries this entry.
+
+## Group 6: scenario S9, the lab helpers, and the empty gap list (U1706 to U1718, A1614)
+
+Stubs came first: `supervisorPrompt`, `supervisorStartArgs`, `labDispatchJson`, and `startedThreadId` threw `not implemented`, and the `startSupervisor` type gained `threadId`.
+The old S9 tests `[U1397]` and `[U1398]`, the old gap assertions `[U1520]` and `[A1507]`, and `[A1508]` (the run exits 0 when S9 fails as a known gap) pinned the three gap entries and the old set of S9 checks.
+FR-025 removes the entries, so these assertions were replaced by `[U1711]` to `[U1716]`, `[U1717]`, the new `[A1507]` (the list is empty), and `[A1614]`, with the reason recorded here.
+The substance of the old S9 tests survives: the late stamp that never arrives still fails only `S9.tools-after-step`, an unstamped supervisor with tools still fails only `S9.unstamped-no-tools`, and a missing command still fails `S9.start-command`.
+`[U1715]` was narrowed from the plan: the stub has no contract row, so the plugin correctly gives it the generic clear advice although its tools arrive at the next turn, and S9 cannot require "no clear advice" for a next-turn driver without contradicting the plugin.
+The unit and acceptance tests against the real contract table (`[U1645]`, `[A1607]`) cover that side.
+
+- red: `pnpm vitest run tools/conformance test/fixtures test/acceptance/conformance-*.test.ts` -> 12 failed, 123 passed
+  - U1706, U1707 `Error: not implemented: supervisorStartArgs` and `startedThreadId` (stubs)
+  - U1708 `Error: not implemented: labDispatchJson`
+  - U1709 `AssertionError: expected undefined to match /^thr_/` (the fake `startSupervisor` returned no thread ID)
+  - U1710 `AssertionError: …` (the old one-line stamp text with "from its next session")
+  - U1711 `AssertionError: expected [ 'S9.start-command', 'S9.unstamped-no-tools', … ] to deeply equal [ …, 'S9.start-tools', … ]` (the check did not exist)
+  - U1712 `AssertionError: expected [ 'S9.start-command' ] to deeply equal [ 'S9.start-command', 'S9.start-tools' ]`
+  - U1713 `AssertionError: startedLacksTool: expected [] to deeply equal [ 'S9.start-tools' ]`
+  - U1715 `AssertionError: expected [] to deeply equal [ 'S9.stamp-advice', 'S9.tools-after-step' ]` (no stamp fault yet)
+  - U1717, A1507 `AssertionError: expected [ …(3) ] to deeply equal []` (the three gap entries)
+  - A1614 `AssertionError: --tier 1: expected 'S9  pass       Role change' to match /^S9 pass/` after the first green: a bug in my regex (the runner pads the verdict column), fixed in the test.
+- U1714 and U1716 passed on their first run, because those S9 checks already existed. Deliberate mutants, all reverted from a copy of the file:
+  - the unstamped check made `true` -> `[U1714]` failed
+  - the after-step check made `true` -> `[U1715]` and `[U1716]` failed
+  - the first-turn check made to ignore a missing skill -> `[U1713]` failed
+- green: the lab project's `dispatch.json` now names the driver's profile as `roles.supervisor.profile`, `supervisorStartArgs` builds `supervisor start --project <id> --prompt <label marker>`, `startedThreadId` reads the ID from the first line, `real-lab.ts` uses the three helpers, and `S9` has the new check `S9.start-tools` (the four tools and the skill on the first request, no worker tool or skill).
+  The fake lab seeds the role at spawn for a started supervisor, prints the real advice (`roleAdvice` and the contract table) after a stamp, and has the faults the tests use (`startedLacksTool`, `startedLacksSkill`, `startedSeesWorkerTool`, `startedNeedsClear`, `stampFails`).
+  `conformance/known-gaps.json` lists no entry.
+  Suite `pnpm test` -> 149 files, 2009 passed, 0 failed (26 s). `pnpm run typecheck` and `pnpm run lint` clean.
+- U1718 is credited to the existing `[U1305]` and `[A1309]`, which pass before and after.
+- The glue of `real-lab.ts` (the call to `bb`, the project setup) has no unit test. The live runs (T040 to T043) are its check.
+- refactor: none needed.
+- commit: see the commit that carries this entry.

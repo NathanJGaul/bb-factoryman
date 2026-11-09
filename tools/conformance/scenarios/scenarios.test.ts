@@ -161,14 +161,34 @@ describe("S8 refusals", () => {
 });
 
 describe("S9 role change", () => {
-  it("[U1397] passes when a late-stamped supervisor has its tools and skill after the driver's step, and the start command exists", async () => {
-    for (const harness of ["pi", "codex"]) expectAllOk(await run("S9", {}, harness), ["S9.start-command", "S9.unstamped-no-tools", "S9.stamp-advice", "S9.tools-after-step"]);
+  const ALL = ["S9.start-command", "S9.start-tools", "S9.unstamped-no-tools", "S9.stamp-advice", "S9.tools-after-step"];
+
+  it("[U1711] passes for the stub and the four harness drivers when a started supervisor has its tools and skill on its first turn and a late stamp reaches them by the driver's step", async () => {
+    for (const harness of ["pi", "claude-code", "codex", "omp"]) expectAllOk(await run("S9", {}, harness), ALL);
+    expectAllOk(await run("S9", {}, "stub", "1"), ALL);
   });
-  it("[U1398] fails when the supervisor lacks the tools after the step, and keeps the start command and advice checks separate", async () => {
-    expect(failedIds(await run("S9", { stampNeverArrives: true }))).toEqual(["S9.tools-after-step"]);
-    expect(failedIds(await run("S9", { noStartCommand: true }))).toEqual(["S9.start-command"]);
-    expect(failedIds(await run("S9", { noClearAdvice: true }, "codex"))).toEqual(["S9.stamp-advice"]);
+
+  it("[U1712] fails the start checks when the start command does not exist, because there is no thread to read", async () => {
+    expect(failedIds(await run("S9", { noStartCommand: true }))).toEqual(["S9.start-command", "S9.start-tools"]);
+  });
+
+  it("[U1713] fails S9.start-tools when the started supervisor lacks a tool or the skill, is offered a worker tool, or gets its tools only after a clear", async () => {
+    for (const fault of ["startedLacksTool", "startedLacksSkill", "startedSeesWorkerTool", "startedNeedsClear"] as const) {
+      expect(failedIds(await run("S9", { [fault]: true })), fault).toEqual(["S9.start-tools"]);
+    }
+  });
+
+  it("[U1714] fails S9.unstamped-no-tools when a thread with no role is offered a factoryman tool", async () => {
     expect(failedIds(await run("S9", { unstampedHasTools: true }))).toEqual(["S9.unstamped-no-tools"]);
+  });
+
+  it("[U1715] fails S9.stamp-advice when a harness whose step is a clear gets no clear advice, and when the stamp command fails", async () => {
+    for (const harness of ["codex", "omp"]) expect(failedIds(await run("S9", { noClearAdvice: true }, harness)), harness).toEqual(["S9.stamp-advice"]);
+    expect(failedIds(await run("S9", { stampFails: true }))).toEqual(["S9.stamp-advice", "S9.tools-after-step"]);
+  });
+
+  it("[U1716] fails S9.tools-after-step when the late stamp never arrives, and only that check", async () => {
+    expect(failedIds(await run("S9", { stampNeverArrives: true }))).toEqual(["S9.tools-after-step"]);
   });
 });
 

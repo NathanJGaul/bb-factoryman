@@ -50,10 +50,7 @@ describe("the committed known-gap file", () => {
     for (const closed of ["S1.unready-blocks", "S1.remedy", "S7.cause"]) expect(checks, closed).not.toContain(closed);
   });
 
-  it("[U1520] still lists the S9 checks that wait for the supervisor start command, each with task H4", async () => {
-    const gaps = await committed();
-    const key = (gap: { check: string; harness: string }) => `${gap.check} ${gap.harness}`;
-    expect(gaps.map(key).sort()).toEqual(["S9.stamp-advice codex", "S9.stamp-advice omp", "S9.start-command *"]);
-    expect(gaps.map((gap) => gap.task)).toEqual(["H4", "H4", "H4"]);
+  it("[U1717] lists no entry at all, because the supervisor start command closed the last gaps, and loadGaps returns an empty list", async () => {
+    expect(await committed()).toEqual([]);
   });
 });

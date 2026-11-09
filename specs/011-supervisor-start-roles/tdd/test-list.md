@@ -39,7 +39,7 @@ Table-driven tests cover the lines that name several inputs, and the cycle log r
 | A1611 | For a task on a remote machine the observation reads the configuration and the provider states of that machine, and a `direct-PR` or `local-only` hand-off and a scout report get no validator line and run no read | US4.7, US4.10, FR-016, FR-021 | example | DONE | `test/acceptance/validator-observe.test.ts::[A1611]` |
 | A1612 | `bb factoryman preflight <machine> --project <id>` for a remote machine of a `no-mistakes` project exits 1 with a `validator_agent` problem when the agent is not ready or cannot be observed, exits 0 and names the agent when it is ready, skips the host that holds the clone, and a dispatch to the remote machine with an unready agent is refused with `preflight_failed` and creates no task | US4.8, US4.9, US4.10, FR-022, FR-023 | example | DONE | `test/acceptance/validator-observe.test.ts::[A1612]` |
 | A1613 | During every observation of A1608 to A1612 the recorded `exec` calls hold only the one `sh -c` read of the configuration and the project's own custom checks, and no call writes, creates, or changes a file | US4.11, FR-015, SC-006 | example | DONE | `test/acceptance/validator-observe.test.ts::[A1613]` |
-| A1614 | `main` with tier 1.5 for each of the four harness drivers against the fake lab runs S9 to `pass`, S9 holds the check `S9.start-tools`, the committed gap list is empty, and the run exits 0 with no stale gap; tier 1 does the same | US6.1, US6.2, US6.3, US6.4, US6.5, US6.6, US6.7, FR-024, FR-025 | example | PENDING | `test/acceptance/conformance-tier15.test.ts::[A1614]` |
+| A1614 | `main` with tier 1.5 for each of the four harness drivers against the fake lab runs S9 to `pass`, S9 holds the check `S9.start-tools`, the committed gap list is empty, and the run exits 0 with no stale gap; tier 1 does the same | US6.1, US6.2, US6.3, US6.4, US6.5, US6.6, US6.7, FR-024, FR-025 | example | DONE | `test/acceptance/conformance-tier15.test.ts::[A1614]` |
 | A1615 | Live: tier 1 exits 0 with S9 `pass` and no known gap | US6.1, US6.7, FR-026, SC-001, SC-004 | example | PENDING | live run: `conformance/results/1-stub.json` |
 | A1616 | Live: tier 1.5 for Claude Code, Codex, Pi, and omp each exit 0 with S9 `pass` (the started supervisor is offered 4 of 4 tools and its skill on its first request, the stamp text for Codex and omp tells the person to clear), offline, with no credential | US6.1, US6.2, US6.3, US6.4, US6.5, FR-026, SC-001, SC-002, SC-003, SC-008 | example | PENDING | live runs: `conformance/results/1.5-*.json` |
 | A1617 | Live: each of the five runs reports isolation clean and a tripwire with no event | US6.8, SC-008 | example | PENDING | live runs: `isolation.clean` in all five result files |
@@ -214,19 +214,19 @@ Table-driven tests cover the lines that name several inputs, and the cycle log r
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| U1706 | The argument list of `supervisor start` carries the project, the prompt with the label marker, and no profile flag | FR-024 | example | PENDING | |
-| U1707 | The thread-ID reader takes the ID from the first line of the command's output and returns null when the line has none | FR-024 | example | PENDING | |
-| U1708 | The lab project's `dispatch.json` holds the driver's profile as `harness`, `default: harness`, and `roles.supervisor.profile: harness`, and the plugin's parser accepts it | FR-024 | example | PENDING | |
-| U1709 | The fake lab's `startSupervisor` returns a thread ID and seeds the role at spawn, so the offers are complete before any clear on every driver | US6.2 | example | PENDING | |
-| U1710 | The fake lab's stamp text is the real advice for the driver's provider | US6.5 | example | PENDING | |
-| U1711 | S9 passes for the stub and the four harness drivers | US6.1 to US6.7 | example | PENDING | |
-| U1712 | S9 fails `S9.start-command` when the command does not exist or exits non-zero | US6.1, FR-024 | example | PENDING | |
-| U1713 | S9 fails `S9.start-tools` when the started supervisor lacks a tool or the skill, is offered a worker tool, or gets its tools only after a clear | US6.2, FR-024 | example | PENDING | |
-| U1714 | S9 fails `S9.unstamped-no-tools` when a thread with no role is offered a factoryman tool or skill | US6.3, FR-024 | example | PENDING | |
-| U1715 | S9 fails `S9.stamp-advice` when a `clear` harness gets no clear advice and when a `next-turn` harness is told to clear | US6.4, US6.5, FR-024 | example | PENDING | |
-| U1716 | S9 fails `S9.tools-after-step` when the late stamp never arrives | US6.4, FR-024 | example | PENDING | |
-| U1717 | The committed `conformance/known-gaps.json` has no entry, and `loadGaps` returns an empty list | US6.6, FR-025 | example | PENDING | |
-| U1718 | A gap entry that now passes still fails the run as stale | FR-025 | characterization | BASELINE | `tools/conformance/run.test.ts` (stale gap tests) |
+| U1706 | The argument list of `supervisor start` carries the project, the prompt with the label marker, and no profile flag | FR-024 | example | DONE | `tools/conformance/lab-env.test.ts::[U1706]` |
+| U1707 | The thread-ID reader takes the ID from the first line of the command's output and returns null when the line has none | FR-024 | example | DONE | `tools/conformance/readers.test.ts::[U1707]` |
+| U1708 | The lab project's `dispatch.json` holds the driver's profile as `harness`, `default: harness`, and `roles.supervisor.profile: harness`, and the plugin's parser accepts it | FR-024 | example | DONE | `test/acceptance/conformance-project-row.test.ts::[U1708]` |
+| U1709 | The fake lab's `startSupervisor` returns a thread ID and seeds the role at spawn, so the offers are complete before any clear on every driver | US6.2 | example | DONE | `test/fixtures/conformance-lab.test.ts::[U1709]` |
+| U1710 | The fake lab's stamp text is the real advice for the driver's provider | US6.5 | example | DONE | `test/fixtures/conformance-lab.test.ts::[U1710]` |
+| U1711 | S9 passes for the stub and the four harness drivers | US6.1 to US6.7 | example | DONE | `tools/conformance/scenarios/scenarios.test.ts::[U1711]` |
+| U1712 | S9 fails `S9.start-command` when the command does not exist or exits non-zero | US6.1, FR-024 | example | DONE | `tools/conformance/scenarios/scenarios.test.ts::[U1712]` |
+| U1713 | S9 fails `S9.start-tools` when the started supervisor lacks a tool or the skill, is offered a worker tool, or gets its tools only after a clear | US6.2, FR-024 | example | DONE | `tools/conformance/scenarios/scenarios.test.ts::[U1713]` |
+| U1714 | S9 fails `S9.unstamped-no-tools` when a thread with no role is offered a factoryman tool or skill | US6.3, FR-024 | example | DONE | `tools/conformance/scenarios/scenarios.test.ts::[U1714]` |
+| U1715 | S9 fails `S9.stamp-advice` when a harness whose step is a clear gets no clear advice, and when the stamp command fails | US6.4, US6.5, FR-024 | example | DONE | `tools/conformance/scenarios/scenarios.test.ts::[U1715]` |
+| U1716 | S9 fails `S9.tools-after-step` when the late stamp never arrives | US6.4, FR-024 | example | DONE | `tools/conformance/scenarios/scenarios.test.ts::[U1716]` |
+| U1717 | The committed `conformance/known-gaps.json` has no entry, and `loadGaps` returns an empty list | US6.6, FR-025 | example | DONE | `tools/conformance/gaps.test.ts::[U1717]` |
+| U1718 | A gap entry that now passes still fails the run as stale | FR-025 | characterization | DONE | `tools/conformance/verdict.test.ts::[U1305]`, `test/acceptance/conformance-gaps.test.ts::[A1309]` (existing, unchanged) |
 
 ## Invariants and edge cases still to place
 

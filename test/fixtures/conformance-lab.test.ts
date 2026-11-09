@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { HARNESS_IDS, resolveDriver } from "../../tools/conformance/drivers/index.ts";
 import { deliveryModeOf } from "../../tools/conformance/drivers/types.ts";
+import { roleAdvice } from "../../src/harness/advice";
 import { contractFor } from "../../src/harness/contracts";
 import { FakeLab } from "./conformance-lab.ts";
 
@@ -94,5 +95,35 @@ describe("the fake lab's block of an unsupported profile", () => {
     expect(mode.taskId).toBeNull();
     expect(mode.result.text).toMatch(/permission mode `auto`/);
     expect(mode.result.text).not.toMatch(/reasoning level/);
+  });
+});
+
+describe("the fake lab's supervisors", () => {
+  const SUPERVISOR_TOOLS = ["factoryman_dispatch", "factoryman_merge", "factoryman_status", "factoryman_teardown"];
+  const DRIVERS: Array<[string, "1" | "1.5"]> = [["stub", "1"], ["claude-code", "1.5"], ["codex", "1.5"], ["pi", "1.5"], ["omp", "1.5"]];
+
+  it("[U1709] starts a supervisor with a thread ID and the role seeded at spawn, so its offers are complete before any clear, on every driver", async () => {
+    for (const [id, tier] of DRIVERS) {
+      const lab = new FakeLab(id, {}, tier);
+      const started = await lab.startSupervisor("S9start");
+      expect(started.code, id).toBe(0);
+      expect(started.threadId, id).toMatch(/^thr_/);
+      expect(started.text.split("\n")[0], id).toBe(`Started factoryman supervisor thread ${started.threadId} with the profile harness (${lab.driver.profile.provider}, ${lab.driver.profile.model}).`);
+      expect(await lab.offers({ kind: "supervisor", label: "S9start" }), id).toEqual({ tools: SUPERVISOR_TOOLS, skills: ["factoryman-supervisor"] });
+    }
+    const missing = new FakeLab("pi", { noStartCommand: true });
+    expect(await missing.startSupervisor("S9start")).toMatchObject({ code: 2, threadId: null });
+  });
+
+  it("[U1710] prints the real advice for the driver's provider after a stamp", async () => {
+    for (const [id, tier] of DRIVERS) {
+      const lab = new FakeLab(id, {}, tier);
+      const thread = await lab.spawnSupervisor("late");
+      const stamp = await lab.stamp(thread);
+      const provider = lab.driver.provider;
+      expect(stamp.code, id).toBe(0);
+      expect(stamp.text, id).toBe(`Thread ${thread} is now a factoryman supervisor.\n${roleAdvice(thread, provider, contractFor(provider))}`);
+      expect(stamp.text.includes(`bb thread clear ${thread}`), id).toBe(contractFor(provider).roleChange === "clear");
+    }
   });
 });

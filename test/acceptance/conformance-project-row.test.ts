@@ -2,7 +2,8 @@ import { spawnSync } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { projectRowScript } from "../../tools/conformance/lab-env.ts";
+import { labDispatchJson, projectRowScript } from "../../tools/conformance/lab-env.ts";
+import { parseDispatchConfig } from "../../src/dispatch/config";
 import { openSqliteStore } from "../../src/store/sqlite";
 import type { DeliveryMode } from "../../src/machine/types";
 import { tmpDir } from "../fixtures/git-repo";
@@ -28,5 +29,17 @@ describe("the lab's project row", () => {
     for (const mode of ["direct-PR", "local-only"] as const) {
       expect(rowAfterScript(mode), mode).toEqual({ projectId: "proj_x", deliveryMode: mode, yolo: false, branchPrefix: null, baseBranch: "main", defaultMachine: null });
     }
+  });
+});
+
+describe("the lab project's dispatch.json", () => {
+  it("[U1708] holds the driver's profile as harness, as the default, and as the supervisor's, and the plugin's parser accepts it", () => {
+    const profile = { provider: "claude-code", model: "claude-haiku-5-5", reasoningLevel: "low", permissionMode: "accept-edits" };
+    const text = labDispatchJson(profile);
+    expect(text).not.toContain("'");
+    expect(parseDispatchConfig(JSON.parse(text))).toMatchObject({
+      ok: true,
+      config: { profiles: { harness: profile }, default: "harness", rules: [], roles: { supervisor: { profile: "harness" }, validator: { agent: "observe" } } },
+    });
   });
 });
