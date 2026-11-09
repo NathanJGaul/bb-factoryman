@@ -77,7 +77,7 @@ No foundational task. The five user stories touch separate files and do not bloc
 - [X] T020 [P] [US4] Write the checker tests in `test/fixtures/decision-log.test.ts` (new): [U1521] a heading number that appears twice is reported with both line numbers; [U1522] a citation whose number has no heading is reported with file and line; [U1523] unique headings and valid citations give no report.
 - [X] T021 [US4] Write the guard in `test/acceptance/decision-log.test.ts` (new) over the real `docs/DECISIONS.md` and the tracked text files from `git ls-files`: [A1509] no duplicate heading number; [A1510] every cited `D-nnn` names a heading. Print the offending file and number on failure.
 - [X] T022 [US4] Create the checker `test/fixtures/decision-log.ts` (pure functions over text). Covers [U1521] [U1522] [U1523] [A1509] [A1510].
-- [ ] T023 [US4] Spot-check the citations of D-100 to D-117 outside `docs/DECISIONS.md` against their headings (done in planning: all fit) and record the evidence in `checklist.md`.
+- [X] T023 [US4] Spot-check the citations of D-100 to D-117 outside `docs/DECISIONS.md` against their headings (done in planning: all fit) and record the evidence in `checklist.md`.
 
 ## Phase 7: User story 5 - The test suite leaves nothing behind in `/tmp` (P1)
 
@@ -118,7 +118,7 @@ No foundational task. The five user stories touch separate files and do not bloc
 
 - [X] T039 Run `/speckit.tdd.verify`, which writes `tdd/verification.md` (test-first evidence, test smells, deliberate mutants, acceptance coverage).
 - [X] T040 Run `/speckit.implement` for the tasks that no behavior covers (phases 8 and 9) and for the remediation tasks of the verification.
-- [ ] T041 Run `/speckit.checklist`, which writes `checklist.md`.
+- [X] T041 Run `/speckit.checklist`, which writes `checklist.md`.
 - [ ] T042 Run `/speckit.analyze`, which writes `analyze.md`.
 - [ ] T043 Run `/speckit.converge`, which writes `converge.md` with the verdict table of the five runs, the merge readiness, the risk, and any remaining work.
 - [ ] T044 Run `pnpm run check` a last time, leave the worktree clean, commit, and append the `done` status line.
