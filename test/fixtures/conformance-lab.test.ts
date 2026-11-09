@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { HARNESS_IDS, resolveDriver } from "../../tools/conformance/drivers/index.ts";
 import { deliveryModeOf } from "../../tools/conformance/drivers/types.ts";
-import { roleAdvice } from "../../src/harness/advice";
 import { contractFor } from "../../src/harness/contracts";
 import { FakeLab } from "./conformance-lab.ts";
 
@@ -115,15 +114,20 @@ describe("the fake lab's supervisors", () => {
     expect(await missing.startSupervisor("S9start")).toMatchObject({ code: 2, threadId: null });
   });
 
-  it("[U1710] prints the real advice for the driver's provider after a stamp", async () => {
-    for (const [id, tier] of DRIVERS) {
-      const lab = new FakeLab(id, {}, tier);
-      const thread = await lab.spawnSupervisor("late");
-      const stamp = await lab.stamp(thread);
-      const provider = lab.driver.provider;
-      expect(stamp.code, id).toBe(0);
-      expect(stamp.text, id).toBe(`Thread ${thread} is now a factoryman supervisor.\n${roleAdvice(thread, provider, contractFor(provider))}`);
-      expect(stamp.text.includes(`bb thread clear ${thread}`), id).toBe(contractFor(provider).roleChange === "clear");
-    }
+  const ONE = "Thread THREAD is now a factoryman supervisor.\n";
+  const NEXT_TURN = `${ONE}It gets the four supervisor tools and the factoryman-supervisor skill on its next turn.`;
+  const CLEAR = (why: string) => `${ONE}${why}\nRun \`bb thread clear THREAD\` so the thread gets the four supervisor tools and the factoryman-supervisor skill.`;
+
+  it.each([
+    ["stub", "1", CLEAR("The harness acp-stub has no recorded role-change behavior.")],
+    ["claude-code", "1.5", NEXT_TURN],
+    ["codex", "1.5", CLEAR("This harness (codex) applies a new role only when its session is rebuilt.")],
+    ["pi", "1.5", NEXT_TURN],
+    ["omp", "1.5", CLEAR("This harness (acp-omp) applies a new role only when its session is rebuilt.")],
+  ] as const)("[U1710] prints the advice for the %s driver's provider after a stamp, as literal text", async (id, tier, expected) => {
+    const lab = new FakeLab(id, {}, tier);
+    const thread = await lab.spawnSupervisor("late");
+    const stamp = await lab.stamp(thread);
+    expect(stamp).toEqual({ code: 0, text: expected.replaceAll("THREAD", thread) });
   });
 });

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { FakeBbPort, providerState } from "../../test/fixtures/bb-port";
 import type { Exec, ExecOptions, ExecResult } from "../exec";
-import { AGENT_PROVIDERS, READ_SCRIPT, describeObservation, observeValidatorAgent, parseAgentSetting, providerForAgent, validatorProblem, type Observation } from "./agent";
+import { AGENT_PROVIDERS, READ_SCRIPT, describeObservation, observeValidatorAgent, parseAgentSetting, providerForAgent, validatorProblem, type Observation, type ObservedAgent } from "./agent";
 
 function names(text: string): string[] {
   const result = parseAgentSetting(text);
@@ -282,26 +282,26 @@ describe("describeObservation", () => {
     );
   });
 
-  it("[U1689] never calls an unchecked or unobserved result ready, and gives no problem exactly when the observation is ready", () => {
-    const cases: Observation[] = [
-      observed([claudeReady], true),
-      observed([codexNot], false),
-      observed([copilot], false),
-      observed([copilot, codexNot], false),
-      observed([copilot, claudeReady], true),
-      observed([{ name: "auto", readiness: { kind: "auto", readyProviders: [] } }], false),
-      observed([{ name: "auto", readiness: { kind: "auto", readyProviders: ["pi"] } }], true),
-      { status: "unobserved", reason: "the read timed out" },
-    ];
-    for (const observation of cases) {
-      const ready = observation.status === "observed" && observation.ready;
-      const problem = validatorProblem(observation, host);
-      expect(problem === null, JSON.stringify(observation)).toBe(ready);
-      if (!ready) {
-        expect(describeObservation(observation, host), JSON.stringify(observation)).not.toMatch(/\bis ready\b/);
-        expect(problem).not.toMatch(/^Validator agents?/);
-      }
-    }
-    expect(validatorProblem(observed([codexNot], false), host)).toBe(describeObservation(observed([codexNot], false), host).replace(/^Validator agent: /, ""));
+  const CODEX_PROBLEM = "The provider `codex` is not signed in on the default host (bb status: unauthenticated). Run `codex login` on that machine.";
+  const autoNone: ObservedAgent = { name: "auto", readiness: { kind: "auto", readyProviders: [] } };
+  const autoPi: ObservedAgent = { name: "auto", readiness: { kind: "auto", readyProviders: ["pi"] } };
+
+  it.each([
+    ["a single agent that is not ready", observed([codexNot], false), `codex (bb provider codex) is not ready on the default host: ${CODEX_PROBLEM}`],
+    ["a single agent with no known provider", observed([copilot], false), "copilot has no known bb provider, so its readiness was not checked."],
+    ["a list in which no entry is ready", observed([copilot, codexNot], false), `copilot has no known bb provider, so its readiness was not checked; codex (bb provider codex) is not ready on the default host: ${CODEX_PROBLEM}`],
+    ["auto with no ready provider", observed([autoNone], false), "auto. no-mistakes picks the first runnable agent when the run starts. bb reports no ready provider that no-mistakes can use on the default host."],
+    ["an unobserved result", { status: "unobserved", reason: "the read timed out" } as Observation, "could not be observed on the default host (the read timed out), so its readiness is not known."],
+  ])("[U1689] gives the problem text for %s, and its line never says the agent is ready", (_name, observation, problem) => {
+    expect(validatorProblem(observation, host)).toBe(problem);
+    expect(describeObservation(observation, host)).not.toMatch(/\bis ready\b/);
+  });
+
+  it.each([
+    ["a single ready agent", observed([claudeReady], true)],
+    ["a list in which one entry is ready and another has no known provider", observed([copilot, claudeReady], true)],
+    ["auto with a ready provider", observed([autoPi], true)],
+  ])("[U1689] gives no problem for %s", (_name, observation) => {
+    expect(validatorProblem(observation, host)).toBeNull();
   });
 });

@@ -27,6 +27,8 @@ async function handoff(world: World, args: Record<string, unknown> = { outcome: 
   return world.call("factoryman_report", args, worker);
 }
 const evidence = (world: World) => world.store.listEvents({ taskId: "t1" }).find((row) => row.event === "handoff" && row.outcome === "applied")?.evidence;
+/** A pattern that matches this whole line and nothing else. */
+const exactly = (text: string): RegExp => new RegExp(`^${text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`);
 const CODEX_DOWN = [...READY, stateFixture("codex", { status: "unauthenticated", localLoginCommand: "codex login" })];
 
 describe("the validator line of a hand-off, through the plugin factory", () => {
@@ -50,9 +52,9 @@ describe("the validator line of a hand-off, through the plugin factory", () => {
       ["a list", "agent: [codex, claude]\n", /^Validator agents, in order: codex \(bb provider codex\) is not ready on the default host: .*; claude \(bb provider claude-code\) is ready on the default host\.$/s],
       ["auto", "agent: auto\n", /Validator agent: auto\. no-mistakes picks the first runnable agent when the run starts\. bb reports ready on the default host: claude-code\.$/],
       ["no file", { code: 3, stderr: "" }, /Validator agent: auto \(the host has no no-mistakes configuration file, so the default applies\)\. no-mistakes picks/],
-      ["an unmapped agent", "agent: copilot\n", /Validator agent: copilot has no known bb provider, so its readiness was not checked\.$/],
-      ["an unreadable configuration", "agent: [codex\n", /Validator agent: could not be observed on the default host \(the `agent` list is not closed .*\), so its readiness is not known\.$/],
-      ["a read that fails", { code: 1, stderr: "Permission denied" }, /could not be observed on the default host \(the read exited 1: Permission denied\)/],
+      ["an unmapped agent", "agent: copilot\n", exactly("Validator agent: copilot has no known bb provider, so its readiness was not checked.")],
+      ["an unreadable configuration", "agent: [codex\n", exactly("Validator agent: could not be observed on the default host (the `agent` list is not closed (a flow list ends with `]`)), so its readiness is not known.")],
+      ["a read that fails", { code: 1, stderr: "Permission denied" }, exactly("Validator agent: could not be observed on the default host (the read exited 1: Permission denied), so its readiness is not known.")],
     ];
     for (const [label, config, pattern] of cases) {
       const world = await local(config, CODEX_DOWN);
@@ -60,8 +62,6 @@ describe("the validator line of a hand-off, through the plugin factory", () => {
       expect(world.store.getTask("t1")?.state, label).toBe("validating");
       const line = evidence(world)?.split("\n\n")[1] ?? "";
       expect(line, label).toMatch(pattern);
-      // Only a confirmed ready provider may make a line say ready.
-      if (label === "an unmapped agent" || label === "an unreadable configuration" || label === "a read that fails") expect(line, label).not.toMatch(/\bis ready\b/);
     }
   });
 });

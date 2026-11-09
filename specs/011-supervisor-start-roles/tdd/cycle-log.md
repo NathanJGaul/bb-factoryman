@@ -319,3 +319,15 @@ They share one test file and one commit (a departure from one commit per cycle, 
 - Both mutants were restored with `git checkout`, and `git status src` was clean.
 - Tooling fix: my tick script ticked task `T063` because its text mentions the existing test `[U1692]` in a code span. It was unticked by hand in the same commit, and the script now ignores ids inside code spans.
 - commit: see the commit that carries this entry.
+
+## Remediation 3: literal expectations, and no conditionals in tests (T056, T058)
+
+`tdd/verification.md` findings 3 and 5 were smells in tests that already passed, so this is a change to tests with no source change.
+Each step has its reason and no assertion was weakened: the new expectations are strictly more specific, because they are literal text instead of the output of the function under test.
+
+- `[U1689]` (`src/validator/agent.test.ts`): the loop with `if (!ready)` and an expectation built with `describeObservation().replace(...)` is replaced by two `it.each` tables. One table gives the literal problem text of five not-ready cases (a single agent that is not ready, a single agent with no known provider, a list, `auto` with no ready provider, an unobserved result) and asserts that the line never says "is ready". The other gives `toBeNull()` for three ready cases.
+- `[U1710]` (`test/fixtures/conformance-lab.test.ts`): the expectation built with `roleAdvice` is replaced by the literal stamp text of each of the five drivers (the next-turn text for Claude Code and Pi, the clear text for Codex and omp, and the generic text for the stub).
+- `[A1610]` (`test/acceptance/validator-observe.test.ts`): the `if (label === ...)` is gone. The three not-ready cases now use a pattern that matches the whole line (`exactly(...)`), which also rules out the word "ready" by construction.
+- Both literal tables caught a mutant that the old form would not have been shown to catch: `validatorProblem` keeping its prefix failed `[U1689]`, and `roleAdvice` with its branches swapped failed `[U1710]` through the fake lab. Both mutants were restored with `git checkout`.
+- A probe test printed the exact text of five cases before the literals were written, so the literals were not guessed; the probe was deleted. The text agrees with `contracts/validator-observation.md` and with the existing `[U1683]`, `[U1685]`, and `[U1688]`.
+- commit: see the commit that carries this entry.
