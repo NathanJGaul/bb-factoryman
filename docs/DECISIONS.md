@@ -1416,8 +1416,7 @@ The behavior is A1707, through the adapted test `[A1109]`: its new flag table (t
 The test does fail when the property is removed: the mutants `--lvl` for `--level` (M17) and `supervisor begin` for `supervisor start` (M18) each fail it, and the other 16 sampled mutants of the three documents are caught except one that the remediation then closed.
 The repository commits only at green (D-099), so the history cannot show a test before its document.
 The position is the one taken for D-099, D-107, D-116, D-122, and D-133: the rubric fails the feature, the evidence is complete, and the owner decides.
-The captain could accept the one behavior as a recorded deviation, or ask for rework.
-This entry does not claim that acceptance.
+The captain accepted the one behavior on 2026-11-09, through firstmate, as a waiver on the same footing as D-099, D-122, and D-133.
 The audit's other four findings (a brittle read of `config.ts`, a surviving mutant, a magic ratio, and a weak status check) are fixed in tasks T015 to T018.
 The audit was run by the session that wrote the tests, so it was not independent.
 

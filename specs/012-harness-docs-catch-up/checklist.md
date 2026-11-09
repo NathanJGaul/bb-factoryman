@@ -48,8 +48,8 @@ The reviewer-owned requirements-quality checklist is a separate file, `checklist
 
 ## Items that are not closed
 
-- [ ] CHK1730 The captain accepts or rejects the `TEST_AFTER` behavior `[A1109]` (audit finding 1, D-135).
-      Owner: the captain.
+- [x] CHK1730 The captain accepts or rejects the `TEST_AFTER` behavior `[A1109]` (audit finding 1, D-135).
+      Evidence: accepted on 2026-11-09 through firstmate, as a waiver on the same footing as D-099, D-122, and D-133. D-135 records it.
 - [ ] CHK1731 Hosted CI. There is none. The no-mistakes pipeline runs the repository's own checks.
       Owner: not applicable.
 - [ ] CHK1732 A tier 2 run on any harness. Shelved by the captain.

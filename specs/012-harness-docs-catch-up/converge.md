@@ -4,7 +4,7 @@ Assessment of the tree at `32c1517` plus the specification artifacts against `sp
 
 **Outcome: converged.** The documents satisfy the specification, the plan, and the task list.
 `tasks.md` is unchanged by this step.
-One decision stays open and belongs to the captain (below).
+The one open decision was settled afterwards: the captain accepted the `TEST_AFTER` behavior (D-135).
 
 ## What was checked
 
@@ -30,7 +30,7 @@ The one `unrequested` candidate is the new guard `design-profiles.test.ts`: the 
 - **Risk**: low. Documents and their guards only. A wrong sentence in the runbook would mislead the owner during the live check, which has not run. The guards check that every command, flag, tool, and provider the runbook names exists.
 - **Evidence**: `checklist.md` (quality gates), `tdd/verification.md` (audit and mutants), `analyze.md`, and the cycle log.
 - **Open for the captain**:
-  1. Accept or reject the `TEST_AFTER` behavior `[A1109]` (D-135). It fails when its property is removed (mutants M17, M18).
+  1. Accepted on 2026-11-09 through firstmate: the `TEST_AFTER` behavior `[A1109]` (D-135). It fails when its property is removed (mutants M17, M18).
   2. Confirm the reading of "docs lint" and "no code changes": the two guard files changed with their documents (D-135).
 - **Not done, by decision**: tier 2 runs (report task H13, shelved).
 - **Not exercised**: how a key reaches Codex, Pi, and omp inside the lab. The runbook says so.
