@@ -52,7 +52,7 @@ export interface Choice {
 
 export type ProfileSource = "override" | "rule" | "default" | "builtin";
 
-export type BlockCode = "reasoning_lowered" | "rule_not_applicable" | "invalid_choice" | "config_invalid" | "provider_unavailable";
+export type BlockCode = "reasoning_lowered" | "rule_not_applicable" | "invalid_choice" | "config_invalid" | "provider_unavailable" | "provider_not_admitted";
 
 export interface Candidate {
   readonly ruleId: string;

@@ -95,3 +95,22 @@ Commit subject: "feat: pass a provider only when bb reports it ready (H1)".
   No assertion was loosened: both still require an error and zero spawns.
 - suite: `pnpm run check` -> 99 files, 1408 passed, 0 failed.
 - refactor: none needed after the green. The three call sites each shrank by a few lines.
+
+## Group 4: the Pi admission rule (tasks T1340 to T1344, H11)
+
+Behaviors: U1358 to U1368, A1316 to A1321.
+Commit subject: "feat: refuse Pi in local-only projects (H11)".
+
+- test: `src/dispatch/gate.test.ts` gained `admit` and admission cases (U1358 to U1366), and `src/limits/queue.test.ts` gained U1367 and U1368, against a stub `admit` that admits every provider.
+- red: `pnpm vitest run src/dispatch/gate.test.ts src/limits/queue.test.ts` -> `6 failed`; `AssertionError: expected null to deeply equal StringContaining{…}` (U1358), `expected null to be 'The provider \`pi\` is not admitted for…'` (U1364), `expected { ok: false, …(3) } to match object { ok: false, …(2) }` (U1363), `expected [ …(2) ] to deeply equal []` (U1365: the gate had read bb), `expected { ok: false, …(3) } to match object { code: 'provider_not_admitted' }` (U1366), and the U1367 queue case.
+  U1359 to U1362 and U1368 passed against the stub by design: they pin what stays admitted.
+  Their mutant: the Pi row refuses `direct-PR` and not `local-only` -> 16 tests fail, U1358 to U1360, U1363 to U1367 among them (M3 killed).
+- green: `admit(providerId, mode)` reads the contract row, and `gateProfile` calls it first with `permanent: true`; a queued task with a permanent refusal fails with "The queued task can no longer start: <message>".
+  `BlockCode` gained `provider_not_admitted`. `pnpm vitest run src/dispatch/gate.test.ts src/limits/queue.test.ts` -> 37 passed.
+- test: `test/acceptance/harness-admission.test.ts` (new, 12 cases, A1316 to A1321).
+  It was written after the code, so 11 cases passed on the first run and the deliberate-mutant check applies.
+  The twelfth failed (A1320, `expected [] to have a length of 1 but got +0`) for a reason that belonged to the test: a plugin reload gives the fake host a new call log, so the spawns before the restart are not counted.
+  I changed the assertion to "no spawn since the restart", which is stricter than the first version, as a step of its own.
+  Mutants: Pi refuses `direct-PR` instead of `local-only` -> A1316, A1317 and the unit cases fail (M3 killed); the queue start does not fail a permanently refused task -> U1367 and A1320 fail (M4 killed); the gate with no admission call -> 11 tests fail, among them A1316, A1318, A1320 (M20 killed through U1365 as well); dispatch passes a fixed mode to the gate -> A1316, A1318, A1321 fail (M19-style).
+- suite: `pnpm run check` -> 100 files, 1436 passed, 0 failed.
+- refactor: none needed. A leftover string `replace` in the first draft of `admit` was removed before the commit.

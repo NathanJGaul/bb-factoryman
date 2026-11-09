@@ -137,6 +137,25 @@ describe("drain", () => {
     expect(warnings(t).join("\n")).toContain("could not read bb's provider states (bb is down)");
   });
 
+  it("[U1367] fails a queued pi task in local-only mode with evidence, and spawns nothing", async () => {
+    const t = setup();
+    const queued = enqueue(t.runtime, { projectId: "proj-1", kind: "ship", mode: "local-only", request: { ...REQUEST, profile: { provider: "pi", model: "m", reasoningLevel: "medium", permissionMode: "full" } } });
+    if (!queued.ok) throw new Error(queued.message);
+    await drain(t.runtime);
+    expect(state(t, queued.taskId)).toBe("failed");
+    const failed = t.runtime.deps.store.listEvents({ taskId: queued.taskId }).findLast((row) => row.event === "fail");
+    expect(failed?.evidence).toMatch(/^The queued task can no longer start: The provider `pi` is not admitted for local-only projects\./);
+    expect(t.bb.callsTo("spawnWorker")).toEqual([]);
+  });
+
+  it("[U1368] does not fail a queued task whose provider fails a readiness check, which is transient", async () => {
+    const t = setup();
+    const id = queue(t);
+    t.bb.states = [providerState(PROFILE_OK_FOR_QUEUE.provider, { status: "expired" })];
+    await drain(t.runtime);
+    expect(state(t, id)).toBe("queued");
+  });
+
   it("[U1009] drains when a task leaves the running states, and not otherwise", async () => {
     const t = setup();
     registerQueue(t.runtime);

@@ -122,6 +122,11 @@ async function startOne(rt: Runtime, task: TaskRow, raw: unknown): Promise<boole
     }
     const gate = await gateProfile(bb, request.profile, task.mode, host);
     if (!gate.ok) {
+      // A refusal that cannot change (the provider is never admitted in this mode) fails the task. Anything else waits.
+      if (gate.code === "provider_not_admitted") {
+        await rt.apply(task.taskId, { type: "fail", actor: "system", evidence: `The queued task can no longer start: ${gate.message}` });
+        return false;
+      }
       log.warn(`Task ${task.taskId} stays queued: ${gate.message}`);
       return false;
     }

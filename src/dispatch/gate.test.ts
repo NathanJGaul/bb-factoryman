@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { MachineInfo } from "../bb/port";
 import { FakeBbPort, providerState } from "../../test/fixtures/bb-port";
 import type { Profile } from "../machine/types";
-import { gateProfile } from "./gate";
+import { admit, gateProfile } from "./gate";
 
 const profile: Profile = { provider: "claude", model: "opus", reasoningLevel: "high", permissionMode: "auto" };
 const GPU: MachineInfo = { id: "host_gpu", name: "gpu-box", status: "connected", phase: "active", online: true };
@@ -49,5 +49,65 @@ describe("gateProfile: reads", () => {
     const bb = new FakeBbPort();
     bb.states = [providerState("claude", { status: "expired" })];
     expect(await gateProfile(bb, profile, "direct-PR", null)).toMatchObject({ ok: false, code: "provider_unavailable", permanent: false });
+  });
+});
+
+const MODES = ["no-mistakes", "direct-PR", "local-only"] as const;
+const pi: Profile = { provider: "pi", model: "openai/gpt-6-luna", reasoningLevel: "medium", permissionMode: "full" };
+
+describe("admit", () => {
+  it("[U1358] refuses pi in local-only mode", () => {
+    expect(admit("pi", "local-only")).toEqual(expect.stringContaining("`pi` is not admitted for local-only projects"));
+  });
+
+  it("[U1359] admits pi in direct-PR mode", () => {
+    expect(admit("pi", "direct-PR")).toBeNull();
+  });
+
+  it("[U1360] admits pi in no-mistakes mode", () => {
+    expect(admit("pi", "no-mistakes")).toBeNull();
+  });
+
+  it.each(["claude-code", "codex", "acp-omp"])("[U1361] never refuses %s in any mode", (provider) => {
+    for (const mode of MODES) expect(admit(provider, mode), `${provider} ${mode}`).toBeNull();
+  });
+
+  it.each(["acp-opencode", "never-heard-of-it", ""])("[U1362] never refuses the provider %j, which has no refused mode, in any mode", (provider) => {
+    for (const mode of MODES) expect(admit(provider, mode), `${provider} ${mode}`).toBeNull();
+  });
+
+  it("[U1364] names the provider and the mode, gives the row's reason, lists exactly the modes where the provider is allowed, and ends with no other provider was tried", () => {
+    expect(admit("pi", "local-only")).toBe(
+      "The provider `pi` is not admitted for local-only projects. " +
+        "It runs workers with no sandbox (it offers only the permission mode `full`), so a worker can answer the owner's merge form with `bb thread interactions respond` (D-030), and local-only mode has no pull request backstop. " +
+        "It is allowed in: no-mistakes, direct-PR. No other provider was tried.",
+    );
+  });
+});
+
+describe("gateProfile: admission", () => {
+  it("[U1363] returns provider_not_admitted, permanent, for a refused provider", async () => {
+    const result = await gateProfile(new FakeBbPort(), pi, "local-only", null);
+    expect(result).toMatchObject({ ok: false, code: "provider_not_admitted", permanent: true });
+    expect(result).toMatchObject({ message: admit("pi", "local-only") });
+  });
+
+  it("[U1365] refuses before it makes any bb read", async () => {
+    const bb = new FakeBbPort();
+    await gateProfile(bb, pi, "local-only", null);
+    expect(bb.calls).toEqual([]);
+  });
+
+  it("[U1366] refuses before it checks readiness: pi in local-only mode with a signed-out state gets the admission message", async () => {
+    const bb = new FakeBbPort();
+    bb.states = [providerState("pi", { status: "unauthenticated" })];
+    expect(await gateProfile(bb, pi, "local-only", null)).toMatchObject({ code: "provider_not_admitted" });
+  });
+
+  it("passes pi in direct-PR and no-mistakes modes on to the other checks", async () => {
+    const bb = new FakeBbPort();
+    bb.providers = [{ id: "pi", available: true, permissionModes: ["full"], reasoningLevels: ["medium"] }];
+    bb.states = [providerState("pi")];
+    for (const mode of ["direct-PR", "no-mistakes"] as const) expect(await gateProfile(bb, pi, mode, null), mode).toEqual({ ok: true });
   });
 });

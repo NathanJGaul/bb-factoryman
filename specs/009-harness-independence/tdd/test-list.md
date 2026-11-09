@@ -41,12 +41,12 @@ A1301 to A1309 live in `test/acceptance/harness-readiness.test.ts`, A1310 to A13
 | A1313 | With the tool hint off (the plugin's default), `bb.agents.configure` returns for every role on every provider exactly the tools and skills it returned before, and no `instructions` | AC-2.4, FR-1305, FR-1307, SC-1307 | example | DONE | `test/acceptance/harness-configure.test.ts` |
 | A1314 | With the hint on, a worker on `claude-code` and a worker on `acp-omp` each get the hint of their row in `instructions` | AC-2.5, FR-1306 | example | DONE | `test/acceptance/harness-configure.test.ts` |
 | A1315 | With the hint on, a worker on `codex` or `pi`, a supervisor, and an unroled thread get no `instructions`, and the hint holds no metadata value | AC-2.6, FR-1306 | example | DONE | `test/acceptance/harness-configure.test.ts` |
-| A1316 | A Pi profile in a `local-only` project, ship or scout, is blocked with the admission message and leaves no task and no spawn | AC-3.1, FR-1322, FR-1323, FR-1325, SC-1303 | example | PENDING | |
-| A1317 | A ready Pi profile in `full` mode dispatches in a `direct-PR` project and in a `no-mistakes` project | AC-3.2, FR-1324, SC-1303 | example | PENDING | |
-| A1318 | The `local-only` refusal is the same when the Pi profile comes from an explicit override, a matching rule, or the configured default | AC-3.3, FR-1325 | example | PENDING | |
-| A1319 | A profile on `claude-code`, `codex`, `acp-omp`, or an unknown provider is never refused by the admission rule in any mode | AC-3.4, FR-1326 | example | PENDING | |
-| A1320 | A queued Pi task in a `local-only` project fails with evidence when its slot frees and starts no worker | AC-3.5, FR-1325 | example | PENDING | |
-| A1321 | A refused Pi dispatch spawns no worker on any other provider | AC-3.6, FR-1314 | example | PENDING | |
+| A1316 | A Pi profile in a `local-only` project, ship or scout, is blocked with the admission message and leaves no task and no spawn | AC-3.1, FR-1322, FR-1323, FR-1325, SC-1303 | example | DONE | `test/acceptance/harness-admission.test.ts` |
+| A1317 | A ready Pi profile in `full` mode dispatches in a `direct-PR` project and in a `no-mistakes` project | AC-3.2, FR-1324, SC-1303 | example | DONE | `test/acceptance/harness-admission.test.ts` |
+| A1318 | The `local-only` refusal is the same when the Pi profile comes from an explicit override, a matching rule, or the configured default | AC-3.3, FR-1325 | example | DONE | `test/acceptance/harness-admission.test.ts` |
+| A1319 | A profile on `claude-code`, `codex`, `acp-omp`, or an unknown provider is never refused by the admission rule in any mode | AC-3.4, FR-1326 | example | DONE | `test/acceptance/harness-admission.test.ts` |
+| A1320 | A queued Pi task in a `local-only` project fails with evidence when its slot frees and starts no worker | AC-3.5, FR-1325 | example | DONE | `test/acceptance/harness-admission.test.ts` |
+| A1321 | A refused Pi dispatch spawns no worker on any other provider | AC-3.6, FR-1314 | example | DONE | `test/acceptance/harness-admission.test.ts` |
 | A1322 | A project with no `dispatch.json` blocks a dispatch with the `dispatch init` hint and creates no task | AC-4.1, FR-1331, SC-1304 | example | PENDING | |
 | A1323 | An explicit profile, a matching rule, and a configured default each resolve as before, in the same order | AC-4.2, FR-1331 | example | PENDING | |
 | A1324 | `bb factoryman dispatch init --provider <id>` writes `.bb/factoryman/dispatch.json` with one profile built from what bb lists, sets it as the default, and prints the path and the profile | AC-4.3, FR-1334, FR-1335, FR-1336 | example | PENDING | |
@@ -180,22 +180,22 @@ A1301 to A1309 live in `test/acceptance/harness-readiness.test.ts`, A1310 to A13
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| U1358 | `admit` refuses `pi` in `local-only` | AC-3.1, FR-1322 | example | PENDING | |
-| U1359 | `admit` allows `pi` in `direct-PR` | AC-3.2, FR-1324 | example | PENDING | |
-| U1360 | `admit` allows `pi` in `no-mistakes` | AC-3.2, FR-1324 | example | PENDING | |
-| U1361 | `admit` never refuses `claude-code`, `codex`, or `acp-omp` in any of the three modes | AC-3.4, FR-1326 | example | PENDING | |
-| U1362 | `admit` never refuses `acp-opencode` or an unknown ID in any mode | AC-3.4, FR-1326 | example | PENDING | |
-| U1363 | A refusal has code `provider_not_admitted` and `permanent` true | FR-1322 | example | PENDING | |
-| U1364 | The refusal message names the provider and the mode, gives the row's reason, lists exactly the modes where the provider is allowed, and ends "No other provider was tried." | AC-3.1, FR-1323 | example | PENDING | |
-| U1365 | Admission runs before any bb read: a refusal records no `listProviders`, `getProviderStates`, or `listModels` call | plan: admission first | example | PENDING | |
-| U1366 | Admission runs before readiness: `pi` in `local-only` with an `unauthenticated` state gets the admission message | plan: admission first | example | PENDING | |
+| U1358 | `admit` refuses `pi` in `local-only` | AC-3.1, FR-1322 | example | DONE | `src/dispatch/gate.test.ts` |
+| U1359 | `admit` allows `pi` in `direct-PR` | AC-3.2, FR-1324 | example | DONE | `src/dispatch/gate.test.ts` |
+| U1360 | `admit` allows `pi` in `no-mistakes` | AC-3.2, FR-1324 | example | DONE | `src/dispatch/gate.test.ts` |
+| U1361 | `admit` never refuses `claude-code`, `codex`, or `acp-omp` in any of the three modes | AC-3.4, FR-1326 | example | DONE | `src/dispatch/gate.test.ts` |
+| U1362 | `admit` never refuses `acp-opencode` or an unknown ID in any mode | AC-3.4, FR-1326 | example | DONE | `src/dispatch/gate.test.ts` |
+| U1363 | A refusal has code `provider_not_admitted` and `permanent` true | FR-1322 | example | DONE | `src/dispatch/gate.test.ts` |
+| U1364 | The refusal message names the provider and the mode, gives the row's reason, lists exactly the modes where the provider is allowed, and ends "No other provider was tried." | AC-3.1, FR-1323 | example | DONE | `src/dispatch/gate.test.ts` |
+| U1365 | Admission runs before any bb read: a refusal records no `listProviders`, `getProviderStates`, or `listModels` call | plan: admission first | example | DONE | `src/dispatch/gate.test.ts` |
+| U1366 | Admission runs before readiness: `pi` in `local-only` with an `unauthenticated` state gets the admission message | plan: admission first | example | DONE | `src/dispatch/gate.test.ts` |
 
 ### `src/limits/queue.ts`: admission at queue start (H11)
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| U1367 | A queued `pi` task in `local-only` mode fails with the evidence "The queued task can no longer start: <message>" and spawns nothing | AC-3.5, FR-1325 | example | PENDING | |
-| U1368 | A queued task that fails readiness, which is transient, is not failed | FR-1325 (boundary) | example | PENDING | |
+| U1367 | A queued `pi` task in `local-only` mode fails with the evidence "The queued task can no longer start: <message>" and spawns nothing | AC-3.5, FR-1325 | example | DONE | `src/limits/queue.test.ts` |
+| U1368 | A queued task that fails readiness, which is transient, is not failed | FR-1325 (boundary) | example | DONE | `src/limits/queue.test.ts` |
 
 ### `src/bb/adapter.ts`: models (H2)
 
