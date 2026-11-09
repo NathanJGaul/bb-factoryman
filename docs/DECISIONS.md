@@ -897,13 +897,14 @@ Dispatching and reading state need a supervisor that never fails, so the stub su
 Three scenarios spawn a second supervisor on the harness: the supervisor half of S5, S9, and S12.
 The stub and the fake model read the same directives from a prompt (`CALL <tool> <json>`, `SHELL <command>`, `SLEEP <ms>`) and the same behavior markers in a task description (`[brain:<flag>]`: `silent`, `empty-evidence`, `double-report`, `dirty`, `nocommit`, `blocked`, `hold`, `fail=<code>`, `pr=<url>`).
 Assertions read the plugin's events and tasks, bb's thread log, the clone's git state, and the lab's process list.
-Three things in the lab read a brain's own log: which plugin tools and skills a role was offered, because bb has no call for it.
+One check reads a brain's own log: which plugin tools and skills a role was offered, because bb has no call for it.
 No assertion reads model text.
 
 ### D-103: The lab builds the plugin with the network on and then runs offline (Finding, task H8)
 
 bb 0.49.0 starts and serves its API with no network (`bblab up --offline`: the sandbox has its own network namespace with a loopback only; a connection to a public address failed with `ENETUNREACH`; the lab's bb answered on the loopback with HTTP 200).
-It needs the network once for one thing: `bb plugin build` and `bb plugin install` install bb's build toolchain (`esbuild` and `tailwindcss`) with `npm install` into `<data dir>/plugins/toolchain-*` the first time.
+It needs the network once, for one thing.
+`bb plugin build` and `bb plugin install` install bb's build toolchain (`esbuild` and `tailwindcss`) with `npm install` into `<data dir>/plugins/toolchain-*` the first time.
 Offline, that call retried for 4 minutes and failed with `EAI_AGAIN`.
 The runner therefore copies the plugin (with `node_modules`) into the lab directory, builds it once with the pinned `bb` outside the sandbox with the network on and `BB_DATA_DIR` set to the lab's data directory, and then starts the lab offline.
 After that, `bb plugin install` takes under two seconds offline.
@@ -922,11 +923,18 @@ The stub agent and the fake model run inside the lab and import only Node module
 
 ### D-105: Four harness facts that the report's table did not show (Finding)
 
-1. Claude Code sends the sandbox text, the deferred tool list, and the skill list as messages with the role `system` inside the `messages` array. A parser that reads only the `system` field sees no plugin tool and no skill. It also runs a tool call once per id and skips a repeated id.
-2. Claude Code adds the user text `Tool loaded.` after a `ToolSearch` call and a `<total_tokens>` reminder after every tool call.
-3. Codex reports `unauthenticated` until `codex login status` succeeds, even with a custom model provider. The lab driver writes `~/.codex/auth.json` with the literal dummy key `mock-not-a-credential`, which makes it succeed. It is a placeholder and not a credential.
-4. omp in `accept-edits` asks for approval before a shell command (an `approval` interaction, `waiting_for_approval`), and a worker that cannot answer waits for ever. The driver uses `full`. A real omp worker in `accept-edits` stops at its first shell command, and the plugin then wakes the supervisor with the `interaction.pending` text.
-The drivers carry these facts, so a CLI upgrade that changes one fails a scenario and the maintainer edits one driver.
+1. Claude Code sends the sandbox text, the deferred tool list, and the skill list as messages with the role `system` inside the `messages` array.
+   A parser that reads only the `system` field sees no plugin tool and no skill.
+   Claude Code also runs a tool call once per id and skips a repeated id.
+2. Claude Code adds the user text `Tool loaded.` after a `ToolSearch` call, and a `<total_tokens>` reminder after every tool call.
+3. Codex reports `unauthenticated` until `codex login status` succeeds, even with a custom model provider.
+   The lab driver writes `~/.codex/auth.json` with the literal dummy key `mock-not-a-credential`, which makes it succeed.
+   The key is a placeholder and not a credential.
+4. omp in `accept-edits` asks for approval before a shell command (an `approval` interaction, `waiting_for_approval`), and a worker that cannot answer waits for ever.
+   The driver uses `full`.
+   A real omp worker in `accept-edits` stops at its first shell command, and the plugin then wakes the supervisor with the `interaction.pending` text.
+The drivers carry these facts.
+A CLI upgrade that changes one fails a scenario, and the maintainer edits one driver.
 
 ### D-106: The isolation check ignores churn from other tools (Gap)
 
