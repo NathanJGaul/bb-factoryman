@@ -82,3 +82,16 @@ The first draft of `[A1710]` held one regular expression that guarded nothing, a
 ## Suite now
 
 `pnpm run check` -> typecheck clean, lint clean, 152 files, 2076 passed.
+
+## Remediation of the audit (tasks T015 to T019)
+
+The audit (`tdd/verification.md`, verified at `284443c`) found five issues.
+Findings 2 to 5 are test refactors on green code and each was checked with its mutant:
+
+- Finding 2 (`[A1709]` read the source text of `config.ts`): it now calls `parseDispatchConfig` with `roles.supervisor.profile` and `roles.validator.agent`, and checks the returned `roles`.
+- Finding 3 (mutant M16 survived): the roles paragraph and the supervisor-start paragraph are asserted separately. Re-run: M16 -> `failed: ['A1709']`.
+- Finding 4 (`[A1708]` ratio): the lines of section 7 that name Claude are now an exact list of six patterns. Re-runs: M21 (`Claude lists it`) and M22 (an added sentence) -> `failed: ['A1708']`.
+- Finding 5 (`"ready"` string in the source): each status goes through `readinessProblem`, which returns null for `ready` and a text with `(bb status: <status>` for the others. Re-run: M20 (the document drops `expired`) -> `failed: ['A1709']`.
+
+Finding 1 (`[A1109]` is `TEST_AFTER`) cannot be cleared by a later red, so D-135 records it for the captain's decision.
+After the refactors: `pnpm vitest run test/acceptance/design-profiles.test.ts test/acceptance/live-check.test.ts` -> 18 passed.

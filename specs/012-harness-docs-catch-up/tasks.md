@@ -43,9 +43,9 @@
 
 ## Phase 6: Polish
 
-- [ ] T009 Run `pnpm run check` and record the result in `specs/012-harness-docs-catch-up/tdd/cycle-log.md`
-- [ ] T010 [A1712] Confirm `git diff --stat -- src tools skills conformance docs/HARNESS-SUPPORT.md CLAUDE.md .specify/memory` prints nothing
-- [ ] T011 Grep the three documents for the em dash and for one-paragraph multi-sentence lines in the added text
+- [x] T009 Run `pnpm run check` and record the result in `specs/012-harness-docs-catch-up/tdd/cycle-log.md`
+- [x] T010 [A1712] Confirm `git diff --stat -- src tools skills conformance docs/HARNESS-SUPPORT.md CLAUDE.md .specify/memory` prints nothing
+- [x] T011 Grep the three documents for the em dash and for one-paragraph multi-sentence lines in the added text
 
 - [x] T012 [US1] Outer-loop gate: every A1701 to A1708 test green in `test/acceptance/live-check.test.ts`
 - [x] T013 [US2] Outer-loop gate: A1709 and A1710 green
@@ -66,8 +66,8 @@ Commit after each green phase.
 The audit verdict is `FAIL` for one `TEST_AFTER` behavior (finding 1).
 The feature is not done until the captain accepts that finding as a recorded deviation (D-135) or it is cleared.
 
-- [ ] T015 Finding 2: in `test/acceptance/design-profiles.test.ts:25`, replace the check of the `config.ts` source text with a call to `parseDispatchConfig` that accepts `roles.supervisor.profile`. Prove it with `pnpm vitest run test/acceptance/design-profiles.test.ts`.
-- [ ] T016 Finding 3: in `test/acceptance/design-profiles.test.ts:26`, assert the "Roles" bullet and the "Supervisor start" paragraph separately, so mutant M16 fails. Prove it with a restored mutant.
-- [ ] T017 Finding 4: in `test/acceptance/live-check.test.ts` (`[A1708]`), replace the ratio with an exact list of the section 7 lines that name Claude. Prove it with `pnpm vitest run test/acceptance/live-check.test.ts`.
-- [ ] T018 Finding 5: in `test/acceptance/design-profiles.test.ts:15`, read the statuses from the `ProviderState` type or from `readinessProblem` for each status. Prove it with `pnpm vitest run test/acceptance/design-profiles.test.ts`.
-- [ ] T019 Finding 1: record the `TEST_AFTER` behavior `[A1109]` and its killing mutants M17 and M18 in D-135, as D-133 does, and name the captain's decision as pending.
+- [x] T015 Finding 2: in `test/acceptance/design-profiles.test.ts:25`, replace the check of the `config.ts` source text with a call to `parseDispatchConfig` that accepts `roles.supervisor.profile`. Prove it with `pnpm vitest run test/acceptance/design-profiles.test.ts`.
+- [x] T016 Finding 3: in `test/acceptance/design-profiles.test.ts:26`, assert the "Roles" bullet and the "Supervisor start" paragraph separately, so mutant M16 fails. Prove it with a restored mutant.
+- [x] T017 Finding 4: in `test/acceptance/live-check.test.ts` (`[A1708]`), replace the ratio with an exact list of the section 7 lines that name Claude. Prove it with `pnpm vitest run test/acceptance/live-check.test.ts`.
+- [x] T018 Finding 5: in `test/acceptance/design-profiles.test.ts:15`, read the statuses from the `ProviderState` type or from `readinessProblem` for each status. Prove it with `pnpm vitest run test/acceptance/design-profiles.test.ts`.
+- [x] T019 Finding 1: record the `TEST_AFTER` behavior `[A1109]` and its killing mutants M17 and M18 in D-135, as D-133 does, and name the captain's decision as pending.

@@ -245,9 +245,11 @@ describe("the live-check runbook: tiers and the harnesses", () => {
     expect(text).not.toMatch(/Haiku-class/);
     expect(text).not.toMatch(/--provider claude-code/);
     expect(text).not.toMatch(/the Claude CLI inside the lab/);
-    // Every harness has its own words only where the behavior differs: the Claude path is a row, a block, and the funding line.
+    // Every harness has its own words only where the behavior differs: the order line, the Claude Code row, the setup sentence, the credential block, the role-change sentence, and the tool-route sentence.
     const claudeLines = prose(section(text, "## 7.")).split("\n").filter((line) => /Claude/.test(line));
-    expect(claudeLines.length).toBeLessThan(prose(section(text, "## 7.")).split("\n").length / 4);
+    const expected = [/^The order in the report is Claude Code,/, /^\| Claude Code \|/, /^For Claude Code, the captain runs/, /^For Claude Code, enter the credential/, /^On Claude Code and Pi,/, /Claude Code lists it as a deferred tool/];
+    expect(claudeLines).toHaveLength(expected.length);
+    expected.forEach((pattern, index) => expect(claudeLines[index], `Claude line ${index + 1}`).toMatch(pattern));
   });
 });
 

@@ -1,18 +1,26 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
+import type { ProviderState } from "../../src/bb/port";
+import { parseDispatchConfig } from "../../src/dispatch/config";
+import { readinessProblem } from "../../src/dispatch/availability";
 import { START_USAGE } from "../../src/tools/supervisor-start";
 import { fences, section } from "../fixtures/markdown";
 
 const design = (): string => readFileSync(new URL("../../docs/DESIGN.md", import.meta.url), "utf8");
 const source = (path: string): string => readFileSync(new URL(`../../${path}`, import.meta.url), "utf8");
+const state = (status: ProviderState["status"]): ProviderState => ({ providerId: "p", status, installedVersion: null, minimumSupportedVersion: null, localLoginCommand: null, statusMessage: null });
+/** The text from one bold paragraph label to the next one, so a claim is tied to the paragraph that makes it. */
+const between = (text: string, from: string, to: string): string => text.split(from)[1]?.split(to)[0] ?? "";
 
 describe("docs/DESIGN.md: dispatch profiles and harness independence", () => {
   it("[A1709] names the readiness statuses, the admission code, the contract table, the roles block, the supervisor start command, the clear advice, and the validator observation, and each name exists in the code", () => {
     const text = section(design(), "## Dispatch profiles");
-    const availability = source("src/dispatch/availability.ts");
-    for (const status of ["ready", "not_installed", "unauthenticated", "expired", "unsupported_version"]) {
+    // The code treats each status as the document says: only `ready` passes, and each other status blocks and names itself.
+    for (const status of ["ready", "not_installed", "unauthenticated", "expired", "unsupported_version"] as const) {
       expect(text, `status ${status}`).toContain(`\`${status}\``);
-      expect(availability, `status ${status} in the code`).toContain(`"${status}"`);
+      const problem = readinessProblem("p", [state(status)], "the host");
+      if (status === "ready") expect(problem).toBeNull();
+      else expect(problem, `status ${status} in the code`).toContain(`(bb status: ${status}`);
     }
     expect(text).toContain("`provider_not_admitted`");
     expect(source("src/dispatch/gate.ts")).toContain('"provider_not_admitted"');
@@ -20,10 +28,14 @@ describe("docs/DESIGN.md: dispatch profiles and harness independence", () => {
     expect(text).toContain("`src/harness/contracts.ts`");
     expect(source("src/harness/contracts.ts")).toContain("export const CONTRACTS");
 
-    expect(text).toContain("`roles.supervisor.profile`");
-    expect(source("src/dispatch/config.ts")).toContain("supervisor: z.strictObject({ profile: nonBlank.optional() })");
-    expect(text).toContain("`roles.validator.agent`");
-    expect(text).toContain("`observe`");
+    // The roles block: stated in its own paragraph and again in the supervisor paragraph, and the code accepts the field.
+    const roles = between(text, "**Roles.**", "**Supervisor start.**");
+    expect(roles).toContain("`roles.supervisor.profile`");
+    expect(roles).toContain("`roles.validator.agent`");
+    expect(roles).toContain("`observe`");
+    expect(between(text, "**Supervisor start.**", "**Validator observation.**")).toContain("`roles.supervisor.profile`");
+    const accepted = parseDispatchConfig({ version: 1, profiles: { p: { provider: "x", model: "m", reasoningLevel: "low", permissionMode: "auto" } }, rules: [], roles: { supervisor: { profile: "p" }, validator: { agent: "observe" } } });
+    expect(accepted.ok && accepted.config.roles).toEqual({ supervisor: { profile: "p" }, validator: { agent: "observe" } });
 
     expect(text).toContain("`bb factoryman supervisor start`");
     for (const flag of ["--project", "--profile", "--prompt"]) {
