@@ -9,7 +9,7 @@ import { parseResult } from "./result.ts";
 const rootFlag = process.argv.indexOf("--root");
 const root = rootFlag === -1 ? resolve(dirname(fileURLToPath(import.meta.url)), "../..") : resolve(process.argv[rootFlag + 1] ?? ".");
 const dir = join(root, "conformance/results");
-let names: string[] = [];
+let names: string[];
 try {
   names = readdirSync(dir).filter((name) => name.endsWith(".json")).sort();
 } catch {
