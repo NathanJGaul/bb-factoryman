@@ -26,7 +26,7 @@ Five `MED` audit tasks (`T1392` to `T1396`) stay open on purpose, and none block
 
 - `tdd/test-list.md`: 158 of 158 behaviors `DONE`.
 - `tdd/verification.md`: 53 of 54 hand-picked mutants killed (the other is equivalent), no open `HIGH` smell, every criterion covered.
-- `tdd/cycle-log.md`: the red for each group, the live runs, and the 17 defects that the live runs found.
+- `tdd/cycle-log.md`: the red for each group, the live runs, and every defect that the live runs found.
 - `conformance/results/*.json` and `docs/HARNESS-SUPPORT.md`: the results.
 - `checklist.md` and `analyze.md`: the gates and the cross-artifact read.
 
@@ -36,7 +36,7 @@ Five `MED` audit tasks (`T1392` to `T1396`) stay open on purpose, and none block
 - **The live runs are not in `pnpm test`.** They need `bwrap`, a pinned bb, the harness CLIs, and about 10 minutes per harness. The real lab, the entry point, and the lab scripts have no unit test. A CLI upgrade is caught only when someone runs the suite.
 - **The fake model is not a model.** Tier 1.5 shows that the plumbing works. It cannot show that a real model reads the skill, loads the deferred tool, follows the `xd://` route, or avoids `git push`. That is tier 2 and the model-behavior checks, which need a credential.
 - **The isolation check is judged by a list.** It ignores churn from other tools and flags paths a harness or bb would write (D-106). A leak into a path outside the list would not fail the run, but the tripwire and the process list would still show it.
-- **`/var/tmp/bblab-conformance` keeps a lab between runs.** Each run resets it and keeps the pinned bb and its toolchain. The directory holds about 600 MB.
+- **`/var/tmp/bblab-conformance` keeps a lab between runs.** Each run resets it and keeps the pinned bb and its toolchain. The directory holds about 560 MB.
 - **Known gaps hide nothing but depend on the list.** A gap that is not in `conformance/known-gaps.json` fails the run, and a listed gap that passes fails it too.
 
 ## Remaining work

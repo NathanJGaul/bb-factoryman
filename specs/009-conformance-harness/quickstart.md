@@ -6,6 +6,8 @@ No command here needs a credential.
 
 ## Prerequisites
 
+A full tier 1 run takes about 3 minutes and a tier 1.5 run about 8 to 16 minutes per harness, measured on this machine.
+
 1. Install the dependencies: `pnpm install --frozen-lockfile`.
 2. Pick a lab directory outside `/tmp` and outside any path that contains `firstmate`, for example `/var/tmp/bblab-conformance`.
 3. The runner installs the pinned bb (`bb-app@0.49.0`) into `<lab>/pin` the first time, with a redirected home.
