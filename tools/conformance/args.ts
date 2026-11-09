@@ -46,6 +46,7 @@ export function parseArgs(argv: string[]): ParsedArgs {
   const flags = new Set<string>();
   for (let i = 0; i < argv.length; i += 1) {
     const flag = argv[i] as string;
+    if (flag === "--") continue; // pnpm passes the separator through to the script
     if (BOOLEAN_FLAGS.has(flag)) {
       flags.add(flag);
     } else if (VALUE_FLAGS.has(flag)) {

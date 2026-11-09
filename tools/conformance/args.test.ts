@@ -48,6 +48,12 @@ describe("parseArgs", () => {
     expect(ok(["--tier", "1", "--offline"]).offline).toBe(true);
   });
 
+  it("[U1414] skips the lone -- that pnpm passes through to the script", () => {
+    expect(ok(["--", "--tier", "1"]).tier).toBe("1");
+    expect(ok(["--tier", "1.5", "--", "--harness", "pi"]).harness).toBe("pi");
+    expect(message(["--", "--bogus"])).toMatch(/--bogus/);
+  });
+
   it("[U1326] refuses a lab directory that contains firstmate or is the root", () => {
     expect(message(["--tier", "1", "--lab-dir", "/home/x/Projects/firstmate/lab"])).toMatch(/firstmate/);
     expect(message(["--tier", "1", "--lab-dir", "/"])).toMatch(/lab-dir/);

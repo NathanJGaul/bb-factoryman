@@ -98,6 +98,7 @@ Tests carry their behavior id in the title, for example `[U1301]`.
 | U1323 | Refuses an unknown tier, an unknown flag, and a flag with no value, and says so in the usage text | FR-1302 | example | PENDING | |
 | U1324 | `--scenario S3,S4` limits the run to those ids and refuses an unknown id | FR-1304 | example | PENDING | |
 | U1325 | Tier 1.5 is offline by default and `--no-offline` turns it off | AC-5.3, FR-1314 | example | PENDING | |
+| U1414 | Skips the lone `--` that `pnpm run conformance --` passes through to the script | AC-1.1 | example | PENDING | |
 | U1326 | Refuses a lab directory that contains `firstmate` or sits at `/` | FR-1310 | example | PENDING | |
 
 ### `tools/conformance/drivers`
