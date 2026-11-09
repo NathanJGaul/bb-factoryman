@@ -3,17 +3,31 @@ import { describe, expect, it } from "vitest";
 import type { ProviderState } from "../../src/bb/port";
 import { parseDispatchConfig } from "../../src/dispatch/config";
 import { readinessProblem } from "../../src/dispatch/availability";
+import { gateProfile } from "../../src/dispatch/gate";
+import { contractFor, CONTRACTS } from "../../src/harness/contracts";
+import { roleAdvice } from "../../src/harness/advice";
+import { preflightReport } from "../../src/machines/preflight";
+import { describeObservation, READ_SCRIPT } from "../../src/validator/agent";
+import type { Exec } from "../../src/exec";
+import type { Profile } from "../../src/machine/types";
+import { FakeBbPort, modelEntry, providerState } from "../fixtures/bb-port";
 import { START_USAGE } from "../../src/tools/supervisor-start";
 import { fences, section } from "../fixtures/markdown";
 
 const design = (): string => readFileSync(new URL("../../docs/DESIGN.md", import.meta.url), "utf8");
-const source = (path: string): string => readFileSync(new URL(`../../${path}`, import.meta.url), "utf8");
 const state = (status: ProviderState["status"]): ProviderState => ({ providerId: "p", status, installedVersion: null, minimumSupportedVersion: null, localLoginCommand: null, statusMessage: null });
+const PI: Profile = { provider: "pi", model: "openai/gpt-6-luna", reasoningLevel: "medium", permissionMode: "full" };
+function piBb(): FakeBbPort {
+  const bb = new FakeBbPort();
+  bb.providers = [{ id: "pi", available: true, permissionModes: ["full"], reasoningLevels: ["low", "medium", "high"] }];
+  bb.models.set("pi", { models: [modelEntry("openai/gpt-6-luna", { reasoningLevels: ["low", "medium", "high"] })], loadError: null });
+  return bb;
+}
 /** The text from one bold paragraph label to the next one, so a claim is tied to the paragraph that makes it. */
 const between = (text: string, from: string, to: string): string => text.split(from)[1]?.split(to)[0] ?? "";
 
 describe("docs/DESIGN.md: dispatch profiles and harness independence", () => {
-  it("[A1709] names the readiness statuses, the admission code, the contract table, the roles block, the supervisor start command, the clear advice, and the validator observation, and each name exists in the code", () => {
+  it("[A1709] names the readiness statuses, the admission code, the contract table, the roles block, the supervisor start command, the clear advice, and the validator observation, and each name exists in the code", async () => {
     const text = section(design(), "## Dispatch profiles");
     // The code treats each status as the document says: only `ready` passes, and each other status blocks and names itself.
     for (const status of ["ready", "not_installed", "unauthenticated", "expired", "unsupported_version"] as const) {
@@ -23,10 +37,12 @@ describe("docs/DESIGN.md: dispatch profiles and harness independence", () => {
       else expect(problem, `status ${status} in the code`).toContain(`(bb status: ${status}`);
     }
     expect(text).toContain("`provider_not_admitted`");
-    expect(source("src/dispatch/gate.ts")).toContain('"provider_not_admitted"');
+    const refused = await gateProfile(piBb(), PI, "local-only", null);
+    expect(refused).toMatchObject({ ok: false, code: "provider_not_admitted", permanent: true });
     expect(text).toContain("`no_default_profile`");
     expect(text).toContain("`src/harness/contracts.ts`");
-    expect(source("src/harness/contracts.ts")).toContain("export const CONTRACTS");
+    expect(CONTRACTS.map((row) => row.provider)).toContain("claude");
+    expect(contractFor("claude")).toBe(CONTRACTS.find((row) => row.provider === "claude"));
 
     // The roles block: stated in its own paragraph and again in the supervisor paragraph, and the code accepts the field.
     const roles = between(text, "**Roles.**", "**Supervisor start.**");
@@ -44,13 +60,18 @@ describe("docs/DESIGN.md: dispatch profiles and harness independence", () => {
     }
     expect(text).toContain("`bb factoryman supervisor <thread>`");
     expect(text).toContain("`bb thread clear`");
-    expect(source("src/harness/advice.ts")).toContain("bb thread clear");
+    expect(roleAdvice("thr-1", "codex", contractFor("codex"))).toContain("`bb thread clear thr-1`");
 
     expect(text).toContain("never writes");
     expect(text).toContain("`config.yaml`");
-    expect(source("src/validator/agent.ts")).toContain("config.yaml");
+    expect(READ_SCRIPT).toContain("config.yaml");
+    expect(describeObservation({ status: "unobserved", reason: "r" }, "h")).toContain("could not be observed");
     expect(text).toContain("`validator_agent`");
-    expect(source("src/machines/preflight.ts")).toContain('"validator_agent"');
+    const bb = new FakeBbPort();
+    bb.states = [providerState("claude"), providerState("codex", { status: "unauthenticated", localLoginCommand: "codex login" })];
+    const exec: Exec = async (_command, args) => ({ code: 0, stdout: args[1] === READ_SCRIPT ? "agent: codex\n" : "", stderr: "" });
+    const report = await preflightReport({ bb, exec }, { host: { id: "h", name: "box", status: "connected", phase: "active", online: true }, sourcePath: "/w", mode: "no-mistakes", provider: "claude" });
+    expect(report.problems.map((problem) => problem.check)).toContain("validator_agent");
   });
 
   it("[A1710] says the supervisor has four tools, has a profile example that parses, and has no unavailable-provider wording", () => {
