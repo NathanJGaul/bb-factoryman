@@ -128,3 +128,18 @@ The `responses` and `messages` test files read a request at the top of the file,
 - lint: an unused `Turn` import; removed. `pnpm run typecheck` and `pnpm run lint` pass.
 - note: the formats are checked against shapes written from the report, not against bytes recorded from a CLI. The live runs record real request bodies, and the next group adds them as fixtures if a CLI sends something these parsers drop.
 - refactor: none needed.
+
+## Group 8: the fake model server (U1367 to U1370, A1318 to A1321)
+
+Unit tests with a server stub that rejected with "not implemented" first.
+
+- red: `pnpm vitest run tools/fake-model/server.test.ts` -> 4 failed, all `Error: not implemented`
+- green: `tools/fake-model/server.ts` (`startServer`, a loopback HTTP server that routes by path, runs the brain, waits out delays, logs one JSON line per request with the tools, skills, actor, and chosen action, and notes a bearer value only as `present`; and a command-line entry that prints the address it listens on). `pnpm vitest run tools/fake-model` -> 24 passed. `pnpm run typecheck` and `pnpm run lint` pass.
+- acceptance (`test/acceptance/conformance-fake-model.test.ts`, which starts the server as a process): the unit cycle had already built the behaviors, so the four tests passed on their first run. That is not a valid red. To get one, a revert-red was run on the server: the `/responses` route renamed, the host set to `0.0.0.0`, and the skills list emptied.
+  - `pnpm vitest run test/acceptance/conformance-fake-model.test.ts` -> 3 failed, 1 passed
+  - A1318 `AssertionError: expected '{}' to contain 'event: response.completed'`
+  - A1320 `AssertionError: expected { Object (t, method, ...) } to match object { wire: 'messages', …(3) }`
+  - A1321 `AssertionError: expected '0.0.0.0' to be '127.0.0.1'`
+  - A1319 did not react to these three mutations. The audit needs its own mutant (a changed `fail=` status).
+  - The file was restored (`cp` of the saved copy) and the four tests passed again. These four are `TEST_AFTER` with a recorded revert-red, as in D-099.
+- refactor: none needed.
