@@ -1099,3 +1099,24 @@ Existing tests changed only where a requirement changed what they assert (preced
 The suite relied on the built-in profile in many acceptance tests.
 `loadWorld` now supplies that profile as a default `dispatch.json` (with `standingPermission.lowerReasoning` on, because the built-in set no floor) wherever a checkout has none.
 A test that wants the real block passes `bareConfig: true`.
+
+### D-108: 71 behaviors came after their code (Deviation, for the captain to accept)
+
+Constitution principle V says that every behavior change is driven by a test that failed first.
+The TDD audit of this feature (`specs/009-harness-independence/tdd/verification.md`) classes 71 of its 223 behaviors `TEST_AFTER`, because no red is recorded for them.
+Two groups make up the 71.
+Forty-two are acceptance tests written after the code they cover, and each passed on its first run: A1301 to A1311, A1313, A1316 to A1344, and A1350.
+The playbook opens the outer loop first.
+This feature wrote the unit tests and the code first, and wrote five of the seven acceptance files afterwards.
+Twenty-nine are unit tests that passed on their first run: U1306, U1307, U1312, U1315, U1316, U1336, U1346, U1357, U1359 to U1362, U1368, U1376 to U1378, U1383 to U1385, U1389, U1391, U1395, U1396, U1407, U1445, U1447, U1455, U1469, and U1473.
+Most of them pin a behavior that was already true against the stub or the old code (the hint stays off, a ready provider passes, Pi stays admitted in the other two modes).
+The repository commits only on green (D-099), so the history cannot show a test before its code, and the order cannot be rewritten afterwards.
+In place of a red, `tdd/cycle-log.md` holds a revert-red ledger: 58 deliberate mutants of the production code, each applied alone and restored byte for byte, and for every one of the 71 behaviors at least one mutant that makes its test fail.
+No mutant survived, and no mutant sits inside a behavior that the audit marks `DONE`.
+The audit's other blocking findings were repaired in tasks T1399 to T1401: a vacuous assertion in the docs test, two expectations computed by the code under test, and fifteen `BASELINE` behaviors that tasks had ticked.
+The count here is about ten times the seven of D-099, and the captain has not accepted it.
+The captain can choose between two paths.
+The first is to accept the 71 as a recorded deviation, as D-099 did: each is a guard that fails when its property is removed.
+The second is to order the 71 redone test-first, which means new history for tests that already fail when their property is removed.
+The audit does not recommend the rework, and it leaves the choice to the captain.
+Until the captain chooses, the verdict of the audit stays `FAIL` for this item.
