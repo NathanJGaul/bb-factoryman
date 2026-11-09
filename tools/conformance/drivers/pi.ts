@@ -13,7 +13,7 @@ export const pi: Driver = {
   profile,
   shipProfile: profile,
   unsupportedProfile: { ...profile, permissionMode: "accept-edits" },
-  failure: { code: 401, timeoutMs: 120_000 },
+  failure: { code: 401, timeoutMs: 120_000, mode: "fails" },
   roleChangeStep: "next-turn",
   cli: { command: "pi", versionArgs: ["--version"] },
   homeFiles: (port) => [

@@ -13,7 +13,7 @@ export const codex: Driver = {
   profile,
   shipProfile: { ...profile, permissionMode: "full" },
   unsupportedProfile: { ...profile, reasoningLevel: "no-such-level" },
-  failure: { code: 401, timeoutMs: 180_000 },
+  failure: { code: 401, timeoutMs: 180_000, mode: "fails" },
   roleChangeStep: "clear",
   cli: { command: "codex", versionArgs: ["--version"] },
   homeFiles: (port) => [

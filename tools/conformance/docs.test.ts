@@ -53,6 +53,14 @@ describe("renderSupport", () => {
     expect(doc).toContain("the plugin reads only the thread error, not the provider detail");
   });
 
+  it("[U1425] shows a note on a check in the detail column of a passing scenario", () => {
+    const noted: ScenarioVerdict = { id: "S7", verdict: "pass", checks: [{ id: "S7.ends-quiet", title: "t", ok: true, evidence: "e", note: "This harness ends the turn normally and shows the model error as text." }] };
+    const doc = renderSupport([result("omp", { scenarios: ids.map((id) => (id === "S7" ? noted : passing(id))) })]);
+    const row = doc.split("\n").find((line) => line.startsWith("| S7 |")) ?? "";
+    expect(row).toMatch(/\| pass \|/);
+    expect(row).toContain("ends the turn normally");
+  });
+
   it("[U1378] lists a harness with no result file as unsupported, with the reason", () => {
     const doc = renderSupport([result("pi")]);
     const section = doc.split(/^## /m).find((s) => s.startsWith("Claude Code")) ?? "";

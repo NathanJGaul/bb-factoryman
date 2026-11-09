@@ -85,6 +85,8 @@ describe("the harness drivers", () => {
       expect(d.unsupportedProfile, id).not.toEqual(d.profile);
       expect(d.failure.code, id).toBeGreaterThanOrEqual(400);
       expect(d.failure.timeoutMs, id).toBeGreaterThan(0);
+      // omp shows a model error as the assistant's text and ends the turn normally (live run 5). The other three fail the thread.
+      expect(d.failure.mode, id).toBe(id === "omp" ? "ends-turn" : "fails");
       expect(d.roleChangeStep, id).toBe(step[id]);
     }
   });

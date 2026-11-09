@@ -96,6 +96,17 @@ describe("S7 failure", () => {
   });
 });
 
+describe("S7 failure on a harness that ends the turn normally", () => {
+  it("[U1424] passes when the task stays working and the supervisor gets one silent-turn wake, and fails when it is not told", async () => {
+    const ok = await run("S7", {}, "omp");
+    expect(ok.map((c) => c.id)).toEqual(["S7.ends-quiet"]);
+    expect(failedIds(ok)).toEqual([]);
+    expect(ok[0]?.note).toMatch(/ends a failing model turn normally/);
+    expect(failedIds(await run("S7", { noWake: true }, "omp"))).toEqual(["S7.ends-quiet"]);
+    expect(failedIds(await run("S7", { doubleWake: true }, "omp"))).toEqual(["S7.ends-quiet"]);
+  });
+});
+
 describe("S8 refusals", () => {
   it("[U1395] passes when an empty report, a second report, and a wrong-state teardown are each refused and logged", async () => {
     expectAllOk(await run("S8"), ["S8.empty-evidence-refused", "S8.wrong-state-refused", "S8.teardown-wrong-state"]);

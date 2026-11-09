@@ -16,7 +16,8 @@ function rows(result: ResultFile): string[] {
       const tasks = [...new Set(gaps.map((gap) => gap.task))].join(", ");
       const verdict = scenario.verdict === "known-gap" ? `known gap (${tasks})` : scenario.verdict;
       const failed = scenario.checks.filter((check) => !check.ok && check.gap === undefined).map((check) => check.id);
-      const detail = scenario.verdict === "known-gap" ? gaps.map((gap) => `${gap.check} waits for ${gap.task}: ${gap.reason}`).join("; ") : scenario.verdict === "fail" ? `failed: ${failed.join(", ") || "the scenario threw"}` : "";
+      const notes = scenario.checks.flatMap((check) => (check.note === undefined ? [] : [check.note])).join(" ");
+      const detail = scenario.verdict === "known-gap" ? gaps.map((gap) => `${gap.check} waits for ${gap.task}: ${gap.reason}`).join("; ") : scenario.verdict === "fail" ? `failed: ${failed.join(", ") || "the scenario threw"}` : notes;
       return `| ${scenario.id} | ${verdict} | ${titleOf(scenario.id)} | ${detail} |`;
     });
 }

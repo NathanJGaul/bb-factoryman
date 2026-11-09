@@ -38,8 +38,11 @@ export interface Driver {
   shipProfile: Profile;
   /** A profile that bb must refuse before it spawns anything (S2). */
   unsupportedProfile: Profile;
-  /** The failure that the fake model plays for S7: the HTTP status, and how long the harness may take to give up. */
-  failure: { code: number; timeoutMs: number };
+  /**
+   * The failure that the fake model plays for S7: the HTTP status, how long the harness may take to give up, and what the harness does with it.
+   * `fails` means bb records a failed thread. `ends-turn` means the harness shows the error as the assistant's text and ends the turn normally.
+   */
+  failure: { code: number; timeoutMs: number; mode: "fails" | "ends-turn" };
   /** What a late supervisor stamp needs before the tools and the skill appear (S9). */
   roleChangeStep: "next-turn" | "clear";
   /** The command-line tool this driver runs, or null for the stub. */

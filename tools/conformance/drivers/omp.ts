@@ -14,7 +14,7 @@ export const omp: Driver = {
   profile,
   shipProfile: profile,
   unsupportedProfile: { ...profile, permissionMode: "auto" },
-  failure: { code: 401, timeoutMs: 120_000 },
+  failure: { code: 401, timeoutMs: 120_000, mode: "ends-turn" },
   roleChangeStep: "clear",
   cli: { command: "omp", versionArgs: ["--version"] },
   homeFiles: (port) => [

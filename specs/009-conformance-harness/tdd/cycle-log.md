@@ -308,3 +308,17 @@ This is a property of the harness that the owner should know: an omp worker in `
 
 - red: `pnpm vitest run tools/conformance/drivers` -> U1331 `AssertionError: expected 'accept-edits' to be 'full'`
 - green: the omp driver's profile and ship profile use `full` (tier 1.5 tests the plumbing, not the sandbox). `pnpm vitest run tools/conformance` -> 85 passed. Type check and lint pass.
+
+## Live run 6: omp tier 1.5 (16 min 17 s) and the failure finding (U1424, U1425)
+
+Real omp 18.14.1 behind the fake model, lab offline, isolation clean. S2, S3, S4, S5, S6, S8, S11, S12 `pass`; S1, S9 `known-gap` (S9.stamp-advice also, as predicted for omp); S10 `skipped`; S7 `fail`: `state: none within the wait`.
+
+Why S7 failed: omp never records a failed thread for a model error. A probe on the same lab (three bare omp threads, each told to hit a different error) showed:
+
+- HTTP 401 and 404: one request, then the turn ends `completed` with the error as the assistant's text (`401 CONFORMANCE-CAUSE-401 ...`) and the thread goes `idle`.
+- HTTP 500 and 429: omp retries about 130 times for about 6 minutes, then ends the turn `completed` with the error as the assistant's text.
+
+So the plugin sees a worker that finished a turn without reporting, and the supervisor learns of the model error only if it reads the worker's thread. This is a property of the harness, not a plugin defect, and no report task in H1 to H5 covers it, so it is not a known gap. The driver now says what the harness does (`failure.mode`: `fails` for Claude Code, Codex, Pi, and the stub; `ends-turn` for omp). For `ends-turn`, S7 asserts that the task stays `working` and that the supervisor gets exactly one wake saying the turn ended without a report, and the check carries a note that the support document shows.
+
+- red: `pnpm vitest run tools/conformance` -> U1332 `AssertionError: claude-code: expected undefined to be 'fails'`; U1424 (the omp S7 checks); U1425 `AssertionError: expected '| S7 | pass | Failure |  |' to contain 'ends the turn normally'`
+- green: `Driver.failure.mode`, `Check.note` (also in the result schema), the `ends-quiet` branch of S7, and the notes in the document's detail column. One test pattern was corrected: U1424 looked for "ends the turn normally" and the note says "ends a failing model turn normally"; the test now matches the note. `pnpm vitest run tools/conformance` -> all pass; type check and lint pass.

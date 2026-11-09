@@ -270,6 +270,8 @@ Tests carry their behavior id in the title, for example `[U1301]`.
 | U1391 | S6 passes when a silent turn leaves the task `working` and wakes the supervisor once with the silent-turn message | FR-1305 | example | PENDING | |
 | U1392 | S6 fails when the task changes state or the supervisor is woken twice | FR-1305 | example | PENDING | |
 | U1393 | S7 passes when a failing turn fails the task, wakes the supervisor once, and the evidence holds the cause text; and the cause check is its own check | FR-1305 | example | PENDING | |
+| U1424 | S7 passes for a harness that ends a failing turn normally (omp shows the model error as the assistant's text and reports no failure) when the task stays working and the supervisor gets exactly one silent-turn wake, and fails when the supervisor is not told | FR-1305 | example | PENDING | |
+| U1425 | The driver names whether a failing model turn fails the thread (`fails`) or ends it normally (`ends-turn`), and a note on a check shows in the support document | AC-6.2 | example | PENDING | |
 | U1394 | S7 fails when the task does not reach `failed` or no wake arrives | FR-1305 | example | PENDING | |
 | U1395 | S8 passes when an empty report, a second report, and a wrong-state teardown are each refused and each logged with a reason code | FR-1305 | example | PENDING | |
 | U1396 | S8 fails when a refusal is not logged or a task changes state | FR-1305 | example | PENDING | |

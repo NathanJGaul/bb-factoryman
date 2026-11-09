@@ -13,7 +13,7 @@ export const claudeCode: Driver = {
   profile,
   shipProfile: { ...profile, permissionMode: "full" },
   unsupportedProfile: { ...profile, reasoningLevel: "no-such-level" },
-  failure: { code: 401, timeoutMs: 120_000 },
+  failure: { code: 401, timeoutMs: 120_000, mode: "fails" },
   roleChangeStep: "next-turn",
   cli: { command: "claude", versionArgs: ["--version"] },
   homeFiles: (port) => [

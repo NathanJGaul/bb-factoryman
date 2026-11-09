@@ -12,7 +12,7 @@ export const stub: Driver = {
   profile,
   shipProfile: profile,
   unsupportedProfile: { ...profile, permissionMode: "auto" },
-  failure: { code: 500, timeoutMs: 60_000 },
+  failure: { code: 500, timeoutMs: 60_000, mode: "fails" },
   roleChangeStep: "next-turn",
   cli: null,
   homeFiles: () => [],

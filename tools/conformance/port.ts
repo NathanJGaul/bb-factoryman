@@ -5,6 +5,8 @@ export interface Check {
   ok: boolean;
   /** What the scenario read to decide, in plain words. Never model text. */
   evidence: string;
+  /** A fact about the harness that the support document should show next to a passing scenario. */
+  note?: string;
 }
 
 /** What one scenario returned, before the known gaps are applied. */

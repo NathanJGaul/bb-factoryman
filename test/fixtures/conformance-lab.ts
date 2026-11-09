@@ -189,6 +189,7 @@ export class FakeLab implements Lab {
     const text = (phrase: string) => `[factoryman] Task ${task.taskId} (${task.kind}, ${task.mode}) ${phrase}.`;
     if (this.faults.neverReports === true || flag === "hold") return;
     if (flag === "silent") return void this.wake(parent, text("reports: the worker finished a turn without reporting"));
+    if (flag.startsWith("fail=") && this.driver.failure.mode === "ends-turn") return void this.wake(parent, text("reports: the worker finished a turn without reporting"));
     if (flag.startsWith("fail=")) {
       const code = flag.slice(5);
       this.transition(task, "fail", "failed", `worker thread failed: provider error (category x, HTTP ${code})${this.faults.noCause === true ? "" : ` CONFORMANCE-CAUSE-${code}`}`, "system");

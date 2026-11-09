@@ -6,6 +6,7 @@ const checkSchema = z.strictObject({
   title: z.string(),
   ok: z.boolean(),
   evidence: z.string(),
+  note: z.string().optional(),
   gap: z.strictObject({ task: z.string(), reason: z.string() }).optional(),
 });
 
