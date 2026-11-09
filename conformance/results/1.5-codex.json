@@ -10,11 +10,11 @@
     "version": "0.49.0"
   },
   "plugin": {
-    "commit": "43eb149",
+    "commit": "1e7be3e",
     "dirty": false
   },
-  "startedAt": "2026-11-09T06:13:36.916Z",
-  "finishedAt": "2026-11-09T06:16:48.886Z",
+  "startedAt": "2026-11-09T15:56:22.944Z",
+  "finishedAt": "2026-11-09T15:59:48.982Z",
   "offline": true,
   "isolation": {
     "clean": true,
@@ -23,7 +23,7 @@
   "scenarios": [
     {
       "id": "S1",
-      "verdict": "known-gap",
+      "verdict": "pass",
       "checks": [
         {
           "id": "S1.ready",
@@ -34,22 +34,14 @@
         {
           "id": "S1.unready-blocks",
           "title": "A dispatch to claude-code (not_installed) is blocked and creates no task",
-          "ok": false,
-          "evidence": "task created: t-2b6e4cfe; tasks 0 to 1; text: Dispatched scout task t-2b6e4cfe in local-only mode. Worker thread thr_i9utab3h3t, branch fm/t-2b6e4cfe.",
-          "gap": {
-            "task": "H1",
-            "reason": "dispatch trusts the `available` flag of bb's provider list, which means installed and not signed in, and does not read providerStates"
-          }
+          "ok": true,
+          "evidence": "task created: none; tasks 0 to 0; text: Dispatch blocked (provider_unavailable): The provider `claude-code` is not installed on the default host (bb status: not_installed). Install its CLI there. No other provider was tried. No task was cre"
         },
         {
           "id": "S1.remedy",
           "title": "The refusal names bb's status \"not_installed\" or its login command",
-          "ok": false,
-          "evidence": "Dispatched scout task t-2b6e4cfe in local-only mode. Worker thread thr_i9utab3h3t, branch fm/t-2b6e4cfe.",
-          "gap": {
-            "task": "H1",
-            "reason": "the refusal cannot name bb's status or login command, because dispatch does not read providerStates"
-          }
+          "ok": true,
+          "evidence": "Dispatch blocked (provider_unavailable): The provider `claude-code` is not installed on the default host (bb status: not_installed). Install its CLI there. No other provider was tried. No task was created."
         }
       ]
     },
@@ -103,7 +95,7 @@
           "id": "S4.branch-commit",
           "title": "The task branch holds the one commit the worker made",
           "ok": true,
-          "evidence": "git rev-list --count main..fm/t-7f1a790e: 1"
+          "evidence": "git rev-list --count main..fm/t-c8939f0c: 1"
         },
         {
           "id": "S4.review-ready",
@@ -139,7 +131,7 @@
           "id": "S5.supervisor-tools",
           "title": "The supervisor is offered its four tools and not the report tool",
           "ok": true,
-          "evidence": "tools: factoryman_dispatch, factoryman_merge, factoryman_status, factoryman_teardown (thread thr_3v68pqq7gk)"
+          "evidence": "tools: factoryman_dispatch, factoryman_merge, factoryman_status, factoryman_teardown (thread thr_82mgk9hnmd)"
         },
         {
           "id": "S5.supervisor-skills",
@@ -169,7 +161,7 @@
     },
     {
       "id": "S7",
-      "verdict": "known-gap",
+      "verdict": "pass",
       "checks": [
         {
           "id": "S7.failed",
@@ -186,12 +178,8 @@
         {
           "id": "S7.cause",
           "title": "The failure evidence holds the harness's cause text (CONFORMANCE-CAUSE-401)",
-          "ok": false,
-          "evidence": "evidence: worker thread failed: provider error (category connection-failed, HTTP 401)",
-          "gap": {
-            "task": "H3",
-            "reason": "the failure evidence reads thread.failed.error and turn.failed.errorInfo, and drops the cause text that bb keeps in provider/error.detail"
-          }
+          "ok": true,
+          "evidence": "evidence: worker thread failed: provider error (category connection-failed, HTTP 401). Provider-reported cause: \"unexpected status 401 Unauthorized: CONFORMANCE-CAUSE-401, url: http://127.0.0.1:45349/v1/responses\"\nRemedy: Sign in to the provider on the machine that runs the worker, then dispatch the task agai"
         }
       ]
     },
@@ -227,7 +215,7 @@
           "id": "S9.start-command",
           "title": "`bb factoryman supervisor start` spawns a supervisor with its role",
           "ok": false,
-          "evidence": "exit 2: Usage: bb factoryman supervisor <thread-id>\nUsage: bb factoryman preflight <machine> --project <project-id> [--provider <provider-id>]\nUsage: bb factoryman protection <owner/repo> [--branch <branch>] ",
+          "evidence": "exit 2: Usage: bb factoryman supervisor <thread-id>\nUsage: bb factoryman preflight <machine> --project <project-id> [--provider <provider-id>]\nUsage: bb factoryman dispatch init --provider <id> [--project <id",
           "gap": {
             "task": "H4",
             "reason": "the command `bb factoryman supervisor start` does not exist yet"
@@ -243,7 +231,7 @@
           "id": "S9.stamp-advice",
           "title": "The stamp command tells the person to clear the thread, because this harness needs it",
           "ok": false,
-          "evidence": "Thread thr_u6tbqkinqn is now a factoryman supervisor. It sees the four supervisor tools from its next session.",
+          "evidence": "Thread thr_ghm78u7c4q is now a factoryman supervisor. It sees the four supervisor tools from its next session.",
           "gap": {
             "task": "H4",
             "reason": "the stamp command says the tools arrive \"from its next session\" and does not tell the person to run `bb thread clear`, which this harness needs"
@@ -276,7 +264,7 @@
           "id": "S11.dirty-kept",
           "title": "The dirty worktree is still there",
           "ok": true,
-          "evidence": "worktree: /var/tmp/bblab-conformance/data/plugins/environment-git-worktree/host-data/worktrees/thr_ckbrkyn3ua-1/work"
+          "evidence": "worktree: /var/tmp/bblab-conformance-followup/data/plugins/environment-git-worktree/host-data/worktrees/thr_a7u8brbnnu-1/work"
         },
         {
           "id": "S11.clean-removed",
@@ -300,7 +288,7 @@
           "id": "S12.delivered",
           "title": "The wake arrives",
           "ok": true,
-          "evidence": "1 wake(s) for t-786f7ff5"
+          "evidence": "1 wake(s) for t-d7b17f42"
         },
         {
           "id": "S12.once",

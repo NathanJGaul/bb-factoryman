@@ -65,6 +65,45 @@ describe("S4 ship", () => {
   });
 });
 
+describe("S4 ship in each delivery mode", () => {
+  const S4_IDS = ["S4.branch-commit", "S4.review-ready", "S4.wake"];
+  const PR = "https://github.com/conformance/lab/pull/1";
+
+  it("[U1509] in local-only mode dispatches no pull request, passes, and sets no note", async () => {
+    const lab = new FakeLab("codex");
+    const checks = await byId("S4").run(lab);
+    expectAllOk(checks, S4_IDS);
+    expect(checks.filter((c) => c.note !== undefined)).toEqual([]);
+    expect((await lab.tasks())[0]).toMatchObject({ mode: "local-only", pullRequestUrl: null });
+  });
+
+  it("[U1510] in direct-PR mode makes the worker report a pull request, passes, and names the mode in a note on S4.review-ready", async () => {
+    const lab = new FakeLab("pi");
+    const checks = await byId("S4").run(lab);
+    expectAllOk(checks, S4_IDS);
+    expect(checks.find((c) => c.id === "S4.review-ready")?.note).toBe("This harness ran in direct-PR mode, because the plugin does not admit it in local-only mode.");
+    expect(checks.filter((c) => c.note !== undefined)).toHaveLength(1);
+    expect((await lab.tasks())[0]).toMatchObject({ mode: "direct-PR", state: "review_ready", pullRequestUrl: PR });
+  });
+
+  it("[U1511] in direct-PR mode fails S4.review-ready when the worker reports no pull request", async () => {
+    expect(failedIds(await run("S4", { noPullRequest: true }, "pi"))).toEqual(["S4.review-ready", "S4.wake"]);
+  });
+
+  it("[U1512] in no-mistakes mode fails S4.review-ready, says S4 does not run in that mode, and dispatches nothing", async () => {
+    const lab = new FakeLab("codex", {}, "1.5", { deliveryMode: "no-mistakes" });
+    const checks = await byId("S4").run(lab);
+    expect(failedIds(checks)).toEqual(["S4.review-ready"]);
+    expect(checks[0]?.evidence).toMatch(/no-mistakes/);
+    expect(checks[0]?.evidence).toMatch(/does not run/);
+    expect(lab.calls.filter((call) => call.startsWith("dispatch "))).toEqual([]);
+  });
+
+  it("[U1513] is titled Ship and names no delivery mode", () => {
+    expect(byId("S4").title).toBe("Ship");
+  });
+});
+
 describe("S5 confinement", () => {
   it("[U1389] passes when the worker is offered the report tool and its skill only, and the supervisor its four tools and skill only", async () => {
     expectAllOk(await run("S5"), ["S5.worker-tools", "S5.worker-skills", "S5.supervisor-tools", "S5.supervisor-skills"]);

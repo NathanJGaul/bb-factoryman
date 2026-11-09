@@ -56,4 +56,63 @@ describe("pnpm run conformance -- --tier 1.5 --harness <id>", () => {
     expect(broken.rec.opened).toHaveLength(1);
     expect(broken.rec.files.size).toBe(0);
   });
+
+  it("[A1501] runs every scenario for Pi in a direct-PR project, and the same run in a local-only project is refused by the plugin's rule", async () => {
+    const { deps, rec } = fakeDeps();
+    expect(await main(["--tier", "1.5", "--harness", "pi"], deps)).toBe(0);
+    expect(rec.labs[0]?.projectMode).toBe("direct-PR");
+    expect(rows(rec.out).map((line) => line.split(/\s+/).slice(0, 2).join(" "))).toEqual([
+      "S1 pass", "S2 pass", "S3 pass", "S4 pass", "S5 pass", "S6 pass", "S7 pass", "S8 pass", "S9 pass", "S10 skipped", "S11 pass", "S12 pass",
+    ]);
+    const refused = fakeDeps({ faults: { projectMode: "local-only" } });
+    expect(await main(["--tier", "1.5", "--harness", "pi"], refused.deps)).toBe(1);
+    const verdicts = Object.fromEntries(rows(refused.rec.out).map((line) => line.split(/\s+/).slice(0, 2) as [string, string]));
+    expect([verdicts["S3"], verdicts["S4"], verdicts["S11"]]).toEqual(["fail", "fail", "fail"]);
+    expect(refused.rec.out.join("\n")).toMatch(/S3 +fail/);
+  });
+
+  it("[A1502] keeps Claude Code, Codex, and omp in a local-only project, and each still passes every scenario", async () => {
+    for (const harness of ["claude-code", "codex", "omp"]) {
+      const { deps, rec } = fakeDeps();
+      expect(await main(["--tier", "1.5", "--harness", harness], deps), harness).toBe(0);
+      expect(rec.labs[0]?.projectMode, harness).toBe("local-only");
+      expect(rows(rec.out).filter((line) => / fail /.test(line)), harness).toEqual([]);
+    }
+  });
+
+  it("[A1503] writes a mode note on Pi's S4 result and no note on the S4 result of the other harnesses", async () => {
+    const note = async (harness: string) => {
+      const { deps, rec } = fakeDeps();
+      await main(["--tier", "1.5", "--harness", harness, "--results-dir", "out"], deps);
+      const result = parseResult(rec.files.get(`out/1.5-${harness}.json`) as string);
+      return result.scenarios.find((s) => s.id === "S4")?.checks.find((c) => c.id === "S4.review-ready")?.note;
+    };
+    expect(await note("pi")).toMatch(/direct-PR mode, because the plugin does not admit it in local-only mode/);
+    for (const harness of ["claude-code", "codex", "omp"]) expect(await note(harness), harness).toBeUndefined();
+  });
+
+  it("[A1505] runs every scenario for omp with a reasoning level that its model lists", async () => {
+    const { deps, rec } = fakeDeps();
+    expect(await main(["--tier", "1.5", "--harness", "omp"], deps)).toBe(0);
+    const dispatched = (rec.labs[0]?.calls ?? []).filter((call) => call.startsWith("dispatch "));
+    expect(dispatched).toContain("dispatch scout acp-omp/mock/mock-1/auto/full");
+    expect(dispatched.filter((call) => /\/low\//.test(call))).toEqual([]);
+    expect(rows(rec.out).map((line) => line.split(/\s+/).slice(0, 2).join(" "))).toEqual([
+      "S1 pass", "S2 pass", "S3 pass", "S4 pass", "S5 pass", "S6 pass", "S7 pass", "S8 pass", "S9 pass", "S10 skipped", "S11 pass", "S12 pass",
+    ]);
+  });
+
+  it("[A1506] blocks the omp unsupported profile with no task, and the block names the permission mode and not the reasoning level", async () => {
+    const { deps, rec } = fakeDeps();
+    await main(["--tier", "1.5", "--harness", "omp"], deps);
+    const lab = rec.labs[0];
+    if (lab === undefined) throw new Error("no lab");
+    const before = (await lab.tasks()).length;
+    const out = await lab.dispatch("scout", "unsupported probe", { profile: lab.driver.unsupportedProfile });
+    expect(out.taskId).toBeNull();
+    expect(out.result.isError).toBe(true);
+    expect(out.result.text).toMatch(/permission mode `auto`/);
+    expect(out.result.text).not.toMatch(/reasoning level/);
+    expect((await lab.tasks()).length).toBe(before);
+  });
 });

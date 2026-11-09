@@ -12,6 +12,8 @@ export const pi: Driver = {
   toolRoute: "function",
   profile,
   shipProfile: profile,
+  // The plugin refuses Pi in local-only projects, because Pi has no sandbox (D-111), so the lab project uses direct-PR.
+  deliveryMode: "direct-PR",
   unsupportedProfile: { ...profile, permissionMode: "accept-edits" },
   failure: { code: 401, timeoutMs: 120_000, mode: "fails" },
   roleChangeStep: "next-turn",

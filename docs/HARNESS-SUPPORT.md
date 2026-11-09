@@ -10,26 +10,26 @@ Tier 2 (a real model) has not run for any harness.
 
 ## Claude Code
 
-Status: supported at tier 1.5, with known gaps in S1, S7, S9. Tier 2 has not run.
+Status: supported at tier 1.5, with known gaps in S9. Tier 2 has not run.
 
 | Field | Value |
 | --- | --- |
 | CLI | claude 2.1.316 |
 | bb | 0.49.0 |
-| Plugin commit | 43eb149 |
+| Plugin commit | 1e7be3e |
 | Date | 2026-11-09 |
 | Network | offline |
 | Isolation | clean |
 
 | Scenario | Verdict | Name | Detail |
 | --- | --- | --- | --- |
-| S1 | known gap (H1) | Readiness | S1.unready-blocks waits for H1: dispatch trusts the `available` flag of bb's provider list, which means installed and not signed in, and does not read providerStates; S1.remedy waits for H1: the refusal cannot name bb's status or login command, because dispatch does not read providerStates |
+| S1 | pass | Readiness |  |
 | S2 | pass | Profile honored |  |
 | S3 | pass | Scout |  |
-| S4 | pass | Ship in local-only mode |  |
+| S4 | pass | Ship |  |
 | S5 | pass | Confinement |  |
 | S6 | pass | Silence |  |
-| S7 | known gap (H3) | Failure | S7.cause waits for H3: the failure evidence reads thread.failed.error and turn.failed.errorInfo, and drops the cause text that bb keeps in provider/error.detail |
+| S7 | pass | Failure |  |
 | S8 | pass | Refusals |  |
 | S9 | known gap (H4) | Role change | S9.start-command waits for H4: the command `bb factoryman supervisor start` does not exist yet |
 | S10 | skipped | Restart |  |
@@ -38,26 +38,26 @@ Status: supported at tier 1.5, with known gaps in S1, S7, S9. Tier 2 has not run
 
 ## Codex
 
-Status: supported at tier 1.5, with known gaps in S1, S7, S9. Tier 2 has not run.
+Status: supported at tier 1.5, with known gaps in S9. Tier 2 has not run.
 
 | Field | Value |
 | --- | --- |
 | CLI | codex 0.166.0 |
 | bb | 0.49.0 |
-| Plugin commit | 43eb149 |
+| Plugin commit | 1e7be3e |
 | Date | 2026-11-09 |
 | Network | offline |
 | Isolation | clean |
 
 | Scenario | Verdict | Name | Detail |
 | --- | --- | --- | --- |
-| S1 | known gap (H1) | Readiness | S1.unready-blocks waits for H1: dispatch trusts the `available` flag of bb's provider list, which means installed and not signed in, and does not read providerStates; S1.remedy waits for H1: the refusal cannot name bb's status or login command, because dispatch does not read providerStates |
+| S1 | pass | Readiness |  |
 | S2 | pass | Profile honored |  |
 | S3 | pass | Scout |  |
-| S4 | pass | Ship in local-only mode |  |
+| S4 | pass | Ship |  |
 | S5 | pass | Confinement |  |
 | S6 | pass | Silence |  |
-| S7 | known gap (H3) | Failure | S7.cause waits for H3: the failure evidence reads thread.failed.error and turn.failed.errorInfo, and drops the cause text that bb keeps in provider/error.detail |
+| S7 | pass | Failure |  |
 | S8 | pass | Refusals |  |
 | S9 | known gap (H4) | Role change | S9.start-command waits for H4: the command `bb factoryman supervisor start` does not exist yet; S9.stamp-advice waits for H4: the stamp command says the tools arrive "from its next session" and does not tell the person to run `bb thread clear`, which this harness needs |
 | S10 | skipped | Restart |  |
@@ -66,26 +66,26 @@ Status: supported at tier 1.5, with known gaps in S1, S7, S9. Tier 2 has not run
 
 ## Pi
 
-Status: supported at tier 1.5, with known gaps in S1, S7, S9. Tier 2 has not run.
+Status: supported at tier 1.5, with known gaps in S9. Tier 2 has not run.
 
 | Field | Value |
 | --- | --- |
 | CLI | pi 1.4.0 |
 | bb | 0.49.0 |
-| Plugin commit | 43eb149 |
+| Plugin commit | 1e7be3e |
 | Date | 2026-11-09 |
 | Network | offline |
 | Isolation | clean |
 
 | Scenario | Verdict | Name | Detail |
 | --- | --- | --- | --- |
-| S1 | known gap (H1) | Readiness | S1.unready-blocks waits for H1: dispatch trusts the `available` flag of bb's provider list, which means installed and not signed in, and does not read providerStates; S1.remedy waits for H1: the refusal cannot name bb's status or login command, because dispatch does not read providerStates |
+| S1 | pass | Readiness |  |
 | S2 | pass | Profile honored |  |
 | S3 | pass | Scout |  |
-| S4 | pass | Ship in local-only mode |  |
+| S4 | pass | Ship | This harness ran in direct-PR mode, because the plugin does not admit it in local-only mode. |
 | S5 | pass | Confinement |  |
 | S6 | pass | Silence |  |
-| S7 | known gap (H3) | Failure | S7.cause waits for H3: the failure evidence reads thread.failed.error and turn.failed.errorInfo, and drops the cause text that bb keeps in provider/error.detail |
+| S7 | pass | Failure |  |
 | S8 | pass | Refusals |  |
 | S9 | known gap (H4) | Role change | S9.start-command waits for H4: the command `bb factoryman supervisor start` does not exist yet |
 | S10 | skipped | Restart |  |
@@ -94,23 +94,23 @@ Status: supported at tier 1.5, with known gaps in S1, S7, S9. Tier 2 has not run
 
 ## omp
 
-Status: supported at tier 1.5, with known gaps in S1, S9. Tier 2 has not run.
+Status: supported at tier 1.5, with known gaps in S9. Tier 2 has not run.
 
 | Field | Value |
 | --- | --- |
-| CLI | omp 18.14.1 |
+| CLI | omp 18.18.3 |
 | bb | 0.49.0 |
-| Plugin commit | 43eb149 |
+| Plugin commit | 1e7be3e |
 | Date | 2026-11-09 |
 | Network | offline |
 | Isolation | clean |
 
 | Scenario | Verdict | Name | Detail |
 | --- | --- | --- | --- |
-| S1 | known gap (H1) | Readiness | S1.unready-blocks waits for H1: dispatch trusts the `available` flag of bb's provider list, which means installed and not signed in, and does not read providerStates; S1.remedy waits for H1: the refusal cannot name bb's status or login command, because dispatch does not read providerStates |
+| S1 | pass | Readiness |  |
 | S2 | pass | Profile honored |  |
 | S3 | pass | Scout |  |
-| S4 | pass | Ship in local-only mode |  |
+| S4 | pass | Ship |  |
 | S5 | pass | Confinement |  |
 | S6 | pass | Silence |  |
 | S7 | pass | Failure | This harness ends a failing model turn normally and shows the error as the assistant's text, so bb records no failure and the plugin sees a silent turn. |
@@ -126,20 +126,20 @@ Status: supported at tier 1.5, with known gaps in S1, S9. Tier 2 has not run.
 | --- | --- |
 | CLI | stub-agent 0.0.1 |
 | bb | 0.49.0 |
-| Plugin commit | eae7b62 |
+| Plugin commit | 1e7be3e |
 | Date | 2026-11-09 |
-| Network | shared |
+| Network | offline |
 | Isolation | clean |
 
 | Scenario | Verdict | Name | Detail |
 | --- | --- | --- | --- |
-| S1 | known gap (H1) | Readiness | S1.unready-blocks waits for H1: dispatch trusts the `available` flag of bb's provider list, which means installed and not signed in, and does not read providerStates; S1.remedy waits for H1: the refusal cannot name bb's status or login command, because dispatch does not read providerStates |
+| S1 | pass | Readiness |  |
 | S2 | pass | Profile honored |  |
 | S3 | pass | Scout |  |
-| S4 | pass | Ship in local-only mode |  |
+| S4 | pass | Ship |  |
 | S5 | pass | Confinement |  |
 | S6 | pass | Silence |  |
-| S7 | known gap (H3) | Failure | S7.cause waits for H3: the failure evidence reads thread.failed.error and turn.failed.errorInfo, and drops the cause text that bb keeps in provider/error.detail |
+| S7 | pass | Failure |  |
 | S8 | pass | Refusals |  |
 | S9 | known gap (H4) | Role change | S9.start-command waits for H4: the command `bb factoryman supervisor start` does not exist yet |
 | S10 | pass | Restart |  |

@@ -1145,3 +1145,71 @@ About the number: this entry takes D-117, the next free number after D-116, on p
 The default branch already holds the entries 100 to 107 of another feature (the conformance harness).
 When this branch was rebased onto it, the nine entries of the "Harness independence" section above were renumbered from the numbers 100 to 108 to the numbers 108 to 116, in order, with every reference to them in code comments, docs, and specs.
 This entry kept D-117 so that it did not collide with that renumbering.
+
+## Conformance follow-up
+
+### D-118: A driver names the delivery mode of its lab project, and S4 follows it (Gap)
+
+The live check of the two merged pull requests found that the Pi conformance run fails every scenario that needs a task.
+The runner wrote every lab project as `local-only`, and the plugin refuses Pi there (D-111).
+The report offered two repairs for S4: run the ship scenario in `direct-PR` for Pi, or assert Pi's refusal.
+This follow-up takes the first.
+The `Driver` interface in `tools/conformance/drivers/types.ts` gets an optional `deliveryMode`, and a driver that names none gets `local-only`, so Claude Code, Codex, omp, and the stub keep their projects.
+The Pi driver names `direct-PR`, which needs only a pull request URL, where `no-mistakes` needs a validator run that the lab does not have.
+A command-line option would have let a maintainer ask for a combination that the plugin refuses, so the mode is a property of the driver and not of the run.
+S4 reads the mode.
+In `direct-PR` the scripted worker reports a made-up pull request URL (the plugin checks that the URL is valid and calls no forge), S4 asserts the same three facts as before, and `S4.review-ready` carries a note that names the mode.
+The support document shows the note, and the scenario is named "Ship", so no row claims `local-only` for a harness that ran in another mode.
+S4 for a `no-mistakes` driver fails with a message, because no driver uses that mode and the lab has no validator.
+Pi's refusal in `local-only` stays proven by the admission tests of the gate (`test/acceptance/harness-admission.test.ts`) and by the live check.
+The fake lab in `test/fixtures/conformance-lab.ts` now reads the real contract table, so a driver that names a refused mode fails in the unit tests as it fails in a real lab.
+
+### D-119: The omp driver asks for the reasoning level `auto` (Gap)
+
+The plugin compares a profile's reasoning level with the model's own list (D-113, D-114).
+bb lists `off` and `auto` for the omp lab model, and the omp driver asked for `low`, so every omp dispatch was refused.
+The driver now asks for `auto`, the level that leaves the choice to omp.
+`off` would also pass.
+The unsupported profile of omp still differs from its profile in the permission mode only (`auto`, which omp does not offer), so S2 still tests the permission gate and not the level gate.
+The fake lab lists the same two levels for omp and refuses any other.
+
+### D-120: The decision numbers were already unique on master, so the follow-up adds a guard and renumbers nothing (Finding)
+
+The live check merged the two pull requests in a scratch tree and found eight duplicate numbers, D-100 to D-107.
+Pull request 6 landed first, and pull request 5 was rebased onto it and renumbered its entries (D-117 records this).
+On master the log holds one heading for each number from D-001 to D-117, and every `D-nnn` in a tracked file names a heading.
+The citations of D-100 to D-107 in `specs/009-conformance-harness/` fit their entries, and the citations of D-108 to D-117 in the code, the docs, and `specs/009-harness-independence/` fit theirs.
+A renumbering would have broken the citations that are right.
+`test/acceptance/decision-log.test.ts` now fails when a number has two headings or when a tracked file cites a number that has no heading, so a collision cannot return unseen.
+The test checks that a number exists, not that its meaning fits, so the manual check above stays a review step.
+
+### D-121: Each test file gets its own temporary directory and removes it (Gap)
+
+The fake plugin host makes a directory named `bb-fake-plugin-host-*` for each host and removes it only in `dispose`.
+Most test worlds never disposed their host, so one `pnpm run check` left about 394 directories, and lanes that share a user account filled the per-user quota of `/tmp` (about 52,000 directories at the time of the live check).
+Every shell command of every worker on the machine then failed.
+The options were: dispose each world in an `afterEach` (misses the tests that call `createFakePluginHost` directly, and every future one), wrap the SDK function with a module mock (covers all callers but hides the SDK behind a mock), or give each test file a private temporary directory.
+This follow-up takes the third.
+`test/setup/private-tmpdir.setup.ts` is a `vitest` setup file that calls `createPrivateTmpdir` (in `test/setup/private-tmpdir.ts`), which makes a directory under the current temporary directory and points `TMPDIR` at it before the test file loads.
+The setup file removes the directory after the file, whether its tests pass, fail, or time out.
+`os.tmpdir()` reads `TMPDIR` on each call, so the SDK's `mkdtempSync` lands inside it, for `loadWorld`, for a direct `createFakePluginHost`, and for any test that comes later.
+It removes only the directory it made, and it does not delete directories that earlier runs leaked.
+One full run of the suite left 394 `bb-fake-plugin-host-*` directories before the change and none after it.
+`test/acceptance/tmpdir-leak.test.ts` proves it in a child `vitest` process with a private `TMPDIR`, because the cleanup runs after the test file and cannot be seen from inside it.
+
+### D-122: Eleven behaviors came after their behavior, with killing mutants (Deviation, accepted by the captain)
+
+Constitution principle V says that every behavior change is driven by a test that failed first.
+The TDD audit of this feature (`specs/010-conformance-followup/tdd/verification.md`) classes four of its 43 behaviors `TEST_AFTER`, because no red is recorded for them.
+Each passed on its first run, because the behavior was already true when the test was written.
+The seven behaviors that the audit's remediation added (U1530 to U1535 and A1515) are in the same class: each describes code that already worked, passed on its first run, and has a mutant that fails it, so the count is eleven.
+U1506 pins that the omp unsupported profile differs from its profile in the permission mode only, which the driver already had.
+U1509 pins that S4 in `local-only` sends no pull request, which was the old path.
+U1529 pins that every harness driver's mode is admitted by its contract, which was true once Pi named `direct-PR`.
+A1509 pins that the decision log has no duplicate number, which was already true on master.
+In place of a red, `tdd/cycle-log.md` records a killing mutant for each: the omp unsupported profile with a second differing key (U1506), the S4 scenario that always sends `pr=` (U1509, killed once the fake lab refused that report in `local-only`), Pi set to `local-only` (U1529), and a second heading with an existing number (A1509).
+The repository commits only at green (D-099), so the history cannot show a test before its code in any case.
+The audit's rule fails the feature for this, and the same position was taken for the earlier features (D-107 and D-116).
+The seven of the remediation are pinned by the mutants that the audit found alive: the fake lab's `local-only` rule, the columns of the project row, the root config's setup file, the fake lab's wording of a blocked profile, the empty `TMPDIR`, the restore guard, and the heading pattern of the guard.
+The captain accepted the eleven as a recorded deviation on 2026-11-09, on the same precedent as the earlier factoryman milestones (D-099, D-107, and D-116), with their killing mutants in `tdd/cycle-log.md` as the evidence.
+The pull request description names the eleven behaviors.

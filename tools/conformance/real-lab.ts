@@ -2,9 +2,9 @@ import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, symlinkSync, write
 import { createServer } from "node:net";
 import { dirname, join } from "node:path";
 import type { RunArgs } from "./args.ts";
-import type { Driver } from "./drivers/types.ts";
+import { deliveryModeOf, type Driver } from "./drivers/types.ts";
 import { judgeIsolation } from "./isolation.ts";
-import { bblabCommand, labEnv, labPaths, offlineProof, pluginBuildCommand, pluginCopyArgs, resetLab, type LabPaths, type LabSettings } from "./lab-env.ts";
+import { bblabCommand, labEnv, labPaths, offlineProof, pluginBuildCommand, pluginCopyArgs, projectRowScript, resetLab, type LabPaths, type LabSettings } from "./lab-env.ts";
 import type { DispatchOptions, EventRow, Lab, Offers, ProviderState, TaskRow, ThreadFacts, ToolResult, Wake, Who } from "./port.ts";
 import { fakeOffers, readWakes, stubOffers, type LogLine, type ThreadEvent } from "./readers.ts";
 import type { Isolation, LabSession } from "./run.ts";
@@ -354,7 +354,7 @@ export async function openRealLab(init: RealLabInit): Promise<LabSession> {
     if (made.code !== 0) throw new Error(`Could not create the project repository: ${made.stderr.trim()}`);
     const project = JSON.parse((await lab.bb(["project", "create", "--name", PROJECT, "--root", join(labDir, "repos/work"), "--json"])).stdout) as { id: string };
     lab.projectId = project.id;
-    const row = await lab.inLab(["bash", "-c", `cd ${src} && node -e "const D=require('better-sqlite3');const db=new D(process.env.BB_DATA_DIR+'/plugins/bb-factoryman/data.db');db.prepare('INSERT OR REPLACE INTO project_config (project_id, delivery_mode, yolo, branch_prefix, base_branch, default_machine) VALUES (?, ?, 0, NULL, ?, NULL)').run('${project.id}','local-only','main');"`]);
+    const row = await lab.inLab(["bash", "-c", `cd ${src} && node -e "${projectRowScript(project.id, deliveryModeOf(driver))}"`]);
     if (row.code !== 0) throw new Error(`Could not write the project row: ${row.stderr.trim()}`);
 
     progress("Starting the driver supervisor (the stub)");

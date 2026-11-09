@@ -1,5 +1,6 @@
-import type { Driver } from "../../tools/conformance/drivers/types.ts";
+import { deliveryModeOf, type DeliveryMode, type Driver } from "../../tools/conformance/drivers/types.ts";
 import { resolveDriver } from "../../tools/conformance/drivers/index.ts";
+import { contractFor } from "../../src/harness/contracts";
 import type { DispatchOptions, EventRow, Lab, Offers, ProviderState, TaskRow, ThreadFacts, ToolResult, Wake, Who } from "../../tools/conformance/port.ts";
 
 /** Ways to make the fake lab misbehave, so a scenario test can show that the scenario notices. */
@@ -66,10 +67,19 @@ export interface Faults {
   worktreeStaysAfterTeardown?: boolean;
   /** The stamp text gives no advice for a harness that needs a clear (today's behavior without report task H4). */
   noClearAdvice?: boolean;
+  /** The lab project uses this mode and not the driver's, so a test can reproduce a run that PR 5's admission rule refuses. */
+  projectMode?: DeliveryMode;
+  /** The worker never reports a pull request, so a `direct-PR` ship task cannot reach `review_ready`. */
+  noPullRequest?: boolean;
 }
+
+/** The reasoning levels that bb lists for the lab model of a provider, from the live check. A provider that is not here lists every level. */
+const LISTED_LEVELS: Record<string, readonly string[]> = { "acp-omp": ["off", "auto"] };
 
 interface Task extends TaskRow {
   dirty: boolean;
+  /** The worker committed on the task branch. */
+  committed: boolean;
   flag: string;
   profile: { provider: string; model: string; reasoningLevel: string; permissionMode: string };
 }
@@ -97,10 +107,15 @@ export class FakeLab implements Lab {
   /** Every call the scenarios made, so a test can assert on the order. */
   readonly calls: string[] = [];
 
-  constructor(driverId = "pi", faults: Faults = {}, tier: "1" | "1.5" = "1.5") {
+  /** The delivery mode of the lab project. */
+  get projectMode(): DeliveryMode {
+    return this.faults.projectMode ?? deliveryModeOf(this.driver);
+  }
+
+  constructor(driverId = "pi", faults: Faults = {}, tier: "1" | "1.5" = "1.5", overrides: Partial<Driver> = {}) {
     const resolved = resolveDriver(tier === "1" ? "stub" : driverId);
     if (!resolved.ok) throw new Error(resolved.message);
-    this.driver = resolved.driver;
+    this.driver = { ...resolved.driver, ...overrides };
     this.tier = tier;
     this.faults = faults;
   }
@@ -180,18 +195,28 @@ export class FakeLab implements Lab {
   async dispatch(kind: "scout" | "ship", description: string, options: DispatchOptions = {}): Promise<{ result: ToolResult; taskId: string | null }> {
     const profile = options.profile ?? (kind === "ship" ? this.driver.shipProfile : this.driver.profile);
     this.calls.push(`dispatch ${kind} ${profile.provider}/${profile.model}/${profile.reasoningLevel}/${profile.permissionMode}`);
+    // The plugin checks the harness contract first, before readiness (the live check, section 4.4).
+    const contract = contractFor(profile.provider);
+    if (contract.refusedModes.includes(this.projectMode)) {
+      return { result: { text: `Dispatch blocked (provider_not_admitted): The provider \`${profile.provider}\` is not admitted for ${this.projectMode} projects. ${contract.refusalReason ?? ""} No task was created.`, isError: true }, taskId: null };
+    }
     const known = (await this.providerStates()).find((p) => p.id === profile.provider);
     if (known !== undefined && known.status !== "ready" && this.faults.noReadinessGate !== true) {
       const remedy = this.faults.noRemedy === true ? "" : ` Status ${known.status}${known.loginCommand === null ? "" : `; run \`${known.loginCommand}\``}.`;
       return { result: { text: `Dispatch blocked (provider_unavailable): the provider ${profile.provider} is not ready.${remedy} No task was created.`, isError: true }, taskId: null };
     }
     if (profile.provider === this.driver.provider && JSON.stringify(profile) === JSON.stringify(this.driver.unsupportedProfile) && this.faults.noProfileGate !== true) {
-      return { result: { text: `Dispatch blocked (provider_unavailable): the provider does not offer ${profile.permissionMode} ${profile.reasoningLevel}. No task was created.`, isError: true }, taskId: null };
+      const what = profile.permissionMode !== this.driver.profile.permissionMode ? `the permission mode \`${profile.permissionMode}\`` : `the reasoning level \`${profile.reasoningLevel}\``;
+      return { result: { text: `Dispatch blocked (provider_unavailable): the provider ${profile.provider} does not offer ${what}. No task was created.`, isError: true }, taskId: null };
+    }
+    const listed = LISTED_LEVELS[profile.provider];
+    if (listed !== undefined && !listed.includes(profile.reasoningLevel)) {
+      return { result: { text: `Dispatch blocked (provider_unavailable): The model \`${profile.model}\` of the provider \`${profile.provider}\` does not list the reasoning level \`${profile.reasoningLevel}\`. It lists: ${listed.join(", ")}. No task was created.`, isError: true }, taskId: null };
     }
     const taskId = `t-${String(this.nextTask++).padStart(4, "0")}`;
     const flag = /\[brain:([^\]]+)\]/.exec(description)?.[1] ?? options.flag ?? "normal";
     const worker = `thr_w${this.nextThread++}`;
-    const task: Task = { taskId, projectId: "proj", kind, mode: "local-only", state: "queued", workerThreadId: worker, branch: `fm/${taskId}`, machine: null, pullRequestUrl: null, dirty: false, flag, profile };
+    const task: Task = { taskId, projectId: "proj", kind, mode: this.projectMode, state: "queued", workerThreadId: worker, branch: `fm/${taskId}`, machine: null, pullRequestUrl: null, dirty: false, committed: false, flag, profile };
     this.rows.set(taskId, task);
     this.add({ taskId, fromState: null, toState: "queued", event: "create", actor: "supervisor", evidence: null });
     this.transition(task, "start", "working", null, "supervisor");
@@ -219,7 +244,20 @@ export class FakeLab implements Lab {
       if (this.faults.acceptEmpty === true) this.log.pop();
     }
     if (task.kind === "ship") {
-      if (this.faults.noCommit !== true) task.dirty = flag === "dirty";
+      if (this.faults.noCommit !== true) {
+        task.dirty = flag === "dirty";
+        task.committed = true;
+      }
+      if (task.mode === "direct-PR") {
+        // `direct-PR` is review ready only when a pull request is open (src/machine/guards.ts, readyModeCheck).
+        const pr = flag.startsWith("pr=") && this.faults.noPullRequest !== true ? flag.slice(3) : null;
+        if (pr === null) return void this.refuse(task, "ready", "mode_check_failed", "A `direct-PR` task is review ready only when a pull request is open.", "worker");
+        task.pullRequestUrl = pr;
+      }
+      if (task.mode === "local-only" && flag.startsWith("pr=")) {
+        // A worker that reports a pull request and no landed commits does not meet the `local-only` check (src/machine/guards.ts, readyModeCheck).
+        return void this.refuse(task, "ready", "mode_check_failed", "A `local-only` task is review ready only when its branch holds landed commits.", "worker");
+      }
       this.transition(task, "ready", "review_ready", "committed 1 commit");
       return void this.wake(parent, text("is now review_ready"));
     }
@@ -329,7 +367,7 @@ export class FakeLab implements Lab {
     const count = /rev-list --count (\S+)\.\.(\S+)/.exec(command);
     if (count !== null) {
       const task = [...this.rows.values()].find((t) => t.branch === count[2]);
-      return { code: 0, stdout: task !== undefined && task.kind === "ship" && task.state === "review_ready" && this.faults.noCommit !== true ? "1\n" : "0\n" };
+      return { code: 0, stdout: task?.committed === true ? "1\n" : "0\n" };
     }
     return { code: 0, stdout: "" };
   }
