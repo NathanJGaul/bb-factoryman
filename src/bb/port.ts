@@ -19,12 +19,24 @@ export interface SpawnWorkerRequest {
 export interface ThreadInfo {
   id: string;
   projectId: string;
+  /** The bb provider that runs the thread, or null when bb did not say. */
+  providerId: string | null;
   /** bb's thread status, for example `active`, `idle`, or `error`. */
   status: string;
   parentThreadId: string | null;
   environmentId: string | null;
   /** True when bb still serves the thread but has soft-deleted it. */
   deleted: boolean;
+}
+
+export interface SpawnSupervisorRequest {
+  projectId: string;
+  prompt: string;
+  profile: Profile;
+  /** Plugin metadata set in the spawn call, so it is present at the thread's first session. */
+  metadata: Record<string, Json>;
+  /** The branch the worktree starts from, or null for the project default. */
+  baseBranch: string | null;
 }
 
 export interface InputRequest {
@@ -44,6 +56,8 @@ export type InputResult =
 /** Every call the plugin makes to bb. Only `adapter.ts` implements it against the real SDK. */
 export interface BbPort {
   spawnWorker(request: SpawnWorkerRequest): Promise<{ threadId: string }>;
+  /** Spawn a supervisor thread: no parent, with `metadata` set in the spawn call. */
+  spawnSupervisor(request: SpawnSupervisorRequest): Promise<{ threadId: string }>;
   /** Returns null when bb does not know the thread. */
   getThread(threadId: string): Promise<ThreadInfo | null>;
   sendMessage(threadId: string, text: string): Promise<void>;

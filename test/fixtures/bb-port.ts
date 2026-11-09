@@ -1,5 +1,5 @@
 import { DEFAULT_MODEL_IDS } from "./models";
-import type { BbPort, InputRequest, InputResult, MachineInfo, ProjectSource, ModelEntry, ModelList, ProviderAvailability, ProviderState, SpawnWorkerRequest, TerminalRead, ThreadInfo } from "../../src/bb/port";
+import type { BbPort, InputRequest, InputResult, MachineInfo, ProjectSource, ModelEntry, ModelList, ProviderAvailability, ProviderState, SpawnSupervisorRequest, SpawnWorkerRequest, TerminalRead, ThreadInfo } from "../../src/bb/port";
 
 export interface RecordedCall {
   method: string;
@@ -80,6 +80,7 @@ export class FakeBbPort implements BbPort {
   /** Called for each form. Defaults to a timeout cancellation. */
   inputHandler: (request: InputRequest) => Promise<InputResult> = async () => ({ outcome: "cancelled", reason: "timeout" });
   private nextThread = 1;
+  private nextSupervisor = 1;
 
   callsTo(method: string): unknown[][] {
     return this.calls.filter((call) => call.method === method).map((call) => call.args);
@@ -92,6 +93,7 @@ export class FakeBbPort implements BbPort {
       status: "idle",
       parentThreadId: null,
       environmentId: null,
+      providerId: null,
       deleted: false,
       ...info,
     };
@@ -107,9 +109,20 @@ export class FakeBbPort implements BbPort {
       id: threadId,
       projectId: request.projectId,
       parentThreadId: request.parentThreadId,
+      providerId: request.profile.provider,
       environmentId: `env-${threadId}`,
       status: "active",
     });
+    return { threadId };
+  }
+
+  /** Record the spawn and register the supervisor thread, with the provider of the profile. */
+  async spawnSupervisor(request: SpawnSupervisorRequest): Promise<{ threadId: string }> {
+    this.calls.push({ method: "spawnSupervisor", args: [request] });
+    if (this.spawnError) throw this.spawnError;
+    const threadId = `thr-s${this.nextSupervisor++}`;
+    this.addThread({ id: threadId, projectId: request.projectId, providerId: request.profile.provider, environmentId: `env-${threadId}`, status: "active" });
+    this.metadata.set(threadId, request.metadata);
     return { threadId };
   }
 

@@ -2,10 +2,59 @@ import { describe, expect, it } from "vitest";
 import type { MachineInfo } from "../bb/port";
 import { FakeBbPort, modelEntry, providerState } from "../../test/fixtures/bb-port";
 import type { Profile } from "../machine/types";
-import { admit, gateProfile } from "./gate";
+import { admit, gateProfile, gateReadiness } from "./gate";
 
 const profile: Profile = { provider: "claude", model: "opus", reasoningLevel: "high", permissionMode: "auto" };
 const GPU: MachineInfo = { id: "host_gpu", name: "gpu-box", status: "connected", phase: "active", online: true };
+
+describe("gateReadiness: the checks without the worker admission rule", () => {
+  const piProfile: Profile = { provider: "pi", model: "openai/gpt-6-luna", reasoningLevel: "medium", permissionMode: "full" };
+
+  function piBb(): FakeBbPort {
+    const bb = new FakeBbPort();
+    bb.providers = [{ id: "pi", available: true, permissionModes: ["full"], reasoningLevels: ["low", "medium", "high"] }];
+    bb.models.set("pi", { models: [modelEntry("openai/gpt-6-luna", { reasoningLevels: ["low", "medium", "high"] })], loadError: null });
+    return bb;
+  }
+
+  it("[U1606] passes a ready Pi profile, which gateProfile refuses for a local-only project, and reads the providers, the states, and the models", async () => {
+    const bb = piBb();
+    expect(await gateReadiness(bb, piProfile, null)).toEqual({ ok: true });
+    expect(bb.callsTo("listProviders")).toEqual([[undefined]]);
+    expect(bb.callsTo("getProviderStates")).toEqual([[undefined]]);
+    expect(bb.callsTo("listModels")).toEqual([["pi", undefined]]);
+  });
+
+  it("[U1607] returns provider_unavailable with bb's remedy for a provider that is not ready", async () => {
+    const bb = new FakeBbPort();
+    bb.states = [providerState("claude", { status: "unauthenticated", localLoginCommand: "claude login" })];
+    expect(await gateReadiness(bb, profile, null)).toMatchObject({ ok: false, code: "provider_unavailable", permanent: false, message: expect.stringContaining("Run `claude login`") });
+  });
+
+  it("[U1608] returns provider_unavailable for a permission mode the provider does not offer", async () => {
+    const bb = new FakeBbPort();
+    bb.providers = [{ id: "claude", available: true, permissionModes: ["accept-edits"], reasoningLevels: ["low", "high"] }];
+    expect(await gateReadiness(bb, profile, null)).toMatchObject({ ok: false, code: "provider_unavailable", message: expect.stringContaining("does not offer the permission mode `auto`") });
+  });
+
+  it("[U1609] returns provider_unavailable for a reasoning level the model does not list, and for a model that a refusing provider does not list", async () => {
+    const bb = new FakeBbPort();
+    bb.models.set("claude", { models: [modelEntry("opus", { reasoningLevels: ["low"] })], loadError: null });
+    expect(await gateReadiness(bb, profile, null)).toMatchObject({ ok: false, code: "provider_unavailable", message: expect.stringContaining("does not list the reasoning level `high`") });
+    const pi = piBb();
+    expect(await gateReadiness(pi, { ...piProfile, model: "openai/other" }, null)).toMatchObject({ ok: false, code: "provider_unavailable", message: expect.stringContaining("is not listed for the provider `pi`") });
+  });
+
+  it.each([
+    ["providers", (bb: FakeBbPort) => (bb.providersError = new Error("HTTP 500")), "could not read bb's providers (HTTP 500)"],
+    ["states", (bb: FakeBbPort) => (bb.statesError = new Error("HTTP 404")), "could not read bb's provider states (HTTP 404)"],
+    ["models", (bb: FakeBbPort) => (bb.modelsError = new Error("HTTP 503")), "could not read bb's models (HTTP 503)"],
+  ])("[U1610] returns read_failed when the %s read throws", async (_name, breakIt, message) => {
+    const bb = new FakeBbPort();
+    breakIt(bb);
+    expect(await gateReadiness(bb, profile, null)).toEqual({ ok: false, code: "read_failed", message });
+  });
+});
 
 describe("gateProfile: reads", () => {
   it("[U1339] returns ok for a ready profile", async () => {

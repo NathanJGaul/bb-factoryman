@@ -1213,3 +1213,79 @@ The audit's rule fails the feature for this, and the same position was taken for
 The seven of the remediation are pinned by the mutants that the audit found alive: the fake lab's `local-only` rule, the columns of the project row, the root config's setup file, the fake lab's wording of a blocked profile, the empty `TMPDIR`, the restore guard, and the heading pattern of the guard.
 The captain accepted the eleven as a recorded deviation on 2026-11-09, on the same precedent as the earlier factoryman milestones (D-099, D-107, and D-116), with their killing mutants in `tdd/cycle-log.md` as the evidence.
 The pull request description names the eleven behaviors.
+
+## Supervisor start and roles
+
+### D-123: The clarification step was skipped, and four defaults stay as assumptions (Gap)
+
+The workflow offers `/speckit.clarify` when a specification is ambiguous.
+The specification for report tasks H4 and H12 has no `[NEEDS CLARIFICATION]` marker, and the captain decided D4 (option B) and said "go with the recommendations; continue development".
+So the step was skipped, and the specification records its four open choices as assumptions: where the supervisor runs, what an unready validator agent does at hand-off, how an `auto` agent is reported, and which agent names map to which bb provider.
+D-124 to D-128 record how each was settled in the plan.
+The captain can overrule any of them, and each is one function or one line of text.
+
+### D-124: The supervisor's profile comes from the flag, then from `roles.supervisor.profile`, and never from `default` (Gap)
+
+The report (section 6.1) adds `roles.supervisor.profile` and a `--profile` flag to `supervisor start`, and does not say what happens when neither is set.
+The profile `default` is the worker's profile.
+A supervisor that took it silently would carry the worker's harness, model, and permission mode, and the owner would not have chosen either.
+Hard rule 8 and decision D-112 (no built-in default profile) already say that no harness is picked silently.
+So the command refuses, names both ways to choose a profile, says that `default` is not used, and spawns nothing.
+The flag wins over the file for that one start, because the owner who types a name means it.
+
+### D-125: Admission is not applied to a supervisor, and the supervisor spawns as a worker does (Gap)
+
+`gateProfile` runs the worker admission rule first (D-111), and then the readiness, permission mode, model, and level checks.
+The admission rule exists to confine workers: Pi has no sandbox, so a Pi worker could answer the owner's merge form.
+A supervisor is the owner's agent, and the report's decision D3 keeps Pi allowed as a supervisor.
+So `gateReadiness` is the second half of `gateProfile` on its own, and `supervisor start` calls it.
+Dispatch and the queue still call `gateProfile`, so no worker path changes.
+The supervisor starts in a managed worktree off the project's default branch on the project's default host, as a worker does and as the conformance lab and the live-check guide already spawn it.
+It has no parent thread, and its metadata is exactly `{ role: "supervisor" }`, set in the spawn call.
+Without `--prompt`, its first prompt is the live-check guide's text: "You are the factoryman supervisor. Wait for instructions."
+Choosing another machine for a supervisor is out of scope.
+
+### D-126: The validator's agent is read from no-mistakes' global configuration, as the plugin's commands see it (Limit)
+
+The plugin reads which agent no-mistakes will use, and never writes it (decision D4, option B).
+no-mistakes 1.84.0 keeps the setting as the top-level key `agent` of `$NM_HOME/config.yaml`, and `~/.no-mistakes/config.yaml` when `NM_HOME` is unset.
+The shipped file documents it as `auto`, one name, or an ordered fallback list, and the binary's own error text tells the owner to set `agent` in that file.
+Nothing in the file or the binary says that a repository's `.no-mistakes.yaml` can set `agent`, so the plugin reads the global file only.
+The plugin reads the file with one `sh -c` command through its own command runner, which already routes a command to the right machine, and it stops after 30 seconds.
+A small reader handles the one key in its three shapes (scalar, flow list, block list), because a YAML library would be a new dependency for one key.
+A shape it does not understand makes the result "could not be observed", and never a guess.
+Two limits remain.
+The plugin sees `NM_HOME` and `HOME` as its own commands see them, and the daemon may run with another environment.
+bb's readiness says that the CLI is installed, new enough, and signed in for bb, and it does not prove that no-mistakes can start it.
+So the evidence names the file it read and says "bb reports the provider ready", and never says that the pipeline will run.
+The agent names map to bb providers by the CLI they start: `claude` to `claude-code`, `codex` to `codex`, `pi` to `pi`, `acp:omp` to `acp-omp`, and `opencode`, `grok`, and `cursor` to `acp-opencode`, `acp-grok`, and `acp-cursor`.
+Every other name maps to none, and its readiness is "not checked".
+The table is in `src/validator/agent.ts`, and not in `src/harness/contracts.ts`, because the contract table describes how a provider behaves as a worker or supervisor harness.
+
+### D-127: `roles.validator.agent` accepts `observe` only (Gap)
+
+The report lists `inherit` and `set` as options for the captain and not as part of the base design.
+`set` would make the plugin write no-mistakes configuration, which the captain's decision D4 rules out.
+So the schema accepts the value `observe`, which is also the default, and refuses every other value with a message that names the field and the accepted value.
+The plugin therefore always observes the validator's agent, and the field exists so that a project can state the choice and so that the other modes are refused with a reason until the captain decides on them.
+Every object inside `roles` is strict, as the rest of the file is.
+
+### D-128: The validator line never refuses a hand-off, and the preflight does (Gap)
+
+The report says the validator's agent is "observed and readiness-checked", and its design adds no new gate.
+At hand-off, the worker cannot fix the validator's sign-in, and the pipeline reports its own failure through the validation driver.
+So the plugin appends one line to the evidence of the event that moves a `no-mistakes` ship task into `validating`, and it moves the task whether the agent is ready, not ready, unchecked, or unobserved.
+The line never says "ready" for an agent that was not confirmed ready.
+The preflight is a command that exists to report what a machine is missing before the first dispatch, so a validator agent that is not ready, or that cannot be observed, is a `validator_agent` problem there.
+A dispatch to a remote machine runs the same preflight, so it is refused with `preflight_failed` and creates no task.
+The host that holds the project's clone still gets no remote preflight, as before.
+
+### D-129: The constitution is amended to 1.4.0 to put H4 and H12 in scope (Deviation)
+
+Principle VI names the harness-independence tasks that are in scope: H5, H1, H11, H2, H10, and H3.
+H4 (the supervisor start command and the role advice) and H12 (the roles block and the validator observation) are not on that list.
+The captain decided D4 (option B) and said "go with the recommendations; continue development", which puts both in scope.
+Constitution version 1.4.0 adds H4 and H12 to the scope line, as 1.3.0 added the earlier tasks.
+It is a minor bump, because it materially expands the scope guidance and adds no principle.
+The rest of Principle VI is unchanged, including the rule that features from the design's non-goals list need approval first, and so are the eight hard rules.
+D-117 keeps its text.

@@ -53,22 +53,22 @@ Table-driven tests cover the lines that name several inputs, and the cycle log r
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| U1601 | `getThread` returns the thread's provider ID | US3.1, FR-010 | example | PENDING | |
-| U1602 | `getThread` returns a null provider ID when the thread carries none | US3.3, FR-010 | example | PENDING | |
-| U1603 | `spawnSupervisor` makes one spawn call with the profile's provider, model, reasoning level, and permission mode, no parent thread, and the metadata it was given | US1.1, FR-002, FR-003, FR-007 | example | PENDING | |
-| U1604 | `spawnSupervisor` starts the thread in a managed worktree off the project's default branch on the project's default host | US1.1, FR-007 | example | PENDING | |
-| U1605 | `spawnSupervisor` throws with bb's reason when the project has no host, and makes no spawn call | US1.5, FR-007 | example | PENDING | |
+| U1601 | `getThread` returns the thread's provider ID | US3.1, FR-010 | example | DONE | `src/bb/adapter.test.ts::[U1601]` |
+| U1602 | `getThread` returns a null provider ID when the thread carries none | US3.3, FR-010 | example | DONE | `src/bb/adapter.test.ts::[U1602]` |
+| U1603 | `spawnSupervisor` makes one spawn call with the profile's provider, model, reasoning level, and permission mode, no parent thread, and the metadata it was given | US1.1, FR-002, FR-003, FR-007 | example | DONE | `src/bb/adapter.test.ts::[U1603]` |
+| U1604 | `spawnSupervisor` starts the thread in a managed worktree off the project's default branch on the project's default host | US1.1, FR-007 | example | DONE | `src/bb/adapter.test.ts::[U1604]` |
+| U1605 | `spawnSupervisor` throws with bb's reason when the project has no host, and makes no spawn call | US1.5, FR-007 | example | DONE | `src/bb/adapter.test.ts::[U1605]` |
 
 ### `src/dispatch/gate.ts` (tests in `src/dispatch/gate.test.ts`)
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| U1606 | `gateReadiness` passes a ready Pi profile for a `local-only` project and reads the providers, the states, and the models | US1.6, FR-005 | example | PENDING | |
-| U1607 | `gateReadiness` returns `provider_unavailable` with bb's remedy for a provider that is not ready | US1.5, FR-005 | example | PENDING | |
-| U1608 | `gateReadiness` returns `provider_unavailable` for a permission mode the provider does not offer | US1.5, FR-005 | example | PENDING | |
-| U1609 | `gateReadiness` returns `provider_unavailable` for a model or a reasoning level that the provider does not list | US1.5, FR-005 | example | PENDING | |
-| U1610 | `gateReadiness` returns `read_failed` when any of the three reads throws | FR-005, FR-029 | example | PENDING | |
-| U1611 | `gateProfile` still refuses Pi in `local-only` with `provider_not_admitted` before any bb read, and still passes a ready admitted profile | FR-005, FR-029 | characterization | BASELINE | `src/dispatch/gate.test.ts::[U1363]`, `[U1339]` |
+| U1606 | `gateReadiness` passes a ready Pi profile for a `local-only` project and reads the providers, the states, and the models | US1.6, FR-005 | example | DONE | `src/dispatch/gate.test.ts::[U1606]` |
+| U1607 | `gateReadiness` returns `provider_unavailable` with bb's remedy for a provider that is not ready | US1.5, FR-005 | example | DONE | `src/dispatch/gate.test.ts::[U1607]` |
+| U1608 | `gateReadiness` returns `provider_unavailable` for a permission mode the provider does not offer | US1.5, FR-005 | example | DONE | `src/dispatch/gate.test.ts::[U1608]` |
+| U1609 | `gateReadiness` returns `provider_unavailable` for a model or a reasoning level that the provider does not list | US1.5, FR-005 | example | DONE | `src/dispatch/gate.test.ts::[U1609]` |
+| U1610 | `gateReadiness` returns `read_failed` when any of the three reads throws | FR-005, FR-029 | example | DONE | `src/dispatch/gate.test.ts::[U1610]` |
+| U1611 | `gateProfile` still refuses Pi in `local-only` with `provider_not_admitted` before any bb read, and still passes a ready admitted profile | FR-005, FR-029 | characterization | DONE | `src/dispatch/gate.test.ts::[U1363]`, `[U1339]` (existing, unchanged, passing before and after the split) |
 
 ### `src/dispatch/config.ts` and `src/dispatch/load.ts` (tests in `src/dispatch/config.test.ts` and `load.test.ts`)
 

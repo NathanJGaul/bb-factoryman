@@ -5,7 +5,7 @@ import { observe, reconcileOnStart } from "./startup";
 import { Notifier } from "./wake";
 
 const row = (state: TaskRow["state"]): TaskRow => ({ taskId: "t1", projectId: "proj-1", kind: "ship", mode: "no-mistakes", state, workerThreadId: "thr-w1", branch: "fm/t1", machine: null, pullRequestUrl: null });
-const thread = (status: string, deleted = false) => ({ id: "thr-w1", projectId: "proj-1", status, parentThreadId: "thr-sup", environmentId: "env-thr-w1", deleted });
+const thread = (status: string, deleted = false) => ({ id: "thr-w1", projectId: "proj-1", status, parentThreadId: "thr-sup", environmentId: "env-thr-w1", providerId: null, deleted });
 
 async function restarted(options: Parameters<typeof withDispatchedTask>[0] = {}) {
   const t = await withDispatchedTask(options);
