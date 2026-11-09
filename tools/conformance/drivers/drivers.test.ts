@@ -46,6 +46,8 @@ describe("the harness drivers", () => {
     expect(toml).toContain(`base_url = "${URL_BASE}/v1"`);
     expect(toml).toContain('wire_api = "responses"');
     expect(toml).toContain("requires_openai_auth = false");
+    // Without a login, bb reports Codex as unauthenticated. A file with the literal dummy key makes `codex login status` exit 0 and writes no real credential.
+    expect(JSON.parse(file(d, ".codex/auth.json"))).toEqual({ OPENAI_API_KEY: "mock-not-a-credential" });
     expect([d.provider, d.wire, d.toolRoute]).toEqual(["codex", "responses", "function"]);
   });
 

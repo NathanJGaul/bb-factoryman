@@ -24,6 +24,18 @@
       "harness": "*",
       "task": "H4",
       "reason": "the command `bb factoryman supervisor start` does not exist yet"
+    },
+    {
+      "check": "S9.stamp-advice",
+      "harness": "codex",
+      "task": "H4",
+      "reason": "the stamp command says the tools arrive \"from its next session\" and does not tell the person to run `bb thread clear`, which this harness needs"
+    },
+    {
+      "check": "S9.stamp-advice",
+      "harness": "omp",
+      "task": "H4",
+      "reason": "the stamp command says the tools arrive \"from its next session\" and does not tell the person to run `bb thread clear`, which this harness needs"
     }
   ]
 }

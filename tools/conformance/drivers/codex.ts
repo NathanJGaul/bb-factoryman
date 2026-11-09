@@ -17,6 +17,8 @@ export const codex: Driver = {
   roleChangeStep: "clear",
   cli: { command: "codex", versionArgs: ["--version"] },
   homeFiles: (port) => [
+    // bb reports Codex as unauthenticated until `codex login status` succeeds. The literal dummy key makes it succeed. It is not a credential.
+    { path: ".codex/auth.json", content: `${JSON.stringify({ OPENAI_API_KEY: "mock-not-a-credential" })}\n` },
     {
       path: ".codex/config.toml",
       content: [
