@@ -1013,7 +1013,8 @@ The lookup matches the provider ID exactly and returns the generic row for anyth
 The values come from the report's table and were observed with bb 0.49.0.
 The table adds five columns that the report did not list, each for a stated reason:
 
-- `unlistedModels`: the report's rule R4 says "the model is listed or the provider accepts unlisted ids", and that fact needs a home. Claude Code and Codex accept, every other row refuses.
+- `unlistedModels`: the report's rule R4 says "the model is listed or the provider accepts unlisted ids", and that fact needs a home.
+  Claude Code and Codex accept, and every other row refuses.
 - `sandbox`, `refusedModes`, and `refusalReason`: H11 records Pi's `full`-only policy as a contract rule, and the admission message needs the reason.
 - `toolHint`: the one-line hint for a worker, for the two routes that are not a plain function.
 
