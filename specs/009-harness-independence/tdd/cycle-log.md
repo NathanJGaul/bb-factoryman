@@ -268,3 +268,91 @@ Commit subject: "docs: record the harness-independence decisions D-100 to D-107"
 The note on surviving mutants says "Eight times".
 The count is four: U1407 (a swallowed write error), U1442 (any subcommand routed to init), U1451 (the sign-in family before the model family), and A1341 (a wake limit of 600).
 Each was strengthened in a step of its own, and the mutant then failed.
+
+## Remediation 1: the revert-red ledger for the 71 behaviors without a recorded red (task T1405, finding 1)
+
+`tdd/verification.md` classes 71 behaviors `TEST_AFTER`: 42 acceptance tests written after their code and 29 unit tests that passed on their first run.
+Their order cannot be rewritten, so this ledger gives each of them the evidence the rubric and D-099 accept in its place: a deliberate mutant of the production code that makes the behavior's test fail.
+Method: 58 mutants, one at a time.
+Each edited one production file, ran `src`, the seven `test/acceptance/harness-*.test.ts` files that the feature added, and `test/acceptance/dispatch-resolver.test.ts`, recorded the failing behavior ids, restored the file, and checked by hash that the restored file was byte-identical.
+After the last mutant the tree was clean and `pnpm test` was green (106 files, 1605 passed).
+No mutant survived: each of the 58 made at least one behavior fail.
+The table names, for each of the 71, the mutant with the fewest failing behaviors that fails it ("specific mutant"), the number of behaviors that this mutant fails, and the number of mutants that fail the behavior.
+The mutant list and the runner are in the scratch directory of the worktree session and are not part of the repository.
+
+| Behavior | Specific mutant | Behaviors it fails | Mutants that fail the behavior |
+| --- | --- | --- | --- |
+| A1301 | L01 unauthenticated counts as ready | 11 | 5 |
+| A1302 | L02 expired counts as ready | 5 | 5 |
+| A1303 | L03 too-old version counts as ready | 3 | 5 |
+| A1304 | L04 status unknown counts as ready | 2 | 6 |
+| A1305 | L05 states read for the default host, not the placed machine | 2 | 8 |
+| A1306 | L06 the preflight ignores readiness | 2 | 4 |
+| A1307 | L21 the queue start fails a task on any block | 6 | 6 |
+| A1308 | L08 the gate always blocks | 36 | 3 |
+| A1309 | L09 dispatch creates a task before it blocks | 14 | 5 |
+| A1310 | L10 Pi sandbox row says available | 3 | 3 |
+| A1311 | L12 unknown provider gets the first row | 8 | 1 |
+| A1313 | L13 tool hint on at the plugin factory | 1 | 1 |
+| A1316 | L58 Pi refused in no-mistakes as well | 7 | 6 |
+| A1317 | L58 Pi refused in no-mistakes as well | 7 | 5 |
+| A1318 | L25 the resolver ignores default | 6 | 5 |
+| A1319 | L18 codex refused in local-only | 3 | 4 |
+| A1320 | L20 the queue start does not fail a refused task | 2 | 7 |
+| A1321 | L25 the resolver ignores default | 6 | 4 |
+| A1322 | L26 a built-in default returns | 3 | 1 |
+| A1323 | L25 the resolver ignores default | 6 | 5 |
+| A1324 | L29 init prefers full mode | 6 | 2 |
+| A1325 | L25 the resolver ignores default | 6 | 4 |
+| A1326 | L27 init writes with flag w | 2 | 2 |
+| A1327 | L30 init does not accept an unlisted provider check | 2 | 1 |
+| A1328 | L28 init skips the profile check | 2 | 2 |
+| A1329 | L31 init changes state in bb | 2 | 2 |
+| A1330 | L32 the model's levels never decide | 7 | 4 |
+| A1331 | L32 the model's levels never decide | 7 | 4 |
+| A1332 | L36 Pi accepts unlisted models | 6 | 5 |
+| A1333 | L35 unlisted models are refused for every provider | 6 | 4 |
+| A1334 | L33 a model with unknown levels is judged by its listed levels | 3 | 4 |
+| A1335 | L37 an array ladder is ignored | 2 | 5 |
+| A1336 | L38 a record entry is ignored | 3 | 4 |
+| A1337 | L39 an omitted provider has no ladder | 3 | 2 |
+| A1338 | L43 the models read ignores a failure | 2 | 4 |
+| A1339 | L49 the oldest error event is read | 2 | 6 |
+| A1340 | L45 boundCause rewrites the middle dot | 5 | 5 |
+| A1341 | L46 boundCause cuts at 299 | 2 | 7 |
+| A1342 | L45 boundCause rewrites the middle dot | 5 | 5 |
+| A1343 | L51 a failed cause read throws out of the handler | 2 | 5 |
+| A1344 | L53 the cause is not bounded | 2 | 6 |
+| A1350 | L21 the queue start fails a task on any block | 6 | 7 |
+| U1306 | L10 Pi sandbox row says available | 3 | 1 |
+| U1307 | L11 Pi has no refusal reason | 4 | 1 |
+| U1312 | L14 tool hint on in registerTools | 1 | 1 |
+| U1315 | L15 a hint for every worker | 2 | 2 |
+| U1316 | L16 the hint for every role | 2 | 1 |
+| U1336 | L57 the level check runs before the mode check | 7 | 1 |
+| U1346 | L55 a ready named provider gives a preflight problem | 2 | 1 |
+| U1357 | L56 dispatch reads provider states before it places the machine | 3 | 2 |
+| U1359 | L17 Pi refuses direct-PR and not local-only | 14 | 1 |
+| U1360 | L58 Pi refused in no-mistakes as well | 7 | 1 |
+| U1361 | L18 codex refused in local-only | 3 | 1 |
+| U1362 | L19 a generic provider refused in local-only | 45 | 1 |
+| U1368 | L02 expired counts as ready | 5 | 4 |
+| U1376 | L34 a listed level on both lists is refused | 54 | 1 |
+| U1377 | L33 a model with unknown levels is judged by its listed levels | 3 | 1 |
+| U1378 | L33 a model with unknown levels is judged by its listed levels | 3 | 1 |
+| U1383 | L35 unlisted models are refused for every provider | 6 | 1 |
+| U1384 | L35 unlisted models are refused for every provider | 6 | 1 |
+| U1385 | L35 unlisted models are refused for every provider | 6 | 1 |
+| U1389 | L41 an array ladder is dropped by the parser | 2 | 1 |
+| U1391 | L40 a record key may be blank | 1 | 1 |
+| U1395 | L42 the parser accepts a string for reasoningLevels | 1 | 1 |
+| U1396 | L37 an array ladder is ignored | 2 | 1 |
+| U1407 | L44 a write error is swallowed | 1 | 1 |
+| U1445 | L45 boundCause rewrites the middle dot | 5 | 1 |
+| U1447 | L46 boundCause cuts at 299 | 2 | 1 |
+| U1455 | L47 remedyFor falls back to the sign-in hint | 6 | 1 |
+| U1469 | L54 the cause is read before the state check | 1 | 5 |
+| U1473 | L21 the queue start fails a task on any block | 6 | 6 |
+
+This ledger does not turn the 71 into test-first behaviors.
+D-108 records the deviation for the captain to accept, or to order the 71 redone.
