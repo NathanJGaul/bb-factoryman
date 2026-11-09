@@ -165,3 +165,21 @@ The test for U1347 gained an assertion that the script has no `lab_x curl`.
 
 - red: `pnpm vitest run tools/bblab` -> 1 failed: `AssertionError: expected '#!/usr/bin/env bash\n# bblab - isolat…' not to match /lab_x curl/`
 - green: `probe_http` runs a `node` one-liner (`fetch` with a 2 second timeout) inside an offline lab. `pnpm vitest run tools/bblab` -> 5 passed.
+
+## Group 10: the scenarios S1 to S12 and the registry (U1381 to U1405)
+
+The lab port (`tools/conformance/port.ts`) and a scripted fake lab (`test/fixtures/conformance-lab.ts`, with a `Faults` switch for each deliberate failure) came first.
+The scenarios were stubs that returned no checks, so every test saw an empty list.
+Nothing in the port returns model text, so a scenario cannot read it (A1303).
+
+- red: `pnpm vitest run tools/conformance/scenarios` -> 25 failed
+  - U1381 `AssertionError: expected [] to deeply equal [ 'S1.ready', 'S1.remedy', …(1) ]`
+  - U1382 `AssertionError: expected [] to deeply equal [ 'S1.remedy', 'S1.unready-blocks' ]`
+  - U1383 `AssertionError: expected [] to deeply equal [ 'S2.thread-profile', …(1) ]`
+  - U1384 `AssertionError: expected [] to deeply equal [ 'S2.thread-profile' ]`
+  - U1385 to U1404 the same shape (an empty list where the scenario's check ids were expected)
+  - U1405 failed on the registry: `scenariosFor` returned `[]`
+- green: `tools/conformance/scenarios/` holds `helpers.ts` and `s01-readiness.ts` to `s12-wake-while-busy.ts` and `index.ts`. `pnpm vitest run tools/conformance/scenarios` -> 25 passed after one change: the S7 wait scaled with the driver's failure time (120 s), so the failure test timed out at 5 s. The port gained `failurePatienceMs`, and the fake lab sets it small. The change fixed the lab's wait and weakened no assertion.
+- lint: three unused destructured names in the fake lab; replaced with an explicit mapping. `pnpm run typecheck` and `pnpm run lint` pass.
+- the fake-lab tests prove each scenario's checks pass on a correct lab and fail on the named fault. They do not prove the real lab behaves like the fake one; the live runs do.
+- refactor: none needed.
