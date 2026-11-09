@@ -4,7 +4,7 @@ loop: outside-in
 profile: .specify/memory/tdd-profile.md
 spec_criteria: 24
 planned_at: 3b827b8
-updated_at: 06b107f
+updated_at: c089d6a
 suite_baseline: green
 ---
 
@@ -35,8 +35,8 @@ Tests carry their behavior id in the title, for example `[U1501]`.
 | A1510 | Every `D-nnn` cited in a tracked text file names a heading in the decision log | US4.2, FR-010, SC-005 | example | DONE | `test/acceptance/decision-log.test.ts::[A1510]` |
 | A1511 | A child `vitest` run with a private `TMPDIR` of two fixture files, one that builds hosts through `loadWorld` and `createFakePluginHost` and disposes none, and one that fails on purpose, leaves no `bb-fake-plugin-host-*` entry under that directory | US5.1, US5.2, US5.3, FR-011, FR-012 | example | DONE | `test/acceptance/tmpdir-leak.test.ts::[A1511]` |
 | A1512 | Live: a full `pnpm run test` adds no `bb-fake-plugin-host-*` directory to the temporary directory | US5.4, SC-006 | example | DONE | measured: 394 directories left before the setup file, 0 after (`cycle-log.md`, group 5) |
-| A1513 | Live: tier 1 exits 0 with S9 as the only known gap, and tier 1.5 for Claude Code, Codex, Pi, and omp each exit 0 with S9 as the only known gap and S10 skipped | US6.1, US6.2, FR-014, SC-001 to SC-004 | example | PENDING | live runs: `conformance/results/*.json` |
-| A1514 | Live: each of the five runs reports isolation clean and a tripwire with no event | US6.3 | example | PENDING | live runs: `isolation` in each result file |
+| A1513 | Live: tier 1 exits 0 with S9 as the only known gap, and tier 1.5 for Claude Code, Codex, Pi, and omp each exit 0 with S9 as the only known gap and S10 skipped | US6.1, US6.2, FR-014, SC-001 to SC-004 | example | DONE | live runs: `conformance/results/*.json`, five exits of 0 (`cycle-log.md`, live runs) |
+| A1514 | Live: each of the five runs reports isolation clean and a tripwire with no event | US6.3 | example | DONE | live runs: `isolation.clean` is true in all five result files |
 
 ## Inner loop: unit behaviors
 

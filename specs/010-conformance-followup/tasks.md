@@ -45,7 +45,7 @@ No foundational task. The five user stories touch separate files and do not bloc
 - [X] T009 [US1] Add `projectRowScript` to `tools/conformance/lab-env.ts` and use it in `tools/conformance/real-lab.ts` in place of the inline `'local-only'` literal. Covers [U1507] [U1508].
 - [X] T010 [US1] Make the fake lab in `test/fixtures/conformance-lab.ts` take the mode from the driver, refuse a provider in a mode its contract refuses, and require a pull request URL for `review_ready` in `direct-PR`. Covers [U1514] [U1515] [U1516].
 - [X] T011 [US1] Make `tools/conformance/scenarios/s04-ship.ts` follow `deliveryModeOf(lab.driver)`: dispatch with `{ flag: "pr=https://github.com/conformance/lab/pull/1" }` in `direct-PR`, keep the three checks, add the note, rename the title to "Ship", and fix the doc comment. Covers [U1510] [U1511] [U1512] [U1513] and, with T008 to T010, [A1501] [A1502] [A1503] [A1504].
-- [ ] T012 [US1] Update the S4 row and the "Add a harness" steps in `docs/CONFORMANCE.md`: name the `deliveryMode` field and say that S4 follows it.
+- [X] T012 [US1] Update the S4 row and the "Add a harness" steps in `docs/CONFORMANCE.md`: name the `deliveryMode` field and say that S4 follows it.
 
 ## Phase 4: User story 2 - omp asks for a level its model lists (P1)
 
@@ -95,23 +95,23 @@ No foundational task. The five user stories touch separate files and do not bloc
 
 - [X] T027 [US5] Create `test/setup/private-tmpdir.ts`: export `createPrivateTmpdir(env)` that makes `mkdtempSync(join(tmpdir(), "bb-factoryman-test-"))`, sets `env.TMPDIR` to it, and returns a `restore` that restores or unsets `TMPDIR` and removes the directory with `rmSync(dir, { recursive: true, force: true })`; and register `beforeAll` and `afterAll` hooks that call it. Covers [U1524] [U1525] [U1526] [U1527] [U1528].
 - [X] T028 [US5] Add `setupFiles: ["test/setup/private-tmpdir.ts"]` to `vitest.config.ts`, and confirm that the main run does not collect the fixtures (they are not `*.test.ts`). Covers [A1511].
-- [ ] T029 [US5] Run `pnpm run check` twice, and record the leaked-directory count before and after in `tdd/cycle-log.md` (A1512, SC-006).
+- [X] T029 [US5] Run `pnpm run check` twice, and record the leaked-directory count before and after in `tdd/cycle-log.md` (A1512, SC-006).
 
 ## Phase 8: Live runs and results
 
 **Purpose**: The only end-to-end proof for the lab changes (A1513, A1514). Run them one after another. Commit the code first, so the result files name the right plugin commit.
 
-- [ ] T030 Commit the code and test changes of phases 3 to 7 in small commits (one concern each, no co-author line), and run `pnpm run check`.
-- [ ] T031 [US6] Declare the wait (`paused`) and run tier 1: `pnpm run conformance -- --tier 1 --lab-dir /var/tmp/bblab-conformance-followup`. Expect exit 0, S9 as the only known gap, and a clean isolation check. The first run may need the network once, for the pinned bb and its toolchain. [A1513] [A1514]
-- [ ] T032 [US6] Run `pnpm run conformance -- --tier 1.5 --harness claude-code --lab-dir /var/tmp/bblab-conformance-followup` and the same for `--harness codex`, and expect exit 0 for both. [A1513] [A1514]
-- [ ] T033 [US1] Run the same for `--harness pi`. Expect S2 to S8, S11, and S12 to pass and the S4 note to read `direct-PR`. A failure that comes from `src/` is a finding: record it and do not change `src/`. [A1513] [A1514]
-- [ ] T034 [US2] Run the same for `--harness omp`. Expect S2 to S8, S11, and S12 to pass, and the unsupported profile to be refused for its permission mode. [A1513] [A1514]
-- [ ] T035 [US6] Run `pnpm run conformance:docs`, read `docs/HARNESS-SUPPORT.md`, and confirm that S9 is the only known gap and that no scenario failed.
-- [ ] T036 [US6] Copy the five run logs and a one-line verdict table to `/home/nathanjgaul/Projects/firstmate/data/bb-factoryman-conformance-followup/`, and confirm that no lab process or listener remains.
+- [X] T030 Commit the code and test changes of phases 3 to 7 in small commits (one concern each, no co-author line), and run `pnpm run check`.
+- [X] T031 [US6] Declare the wait (`paused`) and run tier 1: `pnpm run conformance -- --tier 1 --lab-dir /var/tmp/bblab-conformance-followup`. Expect exit 0, S9 as the only known gap, and a clean isolation check. The first run may need the network once, for the pinned bb and its toolchain. [A1513] [A1514]
+- [X] T032 [US6] Run `pnpm run conformance -- --tier 1.5 --harness claude-code --lab-dir /var/tmp/bblab-conformance-followup` and the same for `--harness codex`, and expect exit 0 for both. [A1513] [A1514]
+- [X] T033 [US1] Run the same for `--harness pi`. Expect S2 to S8, S11, and S12 to pass and the S4 note to read `direct-PR`. A failure that comes from `src/` is a finding: record it and do not change `src/`. [A1513] [A1514]
+- [X] T034 [US2] Run the same for `--harness omp`. Expect S2 to S8, S11, and S12 to pass, and the unsupported profile to be refused for its permission mode. [A1513] [A1514]
+- [X] T035 [US6] Run `pnpm run conformance:docs`, read `docs/HARNESS-SUPPORT.md`, and confirm that S9 is the only known gap and that no scenario failed.
+- [X] T036 [US6] Copy the five run logs and a one-line verdict table to `/home/nathanjgaul/Projects/firstmate/data/bb-factoryman-conformance-followup/`, and confirm that no lab process or listener remains.
 
 ## Phase 9: Decisions and documents
 
-- [ ] T037 Record in `docs/DECISIONS.md` (D-118 onward) every decision of this feature: the driver-owned delivery mode and `direct-PR` for Pi with S4 following it (Q1 to Q3), the omp level `auto` (Q4), the guard instead of a renumbering with the finding that master was already consistent (Q5), the per-file temporary directory (Q6, Q7), and any deviation the live runs forced. Each entry names its source and keeps one sentence per line.
+- [X] T037 Record in `docs/DECISIONS.md` (D-118 onward) every decision of this feature: the driver-owned delivery mode and `direct-PR` for Pi with S4 following it (Q1 to Q3), the omp level `auto` (Q4), the guard instead of a renumbering with the finding that master was already consistent (Q5), the per-file temporary directory (Q6, Q7), and any deviation the live runs forced. Each entry names its source and keeps one sentence per line.
 - [ ] T038 Add a note to `docs/CONFORMANCE.md` only if the runs changed how the suite is used (for example the lab-directory advice), and otherwise leave it.
 
 ## Phase 10: Lifecycle closing tasks
@@ -125,12 +125,12 @@ No foundational task. The five user stories touch separate files and do not bloc
 
 ## Acceptance gates (one per acceptance behavior)
 
-- [ ] T045 [US1] [A1501] [A1502] [A1503] [A1504] are green before user story 1 counts as complete.
-- [ ] T046 [US2] [A1505] [A1506] are green before user story 2 counts as complete.
-- [ ] T047 [US3] [A1507] [A1508] are green before user story 3 counts as complete.
-- [ ] T048 [US4] [A1509] [A1510] are green before user story 4 counts as complete.
-- [ ] T049 [US5] [A1511] is green, and [A1512] is measured, before user story 5 counts as complete.
-- [ ] T050 [US6] [A1513] [A1514] are recorded from the live runs before user story 6 counts as complete.
+- [X] T045 [US1] [A1501] [A1502] [A1503] [A1504] are green before user story 1 counts as complete.
+- [X] T046 [US2] [A1505] [A1506] are green before user story 2 counts as complete.
+- [X] T047 [US3] [A1507] [A1508] are green before user story 3 counts as complete.
+- [X] T048 [US4] [A1509] [A1510] are green before user story 4 counts as complete.
+- [X] T049 [US5] [A1511] is green, and [A1512] is measured, before user story 5 counts as complete.
+- [X] T050 [US6] [A1513] [A1514] are recorded from the live runs before user story 6 counts as complete.
 
 ## Dependencies and order
 

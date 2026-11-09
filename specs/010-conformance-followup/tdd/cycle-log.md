@@ -143,3 +143,26 @@ Step 3, green:
 After group 4 the guard `[A1510]` failed on this file, because the group 4 entry quoted the stub's sentinel number and the number of a mutant, and neither has a heading.
 The entry was reworded to cite no such number.
 Nothing else in it changed.
+
+## Live runs (A1513, A1514), tasks T031 to T036
+
+The fixes were committed first (`1e7be3e`), then the runner ran five times, one after another, with the lab in `/var/tmp/bblab-conformance-followup`, no credential, and a 30 minute limit for each.
+The runs came from `/home/nathanjgaul/Projects/firstmate/data/bb-factoryman-conformance-followup/run-all.sh`.
+Tier 1 ran first with the network shared, which is its default, so it was run again with `--offline` and the second result replaced the first.
+The logs, the result files, and the verdict file sit in that data directory.
+
+| Run | Command | Exit | Verdicts | Isolation |
+| --- | --- | --- | --- | --- |
+| Tier 1, stub, offline | `pnpm run conformance -- --tier 1 --offline` | 0 | S1 to S8, S10 to S12 pass, S9 known gap | clean, tripwire no events |
+| Tier 1.5, Claude Code 2.1.316 | `--tier 1.5 --harness claude-code` | 0 | S1 to S8, S11, S12 pass, S9 known gap, S10 skipped | clean, tripwire no events |
+| Tier 1.5, Codex 0.166.0 | `--tier 1.5 --harness codex` | 0 | the same | clean, tripwire no events |
+| Tier 1.5, Pi 1.4.0 | `--tier 1.5 --harness pi` | 0 | the same, with S4 in `direct-PR` mode | clean, tripwire no events |
+| Tier 1.5, omp 18.18.3 | `--tier 1.5 --harness omp` | 0 | the same | clean, tripwire no events |
+
+- Before the fixes, the live check had Pi and omp failing S2 to S8, S11, and S12 and every run exiting 1 on three stale gaps. After them, no scenario failed, no run reported a stale gap, and every run exited 0.
+- The tier 1.5 runs were offline: each printed `A public connection failed (ENETUNREACH) and the loopback answered with HTTP 200`.
+- The omp CLI is 18.18.3 here, and the live check ran 18.14.1. The result file names the version that ran.
+- The S4 note on Pi's result reads `This harness ran in direct-PR mode, because the plugin does not admit it in local-only mode.`
+- After the last run, no process mentioned the lab directory and nothing listened on the lab ports. `bblab down` ran after each run.
+- No change under `src/`: the live runs needed none.
+- The result files and `docs/HARNESS-SUPPORT.md` were committed in `c089d6a`, and `pnpm run check` was green on them (141 files, 1835 passed).
