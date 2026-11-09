@@ -868,3 +868,94 @@ Reworking them would mean new history for tests that already fail when their pro
 The captain accepted the seven as a recorded deviation, as for the earlier factoryman milestones, on 2026-11-08.
 They are guard tests that fail against the code without the guard.
 The note stays in `tdd/verification.md`.
+
+### D-100: A harness is supported when it passes a conformance suite without a credential (Decided by the captain)
+
+The captain accepted the five recommendations in section 8 of the harness-independence report, including D1 option A.
+A harness is supported at a version when the real command-line tool, behind a scripted fake model and with no credential, passes the scenarios S1 to S9, S11, and S12 (tier 1.5).
+Each funded harness also runs once with a real model (tier 2), which this feature does not do.
+This feature builds the suite: the stub agent and the lab scripts under `tools/`, the runner (`pnpm run conformance`), the fake model server with three wire formats, one driver per harness, result files under `conformance/results/`, and the generated `docs/HARNESS-SUPPORT.md`.
+`docs/CONFORMANCE.md` explains how to run it.
+The plugin under `src/` did not change.
+
+### D-101: A scenario check that waits for a report task is a known gap, and a known gap that passes fails the run (Deviation from the report)
+
+The report's scenarios are written to the behavior that report tasks H1 to H5 will add: a readiness gate (S1), cause-bearing failure evidence (S7), and a supervisor start command with clear advice after a stamp (S9).
+This feature builds none of H1 to H5, so those checks fail today, and the report's "passes S1 to S9, S11, and S12" cannot hold as written.
+The suite keeps every scenario and gives each check an id.
+`conformance/known-gaps.json` names a check, a harness or `*`, the report task that closes it, and the reason.
+A failing check that the list names gives the verdict `known-gap` and does not fail the run.
+A failing check that the list does not name fails the run.
+A passing check that the list names fails the run, with the message to remove the entry, so a gap cannot outlive the work that closes it.
+The generated support document shows a known gap as a gap with its task and never as a pass.
+Today the list holds `S1.unready-blocks` and `S1.remedy` (H1), `S7.cause` (H3), `S9.start-command` (H4), and `S9.stamp-advice` for Codex and omp (H4).
+The captain can ask for a different rule, for example to fail the run on a known gap, by editing the verdict function in `tools/conformance/verdict.ts`.
+
+### D-102: The supervisor brain is the stub, and the harness is the supervisor only where that is the point (Gap)
+
+Dispatching and reading state need a supervisor that never fails, so the stub supervisor (the "driver supervisor") calls `factoryman_dispatch` with an explicit profile, and the worker runs on the harness under test.
+Three scenarios spawn a second supervisor on the harness: the supervisor half of S5, S9, and S12.
+The stub and the fake model read the same directives from a prompt (`CALL <tool> <json>`, `SHELL <command>`, `SLEEP <ms>`) and the same behavior markers in a task description (`[brain:<flag>]`: `silent`, `empty-evidence`, `double-report`, `dirty`, `nocommit`, `blocked`, `hold`, `fail=<code>`, `pr=<url>`).
+Assertions read the plugin's events and tasks, bb's thread log, the clone's git state, and the lab's process list.
+One check reads a brain's own log: which plugin tools and skills a role was offered, because bb has no call for it.
+No assertion reads model text.
+
+### D-103: The lab builds the plugin with the network on and then runs offline (Finding, task H8)
+
+bb 0.49.0 starts and serves its API with no network (`bblab up --offline`: the sandbox has its own network namespace with a loopback only; a connection to a public address failed with `ENETUNREACH`; the lab's bb answered on the loopback with HTTP 200).
+It needs the network once, for one thing.
+`bb plugin build` and `bb plugin install` install bb's build toolchain (`esbuild` and `tailwindcss`) with `npm install` into `<data dir>/plugins/toolchain-*` the first time.
+Offline, that call retried for 4 minutes and failed with `EAI_AGAIN`.
+The runner therefore copies the plugin (with `node_modules`) into the lab directory, builds it once with the pinned `bb` outside the sandbox with the network on and `BB_DATA_DIR` set to the lab's data directory, and then starts the lab offline.
+After that, `bb plugin install` takes under two seconds offline.
+The lab reset keeps the toolchain, so later runs do not need the network at all except to reinstall `bb-app` when the pin is missing.
+Tier 1.5 runs offline by default, so a harness cannot reach a vendor by accident; `--no-offline` turns it off for debugging.
+A `curl` inside the lab opens the canary `.ssh/known_hosts` and trips the tripwire, so the probes inside the lab use `node`.
+
+### D-104: The tools run under Node's type stripping, with a second `tsconfig.json` (Gap)
+
+The tools under `tools/` run directly with `node tools/conformance/cli.ts`, so there is no build step and no new dependency.
+Node strips types, which needs `.ts` extensions in relative imports and no constructor parameter properties, enums, or namespaces.
+`tools/tsconfig.json` extends the root config with `erasableSyntaxOnly`, and `pnpm run typecheck` runs both configs.
+The root config cannot take `erasableSyntaxOnly`, because `src/` uses constructor parameter properties.
+The tools import nothing from `src/` and nothing from `@get-bb/*`.
+The stub agent and the fake model run inside the lab and import only Node modules.
+
+### D-105: Five harness facts that the report's table did not show (Finding)
+
+1. Claude Code sends the sandbox text, the deferred tool list, and the skill list as messages with the role `system` inside the `messages` array.
+   A parser that reads only the `system` field sees no plugin tool and no skill.
+   Claude Code also runs a tool call once per id and skips a repeated id.
+2. Claude Code adds the user text `Tool loaded.` after a `ToolSearch` call, and a `<total_tokens>` reminder after every tool call.
+3. Codex reports `unauthenticated` until `codex login status` succeeds, even with a custom model provider.
+   The lab driver writes `~/.codex/auth.json` with the literal dummy key `mock-not-a-credential`, which makes it succeed.
+   The key is a placeholder and not a credential.
+4. omp in `accept-edits` asks for approval before a shell command (an `approval` interaction, `waiting_for_approval`), and a worker that cannot answer waits for ever.
+   The driver uses `full`.
+   A real omp worker in `accept-edits` stops at its first shell command, and the plugin then wakes the supervisor with the `interaction.pending` text.
+5. omp never records a failed thread for a model error.
+   For HTTP 401 and 404 it ends the turn normally after one request and shows the error as the assistant's text.
+   For HTTP 500 and 429 it retries for about six minutes and then does the same.
+   The plugin therefore sees a silent turn, and the supervisor learns of the error only by reading the worker's thread.
+   The driver says `failure.mode: "ends-turn"`, and scenario S7 checks for the silent-turn wake on such a harness.
+
+The drivers carry these facts.
+A CLI upgrade that changes one fails a scenario, and the maintainer edits one driver.
+
+### D-106: The isolation check ignores churn from other tools (Gap)
+
+`bblab-evidence diff` compares the real machine before and after a run, and other agents work on the same machine at the same time.
+The first Pi run reported `CHANGED: real-home file NAMES`, because another lane's `opencode` created `opencode.db-shm` and `opencode.db-wal`.
+A check that fails on a busy machine is flaky.
+`tools/conformance/isolation.ts` calls a run unclean for a `LEAK` line, a change to a credential or git config file, or a changed file name under the harness homes (`.pi`, `.omp`, `.codex`, `.claude`, `.ssh`, `.bb`), the bb machine homes (not their logs), `.config/{gh,git,systemd,bb,omp,pi}`, or any path with `bblab`.
+It counts other changes and reports how many it ignored.
+The tripwire report is printed and not judged: a harness opens its own credential file, which is a canary in the lab.
+
+### D-107: Some tests came after their code, with a revert-red (Deviation, accepted by the captain)
+
+Constitution principle V says that every behavior change is driven by a test that failed first.
+The tier 1 and tier 1.5 live runs found defects that only a real lab shows, so several behaviors were first seen in a live run and then pinned with a test.
+`specs/009-conformance-harness/tdd/cycle-log.md` lists them: the acceptance tests of the fake model server, the runner, and the document command (a revert-red was recorded for each), and U1422 (a recorded Claude Code request).
+The real lab (`tools/conformance/real-lab.ts`) has no unit test. The live runs are its test, and the result files keep their output.
+The captain accepted the 26 test-after behaviors as a recorded deviation on 2026-11-09, on the same precedent as D-099.
+They are A1301 to A1306, A1308 to A1313, A1316 to A1321, A1324, A1326 to A1328, A1330, U1422, U1427, and U1428, each with a revert-red or a killing mutant in `tdd/cycle-log.md` and `tdd/verification.md`.

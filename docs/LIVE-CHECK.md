@@ -24,8 +24,8 @@ The sandbox has an empty `$HOME`, no systemd bus, no ssh-agent, and a private PI
 Teardown kills the namespace, so nothing survives.
 Canary credential files sit at the real credential paths, and an inotify tripwire records any read.
 
-The report's appendices hold two scripts, `bblab` and `bblab-evidence`.
-Save them outside this repository and outside firstmate's tree (for example in `~/.local/bin`), and make them executable.
+The two scripts, `bblab` and `bblab-evidence`, live in `tools/bblab/` in this repository.
+Run them from there, or copy them outside firstmate's tree (for example to `~/.local/bin`) and make them executable.
 The report's section 6.0 lists the one-time setup, and its section 8 lists the hazards that a naive "set a few environment variables" approach would hit.
 This runbook uses that report's design and its commands.
 It adds the plugin-specific steps.

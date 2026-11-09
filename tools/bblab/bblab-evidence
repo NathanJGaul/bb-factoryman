@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+# bblab-evidence - prove a live test left the real machine and firstmate untouched.
+#   bblab-evidence snap <label>            read-only snapshot into $EVIDENCE_DIR/<label>
+#   bblab-evidence diff <before> <after>   compare two snapshots
+# Credential files are only stat'ed, never read.
+set -u
+EV="${EVIDENCE_DIR:-${TMPDIR:-/tmp}/bblab-evidence}"
+H="$HOME"
+FM="${FIRSTMATE_HOME:-$HOME/Projects/firstmate}"
+strip() { sed 's/\x1b\[[0-9;]*m//g'; }
+lst() { find "$@" -printf '%p %s %TY-%Tm-%Td_%TH:%TM:%TS\n' 2>/dev/null | sort; }
+
+snap() {
+  local D="$EV/$1"; rm -rf "$D"; mkdir -p "$D"; date -u +%FT%TZ > "$D/time.txt"
+  ss -ltnH | awk '{print $4}' | sort -u > "$D/ports-tcp.txt"
+  ss -lunH | awk '{print $4}' | sort -u > "$D/ports-udp.txt"
+  ps -eo args | sed -E 's/[[:space:]]+/ /g' | grep -E 'bb-app|bb-server|bb-host|\.bb|no-mistakes|herdr|treehouse|firstmate' | grep -v -E 'grep|bblab-evidence' | sort > "$D/procs-key.txt"
+  { no-mistakes daemon status 2>&1 | strip | grep -E 'daemon (running|not running)'
+    echo "--- ~/.no-mistakes top level"; find "$H/.no-mistakes" -maxdepth 1 -printf '%P %s\n' | sort
+  } > "$D/no-mistakes.txt"
+  { echo "### ~ top level";            lst "$H" -maxdepth 1 | grep -v -E '/\.(claude|claude\.json|bash_history) '
+    echo "### ~/.bb";                  lst "$H/.bb" -maxdepth 4
+    echo "### ~/.bb-machines";         lst "$H/.bb-machines" -maxdepth 3 -not -path '*/node_modules/*'
+    echo "### ~/.config";              lst "$H/.config" -maxdepth 2
+    echo "### ~/.local";               lst "$H/.local" -maxdepth 3 -not -path '*/mise/installs/*' -not -path '*/mise/downloads/*'
+    echo "### ~/.ssh";                 lst "$H/.ssh" -maxdepth 1
+    echo "### ~/.codex";               lst "$H/.codex" -maxdepth 1
+  } > "$D/files.txt"
+  { for f in "$H/.gitconfig" "$H/.config/git/config" "$H/.config/gh/config.yml" "$H/.config/gh/hosts.yml" "$H/.ssh/config" "$H/.ssh/known_hosts" "$H/.codex/auth.json"; do
+      [ -e "$f" ] && stat -c '%n size=%s mtime=%y' "$f" || echo "$f MISSING"; done
+    echo "--- systemd user units (names)"; ls "$H/.config/systemd/user" | sort
+  } > "$D/creds-stat.txt"
+  { echo "state entries: $(ls "$FM/state" 2>/dev/null | wc -l)"; echo "entries mentioning bblab:"; find "$FM" -maxdepth 4 -iname '*bblab*' 2>/dev/null; } > "$D/firstmate.txt"
+  docker ps -a --format '{{.Names}} {{.Image}}' 2>/dev/null | sort > "$D/docker.txt"
+  echo "snapshot $1 -> $D"
+}
+
+diffs() {
+  local A="$EV/$1" Z="$EV/$2"
+  echo "== TCP listeners (empty = unchanged)";  diff "$A/ports-tcp.txt" "$Z/ports-tcp.txt" && echo "(identical)"
+  echo "== UDP listeners";                       diff "$A/ports-udp.txt" "$Z/ports-udp.txt" && echo "(identical)"
+  echo "== shared no-mistakes daemon + ~/.no-mistakes top level"; diff "$A/no-mistakes.txt" "$Z/no-mistakes.txt" && echo "(identical)"; sed -n 1p "$Z/no-mistakes.txt"
+  echo "== real-home file NAMES (added/removed)"; diff <(awk '{print $1}' "$A/files.txt") <(awk '{print $1}' "$Z/files.txt") && echo "(identical)"
+  echo "== bb / ssh / gh / git / systemd related path changes (names+sizes+mtimes)"
+  diff "$A/files.txt" "$Z/files.txt" | grep -E '\.bb |\.bb/|bb-machines|bblab|systemd|\.ssh|/gh/|\.gitconfig|/git/' | grep -v 'daemon.lock.lock' || echo "(none; the captain's own bb daemon touches daemon.lock.lock every ~15s, ignored)"
+  echo "== credential + git config stat, systemd unit names"; diff "$A/creds-stat.txt" "$Z/creds-stat.txt" && echo "(identical)"
+  echo "== firstmate: anything named bblab"; cat "$Z/firstmate.txt" | tail -n +2
+  echo "== docker container set"; diff "$A/docker.txt" "$Z/docker.txt" && echo "(identical)"
+  echo "== key processes (only unrelated churn from other lanes may appear; no bblab/48886/48887 lines allowed)"
+  diff "$A/procs-key.txt" "$Z/procs-key.txt" | grep -E '48886|48887|bblab|\.lab' && echo "LEAK: lab process visible on host" || echo "(no lab process lines)"
+}
+
+case "${1:-}" in snap) snap "$2";; diff) diffs "$2" "$3";; *) sed -n '2,5p' "$0"; exit 2;; esac

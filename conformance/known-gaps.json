@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "gaps": [
+    {
+      "check": "S1.unready-blocks",
+      "harness": "*",
+      "task": "H1",
+      "reason": "dispatch trusts the `available` flag of bb's provider list, which means installed and not signed in, and does not read providerStates"
+    },
+    {
+      "check": "S1.remedy",
+      "harness": "*",
+      "task": "H1",
+      "reason": "the refusal cannot name bb's status or login command, because dispatch does not read providerStates"
+    },
+    {
+      "check": "S7.cause",
+      "harness": "*",
+      "task": "H3",
+      "reason": "the failure evidence reads thread.failed.error and turn.failed.errorInfo, and drops the cause text that bb keeps in provider/error.detail"
+    },
+    {
+      "check": "S9.start-command",
+      "harness": "*",
+      "task": "H4",
+      "reason": "the command `bb factoryman supervisor start` does not exist yet"
+    },
+    {
+      "check": "S9.stamp-advice",
+      "harness": "codex",
+      "task": "H4",
+      "reason": "the stamp command says the tools arrive \"from its next session\" and does not tell the person to run `bb thread clear`, which this harness needs"
+    },
+    {
+      "check": "S9.stamp-advice",
+      "harness": "omp",
+      "task": "H4",
+      "reason": "the stamp command says the tools arrive \"from its next session\" and does not tell the person to run `bb thread clear`, which this harness needs"
+    }
+  ]
+}

@@ -20,11 +20,13 @@
     "bb-plugin"
   ],
   "scripts": {
-    "typecheck": "tsc6 --noEmit",
+    "typecheck": "tsc6 --noEmit && tsc6 --noEmit -p tools/tsconfig.json",
     "lint": "eslint .",
     "test": "vitest run",
     "build": "bb plugin build",
-    "check": "pnpm run typecheck && pnpm run lint && pnpm run test"
+    "check": "pnpm run typecheck && pnpm run lint && pnpm run test",
+    "conformance": "node tools/conformance/cli.ts",
+    "conformance:docs": "node tools/conformance/docs-cli.ts"
   },
   "dependencies": {
     "@toon-format/toon": "4.4.0",
