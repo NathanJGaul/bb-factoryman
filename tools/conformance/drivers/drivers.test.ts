@@ -146,3 +146,17 @@ describe("the delivery mode of a driver", () => {
     }
   });
 });
+
+describe("the omp profile", () => {
+  it("[U1505] asks for reasoning level auto, which the lab model lists", () => {
+    const d = driver("omp");
+    expect(d.profile.reasoningLevel).toBe("auto");
+    expect(d.shipProfile.reasoningLevel).toBe("auto");
+  });
+
+  it("[U1506] has an unsupported profile that differs from the profile in the permission mode only", () => {
+    const d = driver("omp");
+    const differing = (Object.keys(d.profile) as Array<keyof typeof d.profile>).filter((key) => d.unsupportedProfile[key] !== d.profile[key]);
+    expect(differing).toEqual(["permissionMode"]);
+  });
+});

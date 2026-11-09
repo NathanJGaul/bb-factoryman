@@ -1,8 +1,11 @@
 import { bindCli } from "./bind.ts";
 import type { Driver } from "./types.ts";
 
-/** omp asks for approval before a shell command in `accept-edits`, so a scripted worker would wait for ever. Tier 1.5 tests the plumbing, so the profile uses `full`. */
-const profile = { provider: "acp-omp", model: "mock/mock-1", reasoningLevel: "low", permissionMode: "full" } as const;
+/**
+ * omp asks for approval before a shell command in `accept-edits`, so a scripted worker would wait for ever. Tier 1.5 tests the plumbing, so the profile uses `full`.
+ * bb lists the reasoning levels `off` and `auto` for the lab model, and the plugin refuses a level that the model does not list (D-113, D-114), so the profile uses `auto`.
+ */
+const profile = { provider: "acp-omp", model: "mock/mock-1", reasoningLevel: "auto", permissionMode: "full" } as const;
 
 /** omp runs behind bb's ACP provider. It reads models.yml, and it shows the report tool as an `xd://` device. */
 export const omp: Driver = {

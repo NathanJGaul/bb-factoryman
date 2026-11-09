@@ -3,7 +3,9 @@ import { mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { renderSupport } from "../../tools/conformance/docs.ts";
+import { main } from "../../tools/conformance/run.ts";
 import { parseResult, serializeResult, type ResultFile } from "../../tools/conformance/result.ts";
+import { fakeDeps } from "../fixtures/conformance-run";
 import { gapped, passing, resultFile, SCENARIO_IDS } from "../fixtures/conformance-result";
 import { tmpDir } from "../fixtures/git-repo";
 
@@ -62,5 +64,15 @@ describe("pnpm run conformance:docs", () => {
     const dir = join(ROOT, "conformance/results");
     const results = readdirSync(dir).filter((n) => n.endsWith(".json")).sort().map((n) => parseResult(readFileSync(join(dir, n), "utf8")));
     expect(readFileSync(join(ROOT, "docs/HARNESS-SUPPORT.md"), "utf8")).toBe(renderSupport(results));
+  });
+
+  it("[A1504] shows the direct-PR note next to Pi's passing S4 and names the scenario Ship, from a result that a run wrote", async () => {
+    const { deps, rec } = fakeDeps();
+    await main(["--tier", "1.5", "--harness", "pi", "--results-dir", "out"], deps);
+    const written = parseResult(rec.files.get("out/1.5-pi.json") as string);
+    const doc = generate([written]);
+    const row = doc.split("\n").find((line) => line.startsWith("| S4 |")) as string;
+    expect(row).toMatch(/^\| S4 \| pass \| Ship \| This harness ran in direct-PR mode, because the plugin does not admit it in local-only mode\. \|$/);
+    expect(doc).not.toContain("Ship in local-only mode");
   });
 });

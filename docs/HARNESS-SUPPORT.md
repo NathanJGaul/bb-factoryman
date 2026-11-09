@@ -26,7 +26,7 @@ Status: supported at tier 1.5, with known gaps in S1, S7, S9. Tier 2 has not run
 | S1 | known gap (H1) | Readiness | S1.unready-blocks waits for H1: dispatch trusts the `available` flag of bb's provider list, which means installed and not signed in, and does not read providerStates; S1.remedy waits for H1: the refusal cannot name bb's status or login command, because dispatch does not read providerStates |
 | S2 | pass | Profile honored |  |
 | S3 | pass | Scout |  |
-| S4 | pass | Ship in local-only mode |  |
+| S4 | pass | Ship |  |
 | S5 | pass | Confinement |  |
 | S6 | pass | Silence |  |
 | S7 | known gap (H3) | Failure | S7.cause waits for H3: the failure evidence reads thread.failed.error and turn.failed.errorInfo, and drops the cause text that bb keeps in provider/error.detail |
@@ -54,7 +54,7 @@ Status: supported at tier 1.5, with known gaps in S1, S7, S9. Tier 2 has not run
 | S1 | known gap (H1) | Readiness | S1.unready-blocks waits for H1: dispatch trusts the `available` flag of bb's provider list, which means installed and not signed in, and does not read providerStates; S1.remedy waits for H1: the refusal cannot name bb's status or login command, because dispatch does not read providerStates |
 | S2 | pass | Profile honored |  |
 | S3 | pass | Scout |  |
-| S4 | pass | Ship in local-only mode |  |
+| S4 | pass | Ship |  |
 | S5 | pass | Confinement |  |
 | S6 | pass | Silence |  |
 | S7 | known gap (H3) | Failure | S7.cause waits for H3: the failure evidence reads thread.failed.error and turn.failed.errorInfo, and drops the cause text that bb keeps in provider/error.detail |
@@ -82,7 +82,7 @@ Status: supported at tier 1.5, with known gaps in S1, S7, S9. Tier 2 has not run
 | S1 | known gap (H1) | Readiness | S1.unready-blocks waits for H1: dispatch trusts the `available` flag of bb's provider list, which means installed and not signed in, and does not read providerStates; S1.remedy waits for H1: the refusal cannot name bb's status or login command, because dispatch does not read providerStates |
 | S2 | pass | Profile honored |  |
 | S3 | pass | Scout |  |
-| S4 | pass | Ship in local-only mode |  |
+| S4 | pass | Ship |  |
 | S5 | pass | Confinement |  |
 | S6 | pass | Silence |  |
 | S7 | known gap (H3) | Failure | S7.cause waits for H3: the failure evidence reads thread.failed.error and turn.failed.errorInfo, and drops the cause text that bb keeps in provider/error.detail |
@@ -110,7 +110,7 @@ Status: supported at tier 1.5, with known gaps in S1, S9. Tier 2 has not run.
 | S1 | known gap (H1) | Readiness | S1.unready-blocks waits for H1: dispatch trusts the `available` flag of bb's provider list, which means installed and not signed in, and does not read providerStates; S1.remedy waits for H1: the refusal cannot name bb's status or login command, because dispatch does not read providerStates |
 | S2 | pass | Profile honored |  |
 | S3 | pass | Scout |  |
-| S4 | pass | Ship in local-only mode |  |
+| S4 | pass | Ship |  |
 | S5 | pass | Confinement |  |
 | S6 | pass | Silence |  |
 | S7 | pass | Failure | This harness ends a failing model turn normally and shows the error as the assistant's text, so bb records no failure and the plugin sees a silent turn. |
@@ -136,7 +136,7 @@ Status: supported at tier 1.5, with known gaps in S1, S9. Tier 2 has not run.
 | S1 | known gap (H1) | Readiness | S1.unready-blocks waits for H1: dispatch trusts the `available` flag of bb's provider list, which means installed and not signed in, and does not read providerStates; S1.remedy waits for H1: the refusal cannot name bb's status or login command, because dispatch does not read providerStates |
 | S2 | pass | Profile honored |  |
 | S3 | pass | Scout |  |
-| S4 | pass | Ship in local-only mode |  |
+| S4 | pass | Ship |  |
 | S5 | pass | Confinement |  |
 | S6 | pass | Silence |  |
 | S7 | known gap (H3) | Failure | S7.cause waits for H3: the failure evidence reads thread.failed.error and turn.failed.errorInfo, and drops the cause text that bb keeps in provider/error.detail |
