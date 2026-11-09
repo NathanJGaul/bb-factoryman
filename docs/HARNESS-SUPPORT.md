@@ -26,4 +26,26 @@ Status: unsupported. No tier 1.5 result exists for this harness.
 
 ## Tier 1 (stub agent)
 
-No tier 1 result exists.
+| Field | Value |
+| --- | --- |
+| CLI | stub-agent 0.0.1 |
+| bb | 0.49.0 |
+| Plugin commit | e30c027 |
+| Date | 2026-11-09 |
+| Network | shared |
+| Isolation | clean |
+
+| Scenario | Verdict | Name | Detail |
+| --- | --- | --- | --- |
+| S1 | known gap (H1) | Readiness | S1.unready-blocks waits for H1: dispatch trusts the `available` flag of bb's provider list, which means installed and not signed in, and does not read providerStates; S1.remedy waits for H1: the refusal cannot name bb's status or login command, because dispatch does not read providerStates |
+| S2 | pass | Profile honored |  |
+| S3 | pass | Scout |  |
+| S4 | pass | Ship in local-only mode |  |
+| S5 | pass | Confinement |  |
+| S6 | pass | Silence |  |
+| S7 | known gap (H3) | Failure | S7.cause waits for H3: the failure evidence reads thread.failed.error and turn.failed.errorInfo, and drops the cause text that bb keeps in provider/error.detail |
+| S8 | pass | Refusals |  |
+| S9 | known gap (H4) | Role change | S9.start-command waits for H4: the command `bb factoryman supervisor start` does not exist yet |
+| S10 | pass | Restart |  |
+| S11 | pass | Teardown |  |
+| S12 | pass | Wake while busy |  |

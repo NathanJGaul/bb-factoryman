@@ -225,3 +225,16 @@ The first lab run changed two plans, so the list changed before these tests were
   - The CLI was restored from a saved copy, the document was generated (`Wrote docs/HARNESS-SUPPORT.md from 0 result file(s)`), and `pnpm vitest run test/acceptance/conformance-docs.test.ts tools/conformance/docs.test.ts` -> 10 passed.
   - A1326, A1327, A1311, A1328 are `TEST_AFTER` with a recorded revert-red, as in D-099. A1329 was red first.
 - the document text had two sentences on one line; they were split (the style rule), and the document was regenerated.
+
+## Live run 1: tier 1 against the stub (A1307, T1335)
+
+The real lab (`tools/conformance/real-lab.ts`, `cli.ts`) cannot be unit tested, so the first runs are the test. Each finding below was fixed with a red test first where code could carry one.
+
+- Run 0 (`pnpm run conformance -- --tier 1 --lab-dir /var/tmp/bblab-conformance`): `Unknown argument --.` pnpm passes the `--` separator to the script. Red test U1414 (`parseArgs(["--", "--tier", "1"])` failed), then the fix.
+- Run 1 (7 min 32 s): the lab started with the pinned bb 0.49.0, and the isolation check was clean. Verdicts: S2, S3, S4, S5, S8, S10, S11, S12 `pass`; S1, S6, S7, S9 `fail`.
+  - S6.one-wake and S7.wake read `0 wake(s)`. The cause was in the lab and not in the plugin: `bb thread log` shows the oldest 100 events unless it gets `--all`, and the driver supervisor's thread was longer. The thread log of the driver supervisor held both wakes (`reports: the worker finished a turn without reporting`, `is now failed`). Fix: `threadLog` passes `--all` (no unit test: it is in the real lab, and the next run proves it).
+  - S1.unready-blocks and S1.remedy: a dispatch to `codex`, which bb reports `not_installed`, created a task (`t-907b11e3`) whose thread then failed with `Command thread.start failed`. This is report task H1.
+  - S7.cause: the failure evidence was `worker thread failed: provider error (category unknown, HTTP unknown)`, but the worker's thread log holds `provider/error` with `detail: "STUB upstream failure: CONFORMANCE-CAUSE-500"`. This is report task H3.
+  - S9.start-command: `bb factoryman supervisor start --project ...` exits 2 with the usage text. This is report task H4.
+- Gaps listed in `conformance/known-gaps.json`: S1.unready-blocks and S1.remedy (H1), S7.cause (H3), S9.start-command (H4), each for every harness.
+- Run 2 (3 min 34 s): `pnpm run conformance -- --tier 1 --lab-dir /var/tmp/bblab-conformance` -> exit 0. S1, S7, S9 `known-gap`; the other nine `pass`; isolation clean (`no change to the real home, the credentials, or the lab process list. tripwire: no events`). The result file is `conformance/results/1-stub.json` (stub-agent 0.0.1, bb 0.49.0).
