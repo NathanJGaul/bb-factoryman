@@ -1191,7 +1191,7 @@ Every shell command of every worker on the machine then failed.
 The options were: dispose each world in an `afterEach` (misses the tests that call `createFakePluginHost` directly, and every future one), wrap the SDK function with a module mock (covers all callers but hides the SDK behind a mock), or give each test file a private temporary directory.
 This follow-up takes the third.
 `test/setup/private-tmpdir.setup.ts` is a `vitest` setup file that calls `createPrivateTmpdir` (in `test/setup/private-tmpdir.ts`), which makes a directory under the current temporary directory and points `TMPDIR` at it before the test file loads.
-The setup file removes the directory after the file, whether its tests pass, fail, or time out, and again when the worker exits.
+The setup file removes the directory after the file, whether its tests pass, fail, or time out.
 `os.tmpdir()` reads `TMPDIR` on each call, so the SDK's `mkdtempSync` lands inside it, for `loadWorld`, for a direct `createFakePluginHost`, and for any test that comes later.
 It removes only the directory it made, and it does not delete directories that earlier runs leaked.
 One full run of the suite left 394 `bb-fake-plugin-host-*` directories before the change and none after it.

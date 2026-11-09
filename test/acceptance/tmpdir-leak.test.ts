@@ -1,5 +1,5 @@
 import { spawnSync } from "node:child_process";
-import { mkdirSync, readdirSync } from "node:fs";
+import { readdirSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { tmpDir } from "../fixtures/git-repo";
@@ -18,7 +18,6 @@ const leaks = (dir: string) => entries(dir).filter((entry) => /(^|\/)bb-fake-plu
  */
 function child(withSetup: boolean): { output: string; remaining: string[] } {
   const tmp = tmpDir("leak-child-");
-  mkdirSync(tmp, { recursive: true });
   const env: Record<string, string> = { PATH: process.env["PATH"] ?? "/usr/bin:/bin", HOME: process.env["HOME"] ?? tmp, TMPDIR: tmp, NO_COLOR: "1", ...(withSetup ? {} : { LEAK_WITHOUT_SETUP: "1" }) };
   const run = spawnSync(process.execPath, [VITEST, "run", "--config", CONFIG], { cwd: ROOT, env, encoding: "utf8", timeout: 120_000 });
   return { output: `${run.stdout}${run.stderr}`, remaining: leaks(tmp) };

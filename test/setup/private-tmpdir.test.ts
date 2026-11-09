@@ -61,4 +61,24 @@ describe("createPrivateTmpdir", () => {
     expect(() => handle.restore()).not.toThrow();
     expect(env["TMPDIR"]).toBe(parent);
   });
+
+  it("[U1534] makes its directory in the platform's temporary directory when TMPDIR is the empty string, and puts the empty string back", () => {
+    const env: NodeJS.ProcessEnv = { TMPDIR: "" };
+    const handle = createPrivateTmpdir(env);
+    expect(dirname(handle.dir)).toBe(tmpdir());
+    handle.restore();
+    expect(env["TMPDIR"]).toBe("");
+    expect(existsSync(handle.dir)).toBe(false);
+  });
+
+  it("[U1535] leaves a TMPDIR that changed between two restore calls alone", () => {
+    const parent = tmpDir("private-parent-");
+    const env: NodeJS.ProcessEnv = { TMPDIR: parent };
+    const handle = createPrivateTmpdir(env);
+    handle.restore();
+    env["TMPDIR"] = "/changed/by/another/hook";
+    handle.restore();
+    expect(env["TMPDIR"]).toBe("/changed/by/another/hook");
+  });
 });
+

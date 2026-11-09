@@ -69,3 +69,30 @@ describe("the fake lab's reasoning levels", () => {
     }
   });
 });
+
+describe("the fake lab's ship task in local-only mode", () => {
+  it("[U1530] stays working with a refused report when the worker reports a pull request and no landed commits", async () => {
+    const lab = new FakeLab("codex");
+    const task = await stateOf(lab, (await lab.dispatch("ship", "ship probe", { flag: `pr=${PR}` })).taskId);
+    expect(task?.mode).toBe("local-only");
+    expect(task?.state).toBe("working");
+    expect(task?.pullRequestUrl).toBeNull();
+    const refused = (await lab.events(task?.taskId)).filter((e) => e.outcome === "refused" && e.reasonCode === "mode_check_failed");
+    expect(refused).toHaveLength(1);
+  });
+});
+
+describe("the fake lab's block of an unsupported profile", () => {
+  it("[U1533] names what differs from the driver's profile: the reasoning level for Claude Code, the permission mode for omp", async () => {
+    const claude = new FakeLab("claude-code");
+    const level = await claude.dispatch("scout", "unsupported probe", { profile: claude.driver.unsupportedProfile });
+    expect(level.taskId).toBeNull();
+    expect(level.result.text).toMatch(/reasoning level `no-such-level`/);
+    expect(level.result.text).not.toMatch(/permission mode/);
+    const omp = new FakeLab("omp");
+    const mode = await omp.dispatch("scout", "unsupported probe", { profile: omp.driver.unsupportedProfile });
+    expect(mode.taskId).toBeNull();
+    expect(mode.result.text).toMatch(/permission mode `auto`/);
+    expect(mode.result.text).not.toMatch(/reasoning level/);
+  });
+});

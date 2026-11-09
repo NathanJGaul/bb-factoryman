@@ -2,7 +2,7 @@ import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { findDanglingCitations, findDuplicateHeadings, type TextFile } from "../fixtures/decision-log.ts";
+import { findDanglingCitations, findDuplicateHeadings, headingNumbers, type TextFile } from "../fixtures/decision-log";
 
 const ROOT = new URL("../../", import.meta.url).pathname;
 const TEXT = /\.(md|ts|tsx|json|ya?ml)$/;
@@ -28,4 +28,11 @@ describe("docs/DECISIONS.md", () => {
     const dangling = findDanglingCitations(log(), trackedText());
     expect(dangling.map((d) => `${d.path}:${d.line} cites ${d.number}`)).toEqual([]);
   });
+
+  it("[A1515] holds headings that the checker can read, from D-001 to a number that is not older than D-117", () => {
+    const numbers = headingNumbers(log());
+    expect(numbers[0]).toBe("D-001");
+    expect((numbers.at(-1) ?? "") >= "D-117").toBe(true);
+  });
 });
+
