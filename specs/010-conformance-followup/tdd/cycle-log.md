@@ -71,3 +71,21 @@ Mutant checks for the behaviors that passed on their first run:
 - U1509 (local-only S4 sends no pull request): the first mutant, S4 always sending the `pr=` flag, survived, because the fake lab ignored the flag in `local-only`. The fake lab then learned the real rule (a `local-only` report with a pull request and no landed commits is refused with `mode_check_failed`). The same mutant then failed: `AssertionError: S4.review-ready: state: none within the wait; S4.wake: 0 wake(s): expected [ 'S4.review-ready', 'S4.wake' ] to deeply equal []`. The mutant was reverted.
 
 Refactor: none needed.
+
+## Correction to group 2: the U1506 mutant was run
+
+The group 2 entry said that the U1506 mutant was not run separately.
+It was run afterwards: `unsupportedProfile: { ...profile, permissionMode: "auto", reasoningLevel: "off" }` in `omp.ts` gives `AssertionError: expected [ 'reasoningLevel', 'permissionMode' ] to deeply equal [ 'permissionMode' ]`.
+The change was reverted with `git checkout`.
+
+## Group 3: the known-gap file (U1519, U1520, A1507, A1508)
+
+- red: `pnpm vitest run tools/conformance/gaps.test.ts test/acceptance/conformance-gaps.test.ts` -> 4 failed, 8 passed
+  - U1519 `AssertionError: S1.unready-blocks: expected [ 'S1.unready-blocks', …(5) ] to not include 'S1.unready-blocks'`
+  - U1520 `AssertionError: expected [ 'S1.remedy *', …(5) ] to deeply equal [ 'S9.stamp-advice codex', …(2) ]`
+  - A1507 `AssertionError: expected [ 'S1.remedy * H1', …(5) ] to deeply equal [ 'S9.stamp-advice codex H4', …(2) ]`
+  - A1508 `AssertionError: --tier 1: expected 1 to be +0` (the stale gaps S1.unready-blocks, S1.remedy, and S7.cause)
+- green: `conformance/known-gaps.json` lost the three entries. Suite -> 137 files, 1824 passed, 0 failed. Lint clean.
+- mutant: the file cut to its first two entries (a deleted S9 entry) -> U1520, A1507, and A1508 fail (3 failed, 9 passed). Restored.
+- refactor: none needed.
+- commit: see `git log` ("fix(conformance): remove the three known gaps")
