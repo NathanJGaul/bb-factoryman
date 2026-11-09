@@ -15,7 +15,7 @@ The plan and the implementation differ in one place (the setup file is two files
 
 | ID | Category | Severity | Location(s) | Summary | Recommendation |
 | --- | --- | --- | --- | --- | --- |
-| A1 | Constitution | CRITICAL | constitution V; `tdd/verification.md` finding 1; D-122 | Eleven behaviors have no recorded red, because the behavior was already true: U1506, U1509, U1529, and A1509 (the audit's four), and U1530 to U1535 and A1515 (the remediation's seven). Principle V says every behavior change is driven by a test that failed first. Each has a killing mutant on record. | Wait for the captain's decision on D-122. The earlier features took the same position (D-107, D-116). Nothing to change in the code |
+| A1 | Constitution | CRITICAL | constitution V; `tdd/verification.md` finding 1; D-122 | Eleven behaviors have no recorded red, because the behavior was already true: U1506, U1509, U1529, and A1509 (the audit's four), and U1530 to U1535 and A1515 (the remediation's seven). Principle V says every behavior change is driven by a test that failed first. Each has a killing mutant on record. | The captain accepted D-122 on 2026-11-09, as for D-107 and D-116. Nothing to change in the code |
 | B1 | Inconsistency | LOW | `plan.md` "Project structure" and Q6; `tasks.md` T021 and T027; D-121 | The plan and tasks name one setup file, `test/setup/private-tmpdir.ts`. The implementation has two: a pure module (`private-tmpdir.ts`) and the hook file (`private-tmpdir.setup.ts`). D-121 and `tdd/cycle-log.md` say so. | Leave the plan as the record of the design, and rely on D-121 for the final shape |
 | B2 | Inconsistency | LOW | `plan.md` Q6 and `spec.md` edge cases | The plan says the setup file removes the directory after the file and the worker exit. The exit hook was removed after the audit (it was dead code), so only `afterAll` does the work. | D-121 says so. No change |
 | C1 | Underspecification | MED | `spec.md` FR-010 | FR-010 asks that each citation of a decision number names an entry that says what the citation claims. The guard checks that the number exists, not that it fits. The fit was checked by reading (CHK1521) and D-120 says so. | Accept. A mechanical check of meaning is not possible. Keep the review step |
@@ -75,6 +75,6 @@ None. T001, T002, T012, T025, T029 to T037, T044 are setup, document, and measur
 
 ## Next actions
 
-- The captain decides on D-122 (A1). Nothing else blocks the merge.
+- The captain accepted D-122 (A1) on 2026-11-09. Nothing else blocks the merge.
 - Run `/speckit.converge` for the merge-readiness record, then the final `pnpm run check` (T044).
 - Offer: concrete remediation edits for B1 and B2 (the plan text) are not needed, because D-121 holds the final design.

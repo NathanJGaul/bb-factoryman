@@ -38,11 +38,11 @@ Before this change (the live check of the two merged pull requests): Pi and omp 
 
 ## Merge readiness
 
-Ready for review, with one open decision that belongs to the captain.
+Ready for review. The one decision that belonged to the captain (D-122) is accepted.
 
 - `pnpm run check` is green: 143 files, 1842 tests, typecheck and lint clean.
 - The five runs are the end-to-end proof of the lab changes, and each exits 0.
-- The TDD audit (`tdd/verification.md`) has no `HIGH` smell, no weakened test, and no surviving mutant after the remediation. Its verdict is `FAIL` by the rubric, for one reason: eleven behaviors passed on their first run, because the behavior they pin was already true. Each has a killing mutant. D-122 records the deviation and waits for the captain, as D-107 and D-116 did for the earlier features.
+- The TDD audit (`tdd/verification.md`) has no `HIGH` smell, no weakened test, and no surviving mutant after the remediation. Its verdict is `FAIL` by the rubric, for one reason: eleven behaviors passed on their first run, because the behavior they pin was already true. Each has a killing mutant. D-122 records the deviation, and the captain accepted it on 2026-11-09, as for D-107 and D-116.
 
 ## Risk
 
@@ -61,6 +61,5 @@ Ready for review, with one open decision that belongs to the captain.
 
 ## Remaining work
 
-- The captain accepts or rejects D-122.
 - Tier 2 for each harness (credentials, the captain's), `bb factoryman supervisor start` (H4), and the validator readiness check: other tasks, out of scope here.
 - Directories that earlier runs leaked in `/tmp` stay until their owner removes them.

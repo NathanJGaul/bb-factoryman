@@ -52,7 +52,7 @@ An unchecked item names what is missing and who owns it.
 
 ## Not done, and who owns it
 
-- [ ] CHK1530 The captain accepts or rejects D-122 (eleven behaviors that passed on their first run, each with a killing mutant). Owner: the captain. The audit verdict stays `FAIL` by the rubric until then.
+- [x] CHK1530 The captain accepted D-122 (eleven behaviors that passed on their first run, each with a killing mutant) on 2026-11-09, on the same precedent as D-107 and D-116.
 - [ ] CHK1531 Tier 2 (a real model) for each harness. Owner: the captain, who holds the credentials. Out of scope here.
 - [ ] CHK1532 `bb factoryman supervisor start` (report task H4) and the validator readiness check. Owner: the next feature. The three S9 gap entries wait for H4, and each run fails once the command exists until its entry is removed.
 - [ ] CHK1533 `tools/conformance/real-lab.ts` and the lab scripts have no unit test. Owner: the maintainer, as in D-107. The five live runs are their test.

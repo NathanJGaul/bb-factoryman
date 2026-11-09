@@ -1197,7 +1197,7 @@ It removes only the directory it made, and it does not delete directories that e
 One full run of the suite left 394 `bb-fake-plugin-host-*` directories before the change and none after it.
 `test/acceptance/tmpdir-leak.test.ts` proves it in a child `vitest` process with a private `TMPDIR`, because the cleanup runs after the test file and cannot be seen from inside it.
 
-### D-122: Eleven behaviors came after their behavior, with killing mutants (Deviation, waits for the captain's acceptance)
+### D-122: Eleven behaviors came after their behavior, with killing mutants (Deviation, accepted by the captain)
 
 Constitution principle V says that every behavior change is driven by a test that failed first.
 The TDD audit of this feature (`specs/010-conformance-followup/tdd/verification.md`) classes four of its 43 behaviors `TEST_AFTER`, because no red is recorded for them.
@@ -1211,4 +1211,5 @@ In place of a red, `tdd/cycle-log.md` records a killing mutant for each: the omp
 The repository commits only at green (D-099), so the history cannot show a test before its code in any case.
 The audit's rule fails the feature for this, and the same position was taken for the earlier features (D-107 and D-116).
 The seven of the remediation are pinned by the mutants that the audit found alive: the fake lab's `local-only` rule, the columns of the project row, the root config's setup file, the fake lab's wording of a blocked profile, the empty `TMPDIR`, the restore guard, and the heading pattern of the guard.
-This entry records the deviation and does not accept it: the captain accepts or rejects it, and the pull request description names the eleven behaviors.
+The captain accepted the eleven as a recorded deviation on 2026-11-09, on the same precedent as the earlier factoryman milestones (D-099, D-107, and D-116), with their killing mutants in `tdd/cycle-log.md` as the evidence.
+The pull request description names the eleven behaviors.
