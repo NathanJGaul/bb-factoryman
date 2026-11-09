@@ -179,6 +179,12 @@ Tests carry their behavior id in the title, for example `[U1301]`.
 | U1369 | Binds the loopback only, and ignores any bearer value | AC-4.4 | example | PENDING | |
 | U1370 | Delays a reply by the `SLEEP` directive's time | FR-1305 | example | PENDING | |
 
+### `tools/stub-agent/stub-agent.ts` (added)
+
+| id | behavior | traces | kind | state | test |
+| --- | --- | --- | --- | --- | --- |
+| U1412 | Starts the MCP servers that bb lists as soon as a session opens, so the tools it was offered are in the log even when the first prompt calls no tool | AC-1.3, FR-1307 | example | PENDING | |
+
 ### `tools/fake-model/instructions.ts`
 
 | id | behavior | traces | kind | state | test |
@@ -186,14 +192,14 @@ Tests carry their behavior id in the title, for example `[U1301]`.
 | U1410 | Finds the plugin tools a harness offers by every route (plain, MCP-prefixed, deferred in a system reminder, device in the instruction text) and the skills named in the instruction text, and ignores the same names in the task text | AC-4.3, FR-1307 | example | PENDING | |
 | U1411 | The fake model's log records those tools and skills for each request, so the suite can read what a role was offered | AC-4.3 | example | PENDING | |
 
-### `tools/conformance/lab.ts`
+### `tools/conformance/lab-env.ts` and `tools/conformance/readers.ts` (the pure parts of the real lab)
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| U1371 | Builds the `bblab` command from the repository path and passes no credential variable | AC-1.6, FR-1313 | example | PENDING | |
-| U1372 | Builds the install and build commands for the plugin copy with no network use and an excluded `.git`, `specs`, and `tools` | FR-1302 | example | PENDING | |
-| U1373 | The offline proof passes when the public connection fails and the loopback works, and fails in every other case | AC-5.1, AC-5.3 | example | PENDING | |
-| U1374 | Counts the wake messages of a task from a thread's event log: only events that the plugin sent, naming the task and the state, so the count does not depend on the brain | FR-1307 | example | PENDING | |
+| U1371 | Builds the `bblab` command from the repository path and an environment with the lab variables and no other host variable, so no credential passes | AC-1.6, FR-1313 | example | PENDING | |
+| U1372 | Builds the plugin copy command (excluding `.git`, `specs`, `.claude`, `.specify`, `tools`, `conformance`, `dist`) and the build command, which runs with the lab's data directory and a home inside the lab | FR-1302 | example | PENDING | |
+| U1373 | The offline proof passes when the public connection fails and the loopback answers, and fails in every other case with the reason | AC-5.1, AC-5.3 | example | PENDING | |
+| U1374 | Counts the wake messages of a task from a thread's event log: only events that the plugin sent, naming the task and the state, with a flag for a turn that was running at the time | FR-1307 | example | PENDING | |
 | U1375 | Reads the tools and skills a thread was offered from the stub's log or the fake model's log, by the task id or the supervisor label in the prompt | AC-1.3 | example | PENDING | |
 
 ### `tools/conformance/docs.ts`

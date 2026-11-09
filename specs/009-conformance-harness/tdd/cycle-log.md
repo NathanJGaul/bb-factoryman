@@ -183,3 +183,21 @@ Nothing in the port returns model text, so a scenario cannot read it (A1303).
 - lint: three unused destructured names in the fake lab; replaced with an explicit mapping. `pnpm run typecheck` and `pnpm run lint` pass.
 - the fake-lab tests prove each scenario's checks pass on a correct lab and fail on the named fault. They do not prove the real lab behaves like the fake one; the live runs do.
 - refactor: none needed.
+
+## Group 11: the pure parts of the real lab (U1371 to U1375, U1412)
+
+The first lab run changed two plans, so the list changed before these tests were written:
+
+- U1374 and U1375 now read the thread's event log (a wake is a `client/turn/requested` event from `bb-factoryman`) and the brain's own log by marker, so the count of wakes does not depend on the brain.
+- U1412 is new: the stub starts its MCP servers when a session opens. Before that, a supervisor turn with no tool call left the stub's log with no tool list, so the offers of a plain turn could not be read.
+- The `readers.ts` and `lab-env.ts` modules replace the old `lab.ts` group, and the old rows were removed from the list (ids U1371 to U1375 now name the new rows only).
+
+- red (U1412): `pnpm vitest run tools/stub-agent/stub-agent.test.ts -t U1412` -> `Test timed out in 5000ms` (no `mcp-ready` line without a tool call)
+- red: `pnpm vitest run tools/conformance/readers.test.ts tools/conformance/lab-env.test.ts` -> 6 failed
+  - U1371 `AssertionError: expected { bblab: '', evidence: '', …(1) } to deeply equal { …(3) }`
+  - U1372 `AssertionError: expected '' to contain '--exclude=.git'`
+  - U1373 `AssertionError: expected true to be false`
+  - U1374, U1375 failed against stubs that returned empty values
+- test fix before green: U1372 used an awkward template for the exclusion strings; it now checks `--exclude=<path>` plainly. No assertion became weaker.
+- green: the stub's `session/new` handler now calls `mcpFor(session)` after replying; `tools/conformance/readers.ts` and `tools/conformance/lab-env.ts` are implemented. `pnpm vitest run tools/stub-agent tools/conformance/readers.test.ts tools/conformance/lab-env.test.ts` -> 17 passed. `pnpm run typecheck` and `pnpm run lint` pass.
+- refactor: none needed.

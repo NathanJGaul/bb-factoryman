@@ -320,7 +320,10 @@ async function onRequest(message: { id: number; method: string; params?: Json })
         cwd: session.cwd,
         mcpServers: mcpServers.map((s) => ({ name: s.name, command: s.command, args: s.args, envNames: (s.env ?? []).map((e) => e.name) })),
       });
-      return send({ id, result: { sessionId: session.id } });
+      send({ id, result: { sessionId: session.id } });
+      // Start the servers now, as a real harness does, so the offered tools are known before the first tool call.
+      mcpFor(session).catch((error: unknown) => log("error", { message: `MCP start failed: ${error instanceof Error ? error.message : String(error)}` }));
+      return;
     }
     case "session/prompt": {
       const session = sessions.get(String(params["sessionId"]));

@@ -200,3 +200,13 @@ describe("the stub agent as a worker", () => {
     expect(c.reports()[0]?.arguments["outcome"]).toBe("blocked");
   });
 });
+
+describe("the stub agent at session start", () => {
+  it("[U1412] starts the MCP servers that bb lists as soon as a session opens, so the offered tools are in the log before any tool call", async () => {
+    const s = await session();
+    const deadline = Date.now() + 5000;
+    while (!s.log().some((entry) => entry["kind"] === "mcp-ready") && Date.now() < deadline) await new Promise((resolve) => setTimeout(resolve, 50));
+    const ready = s.log().find((entry) => entry["kind"] === "mcp-ready") as { servers: Array<{ tools: string[] }> } | undefined;
+    expect(ready?.servers[0]?.tools).toEqual(["factoryman_report"]);
+  });
+});
