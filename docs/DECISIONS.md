@@ -986,6 +986,7 @@ D1, D2, and D4 are recorded here and not built, because they gate H4, H7, H9, H1
 No hard rule changes.
 The constitution lists milestones 1 to 11 as its scope.
 The captain's task extends that scope, as D-068 did, and this release leaves the constitution text as it is.
+Amended by D-117: the captain ordered the constitution amended on 2026-11-09, so the sentence above no longer holds.
 
 ### D-101: Readiness comes from bb's provider states, and it fails closed (Gap)
 
@@ -1125,3 +1126,23 @@ Each is a guard that fails when its property is removed, and the ledger holds th
 The audit did not recommend the rework, and the captain did not order it.
 The pull request description names the ledger.
 The audit's verdict stays `FAIL` as the rubric computes it, because an auditor does not accept an exception, and the note stays in `tdd/verification.md`.
+
+### D-117: Constitution 1.3.0 adds harness independence to the scope (Decided by the captain)
+
+Principle VI listed milestones 1 to 11 as the scope.
+D-100 extended it by the captain's task and left the text as it was, as D-068 did.
+The analysis of this feature raised the open question as finding C2, because Governance says that an amendment needs a written reason here and a version bump there.
+The captain ordered the amendment on 2026-11-09 ("bump the rules").
+Constitution version 1.3.0 adds one scope line to Principle VI.
+The line names harness independence: the report tasks H5 (the contract table), H1 (the readiness gate), H11 (the permission floor), H2 (model-aware checks), H10 (no built-in default profile, and `dispatch init`), and H3 (cause-bearing failure evidence), and the captain's decisions D1 to D5 in section 8 of the harness-independence report.
+It is a minor bump, because it materially expands the scope guidance and adds no principle.
+The rest of Principle VI is unchanged, including the rule that features from the design's non-goals list need approval first, and so are the eight hard rules.
+The "Current scope" text of `CLAUDE.md` is not part of this amendment.
+D-100 keeps its text and carries an "Amended by D-117" line, as D-063 and D-064 do.
+Finding C2 of `specs/009-harness-independence/analyze.md` is resolved.
+
+About the number: this entry takes D-117, the next free number after D-116, on purpose.
+The default branch already holds the entries 100 to 107 of another feature (the conformance harness).
+When this branch is rebased onto it, the nine entries of the "Harness independence" section above take the numbers 108 to 116 in order, with every reference to them in code comments, docs, and specs.
+This entry keeps D-117 so that it does not collide with that renumbering.
+Until then the section shows the entries 100 to 108 followed by D-117.
