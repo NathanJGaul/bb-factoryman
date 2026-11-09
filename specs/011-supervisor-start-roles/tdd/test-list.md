@@ -32,7 +32,7 @@ Table-driven tests cover the lines that name several inputs, and the cycle log r
 | A1604 | A profile whose provider is not ready, whose permission mode the provider lacks, or whose model or level is not listed makes the command exit 1 with dispatch's reason, spawns nothing, and adds no event or row to the store; a Pi profile in a `local-only` project spawns | US1.5, US1.6, FR-005, SC-007 | example | DONE | `test/acceptance/supervisor-start.test.ts::[A1604]` |
 | A1605 | The profile is the `--profile` flag, else `roles.supervisor.profile` of the project's `dispatch.json`; with neither, or with an undefined name, or with a missing, unreadable, or invalid file, the command exits 1, names the remedy, and spawns nothing | US2.1, US2.2, US2.3, US2.4, US2.7, FR-004, FR-006, SC-007 | example | DONE | `test/acceptance/supervisor-start.test.ts::[A1605]` |
 | A1606 | `factoryman_dispatch` for a project whose file has an invalid `roles` block is blocked with `config_invalid` and the path of the field, one whose file has a valid `roles` block dispatches as before, and a file without `roles` is unchanged | US2.5, US2.6, US5.1, US5.2, US5.3, US5.4, FR-012, FR-013, FR-014 | example | DONE | `test/acceptance/roles-config.test.ts::[A1606]` |
-| A1607 | The registered command `supervisor <thread>` stamps the role and prints the clear advice for Codex and omp threads, the next-turn advice for Claude Code and Pi threads, the clear advice for an unknown or unreadable provider, no advice and exit 1 for a rejected stamp, and a refusal for a worker thread; no output says "from its next session" | US3.1, US3.2, US3.3, US3.4, US3.5, US3.6, FR-009, FR-010, FR-011, SC-003 | example | PENDING | `test/acceptance/tools-supervisor-command.test.ts::[A1607]` |
+| A1607 | The registered command `supervisor <thread>` stamps the role and prints the clear advice for Codex and omp threads, the next-turn advice for Claude Code and Pi threads, the clear advice for an unknown or unreadable provider, no advice and exit 1 for a rejected stamp, and a refusal for a worker thread; no output says "from its next session" | US3.1, US3.2, US3.3, US3.4, US3.5, US3.6, FR-009, FR-010, FR-011, SC-003 | example | DONE | `test/acceptance/tools-supervisor-command.test.ts::[A1607]` |
 | A1608 | The `factoryman_report` hand-off of a `no-mistakes` ship task puts the worker's evidence first and the validator line after a blank line in the `handoff` event, names the agent, its bb provider, and a ready state, and the task becomes `validating` | US4.1, FR-016, FR-017, FR-021, SC-005 | example | PENDING | `test/acceptance/validator-observe.test.ts::[A1608]` |
 | A1609 | The same hand-off for a provider bb reports as `unauthenticated` names the agent and bb's remedy and says it is not ready, and the task still becomes `validating` | US4.2, FR-017, FR-021 | example | PENDING | `test/acceptance/validator-observe.test.ts::[A1609]` |
 | A1610 | The hand-off line is correct for an ordered list, for `auto` and for a host with no configuration file, for an agent with no known bb provider, and for a configuration that cannot be read, and none of them says ready unless a mapped provider is ready | US4.3, US4.4, US4.5, US4.6, FR-016, FR-018, FR-019, FR-020, SC-005 | example | PENDING | `test/acceptance/validator-observe.test.ts::[A1610]` |
@@ -116,23 +116,23 @@ Table-driven tests cover the lines that name several inputs, and the cycle log r
 | --- | --- | --- | --- | --- | --- |
 | U1642 | The word `start` selects the start command, and any other first word is a thread ID that is stamped | FR-001, FR-009 | example | DONE | `src/tools/supervisor-command.test.ts::[U1642]` |
 | U1643 | The usage text and the registered CLI summary list `supervisor <thread-id>` and then `supervisor start ...` | FR-001 | example | DONE | `src/tools/supervisor-command.test.ts::[U1643]`, `src/server.test.ts::[U1643]` |
-| U1644 | A stamp on a Codex thread and on an `acp-omp` thread prints the thread, the harness, and `bb thread clear <thread>` | US3.1, FR-010 | example | PENDING | |
-| U1645 | A stamp on a `claude-code` thread and on a `pi` thread says the tools arrive at the next turn and does not mention a clear | US3.2, FR-010 | example | PENDING | |
-| U1646 | A stamp on a thread whose provider has no contract row prints the generic advice with `bb thread clear` and names the provider | US3.3, FR-010 | example | PENDING | |
-| U1647 | A stamp whose thread has a null provider, or whose provider read throws, still succeeds with exit 0 and prints the generic advice and says that bb did not name the harness | US3.3, FR-010 | example | PENDING | |
-| U1648 | No output of the stamp command, for any provider, contains "from its next session" | US3.4, FR-011 | example | PENDING | |
-| U1649 | A recorded worker thread is refused, nothing is stamped, and no thread is read | US3.5, FR-009 | example | PENDING | `src/tools/supervisor-command.test.ts::[U118]` covers the refusal and the empty stamp list; the read is new |
-| U1650 | A stamp that bb rejects exits 1 with bb's reason, prints no advice, and reads no thread | US3.6 | example | PENDING | |
+| U1644 | A stamp on a Codex thread and on an `acp-omp` thread prints the thread, the harness, and `bb thread clear <thread>` | US3.1, FR-010 | example | DONE | `src/tools/supervisor-command.test.ts::[U1644]` |
+| U1645 | A stamp on a `claude-code` thread and on a `pi` thread says the tools arrive at the next turn and does not mention a clear | US3.2, FR-010 | example | DONE | `src/tools/supervisor-command.test.ts::[U1645]` |
+| U1646 | A stamp on a thread whose provider has no contract row prints the generic advice with `bb thread clear` and names the provider | US3.3, FR-010 | example | DONE | `src/tools/supervisor-command.test.ts::[U1646]` |
+| U1647 | A stamp whose thread has a null provider, or whose provider read throws, still succeeds with exit 0 and prints the generic advice and says that bb did not name the harness | US3.3, FR-010 | example | DONE | `src/tools/supervisor-command.test.ts::[U1647]` |
+| U1648 | No output of the stamp command, for any provider, contains "from its next session" | US3.4, FR-011 | example | DONE | `src/tools/supervisor-command.test.ts::[U1648]` |
+| U1649 | A recorded worker thread is refused, nothing is stamped, and no thread is read | US3.5, FR-009 | example | DONE | `src/tools/supervisor-command.test.ts::[U1649]` |
+| U1650 | A stamp that bb rejects exits 1 with bb's reason, prints no advice, and reads no thread | US3.6 | example | DONE | `src/tools/supervisor-command.test.ts::[U1650]` |
 
 ### `src/harness/advice.ts` (tests in `src/harness/advice.test.ts`)
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| U1651 | The advice for a `clear` row names the thread and the provider and gives the instruction `bb thread clear <thread>` | US3.1, FR-010 | example | PENDING | |
-| U1652 | The advice for a `next-turn` row names the thread, says the tools and the skill arrive at the next turn, and gives no clear instruction | US3.2, FR-010 | example | PENDING | |
-| U1653 | The advice for the generic row names the provider, says that it has no recorded role-change behavior, and gives the clear instruction | US3.3, FR-010 | example | PENDING | |
-| U1654 | The advice for an unreadable provider says that bb did not name the harness and gives the clear instruction | US3.3, FR-010 | example | PENDING | |
-| U1655 | Over every row of `CONTRACTS` the advice contains the clear instruction exactly when `roleChange` is `clear`, and no advice contains "from its next session" | FR-010, FR-011 | example | PENDING | |
+| U1651 | The advice for a `clear` row names the thread and the provider and gives the instruction `bb thread clear <thread>` | US3.1, FR-010 | example | DONE | `src/harness/advice.test.ts::[U1651]` |
+| U1652 | The advice for a `next-turn` row names the thread, says the tools and the skill arrive at the next turn, and gives no clear instruction | US3.2, FR-010 | example | DONE | `src/harness/advice.test.ts::[U1652]` |
+| U1653 | The advice for the generic row names the provider, says that it has no recorded role-change behavior, and gives the clear instruction | US3.3, FR-010 | example | DONE | `src/harness/advice.test.ts::[U1653]` |
+| U1654 | The advice for an unreadable provider says that bb did not name the harness and gives the clear instruction | US3.3, FR-010 | example | DONE | `src/harness/advice.test.ts::[U1654]` |
+| U1655 | Over every row of `CONTRACTS` the advice contains the clear instruction exactly when `roleChange` is `clear`, and no advice contains "from its next session" | FR-010, FR-011 | example | DONE | `src/harness/advice.test.ts::[U1655]` |
 
 ### `src/validator/agent.ts`: the setting (tests in `src/validator/agent.test.ts`)
 

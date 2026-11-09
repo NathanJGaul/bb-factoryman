@@ -94,3 +94,30 @@ The routing tests and the registration test went red because the word `start` wa
 - Observation: the fake host accepts a two-line `usage` string in the CLI registration. A real bb has not seen it yet, so the live runs (T040 to T043) are the check.
 - refactor: none needed. `refuse` and `names` are the two helpers the module needed, and each has three or more callers.
 - commit: see the commit that carries this entry.
+
+## Group 4: the advice after a stamp (U1644 to U1655, A1607)
+
+A stub came first: `roleAdvice` threw `not implemented: roleAdvice`.
+Two of my own tests were wrong, and were fixed as their own step before the implementation: `[U1649]` and `[U1650]` asserted that no `getThread` call happened, but the fixture's dispatch had already read `thr-w1`, so they failed for a reason that was not the behavior (`expected [ [ 'thr-w1' ] ] to deeply equal []`).
+They now compare the number of reads before and after the command.
+
+- red: `pnpm vitest run src/harness/advice.test.ts src/tools/supervisor-command.test.ts test/acceptance/tools-supervisor-command.test.ts` -> 17 failed after the test fix, 30 passed
+  - U1651 to U1655 (nine tests) `Error: not implemented: roleAdvice`
+  - U1644 (Codex, omp) `AssertionError: expected 'Thread thr-new is now a factoryman su…' to be 'Thread thr-new is now a factoryman su…'` (the old one-line text)
+  - U1645 (Claude Code, Pi) `AssertionError: expected 'Thread thr-new is now a factoryman su…' to contain 'on its next turn.'`
+  - U1646 `AssertionError: expected 'Thread thr-new is now a factoryman su…' to contain 'The harness acp-hermes-agent has no r…'`
+  - U1647 `AssertionError: null: expected 'Thread thr-new is now a factoryman su…' to contain 'bb did not say which harness the thre…'`
+  - U1648 `AssertionError: codex: expected 'Thread thr-new is now a factoryman su…' not to contain 'from its next session'`
+  - A1607 `AssertionError: thr-codex: expected 'Thread thr-codex is now a factoryman …' to contain 'bb thread clear thr-codex'`
+- U1649 and U1650 passed on their first run, because the command already refused a worker before it read anything and already printed no advice on a rejected stamp.
+  Deliberate mutants, both reverted from a copy of the file:
+  - a `getThread` call before the worker check -> `[U1649]` failed (`expected [ [ 'thr-w1' ], [ 'thr-new' ] ]` ...) and `[U1650]` failed too
+  - a `getThread` call between the worker check and the stamp -> `[U1650]` failed (`expected [ [ 'thr-w1' ], [ 'thr-new' ] ] to have a length of 1 but got 2`)
+  They are guards of behavior that already held. They fall in the class that D-099 and D-122 record as accepted: a test that passed on first run and has a killing mutant.
+- green: `roleAdvice` returns the next-turn line for a known row with `roleChange: "next-turn"`, and the clear instruction (with a reason line that names the harness, the unknown provider, or the unreadable read) for everything else.
+  `supervisor <thread>` reads the thread after a successful stamp and prints the confirmation line and the advice. The old text is gone.
+  Suite `pnpm test` -> 147 files, 1923 passed, 0 failed (26 s). `pnpm run typecheck` clean.
+- Deviation from the plan: `src/harness/` is data only, and the lint rule forbids every import there, even a type import (`no-restricted-imports`, first lint run).
+  So `roleAdvice` takes a structural type, `RoleChangeFacts` (`provider` and `roleChange`), that a contract row fits, and imports nothing.
+- refactor: none needed beyond the lint fix.
+- commit: see the commit that carries this entry.

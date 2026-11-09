@@ -13,6 +13,76 @@ describe("bb factoryman supervisor", () => {
     expect(t.bb.callsTo("setThreadMetadata")).toEqual([["thr-new", { role: "supervisor" }]]);
   });
 
+  describe("the advice after a stamp", () => {
+    async function stampWith(provider: string | null | "throws" | "unknown-thread") {
+      const t = await withDispatchedTask();
+      if (provider === "throws") t.bb.getThreadError = new Error("HTTP 500");
+      else if (provider !== "unknown-thread") t.bb.addThread({ id: "thr-new", providerId: provider });
+      const result = await runFactorymanCommand(t.runtime, ["supervisor", "thr-new"]);
+      return { result, t };
+    }
+
+    it.each([["codex"], ["acp-omp"]])("[U1644] tells the owner to clear a %s thread", async (provider) => {
+      const { result } = await stampWith(provider);
+      expect(result.exitCode).toBe(0);
+      expect(result.stdout?.split("\n")[0]).toBe("Thread thr-new is now a factoryman supervisor.");
+      expect(result.stdout).toContain(`This harness (${provider})`);
+      expect(result.stdout).toContain("`bb thread clear thr-new`");
+    });
+
+    it.each([["claude-code"], ["pi"]])("[U1645] says the tools of a %s thread arrive at the next turn, with no clear", async (provider) => {
+      const { result } = await stampWith(provider);
+      expect(result.exitCode).toBe(0);
+      expect(result.stdout).toContain("on its next turn.");
+      expect(result.stdout).not.toMatch(/clear/i);
+    });
+
+    it("[U1646] gives the generic clear advice and names the provider when the provider has no contract row", async () => {
+      const { result } = await stampWith("acp-hermes-agent");
+      expect(result.exitCode).toBe(0);
+      expect(result.stdout).toContain("The harness acp-hermes-agent has no recorded role-change behavior.");
+      expect(result.stdout).toContain("`bb thread clear thr-new`");
+    });
+
+    it("[U1647] still stamps and says that bb did not name the harness when the provider is null, the thread is unknown, or the read throws", async () => {
+      for (const provider of [null, "unknown-thread", "throws"] as const) {
+        const { result, t } = await stampWith(provider);
+        expect(result.exitCode, String(provider)).toBe(0);
+        expect(result.stdout, String(provider)).toContain("bb did not say which harness the thread uses (");
+        expect(result.stdout, String(provider)).toContain("`bb thread clear thr-new`");
+        expect(t.bb.callsTo("setThreadMetadata")).toEqual([["thr-new", { role: "supervisor" }]]);
+      }
+      expect((await stampWith("throws")).result.stdout).toContain("HTTP 500");
+    });
+
+    it("[U1648] never says from its next session, for any provider", async () => {
+      for (const provider of ["codex", "acp-omp", "claude-code", "pi", "acp-x", null, "throws", "unknown-thread"] as const) {
+        const { result } = await stampWith(provider);
+        expect(`${result.stdout ?? ""}${result.stderr ?? ""}`, String(provider)).not.toContain("from its next session");
+      }
+    });
+
+    it("[U1649] refuses a recorded worker thread, stamps nothing, and reads no thread", async () => {
+      const t = await withDispatchedTask();
+      const readsBefore = t.bb.callsTo("getThread").length; // the fixture's dispatch read the worker thread already
+      const result = await runFactorymanCommand(t.runtime, ["supervisor", "thr-w1"]);
+      expect(result.exitCode).toBe(1);
+      expect(t.bb.callsTo("setThreadMetadata")).toEqual([]);
+      expect(t.bb.callsTo("getThread")).toHaveLength(readsBefore);
+    });
+
+    it("[U1650] prints no advice, exits 1 with bb's reason, and reads no thread when bb rejects the stamp", async () => {
+      const t = await withDispatchedTask();
+      const readsBefore = t.bb.callsTo("getThread").length;
+      t.bb.setMetadataError = new Error("HTTP 404: thread not found");
+      const result = await runFactorymanCommand(t.runtime, ["supervisor", "thr-new"]);
+      expect(result.exitCode).toBe(1);
+      expect(result.stderr).toContain("Could not stamp thread thr-new: HTTP 404: thread not found");
+      expect(result.stdout).toBeUndefined();
+      expect(t.bb.callsTo("getThread")).toHaveLength(readsBefore);
+    });
+  });
+
   it("[U118] refuses a recorded worker thread and stamps nothing", async () => {
     const t = await withDispatchedTask();
     const result = await runFactorymanCommand(t.runtime, ["supervisor", "thr-w1"]);

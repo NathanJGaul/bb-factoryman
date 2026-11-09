@@ -4,6 +4,8 @@ import { reportText, runPreflight } from "../machines/preflight";
 import { protectionSteps } from "../limits/protection";
 import { parseRegistry, type RegistryEntry } from "../limits/registry";
 import { errorText, type Runtime } from "../runtime";
+import { roleAdvice } from "../harness/advice";
+import { GENERIC_CONTRACT, contractFor } from "../harness/contracts";
 import { identify } from "./access";
 import { runSupervisorStart, START_USAGE } from "./supervisor-start";
 
@@ -61,7 +63,18 @@ async function supervisor(rt: Runtime, args: string[]): Promise<CommandResult> {
   } catch (error) {
     return { exitCode: 1, stderr: `Could not stamp thread ${threadId}: ${errorText(error)}\n` };
   }
-  return { exitCode: 0, stdout: `Thread ${threadId} is now a factoryman supervisor. It sees the four supervisor tools from its next session.\n` };
+  // The stamp is done. Read the thread's harness for the advice: when bb cannot say, the advice is the generic one.
+  let providerId: string | null = null;
+  let unreadReason: string | undefined;
+  try {
+    const thread = await rt.deps.bb.getThread(threadId);
+    providerId = thread?.providerId ?? null;
+    if (thread === null) unreadReason = "bb does not know the thread";
+  } catch (error) {
+    unreadReason = errorText(error);
+  }
+  const contract = providerId === null ? GENERIC_CONTRACT : contractFor(providerId);
+  return { exitCode: 0, stdout: `Thread ${threadId} is now a factoryman supervisor.\n${roleAdvice(threadId, providerId, contract, unreadReason)}\n` };
 }
 
 function parsePreflight(args: string[], ctx: CommandContext): { machine: string; projectId: string; provider: string | null } | null {
