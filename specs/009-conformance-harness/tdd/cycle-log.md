@@ -238,3 +238,13 @@ The real lab (`tools/conformance/real-lab.ts`, `cli.ts`) cannot be unit tested, 
   - S9.start-command: `bb factoryman supervisor start --project ...` exits 2 with the usage text. This is report task H4.
 - Gaps listed in `conformance/known-gaps.json`: S1.unready-blocks and S1.remedy (H1), S7.cause (H3), S9.start-command (H4), each for every harness.
 - Run 2 (3 min 34 s): `pnpm run conformance -- --tier 1 --lab-dir /var/tmp/bblab-conformance` -> exit 0. S1, S7, S9 `known-gap`; the other nine `pass`; isolation clean (`no change to the real home, the credentials, or the lab process list. tripwire: no events`). The result file is `conformance/results/1-stub.json` (stub-agent 0.0.1, bb 0.49.0).
+
+## Group 14: `exec` returns when the command exits (U1415, U1416) - found by the first tier 1.5 run
+
+The first Pi run stalled for 19 minutes after the lab started. The runner had started the fake model with `bash -c "cd ... && setsid nohup node server.ts ... &"`. The `&` covered the whole `cd ... && ...` list, so a subshell stayed alive as the parent of the server and held the command's output pipe. `exec` waited for the pipe to close, which never happened.
+
+- red: `pnpm vitest run tools/conformance/shell.test.ts`
+  - U1415 `Error: Test timed out in 5000ms.`
+  - U1416 `AssertionError: expected '' to match /timed out after 300 ms/`
+- green: `exec` resolves when the command exits (after a 300 ms grace for output), stops a command at its time limit with a note in `stderr`, and ignores a write error on a closed input pipe (that `EPIPE` showed as an unhandled error in the first green run and was fixed in the same cycle). The fake model start command no longer uses `cd &&`, and every command that runs in the lab gets a 300 s limit by default. `pnpm vitest run tools/conformance/shell.test.ts` -> 3 passed.
+- refactor: none needed.

@@ -209,6 +209,13 @@ Tests carry their behavior id in the title, for example `[U1301]`.
 | --- | --- | --- | --- | --- | --- |
 | U1413 | Starts every run from a clean lab directory: removes the previous run's data, repositories, and logs, and keeps the pinned bb and bb's build toolchain, which needs the network to install | AC-1.1, AC-5.3 | example | PENDING | |
 
+### `tools/conformance/shell.ts` (added)
+
+| id | behavior | traces | kind | state | test |
+| --- | --- | --- | --- | --- | --- |
+| U1415 | Returns when the command exits, even when a background child still holds its output pipe, so a lab command that starts a server cannot hang the runner | AC-1.1 | example | PENDING | |
+| U1416 | Stops a command that outlives its time limit and says so in the result | AC-1.5 | example | PENDING | |
+
 ### `tools/conformance/docs.ts`
 
 | id | behavior | traces | kind | state | test |
