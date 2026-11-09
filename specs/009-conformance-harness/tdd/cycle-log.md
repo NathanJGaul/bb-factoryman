@@ -299,3 +299,12 @@ S12 failed because the busy supervisor's `CALL factoryman_dispatch` never ran. A
 - red: `pnpm vitest run tools/fake-model/brain.test.ts -t U1423` -> `Error: expected a tool call, got {"kind":"text","text":"OK (conformance)"}`
 - green: the reminder pattern in `brain.ts` also strips `<total_tokens>` blocks and the line `Tool loaded.`. `pnpm vitest run tools/fake-model tools/conformance/scenarios` -> 59 passed.
 - S12 also changed in one respect: the supervisor's busy time is 45 s and no longer the lab's whole patience (5 minutes), because the scenario needs only the time for a worker to report. A worker that is slower than 45 s makes the wake arrive after the turn, and S12.mid-turn then fails, which is the signal the check exists to give.
+
+## Live run 5: the first omp run, and the permission finding (U1331)
+
+The first omp run did not finish: S4 (ship) passed, but four scouts stayed `working` and the run waited out each scenario's patience. The thread log of a stuck scout showed why: `system/interaction/lifecycle` with `"payload": {"kind": "approval", "subject": {"kind": "command"...` and the item `git checkout -b fm/t-...` with `"approvalStatus": "waiting_for_approval"`. In `accept-edits`, omp asks for approval before a shell command. The scripted worker cannot answer, so it waits. The ship profile used `full`, which is why S4 passed. (The report's omp scouts passed because the scripted worker only wrote to the `xd://` device and never ran a shell command.)
+
+This is a property of the harness that the owner should know: an omp worker in `accept-edits` stops at its first shell command and the plugin wakes the supervisor with the `interaction.pending` text. It goes in the decision log and in the support document's notes.
+
+- red: `pnpm vitest run tools/conformance/drivers` -> U1331 `AssertionError: expected 'accept-edits' to be 'full'`
+- green: the omp driver's profile and ship profile use `full` (tier 1.5 tests the plumbing, not the sandbox). `pnpm vitest run tools/conformance` -> 85 passed. Type check and lint pass.

@@ -70,6 +70,9 @@ describe("the harness drivers", () => {
     expect(yml).toContain("- id: mock-1");
     expect(d.setupCommands(PORT)).toContainEqual(["omp", "config", "set", "modelRoles", '{"default":"mock/mock-1"}']);
     expect([d.provider, d.wire, d.toolRoute]).toEqual(["acp-omp", "chat", "xd-device"]);
+    // In accept-edits, omp asks for approval before a shell command, and a scripted worker waits for ever (lab finding, live run 5).
+    expect(d.profile.permissionMode).toBe("full");
+    expect(d.unsupportedProfile.permissionMode).toBe("auto");
   });
 
   it("[U1332] gives every driver a ship profile, an unsupported profile, a failure mode, and the step after a late stamp", () => {

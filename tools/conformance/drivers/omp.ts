@@ -1,7 +1,8 @@
 import { bindCli } from "./bind.ts";
 import type { Driver } from "./types.ts";
 
-const profile = { provider: "acp-omp", model: "mock/mock-1", reasoningLevel: "low", permissionMode: "accept-edits" } as const;
+/** omp asks for approval before a shell command in `accept-edits`, so a scripted worker would wait for ever. Tier 1.5 tests the plumbing, so the profile uses `full`. */
+const profile = { provider: "acp-omp", model: "mock/mock-1", reasoningLevel: "low", permissionMode: "full" } as const;
 
 /** omp runs behind bb's ACP provider. It reads models.yml, and it shows the report tool as an `xd://` device. */
 export const omp: Driver = {
@@ -11,7 +12,7 @@ export const omp: Driver = {
   wire: "chat",
   toolRoute: "xd-device",
   profile,
-  shipProfile: { ...profile, permissionMode: "full" },
+  shipProfile: profile,
   unsupportedProfile: { ...profile, permissionMode: "auto" },
   failure: { code: 401, timeoutMs: 120_000 },
   roleChangeStep: "clear",
