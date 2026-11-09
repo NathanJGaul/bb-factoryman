@@ -38,7 +38,7 @@ function parseFlags(args: string[]): Partial<Record<Flag, string>> | null {
 const defaultLevel = (levels: readonly string[], fromModel: string): string | undefined => (fromModel !== "" ? fromModel : levels.includes("medium") ? "medium" : levels[0]);
 
 /**
- * `bb factoryman dispatch init --provider <id>` writes a starter `dispatch.json` for a project (D-104). It reads
+ * `bb factoryman dispatch init --provider <id>` writes a starter `dispatch.json` for a project (D-112). It reads
  * bb to build one profile, checks the profile the way dispatch does (minus readiness), and creates the file only
  * when none exists. `args` are the arguments after `dispatch init`.
  */

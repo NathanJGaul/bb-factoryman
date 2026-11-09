@@ -89,7 +89,7 @@ Commit subject: "feat: pass a provider only when bb reports it ready (H1)".
 - test: `test/acceptance/harness-readiness.test.ts` (new, 13 cases) and `setProviderStates` in the `loadWorld` fixture.
   The file was written after the call sites were wired, so it passed on its first run.
   The deliberate-mutant check, one mutant at a time on the code, with the file restored each time: an `unauthenticated` state that passes -> 12 tests fail, among them A1301, A1305, A1306, A1307 (M1 killed); a failed states read that passes -> U1343, U1352, U1356, A1304 fail (M17 killed); states read without the placed machine's ID -> A1305 and U1340 fail; a queue start that ignores the gate -> A1307, U1351, U1352 fail; a preflight that ignores readiness -> U1347 and A1306 fail; the first state instead of the profile's state -> U1330, U1331, A1304 fail (M16 killed); readiness skipped for an unlisted provider -> U1332 fails (M2 killed).
-- existing tests that changed, forced by the requirement (D-107): `test/acceptance/dispatch-resolver.test.ts` [A710], two cases.
+- existing tests that changed, forced by the requirement (D-115): `test/acceptance/dispatch-resolver.test.ts` [A710], two cases.
   "unavailable" now expects "is not installed" and "not listed" expects "bb reports no state for the provider `claude`", because readiness comes before the listing.
   The behavior is the same (the dispatch blocks and spawns nothing), and only the message that explains it changed.
   No assertion was loosened: both still require an error and zero spawns.
@@ -141,7 +141,7 @@ Commit subject: "feat: check the model and its levels against what bb lists (H2)
 - test: `src/limits/queue.test.ts` U1473, and `test/acceptance/harness-models.test.ts` (new, 10 cases: A1330 to A1338, A1350).
   They were written after the code and passed on the first run, so the deliberate-mutant check applies.
   Mutants, one at a time with the file restored: the provider-wide level list always used -> U1374, U1375, U1386 to U1388, A1330, A1331 fail (M14 killed); Pi accepts unlisted models -> U1379 to U1381 and A1332 fail (M15 killed); `ladderFor` ignores the record entry -> U1397, U1400, A1336 fail (M5 killed); `ladderFor` returns nothing for an omitted provider -> U1398, U1402, A1337 fail (M6 killed); a record key that may be blank -> U1391 fails; models matched by `id` only -> U1387 fails; the models read without the host ID -> U1340 fails; a failed models read that passes -> U1344 and A1338 fail (M17 killed); unlisted models refused for every provider -> A1333, U1383 to U1385 and the old U730, U734, U735 fail.
-- existing tests that changed, forced by the requirement (D-107):
+- existing tests that changed, forced by the requirement (D-115):
   `src/dispatch/gate.test.ts` "passes pi in direct-PR and no-mistakes modes on to the other checks" and `test/acceptance/harness-admission.test.ts` [A1317] and [A1318] (both from group 4) now list Pi's model in bb, because Pi refuses a model that bb does not list.
   `test/acceptance/dispatch-resolver.test.ts` [A710] "a reasoning level it does not list" now scripts a model whose levels are `unknown`, because a model whose levels are known decides, and the provider-wide list is the fallback.
   No assertion was loosened. The new setups make the old reasons explicit.
@@ -165,7 +165,7 @@ Commit subject: "feat: remove the built-in default profile and add dispatch init
 - test: `src/dispatch/resolver.test.ts` U1408 and U1410, `src/tools/dispatch.test.ts` U1411 (two cases), and `test/acceptance/dispatch-resolver.test.ts` [A706].
 - red: `pnpm vitest run src/dispatch/resolver.test.ts src/tools/dispatch.test.ts test/acceptance/dispatch-resolver.test.ts` -> `4 failed | 77 passed`; `expected { status: 'clear', …(4) } to deeply equal { status: 'blocked', …(2) }` (U1408), `expected [ 'BUILTIN_PROFILE', …(1) ] to not include 'BUILTIN_PROFILE'` (U1410), `expected true to be false` (U1411 block), `expected false to be true` (A706).
 - green: `BUILTIN_PROFILE` and the `builtin` source are gone, and the last rung returns `blocked` with `no_default_profile` and the message of the contract.
-- existing tests that changed, forced by the requirement (D-107):
+- existing tests that changed, forced by the requirement (D-115):
   `src/dispatch/resolver.test.ts` [U710] (title only: it no longer names the built-in default), [U717] (its assertion applied the built-in default; U1408 now states the reverse, so the old assertion is retired and not kept), [U726] (title only), [U811] (its last line asserted `source: "builtin"`; it now asserts the block);
   `test/acceptance/dispatch-resolver.test.ts` [A706] (the second half asserted the built-in profile; it now asserts the block) and [A717] (the untagged case now names a configured `default`);
   `test/acceptance/limits-queue.test.ts` [A1025], [A1026] (the project's `dispatch.json` now has a `default`, because the queued task relied on the built-in);
@@ -222,11 +222,11 @@ Commit subject: "feat: carry the provider's reported cause in the failure eviden
 ## Group 8: the decision record and the docs (tasks T1390 to T1394, story 7)
 
 Behaviors: A1345 to A1348.
-Commit subject: "docs: record the harness-independence decisions D-100 to D-107".
+Commit subject: "docs: record the harness-independence decisions D-108 to D-115".
 
 - test: `test/acceptance/harness-docs.test.ts` (new, 6 cases) was written before any doc changed.
-- red: `pnpm vitest run test/acceptance/harness-docs.test.ts` -> `6 failed`; `expected [ 99 ] to deeply equal [ 99, 100, 101, 102, 103, 104, …(3) ]` (A1345), `expected '\nThe design lists "the plugin\'s bui…' to match /Amended by D-104/` (A1346), `... /Amended by D-105/` (A1347), `docs/DESIGN.md: ... not to match /built-in default/i` (A1348), and the two string checks on `docs/DESIGN.md` and `docs/LIVE-CHECK.md`.
-- green: `docs/DECISIONS.md` gained D-100 to D-107 and an "Amended by" line in D-063 and D-064 (their text is unchanged); `docs/DESIGN.md` rung 4 and the `docs/LIVE-CHECK.md` line name the block and `dispatch init`.
+- red: `pnpm vitest run test/acceptance/harness-docs.test.ts` -> `6 failed`; `expected [ 99 ] to deeply equal [ 99, 100, 101, 102, 103, 104, …(3) ]` (A1345), `expected '\nThe design lists "the plugin\'s bui…' to match /Amended by D-112/` (A1346), `... /Amended by D-113/` (A1347), `docs/DESIGN.md: ... not to match /built-in default/i` (A1348), and the two string checks on `docs/DESIGN.md` and `docs/LIVE-CHECK.md`.
+- green: `docs/DECISIONS.md` gained D-108 to D-115 and an "Amended by" line in D-063 and D-064 (their text is unchanged); `docs/DESIGN.md` rung 4 and the `docs/LIVE-CHECK.md` line name the block and `dispatch init`.
   The first wording of both lines said "The plugin has no built-in default", which the test (rightly) rejects as a mention, so they say "The plugin picks no harness for you" and "The plugin picks no profile itself".
   `pnpm vitest run test/acceptance/harness-docs.test.ts test/acceptance/live-check.test.ts` -> 16 passed.
 - plan refinement: the A1348 row of the test list said that `CLAUDE.md` is unchanged.
@@ -355,7 +355,7 @@ The mutant list and the runner are in the scratch directory of the worktree sess
 | U1473 | L21 the queue start fails a task on any block | 6 | 6 |
 
 This ledger does not turn the 71 into test-first behaviors.
-D-108 records the deviation for the captain to accept, or to order the 71 redone.
+D-116 records the deviation for the captain to accept, or to order the 71 redone.
 
 ## Remediation 2: the other findings of the audit (tasks T1399 to T1404 and T1406 to T1414)
 
@@ -363,14 +363,14 @@ Commit subjects: one per task, each beginning "test:" or "docs:" and ending with
 No production code changed in this group, and every task ran `pnpm run check` (the suite ended at 107 files, 1622 passed, 0 failed).
 Each tightened assertion was shown to fail on a mutant, one mutant at a time, with the file restored.
 
-- T1399 (finding 2): A1345 now checks the built tasks and the open tasks in their own sentences with word boundaries, and allows D-108 after D-107. Dropping H1 from the built list, and swapping the two lists, each make it fail.
+- T1399 (finding 2): A1345 now checks the built tasks and the open tasks in their own sentences with word boundaries, and allows D-116 after D-115. Dropping H1 from the built list, and swapping the two lists, each make it fail.
 - T1400 (finding 3): U1312 asserts the literal tool and skill lists of each role, and U1363 asserts a literal fragment of the admission message. Dropping a supervisor tool, and rewording the message, make them fail.
 - T1401 (finding 4): the 15 `BASELINE` behaviors are `DONE`, each with its existing test named and run.
 - T1402 (finding 5): the "configured default" cases of A1318 and A1321 use a config with no rule. A resolver that ignores `default` makes both fail.
 - T1403 (finding 6): A1335 uses the full Codex ladder as an array, so a plugin that ignores arrays blocks ultra. Mutant S8 now fails A1335.
 - T1404 (finding 7): the value-is-another-flag row has an even number of arguments. The first replacement (`--provider --project --model x`) still let the mutant live, because both versions end in the same usage error. I changed it to `--provider --model --project proj-1`, which the mutant would read as a valid call, and the mutant then fails U1412.
 - T1405 (finding 1): the revert-red ledger above.
-- T1406 (finding 1): D-108 records the deviation. It does not claim the captain's acceptance.
+- T1406 (finding 1): D-116 records the deviation. It does not claim the captain's acceptance.
 - T1407 (finding 8): `test/fixtures/models.ts` holds the default model list once, and `test/fixtures/defaults.test.ts` (8 cases) pins the defaults of `FakeBbPort` and `loadWorld`. Five fixture mutants each fail it. A1319 and A1323 say that they rely on the list.
 - T1408 (finding 10): U1440 and A1329 assert read allowlists. A mutant that sends a message fails both, and one that reads the machines fails A1329.
 - T1409 (finding 11): the harness lint cases assert the exact number of messages and their wording (a bare Node built-in reports twice, because two rules match it), the runbook case asserts the sentence, and A1313 asserts the literal tools and skills of every role on every provider.
@@ -394,7 +394,7 @@ The tests that these tasks removed were duplicates of tests that stay; no assert
 - T1418 (finding 20): U1440 asserts the exact set of methods again, besides the allowlist. The first allowlist version had dropped it. A mutant that reads the machines fails U1440.
 - T1419 (finding 21): the lint cases carry the expected message count as a column, the record path in the config test is loose where the code does not decide it, the omp text case is U1449, and the leftover numbers in the failure tests and in `files.test.ts` have names. Two mutants (a changed lint message, a wake limit left at 600) still fail.
 - T1420 (finding 22): U1476 is three tests. The unlisted-model case now has a provider that lists `low` and `high` only, so a fallback to the default model's own levels fails it. Two mutants fail the U1476 tests. U1474 to U1476 stay `BASELINE`, and T1414's proof stays unmet as written (see "Remediation 2").
-- T1421 (finding 23): `dispatch init`'s usage cases are one `it.each` table for each id U1412 to U1417; the `test` column of U1349 names `[U1349]`; the tdd profile names the two new fixture files; A1345 requires D-108.
+- T1421 (finding 23): `dispatch init`'s usage cases are one `it.each` table for each id U1412 to U1417; the `test` column of U1349 names `[U1349]`; the tdd profile names the two new fixture files; A1345 requires D-116.
 - T1422 (finding 24): the ledger runner and its mutant list are in `specs/009-harness-independence/tdd/ledger-mutants.py`. Running it for one mutant from the repository root prints one JSON line (L10: A1310, U1303, U1306 fail) and leaves `git status` unchanged.
 
 ## Convergence: the frozen contract rows (task T1423, behavior U1478)
@@ -409,9 +409,9 @@ The repository commits only on green (D-099), so this entry holds the red eviden
 - mutants, each applied alone and restored byte for byte: a shallow freeze (no recursion) fails all 4 U1478 tests; the generic row left unfrozen fails 2; the table left unfrozen fails 3.
 - refactor: none needed. No existing assertion changed.
 
-## The captain's decisions (D-108, U1, C2)
+## The captain's decisions (D-116, U1, C2)
 
-The captain accepted D-108 and kept the Pi rule as built (U1), and left the constitution untouched (C2).
-`[A1345]` in `test/acceptance/harness-docs.test.ts` checked that D-108's status matched "for the captain to accept".
+The captain accepted D-116 and kept the Pi rule as built (U1), and left the constitution untouched (C2).
+`[A1345]` in `test/acceptance/harness-docs.test.ts` checked that D-116's status matched "for the captain to accept".
 The status now reads "accepted by the captain", so the check changed to match it. A status of "Open" or "for the captain to accept" fails it, so the strictness is the same.
 `pnpm run check` is green (107 files, 1628 passed, 0 failed).

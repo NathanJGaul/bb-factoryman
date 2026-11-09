@@ -19,7 +19,7 @@ suite: 1626 passed, 0 failed, 107 files, 33 to 48 s
 
 # TDD verification: Agent-harness independence (second run)
 
-**Verdict: FAIL.** One rule still blocks: 71 of 227 behaviors have no recorded red, because their tests passed on the first run (42 acceptance tests written after their code and 29 unit tests that pin what stays true), and only the captain can accept that as a recorded deviation (D-108), as feature 008 did with D-099.
+**Verdict: FAIL.** One rule still blocks: 71 of 227 behaviors have no recorded red, because their tests passed on the first run (42 acceptance tests written after their code and 29 unit tests that pin what stays true), and only the captain can accept that as a recorded deviation (D-116), as feature 008 did with D-099.
 Everything else the first run found is repaired: no `HIGH` smell is open, no ticked task names a behavior that is not `DONE`, every acceptance criterion (47 of 47) reaches a test through its real entry point, no existing test was weakened, and every deliberate mutant that was run was killed.
 Eleven new findings of `MED` and `LOW` severity are open.
 None blocks, and each is a change to a test or a record.
@@ -47,7 +47,7 @@ The remediation range changed no production code (`git diff e25b94a..HEAD -- src
 `TEST_AFTER`, unit tests that passed on their first run (29): U1306, U1307, U1312, U1315, U1316, U1336, U1346, U1357, U1359 to U1362, U1368, U1376 to U1378, U1383 to U1385, U1389, U1391, U1395, U1396, U1407, U1445, U1447, U1455, U1469, and U1473.
 In place of a red, `tdd/cycle-log.md` ("Remediation 1") holds a ledger with one killing mutant for each of the 71 (58 mutants, no survivor).
 This audit counted 71 rows and re-ran 9 of its mutants (see "Mutation results").
-D-108 in `docs/DECISIONS.md` records the deviation and leaves the choice (accept, or order the 71 redone test-first) to the captain.
+D-116 in `docs/DECISIONS.md` records the deviation and leaves the choice (accept, or order the 71 redone test-first) to the captain.
 The ledger does not make them test-first, and the rubric has no class for "accepted deviation".
 
 ### What the feature did to tests that already existed
@@ -66,7 +66,7 @@ T1414 is ticked although its proof ("three red entries") is not met as written (
 
 | # | Status | Evidence |
 | --- | --- | --- |
-| 1 | OPEN, by design | 71 `TEST_AFTER`; D-108 waits for the captain (`docs/DECISIONS.md`) |
+| 1 | OPEN, by design | 71 `TEST_AFTER`; D-116 waits for the captain (`docs/DECISIONS.md`) |
 | 2 | FIXED | `harness-docs.test.ts:39-56` checks each task in its own sentence with word boundaries; dropping H1 and swapping the two lists both fail it |
 | 3 | FIXED | literal tool and skill lists in `register.test.ts:107-128`; literal fragment in `gate.test.ts:98-102` |
 | 4 | CHANGED | the 15 formerly `BASELINE` behaviors are `DONE`; U1474 to U1476 are `BASELINE` and T1414 is ticked (finding 22) |
@@ -89,14 +89,14 @@ Ordered by severity. The auditor opened the lines of findings 17 to 20.
 
 | # | Severity | Finding | Evidence |
 | --- | --- | --- | --- |
-| 1 | HIGH by rule | 71 behaviors `TEST_AFTER` (see above) | cycle log, ledger; D-108 |
+| 1 | HIGH by rule | 71 behaviors `TEST_AFTER` (see above) | cycle log, ledger; D-116 |
 | 17 | MED, redundant test with a misleading name | The second `[U1340]` runs `gateProfile(new FakeBbPort(), ...)` and expects `{ok:true}`, which is U1339 again. Its title claims a contrast with the remote machine, but it shares no `bb` with the first U1340 | `src/dispatch/gate.test.ts:26-28` against `:12-14` |
 | 18 | MED, the pin checks the wiring, not the content | `defaults.test.ts` compares the fakes' model IDs with `DEFAULT_MODEL_IDS`, which it imports from `models.ts`. Removing `"m"` from the list passes this file (A1319 and A1323 fail instead), and removing `"opus"` fails it only through the dispatch case. The T1407 proof overclaims. It should assert the literal IDs that the tests rely on | `test/fixtures/defaults.test.ts:28-48`, `test/fixtures/models.ts:6` |
 | 19 | MED, redundant tests | U1410 repeats U811's source assertions, so only the "no `BUILTIN_PROFILE` export" line is new; U1306 to U1309 repeat U1301 to U1305; A1310 and A1311 sit at the level of U1301 to U1304; U1322 equals U730; the second A1324 case repeats the first | `resolver.test.ts:103-109` and `:58-62`, `contracts.test.ts:131-165`, `harness-configure.test.ts:15-24`, `availability.test.ts:123`, `harness-default.test.ts:167-174` |
 | 20 | MED, assertion loosened | At `e25b94a` U1440 asserted that the set of methods called equals `{getProjectCheckout, listProviders, listModels}`. Now any extra read passes. The loosening is not recorded, and A1329 catches it only at the SDK path level | `src/dispatch/init.test.ts:276-284` |
 | 21 | LOW | `lint-isolation.test.ts:156` keys the expected message count on a display label (`name === "a bare node built-in" ? 2 : 1`); `config.test.ts:92` pins a path that comes from zod's union error; `failure-cause.test.ts:60-62` is titled as a precedence case but `OMP_NO_MODEL` matches no sign-in pattern, so only `:64-66` tests precedence; leftover magic numbers in `harness-failure.test.ts` (`+ 200`, `.repeat(4)`, 400, 500) and the filesystem name limit in `files.test.ts:61` | as cited |
 | 22 | LOW | U1474 to U1476 stay `BASELINE` and T1414 is ticked, though its proof ("three red entries") is not met; only the cycle log says so. The second U1476 test cannot tell the provider-wide fallback from the model's own levels, because all three agree on `medium` (`init.test.ts:204-208`), and the first packs two scenarios into one test | `tdd/test-list.md:307-309`, `tasks.md:198` |
-| 23 | LOW | `init.test.ts:40-47` builds tests with a helper where the exemplar (`guards.test.ts:7,12`) uses `it.each`; the `test` column of U1349 points at `[U839]` and that of U1322 at `[U730]`, although tests with the new ids exist; `tdd-profile.md:64` still says feature 009 adds "no new file", and `test/fixtures/models.ts` and `defaults.test.ts` are new; `harness-docs.test.ts:35` accepts a missing D-108 and would fail on a D-109 | as cited |
+| 23 | LOW | `init.test.ts:40-47` builds tests with a helper where the exemplar (`guards.test.ts:7,12`) uses `it.each`; the `test` column of U1349 points at `[U839]` and that of U1322 at `[U730]`, although tests with the new ids exist; `tdd-profile.md:64` still says feature 009 adds "no new file", and `test/fixtures/models.ts` and `defaults.test.ts` are new; `harness-docs.test.ts:35` accepts a missing D-116 and would fail on a D-109 | as cited |
 | 24 | LOW | The mutant list and the runner of the ledger are in a scratch directory outside the repository, so a reader can confirm the 71 rows but not re-run the 58 mutants from the repository | `tdd/cycle-log.md`, "Remediation 1" |
 
 Properties: deterministic (no real clock, network, or sleep), isolated, and fast (107 files in 33 to 48 seconds).
@@ -147,10 +147,10 @@ Tests tracing to nothing: a few cases carry no id (the "four named rows" count, 
 Findings 17 to 24 were open at `verified_at: 2c4ee15`.
 The worker repaired them afterwards in tasks T1415 to T1422 (tests, fixtures, records, and the ledger runner only; no production code), and `tdd/cycle-log.md` ("Remediation 3") has the evidence for each.
 The audit did not re-read those changes.
-The verdict and finding 1 do not change: 71 behaviors stay `TEST_AFTER` until the captain accepts D-108.
+The verdict and finding 1 do not change: 71 behaviors stay `TEST_AFTER` until the captain accepts D-116.
 
 ## Owner decision on the verdict
 
-The captain accepted the 71 `TEST_AFTER` behaviors as a recorded deviation (D-108, 2026-11-08), as for the earlier factoryman milestones (D-099).
+The captain accepted the 71 `TEST_AFTER` behaviors as a recorded deviation (D-116, 2026-11-08), as for the earlier factoryman milestones (D-099).
 They are guards that fail when their property is removed, and the revert-red ledger in `tdd/cycle-log.md` holds a killing mutant for each.
 The verdict above stays `FAIL` as the rubric computes it, because an auditor does not accept an exception.

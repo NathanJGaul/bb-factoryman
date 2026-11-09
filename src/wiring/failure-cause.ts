@@ -4,7 +4,7 @@ export const CAUSE_LIMIT = 300;
 const MODEL_REMEDY = "Pick a model that `bb provider models <provider>` lists for this provider, then dispatch the task again.";
 const SIGN_IN_REMEDY = "Sign in to the provider on the machine that runs the worker, then dispatch the task again.";
 
-// The patterns are advisory: they only add a hint line, and a miss costs the hint and nothing else (D-107).
+// The patterns are advisory: they only add a hint line, and a miss costs the hint and nothing else (D-115).
 const NO_MODEL = [/\bno model selected\b/i, /\bfailed to resolve\b.*\bmodel\b/i];
 const NOT_SIGNED_IN = [/\bnot logged in\b/i, /\bplease run \/login\b/i, /\bunauthenticated\b/i, /\bunauthorized\b/i];
 

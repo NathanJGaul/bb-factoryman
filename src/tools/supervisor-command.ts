@@ -33,7 +33,7 @@ export interface CommandContext {
  * machine is missing, and changes nothing.
  *
  * `bb factoryman dispatch init --provider <id>` writes a starter dispatch.json
- * for a project, and writes nothing when one exists (D-104).
+ * for a project, and writes nothing when one exists (D-112).
  */
 export async function runFactorymanCommand(rt: Runtime, argv: string[], ctx: CommandContext = {}): Promise<CommandResult> {
   const [command, ...rest] = argv;

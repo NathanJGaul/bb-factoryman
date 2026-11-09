@@ -37,11 +37,11 @@ One shared function, `gateProfile`, applies every profile check, and both `facto
 | III. Event log is the source of truth | No change. The failure cause enters the `fail` event as evidence, which the log already stores. |
 | IV. Storage behind an interface | No change. |
 | V. Test first | Each behavior gets a failing test before code, recorded in `tdd/cycle-log.md`. Acceptance tests enter through the plugin factory, the registered tools, the CLI command, and the event handlers. |
-| VI. Scope | The captain's intent fixes this work (D-100 will record it). It adds one CLI command that writes a file (`dispatch init`) and no tool. H4, H6 to H9, and H12 to H14 stay out. The live install stays the owner's step. `factoryman_decide` stays out (D-057). |
+| VI. Scope | The captain's intent fixes this work (D-108 will record it). It adds one CLI command that writes a file (`dispatch init`) and no tool. H4, H6 to H9, and H12 to H14 stay out. The live install stays the owner's step. `factoryman_decide` stays out (D-057). |
 
 Result: no violation, so no complexity tracking.
 The scope text of principle VI lists milestones 1 to 11, and this work extends them by the captain's word.
-D-068 is the precedent: the constitution follows the captain's intent, and D-100 records it.
+D-068 is the precedent: the constitution follows the captain's intent, and D-108 records it.
 The plan does not edit the constitution.
 
 ## Source layout
@@ -71,7 +71,7 @@ test/fixtures/plugin-host.ts        # + system.providerStates, providers.models,
 test/fixtures/files.ts              # + writeNew
 test/acceptance/harness-*.test.ts   # new: one file per story (see "Tests")
 eslint.config.js                    # src/harness may import nothing
-docs/DECISIONS.md                   # D-100 onward; D-063 and D-064 amended
+docs/DECISIONS.md                   # D-108 onward; D-063 and D-064 amended
 docs/DESIGN.md                      # rung 4 of the profile precedence
 docs/LIVE-CHECK.md                  # the "built-in default" line
 .specify/memory/tdd-profile.md      # the new fixtures
@@ -207,7 +207,7 @@ The wake limit for a `failed` task rises from 600 to 1200 characters, so the cau
 
 ### Docs
 
-`docs/DECISIONS.md` gets a section "Harness independence" with D-100 to D-107 and the amendments to D-063 and D-064 (see "Decisions to record").
+`docs/DECISIONS.md` gets a section "Harness independence" with D-108 to D-115 and the amendments to D-063 and D-064 (see "Decisions to record").
 `docs/DESIGN.md` rung 4 and `docs/LIVE-CHECK.md` line 176 lose the built-in default.
 `CLAUDE.md` does not change.
 The `LIVE-CHECK.md` rewrite, `HARNESS-SUPPORT.md`, and the tier plans are task H9 and stay out.
@@ -224,7 +224,7 @@ Entry points and layers:
 ### Test changes in order
 
 An existing test changes only when a requirement changes the behavior it asserts (SC-1309).
-Each change gets a line in the cycle log and in D-107.
+Each change gets a line in the cycle log and in D-115.
 
 | Order | Task | Existing tests that change | Why |
 | --- | --- | --- | --- |
@@ -245,20 +245,20 @@ Fixture defaults:
 
 ## Decisions to record
 
-- D-100: Harness independence: scope and the captain's five decisions (D1 A to D5 A).
+- D-108: Harness independence: scope and the captain's five decisions (D1 A to D5 A).
   Records what this release builds (H1, H2, H3, H5, H10, H11) and what stays open (H4, H6 to H9, H12 to H14, tier 2).
-- D-101: Readiness comes from bb's provider states and fails closed.
+- D-109: Readiness comes from bb's provider states and fails closed.
   Closes t01 finding 5.9.
   Notes the open point that a custom ACP provider must appear in the states.
-- D-102: The harness contract table is data, and it has five columns the report did not list (`unlistedModels`, `sandbox`, `refusedModes`, `refusalReason`, `toolHint`) (Deviation from the report's section 6.2, with the reason).
-- D-103: Pi is admitted in `direct-PR` and `no-mistakes` modes and refused in `local-only` (Decided by the captain, D3 A).
+- D-110: The harness contract table is data, and it has five columns the report did not list (`unlistedModels`, `sandbox`, `refusedModes`, `refusalReason`, `toolHint`) (Deviation from the report's section 6.2, with the reason).
+- D-111: Pi is admitted in `direct-PR` and `no-mistakes` modes and refused in `local-only` (Decided by the captain, D3 A).
   Scouts are included, the queue start fails a refused task, and D-030 and D-095 stay open.
-- D-104: The built-in default profile is removed (Decided by the captain, D5 A).
+- D-112: The built-in default profile is removed (Decided by the captain, D5 A).
   Amends D-063, adds the `no_default_profile` block and `dispatch init`, the first plugin write into a checkout.
-- D-105: Reasoning ladders are per provider (Gap).
+- D-113: Reasoning ladders are per provider (Gap).
   Amends D-064.
-- D-106: Model checks read bb's per-model list, and unlisted models follow the row (Gap).
-- D-107: Failure evidence quotes the provider's cause, with a bound and an advisory remedy (Gap).
+- D-114: Model checks read bb's per-model list, and unlisted models follow the row (Gap).
+- D-115: Failure evidence quotes the provider's cause, with a bound and an advisory remedy (Gap).
   Lists the existing tests that changed.
 
 D-063 and D-064 keep their text and gain an "Amended by" line.

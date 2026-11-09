@@ -2,7 +2,7 @@ import type { Profile } from "../machine/types";
 import { ladderFor, type Candidate, type Choice, type DispatchConfig, type DispatchResolver, type Resolution, type Rule, type TaskFacts } from "./types";
 
 /**
- * What the last rung says. The plugin has no built-in profile (D-104): a project that names no profile gets no
+ * What the last rung says. The plugin has no built-in profile (D-112): a project that names no profile gets no
  * harness, and the owner is told how to choose one.
  */
 const NO_PROFILE_MESSAGE =

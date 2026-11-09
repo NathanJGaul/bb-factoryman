@@ -86,7 +86,7 @@ export const DEFAULT_REASONING_LEVELS = ["none", "low", "medium", "high", "xhigh
 
 /**
  * The ladder for one provider. An array applies to every provider. A record applies its entry to that provider and
- * leaves every other provider on the default ladder, because level IDs belong to one provider (D-105).
+ * leaves every other provider on the default ladder, because level IDs belong to one provider (D-113).
  * It sits here, with no imports, so the resolver stays pure (test A718).
  */
 export function ladderFor(levels: DispatchConfig["reasoningLevels"], providerId: string): readonly string[] {

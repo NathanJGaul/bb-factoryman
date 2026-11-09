@@ -179,7 +179,7 @@ Resolution follows firstmate's precedence:
 1. An explicit override on the task.
 2. The best-fitting rule in the project's dispatch config.
 3. The configured default.
-4. No profile: dispatch blocks, and the message names `bb factoryman dispatch init --provider <id>`, which writes a starter `dispatch.json` (D-104). The plugin picks no harness for you.
+4. No profile: dispatch blocks, and the message names `bb factoryman dispatch init --provider <id>`, which writes a starter `dispatch.json` (D-112). The plugin picks no harness for you.
 
 A deterministic resolver handles any task that matches exactly one rule. When several rules fit, the resolver returns `ambiguous` and the supervisor chooses. Scripts own the mechanics, and the agent owns the judgment.
 

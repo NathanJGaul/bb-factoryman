@@ -7,7 +7,7 @@ import { clip } from "../tools/results";
 export const WAKE_STATES: readonly string[] = ["needs_decision", "review_ready", "report_ready", "blocked", "failed"];
 
 const EVIDENCE_LIMIT = 600;
-/** A failed task also carries the provider's cause and a remedy line, so it keeps twice as much (D-107). */
+/** A failed task also carries the provider's cause and a remedy line, so it keeps twice as much (D-115). */
 const FAILURE_LIMIT = 1200;
 /** Findings travel in the evidence of a `needs_decision` task, and the supervisor needs all of them. */
 const FINDINGS_LIMIT = 8000;

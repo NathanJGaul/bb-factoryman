@@ -12,7 +12,7 @@ The author of the code ran it, so it is not independent.
 
 The implementation matches the specification, the plan, and the contracts in every behavior that the tests pin.
 Every requirement (45 of 45), every acceptance criterion (47 of 47), and every success criterion (9 of 9) has a task, a test, or a recorded rule that covers it.
-One constitution item is open and known: principle V (71 behaviors have no recorded red), which D-108 records for the captain to accept.
+One constitution item is open and known: principle V (71 behaviors have no recorded red), which D-116 records for the captain to accept.
 The other findings are one gap in the admission rule, one race to settle in the live check, one question about the constitution's scope text, and a handful of places where a document lags the code.
 None of them blocks the pull request, and the two that need a decision belong to the captain.
 
@@ -20,14 +20,14 @@ None of them blocks the pull request, and the two that need a decision belong to
 
 | ID | Category | Severity | Location | Summary | Recommendation |
 | --- | --- | --- | --- | --- | --- |
-| C1 | Constitution | CRITICAL (known, recorded) | `.specify/memory/constitution.md` principle V; `docs/DECISIONS.md` D-108; `tdd/verification.md` finding 1 | 71 of 227 behaviors have no recorded red (42 acceptance tests written after their code, 29 unit tests that passed on the first run). Each has a killing mutant in the ledger. The repository commits only on green, so the order cannot be rewritten | The captain accepts D-108, as D-099 was accepted for feature 008, or orders the 71 redone test-first. Not a worker decision |
-| C2 | Constitution | RESOLVED (was MEDIUM) | `.specify/memory/constitution.md` "VI. Scope discipline" and "Governance"; `docs/DECISIONS.md` D-100 | Principle VI lists milestones 1 to 11 as the scope. This feature extends it by the captain's task. D-100 gives the reason and leaves the text as it is (precedent D-068), but Governance says an amendment needs a reason and a version bump | Resolved on 2026-11-09: the captain ordered the amendment, and constitution 1.3.0 adds the scope line to Principle VI (D-117) |
-| U1 | Underspecification | MEDIUM | `src/dispatch/gate.ts:17-23`; `src/harness/contracts.ts` (generic row); `spec.md` FR-1326 | The Pi refusal keys on the bb provider ID `pi`. The same harness behind another provider ID (an ACP registry entry such as `pi-acp`) gets the generic row, which has `sandbox: "unknown"` and no refused mode, so it is admitted in `local-only` mode. FR-1326 says that a provider with no row is never refused by this rule, and the captain's decision D3 names Pi only | The captain decides whether a harness with an unknown sandbox is also refused in `local-only`, or whether each such provider gets its own row when it is admitted. Record the choice in D-103 |
+| C1 | Constitution | CRITICAL (known, recorded) | `.specify/memory/constitution.md` principle V; `docs/DECISIONS.md` D-116; `tdd/verification.md` finding 1 | 71 of 227 behaviors have no recorded red (42 acceptance tests written after their code, 29 unit tests that passed on the first run). Each has a killing mutant in the ledger. The repository commits only on green, so the order cannot be rewritten | The captain accepts D-116, as D-099 was accepted for feature 008, or orders the 71 redone test-first. Not a worker decision |
+| C2 | Constitution | RESOLVED (was MEDIUM) | `.specify/memory/constitution.md` "VI. Scope discipline" and "Governance"; `docs/DECISIONS.md` D-108 | Principle VI lists milestones 1 to 11 as the scope. This feature extends it by the captain's task. D-108 gives the reason and leaves the text as it is (precedent D-068), but Governance says an amendment needs a reason and a version bump | Resolved on 2026-11-09: the captain ordered the amendment, and constitution 1.3.0 adds the scope line to Principle VI (D-117) |
+| U1 | Underspecification | MEDIUM | `src/dispatch/gate.ts:17-23`; `src/harness/contracts.ts` (generic row); `spec.md` FR-1326 | The Pi refusal keys on the bb provider ID `pi`. The same harness behind another provider ID (an ACP registry entry such as `pi-acp`) gets the generic row, which has `sandbox: "unknown"` and no refused mode, so it is admitted in `local-only` mode. FR-1326 says that a provider with no row is never refused by this rule, and the captain's decision D3 names Pi only | The captain decides whether a harness with an unknown sandbox is also refused in `local-only`, or whether each such provider gets its own row when it is admitted. Record the choice in D-111 |
 | U2 | Underspecification | MEDIUM | `src/wiring/handlers.ts:40,47`; `spec.md:223` | The edge case says that the grace wait applies when the thread's events are not yet written. The wait runs only when the error text is empty (`:40`). With an error text, the cause is read at once, so if bb writes the error event after it sends `thread.failed`, the evidence silently lacks the cause (the fail-closed fallback of FR-1356 keeps today's text) | Add a live-check step that fails a worker with an error text and reads the evidence, and wait briefly before the read if the cause is missing. Not covered by a fake |
 | U3 | Underspecification | LOW | `src/dispatch/gate.ts:48-52`; `src/limits/queue.ts` (drain) | Every dispatch, and every queued task on every drain, now makes three bb reads (providers, states, models). The model read may start a CLI in a real bb. The latency was not measured | Time the three reads in the live check. Cache nothing before there is a number |
 | I1 | Inconsistency | MEDIUM | `contracts/dispatch-gate.md:31` against `src/dispatch/availability.ts:66-83` | The contract says that every `provider_unavailable` message ends "No other provider was tried." The mode, level, and model messages do not end with it (they keep today's text), and only the readiness, listing, and admission messages do | Change the contract to name those three messages |
 | I2 | Inconsistency | LOW | `plan.md:88` against `src/harness/contracts.ts` | The plan says the generic row is a frozen object. The rows are `readonly` in their type and are not frozen at run time, so a caller of `contractFor` could change the shared table | Freeze the rows with `Object.freeze` (and test it), or edit the plan |
-| I3 | Inconsistency | LOW | `plan.md` "Source layout" against `src/dispatch/types.ts`, `config.ts` | The plan puts `ladderFor` in `config.ts`. It is in `types.ts`, and `config.ts` re-exports it, because test A718 lets the resolver import only `./types`. D-105 records it. The layout also omits `test/fixtures/models.ts`, `test/fixtures/defaults.test.ts`, and `tdd/ledger-mutants.py` | Update the plan's layout |
+| I3 | Inconsistency | LOW | `plan.md` "Source layout" against `src/dispatch/types.ts`, `config.ts` | The plan puts `ladderFor` in `config.ts`. It is in `types.ts`, and `config.ts` re-exports it, because test A718 lets the resolver import only `./types`. D-113 records it. The layout also omits `test/fixtures/models.ts`, `test/fixtures/defaults.test.ts`, and `tdd/ledger-mutants.py` | Update the plan's layout |
 | I4 | Inconsistency | LOW | `contracts/cli-dispatch-init.md`; `spec.md` FR-1333 against `src/dispatch/init.ts:32` | A flag whose value is another flag also gives the usage error. The contract and FR-1333 list a missing, blank, repeated, or unknown flag only | Add the case to the contract (U1414 pins it) |
 | I5 | Inconsistency | LOW | `tdd/test-list.md` frontmatter | `updated_at` is still `b0ccb09`, though rows changed in every group, and U1474 to U1477 were added after planning | Set `updated_at` to the final commit |
 | I6 | Inconsistency | LOW | `tdd/cycle-log.md:6` | The log's intro says tests are committed with stubs first. The repository commits on green only, and the log's notes say so. The log is append only | Leave it; the notes correct it |
@@ -94,7 +94,7 @@ The table names the tasks that carry a requirement's behaviors and the behaviors
 | SC-1306 | Yes | T1384, T1385, T1386 | A1340, A1341 |
 | SC-1307 | Yes | T1313, T1316, T1317 | A1313 |
 | SC-1308 | Yes | T1395 | A1349 |
-| SC-1309 | Process | T1329, T1358, T1376 (update the existing tests) | none (a rule: recorded in the cycle log and D-107) |
+| SC-1309 | Process | T1329, T1358, T1376 (update the existing tests) | none (a rule: recorded in the cycle log and D-115) |
 
 All 47 acceptance criteria map to at least one `A` behavior (`tdd/verification.md`, "Traceability"), and each of those behaviors has a task that was ticked only when the behavior was `DONE`.
 
@@ -107,7 +107,7 @@ All 47 acceptance criteria map to at least one `A` behavior (`tdd/verification.m
 | III. The event log is the source of truth | Met. The cause enters the `fail` event as evidence. No cache path changed |
 | IV. Storage behind an interface | Met. `Files` gained `writeNew`, and the store is untouched |
 | V. Test first | **Not met for 71 behaviors** (C1). Met for 137 behaviors. Mutation evidence exists for all 71. Tests were not weakened: one loosening was found by the second audit and restored (T1418) |
-| VI. Scope discipline | Met (the captain's task, D-100, no non-goal added, no live install). The text question C2 is resolved by constitution 1.3.0 (D-117) |
+| VI. Scope discipline | Met (the captain's task, D-108, no non-goal added, no live install). The text question C2 is resolved by constitution 1.3.0 (D-117) |
 
 Engineering constraints and workflow: the stack is unchanged and no dependency was added; the docs follow the sentence-per-line and plain-language rules; commits are small and carry no co-author line; `CHANGELOG.md` was not touched.
 
@@ -134,7 +134,7 @@ None is an orphan.
 
 ## Next actions
 
-- The captain's items come first: accept D-108 or order the rework (C1), decide U1 and C2. They are listed in `checklist.md` as CHK1338 and CHK1339, and the worker's final status line will name them.
+- The captain's items come first: accept D-116 or order the rework (C1), decide U1 and C2. They are listed in `checklist.md` as CHK1338 and CHK1339, and the worker's final status line will name them.
 - Safe edits to documents, if wanted before the pull request: I1, I2, I3, I4, I5, I7, and I8. None changes behavior, and none is done here because this command writes only its own report.
 - The live check (`quickstart.md`, part 2) should also settle U2 and U3.
 
