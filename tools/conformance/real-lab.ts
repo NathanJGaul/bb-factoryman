@@ -148,7 +148,7 @@ class RealLab implements Lab {
   }
 
   private async threadLog(id: string): Promise<ThreadEvent[]> {
-    const raw = await this.bbJson<Array<{ seq: number; type: string; data: Record<string, unknown> }>>(["thread", "log", id]);
+    const raw = await this.bbJson<Array<{ seq: number; type: string; data: Record<string, unknown> }>>(["thread", "log", id, "--all"]);
     return raw.map((e) => ({ seq: e.seq, type: e.type, data: e.data }));
   }
 
