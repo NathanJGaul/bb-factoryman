@@ -34,5 +34,16 @@ describe("docs/DECISIONS.md", () => {
     expect(numbers[0]).toBe("D-001");
     expect((numbers.at(-1) ?? "") >= "D-117").toBe(true);
   });
-});
 
+  it("[A1618] holds the headings of this feature from D-123 on, and the constitution is at 1.4.0 with Principle VI naming H4 and H12", () => {
+    const numbers = headingNumbers(log());
+    expect(numbers).toContain("D-123");
+    expect((numbers.at(-1) ?? "") >= "D-123").toBe(true);
+    const constitution = readFileSync(join(ROOT, ".specify/memory/constitution.md"), "utf8");
+    expect(constitution).toMatch(/\*\*Version\*\*: 1\.4\.0 /);
+    const principle = constitution.split("### VI.")[1]?.split("\n### ")[0] ?? "";
+    expect(principle).toMatch(/\bH4\b/);
+    expect(principle).toMatch(/\bH12\b/);
+    expect(principle).toMatch(/D-129/);
+  });
+});

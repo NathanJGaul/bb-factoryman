@@ -47,4 +47,17 @@ describe("loadDispatchConfig", () => {
     expect(files.reads).toEqual([PATH]);
     expect(result).toMatchObject({ ok: true, config: { version: 1, rules: [] } });
   });
+
+  it("[U1621] blocks an invalid roles block with the field path, and no default replaces it", async () => {
+    const files = new FakeFiles();
+    files.files.set(PATH, JSON.stringify({ version: 1, profiles: {}, rules: [], roles: { validator: { agent: "set" } } }));
+    const result = await loadDispatchConfig(files, "/work/repo");
+    expect(result.ok).toBe(false);
+    expect(result.ok ? "" : result.message).toMatch(/dispatch\.json is invalid: roles\.validator\.agent must be "observe".* at `roles\.validator\.agent`/);
+  });
+
+  it("[U1622] gives the default roles for a project with no file", async () => {
+    const result = await loadDispatchConfig(new FakeFiles(), "/work/repo");
+    expect(result.ok && result.config.roles).toEqual({ supervisor: { profile: null }, validator: { agent: "observe" } });
+  });
 });

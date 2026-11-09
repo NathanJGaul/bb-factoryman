@@ -93,6 +93,16 @@ describe("createPlugin", () => {
     expect(command?.summary).toMatch(/starter/i);
   });
 
+  it("[U1643] registers the supervisor command with the stamp line and the start line", async () => {
+    const host = createFakePluginHost({ pluginId: "factoryman" });
+    await createPlugin()(host.bb);
+    const command = host.harness.inspection.registrations.cli?.commands.find((entry) => entry.name === "supervisor");
+    const usage = command?.usage ?? "";
+    expect(usage).toContain("bb factoryman supervisor <thread-id>");
+    expect(usage).toContain("bb factoryman supervisor start [--project <id>] [--profile <name>] [--prompt <text>]");
+    expect(usage.indexOf("<thread-id>")).toBeLessThan(usage.indexOf("supervisor start"));
+  });
+
   it("[U876] defines the machine check interval setting with a default of 30 seconds", async () => {
     const host = createFakePluginHost({ pluginId: "factoryman" });
     await createPlugin()(host.bb);

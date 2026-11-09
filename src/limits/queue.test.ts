@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { modelEntry, providerState } from "../../test/fixtures/bb-port";
 import { PROFILE_OK_FOR_QUEUE } from "../../test/fixtures/queue";
 import { testRuntime, type TestRuntime } from "../../test/fixtures/runtime";
+import { answerRead } from "../../test/fixtures/validator-read";
 import type { TaskRow } from "../store/types";
 import { RUNNING_STATES, capReached, drain, enqueue, registerQueue, runningCount } from "./queue";
 import type { QueuedRequest } from "./request";
@@ -218,6 +219,22 @@ describe("drain re-checks and bookkeeping", () => {
     expect(t.bb.callsTo("spawnWorker")).toEqual([]);
     expect(t.lines.some((line) => line.level === "warn" && line.message.includes(id) && /preflight/.test(line.message))).toBe(true);
     t.execHandler = () => ({ code: 0, stdout: "", stderr: "" });
+    await drain(t.runtime);
+    expect(state(t, id)).toBe("working");
+  });
+
+  it("[U1698] leaves a task queued when the validator agent of its remote machine is not ready, as for any preflight problem", async () => {
+    const t = setup();
+    t.bb.machines.push({ id: "host_gpu", name: "gpu-box", status: "connected", phase: "active", online: true });
+    t.bb.sources.push({ hostId: "host_gpu", path: "/work/gpu", isDefault: false });
+    t.bb.statesByHost.set("host_gpu", [providerState("claude"), providerState("codex", { status: "unauthenticated" })]);
+    t.execHandler = answerRead("agent: codex\n");
+    const id = queue(t, { ...REQUEST, machine: "host_gpu" });
+    await drain(t.runtime);
+    expect(state(t, id)).toBe("queued");
+    expect(t.bb.callsTo("spawnWorker")).toEqual([]);
+    expect(t.lines.some((line) => line.level === "warn" && line.message.includes(id) && /preflight/.test(line.message))).toBe(true);
+    t.bb.statesByHost.set("host_gpu", [providerState("claude"), providerState("codex")]);
     await drain(t.runtime);
     expect(state(t, id)).toBe("working");
   });

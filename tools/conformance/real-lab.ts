@@ -4,11 +4,12 @@ import { dirname, join } from "node:path";
 import type { RunArgs } from "./args.ts";
 import { deliveryModeOf, type Driver } from "./drivers/types.ts";
 import { judgeIsolation } from "./isolation.ts";
-import { bblabCommand, labEnv, labPaths, offlineProof, pluginBuildCommand, pluginCopyArgs, projectRowScript, resetLab, type LabPaths, type LabSettings } from "./lab-env.ts";
+import { bblabCommand, labDispatchJson, labEnv, labPaths, offlineProof, pluginBuildCommand, pluginCopyArgs, projectRowScript, resetLab, supervisorPrompt, supervisorStartArgs, type LabPaths, type LabSettings } from "./lab-env.ts";
 import type { DispatchOptions, EventRow, Lab, Offers, ProviderState, TaskRow, ThreadFacts, ToolResult, Wake, Who } from "./port.ts";
-import { fakeOffers, readWakes, stubOffers, type LogLine, type ThreadEvent } from "./readers.ts";
+import { fakeOffers, readWakes, startedThreadId, stubOffers, type LogLine, type ThreadEvent } from "./readers.ts";
 import type { Isolation, LabSession } from "./run.ts";
 import { ansi, exec } from "./shell.ts";
+import { waitUntil } from "./wait.ts";
 
 /** The bb build that tier 1 and tier 1.5 run on. The report found that the bb on the PATH is older than the owner's server. */
 export const BB_VERSION = "0.49.0";
@@ -186,7 +187,7 @@ class RealLab implements Lab {
   async spawnSupervisor(label: string): Promise<string> {
     const p = this.tier === "1" ? { provider: "acp-stub", model: "acp-default", reasoningLevel: null, permissionMode: null } : { provider: this.driver.profile.provider, model: this.driver.profile.model, reasoningLevel: this.driver.profile.reasoningLevel, permissionMode: this.driver.profile.permissionMode };
     const flags = ["--provider", p.provider, "--model", p.model, ...(p.reasoningLevel === null ? [] : ["--reasoning-level", p.reasoningLevel]), ...(p.permissionMode === null ? [] : ["--permission-mode", p.permissionMode])];
-    const spawned = await this.bbJson<{ id: string }>(["thread", "spawn", "--project", this.projectId, ...flags, "--new-environment", "worktree", "--base-branch", "main", "--prompt", `[conformance:sup=${label}]\nhello`]);
+    const spawned = await this.bbJson<{ id: string }>(["thread", "spawn", "--project", this.projectId, ...flags, "--new-environment", "worktree", "--base-branch", "main", "--prompt", supervisorPrompt(label)]);
     return spawned.id;
   }
 
@@ -208,9 +209,9 @@ class RealLab implements Lab {
     return { code: out.code, text: `${out.stdout}${out.stderr}`.trim() };
   }
 
-  async startSupervisor(label: string): Promise<{ code: number; text: string }> {
-    const out = await this.bb(["factoryman", "supervisor", "start", "--project", this.projectId, "--label", label]);
-    return { code: out.code, text: `${out.stdout}${out.stderr}`.trim() };
+  async startSupervisor(label: string): Promise<{ code: number; text: string; threadId: string | null }> {
+    const out = await this.bb(supervisorStartArgs(this.projectId, label));
+    return { code: out.code, text: `${out.stdout}${out.stderr}`.trim(), threadId: out.code === 0 ? startedThreadId(out.stdout) : null };
   }
 
   async clear(threadId: string): Promise<void> {
@@ -345,7 +346,7 @@ export async function openRealLab(init: RealLabInit): Promise<LabSession> {
 
     progress("Creating the project");
     const profile = driver.profile;
-    const dispatchJson = JSON.stringify({ version: 1, profiles: { harness: profile }, default: "harness", rules: [] });
+    const dispatchJson = labDispatchJson(profile);
     const made = await lab.inLab([
       "bash",
       "-c",
@@ -356,6 +357,19 @@ export async function openRealLab(init: RealLabInit): Promise<LabSession> {
     lab.projectId = project.id;
     const row = await lab.inLab(["bash", "-c", `cd ${src} && node -e "${projectRowScript(project.id, deliveryModeOf(driver))}"`]);
     if (row.code !== 0) throw new Error(`Could not write the project row: ${row.stderr.trim()}`);
+
+    // bb loads a provider's model catalog after the server starts. A first dispatch that comes before the load finishes
+    // is blocked as "not listed", and every scenario then fails for a reason that is not the harness's (found by a live Pi run).
+    progress(`Waiting for bb to list the models of ${driver.provider}`);
+    const listed = await waitUntil(
+      async () => {
+        const out = await lab.bb(["provider", "models", driver.provider, "--json"]);
+        const models: unknown = out.code === 0 ? JSON.parse(out.stdout) : [];
+        return Array.isArray(models) && models.length > 0;
+      },
+      { attempts: 30, delayMs: 2000, sleep },
+    );
+    if (!listed) progress(`bb listed no model of ${driver.provider} after 60 seconds, so the scenarios that dispatch will say so.`);
 
     progress("Starting the driver supervisor (the stub)");
     const driverThread = JSON.parse((await lab.bb(["thread", "spawn", "--project", project.id, "--provider", "acp-stub", "--model", "acp-default", "--new-environment", "worktree", "--base-branch", "main", "--prompt", "[conformance:sup=driver]\nhello", "--json"])).stdout) as { id: string };

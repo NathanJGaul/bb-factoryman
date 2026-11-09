@@ -10,13 +10,13 @@ Tier 2 (a real model) has not run for any harness.
 
 ## Claude Code
 
-Status: supported at tier 1.5, with known gaps in S9. Tier 2 has not run.
+Status: supported at tier 1.5. Tier 2 has not run.
 
 | Field | Value |
 | --- | --- |
 | CLI | claude 2.1.316 |
 | bb | 0.49.0 |
-| Plugin commit | 1e7be3e |
+| Plugin commit | 5042e16 |
 | Date | 2026-11-09 |
 | Network | offline |
 | Isolation | clean |
@@ -31,20 +31,20 @@ Status: supported at tier 1.5, with known gaps in S9. Tier 2 has not run.
 | S6 | pass | Silence |  |
 | S7 | pass | Failure |  |
 | S8 | pass | Refusals |  |
-| S9 | known gap (H4) | Role change | S9.start-command waits for H4: the command `bb factoryman supervisor start` does not exist yet |
+| S9 | pass | Role change |  |
 | S10 | skipped | Restart |  |
 | S11 | pass | Teardown |  |
 | S12 | pass | Wake while busy |  |
 
 ## Codex
 
-Status: supported at tier 1.5, with known gaps in S9. Tier 2 has not run.
+Status: supported at tier 1.5. Tier 2 has not run.
 
 | Field | Value |
 | --- | --- |
 | CLI | codex 0.166.0 |
 | bb | 0.49.0 |
-| Plugin commit | 1e7be3e |
+| Plugin commit | 5042e16 |
 | Date | 2026-11-09 |
 | Network | offline |
 | Isolation | clean |
@@ -59,20 +59,20 @@ Status: supported at tier 1.5, with known gaps in S9. Tier 2 has not run.
 | S6 | pass | Silence |  |
 | S7 | pass | Failure |  |
 | S8 | pass | Refusals |  |
-| S9 | known gap (H4) | Role change | S9.start-command waits for H4: the command `bb factoryman supervisor start` does not exist yet; S9.stamp-advice waits for H4: the stamp command says the tools arrive "from its next session" and does not tell the person to run `bb thread clear`, which this harness needs |
+| S9 | pass | Role change |  |
 | S10 | skipped | Restart |  |
 | S11 | pass | Teardown |  |
 | S12 | pass | Wake while busy |  |
 
 ## Pi
 
-Status: supported at tier 1.5, with known gaps in S9. Tier 2 has not run.
+Status: supported at tier 1.5. Tier 2 has not run.
 
 | Field | Value |
 | --- | --- |
 | CLI | pi 1.4.0 |
 | bb | 0.49.0 |
-| Plugin commit | 1e7be3e |
+| Plugin commit | 53eeae8 |
 | Date | 2026-11-09 |
 | Network | offline |
 | Isolation | clean |
@@ -87,20 +87,20 @@ Status: supported at tier 1.5, with known gaps in S9. Tier 2 has not run.
 | S6 | pass | Silence |  |
 | S7 | pass | Failure |  |
 | S8 | pass | Refusals |  |
-| S9 | known gap (H4) | Role change | S9.start-command waits for H4: the command `bb factoryman supervisor start` does not exist yet |
+| S9 | pass | Role change |  |
 | S10 | skipped | Restart |  |
 | S11 | pass | Teardown |  |
 | S12 | pass | Wake while busy |  |
 
 ## omp
 
-Status: supported at tier 1.5, with known gaps in S9. Tier 2 has not run.
+Status: supported at tier 1.5. Tier 2 has not run.
 
 | Field | Value |
 | --- | --- |
 | CLI | omp 18.18.3 |
 | bb | 0.49.0 |
-| Plugin commit | 1e7be3e |
+| Plugin commit | 5042e16 |
 | Date | 2026-11-09 |
 | Network | offline |
 | Isolation | clean |
@@ -115,7 +115,7 @@ Status: supported at tier 1.5, with known gaps in S9. Tier 2 has not run.
 | S6 | pass | Silence |  |
 | S7 | pass | Failure | This harness ends a failing model turn normally and shows the error as the assistant's text, so bb records no failure and the plugin sees a silent turn. |
 | S8 | pass | Refusals |  |
-| S9 | known gap (H4) | Role change | S9.start-command waits for H4: the command `bb factoryman supervisor start` does not exist yet; S9.stamp-advice waits for H4: the stamp command says the tools arrive "from its next session" and does not tell the person to run `bb thread clear`, which this harness needs |
+| S9 | pass | Role change |  |
 | S10 | skipped | Restart |  |
 | S11 | pass | Teardown |  |
 | S12 | pass | Wake while busy |  |
@@ -126,9 +126,9 @@ Status: supported at tier 1.5, with known gaps in S9. Tier 2 has not run.
 | --- | --- |
 | CLI | stub-agent 0.0.1 |
 | bb | 0.49.0 |
-| Plugin commit | 1e7be3e |
+| Plugin commit | 5042e16 |
 | Date | 2026-11-09 |
-| Network | offline |
+| Network | shared |
 | Isolation | clean |
 
 | Scenario | Verdict | Name | Detail |
@@ -141,7 +141,7 @@ Status: supported at tier 1.5, with known gaps in S9. Tier 2 has not run.
 | S6 | pass | Silence |  |
 | S7 | pass | Failure |  |
 | S8 | pass | Refusals |  |
-| S9 | known gap (H4) | Role change | S9.start-command waits for H4: the command `bb factoryman supervisor start` does not exist yet |
+| S9 | pass | Role change |  |
 | S10 | pass | Restart |  |
 | S11 | pass | Teardown |  |
 | S12 | pass | Wake while busy |  |

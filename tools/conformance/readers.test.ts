@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { fakeOffers, readWakes, stubOffers, type LogLine, type ThreadEvent } from "./readers.ts";
+import { fakeOffers, readWakes, startedThreadId, stubOffers, type LogLine, type ThreadEvent } from "./readers.ts";
 
 const requested = (seq: number, text: string, plugin: string | null = "bb-factoryman"): ThreadEvent => ({
   seq,
@@ -56,5 +56,17 @@ describe("offers", () => {
     expect(fakeOffers(log, { kind: "supervisor", label: "late" })).toEqual({ tools: ["factoryman_dispatch", "factoryman_status"], skills: ["factoryman-supervisor"] });
     expect(fakeOffers(log, { kind: "worker", taskId: "t-9" })).toEqual({ tools: ["factoryman_report"], skills: ["factoryman-worker"] });
     expect(fakeOffers(log, { kind: "worker", taskId: "t-1" })).toEqual({ tools: [], skills: [] });
+  });
+});
+
+describe("startedThreadId", () => {
+  it("[U1707] takes the ID from the first line of the start command's output, and returns null when the line has none", () => {
+    const ok = "Started factoryman supervisor thread thr_abc123 with the profile harness (claude-code, claude-haiku-5-5).\nThe role is set at spawn, so the thread has the four supervisor tools and the factoryman-supervisor skill from its first turn.";
+    expect(startedThreadId(ok)).toBe("thr_abc123");
+    expect(startedThreadId("No supervisor profile is set for project proj_x. Pass --profile <name>.\nNothing was spawned.")).toBeNull();
+    expect(startedThreadId("Usage: bb factoryman supervisor <thread-id>")).toBeNull();
+    expect(startedThreadId("")).toBeNull();
+    // Only the first line counts: a later line must not be taken for the start line.
+    expect(startedThreadId("Cannot start a supervisor: x.\nStarted factoryman supervisor thread thr_zzz with the profile p (a, b).")).toBeNull();
   });
 });

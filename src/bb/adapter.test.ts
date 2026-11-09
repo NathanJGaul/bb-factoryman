@@ -69,7 +69,51 @@ describe("createBbPort", () => {
     expect(sdk.callsTo("threads.spawn")).toEqual([]);
   });
 
-  it("[U11] reads a thread as id, project, status, parent, and environment", async () => {
+  describe("spawnSupervisor", () => {
+    const request = { projectId: "proj-1", prompt: "wait for instructions", profile: { ...PROFILE, permissionMode: "accept-edits" as const }, metadata: { role: "supervisor" }, baseBranch: null };
+
+    it("[U1603] spawns the supervisor with the profile's four fields, no parent thread, and the metadata it was given", async () => {
+      const { port, sdk } = setup({ threads: { spawn: async () => ({ id: "thr-sup-9" }) }, projects });
+      expect(await port.spawnSupervisor(request)).toEqual({ threadId: "thr-sup-9" });
+      const [[args]] = sdk.callsTo("threads.spawn") as [[Record<string, unknown>]];
+      expect(args).toMatchObject({
+        projectId: "proj-1",
+        prompt: "wait for instructions",
+        providerId: "claude",
+        model: "opus",
+        reasoningLevel: "high",
+        permissionMode: "accept-edits",
+        pluginMetadata: { role: "supervisor" },
+      });
+      expect(args).not.toHaveProperty("parentThreadId");
+      expect(args).not.toHaveProperty("parentNotifications");
+      expect(sdk.callsTo("threads.spawn")).toHaveLength(1);
+    });
+
+    it("[U1604] starts a managed worktree off the default branch on the project's default host", async () => {
+      const twoSources = {
+        get: async () => ({
+          id: "proj-1",
+          sources: [
+            { type: "local_path", isDefault: false, hostId: "host_2", path: "/other/repo" },
+            { type: "local_path", isDefault: true, hostId: "host_1", path: "/work/repo" },
+          ],
+        }),
+      };
+      const { port, sdk } = setup({ threads: { spawn: async () => ({ id: "thr-sup-9" }) }, projects: twoSources });
+      await port.spawnSupervisor(request);
+      const [[args]] = sdk.callsTo("threads.spawn") as [[{ environment: unknown }]];
+      expect(args.environment).toEqual({ type: "host", hostId: "host_1", workspace: { type: "managed-worktree", baseBranch: { kind: "default" } } });
+    });
+
+    it("[U1605] throws with bb's reason when the project has no host, and makes no spawn call", async () => {
+      const { port, sdk } = setup({ threads: { spawn: async () => ({ id: "thr-sup-9" }) }, projects: { get: async () => ({ id: "proj-1", sources: [] }) } });
+      await expect(port.spawnSupervisor(request)).rejects.toThrow(/no host/i);
+      expect(sdk.callsTo("threads.spawn")).toEqual([]);
+    });
+  });
+
+  it("[U11] reads a thread as id, project, status, parent, environment, and provider", async () => {
     const { port } = setup({
       threads: {
         get: async () => ({ id: "thr-1", projectId: "proj-1", status: "error", parentThreadId: "thr-sup", environmentId: "env-1", deletedAt: null, extra: true }),
@@ -81,8 +125,19 @@ describe("createBbPort", () => {
       status: "error",
       parentThreadId: "thr-sup",
       environmentId: "env-1",
+      providerId: null,
       deleted: false,
     });
+  });
+
+  it("[U1601] reads the thread's provider ID", async () => {
+    const { port } = setup({ threads: { get: async () => ({ id: "thr-1", projectId: "proj-1", status: "idle", parentThreadId: null, environmentId: null, providerId: "codex", deletedAt: null }) } });
+    expect(await port.getThread("thr-1")).toMatchObject({ providerId: "codex" });
+  });
+
+  it("[U1602] reads a null provider ID when the thread carries none", async () => {
+    const { port } = setup({ threads: { get: async () => ({ id: "thr-1", projectId: "proj-1", status: "idle", parentThreadId: null, environmentId: null, deletedAt: null }) } });
+    expect(await port.getThread("thr-1")).toMatchObject({ providerId: null });
   });
 
   it("[U11] flags a soft-deleted thread and keeps its parent", async () => {

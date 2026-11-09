@@ -1,10 +1,13 @@
 import { INIT_USAGE, runDispatchInit } from "../dispatch/init";
 import { pickMachine } from "../dispatch/placement";
-import { reportText, runPreflight } from "../machines/preflight";
+import { preflightReport, reportText } from "../machines/preflight";
 import { protectionSteps } from "../limits/protection";
 import { parseRegistry, type RegistryEntry } from "../limits/registry";
 import { errorText, type Runtime } from "../runtime";
+import { roleAdvice } from "../harness/advice";
+import { GENERIC_CONTRACT, contractFor } from "../harness/contracts";
 import { identify } from "./access";
+import { runSupervisorStart, START_USAGE } from "./supervisor-start";
 
 export interface CommandResult {
   exitCode: number;
@@ -14,6 +17,7 @@ export interface CommandResult {
 
 const USAGE =
   "Usage: bb factoryman supervisor <thread-id>\n" +
+  START_USAGE +
   "Usage: bb factoryman preflight <machine> --project <project-id> [--provider <provider-id>]\n" +
   INIT_USAGE +
   "Usage: bb factoryman protection <owner/repo> [--branch <branch>] [--check <name>]\n" +
@@ -29,6 +33,9 @@ export interface CommandContext {
  * thread, so bb offers it the four supervisor tools. The stamp only chooses
  * which tools bb offers. Each tool still decides the caller from the store.
  *
+ * `bb factoryman supervisor start` spawns a supervisor with the role set in the
+ * spawn call, so the role exists at the thread's first session (report task H4).
+ *
  * `bb factoryman preflight <machine> --project <id>` reports what a remote
  * machine is missing, and changes nothing.
  *
@@ -37,7 +44,7 @@ export interface CommandContext {
  */
 export async function runFactorymanCommand(rt: Runtime, argv: string[], ctx: CommandContext = {}): Promise<CommandResult> {
   const [command, ...rest] = argv;
-  if (command === "supervisor") return supervisor(rt, rest);
+  if (command === "supervisor") return rest[0] === "start" ? runSupervisorStart(rt, rest.slice(1), ctx) : supervisor(rt, rest);
   if (command === "preflight") return preflight(rt, rest, ctx);
   if (command === "dispatch") return rest[0] === "init" ? runDispatchInit(rt, rest.slice(1), ctx) : { exitCode: 2, stderr: USAGE };
   if (command === "protection") return protection(rest);
@@ -56,7 +63,18 @@ async function supervisor(rt: Runtime, args: string[]): Promise<CommandResult> {
   } catch (error) {
     return { exitCode: 1, stderr: `Could not stamp thread ${threadId}: ${errorText(error)}\n` };
   }
-  return { exitCode: 0, stdout: `Thread ${threadId} is now a factoryman supervisor. It sees the four supervisor tools from its next session.\n` };
+  // The stamp is done. Read the thread's harness for the advice: when bb cannot say, the advice is the generic one.
+  let providerId: string | null = null;
+  let unreadReason: string | undefined;
+  try {
+    const thread = await rt.deps.bb.getThread(threadId);
+    providerId = thread?.providerId ?? null;
+    if (thread === null) unreadReason = "bb does not know the thread";
+  } catch (error) {
+    unreadReason = errorText(error);
+  }
+  const contract = providerId === null ? GENERIC_CONTRACT : contractFor(providerId);
+  return { exitCode: 0, stdout: `Thread ${threadId} is now a factoryman supervisor.\n${roleAdvice(threadId, providerId, contract, unreadReason)}\n` };
 }
 
 function parsePreflight(args: string[], ctx: CommandContext): { machine: string; projectId: string; provider: string | null } | null {
@@ -87,8 +105,8 @@ async function preflight(rt: Runtime, args: string[], ctx: CommandContext): Prom
     if (isClone) return { exitCode: 0, stdout: `Machine ${machine.name} (${machine.id}) holds the project's clone, so no remote preflight applies.\n` };
     const mode = store.getProjectConfig(parsed.projectId).deliveryMode;
     const sourcePath = sources.find((source) => source.hostId === machine.id)?.path ?? "";
-    const problems = await runPreflight({ bb, exec }, { host: machine, sourcePath, mode, provider: parsed.provider });
-    return { exitCode: problems.length === 0 ? 0 : 1, stdout: `${reportText(machine, mode, problems)}\n` };
+    const { problems, notes } = await preflightReport({ bb, exec }, { host: machine, sourcePath, mode, provider: parsed.provider });
+    return { exitCode: problems.length === 0 ? 0 : 1, stdout: `${reportText(machine, mode, problems, notes)}\n` };
   } catch (error) {
     return { exitCode: 1, stderr: `Preflight could not run: ${errorText(error)}\n` };
   }

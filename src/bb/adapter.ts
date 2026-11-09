@@ -1,4 +1,5 @@
 import type { BbPluginApi } from "@get-bb/plugin-sdk";
+import type { Profile } from "../machine/types";
 import type { BbPort, InputResult, Json, MachineInfo, ProjectSource, ProviderStatus, TerminalRead } from "./port";
 
 const PERMISSION_MODES = ["accept-edits", "auto", "full"] as const;
@@ -17,6 +18,7 @@ interface ThreadFields {
   status: string;
   parentThreadId: string | null;
   environmentId: string | null;
+  providerId?: unknown;
   deletedAt?: number | null;
 }
 
@@ -32,41 +34,55 @@ function isNotFound(error: unknown): boolean {
  * and nowhere else.
  */
 export function createBbPort(bb: BbPluginApi): BbPort {
+  /**
+   * Spawn one thread in a managed worktree. A worker passes its parent, and a supervisor passes none. The
+   * metadata goes in the spawn call, so the role is present at the thread's first session.
+   */
+  async function spawnThread(
+    request: { projectId: string; prompt: string; profile: Profile; metadata: Record<string, Json>; baseBranch: string | null; hostId?: string | null },
+    parent: { parentThreadId?: string; parentNotifications?: "off" },
+  ): Promise<{ threadId: string }> {
+    // bb 0.48.1 rejects a host workspace without a host ID (found in the live smoke test), so use the project's default host
+    // unless the task is pinned to a machine. A pinned machine must hold a source of the project (spike item 6).
+    const project = await bb.sdk.projects.get({ projectId: request.projectId });
+    const hostId = request.hostId ?? project.sources.find((candidate) => candidate.isDefault)?.hostId;
+    if (hostId === undefined || hostId === null) throw new Error(`bb reports no host for project ${request.projectId}.`);
+    if (!project.sources.some((candidate) => candidate.hostId === hostId)) throw new Error(`The project has no source on host ${hostId}.`);
+    const thread = await bb.sdk.threads.spawn({
+      projectId: request.projectId,
+      prompt: request.prompt,
+      ...parent,
+      providerId: request.profile.provider,
+      model: request.profile.model,
+      reasoningLevel: request.profile.reasoningLevel,
+      permissionMode: permissionMode(request.profile.permissionMode),
+      pluginMetadata: request.metadata,
+      environment: {
+        type: "host",
+        hostId,
+        workspace: {
+          type: "managed-worktree",
+          baseBranch: request.baseBranch === null ? { kind: "default" } : { kind: "named", name: request.baseBranch },
+        },
+      },
+    });
+    return { threadId: thread.id };
+  }
+
   return {
     async spawnWorker(request) {
-      // bb 0.48.1 rejects a host workspace without a host ID (found in the live smoke test), so use the project's default host
-      // unless the task is pinned to a machine. A pinned machine must hold a source of the project (spike item 6).
-      const project = await bb.sdk.projects.get({ projectId: request.projectId });
-      const hostId = request.hostId ?? project.sources.find((candidate) => candidate.isDefault)?.hostId;
-      if (hostId === undefined || hostId === null) throw new Error(`bb reports no host for project ${request.projectId}.`);
-      if (!project.sources.some((candidate) => candidate.hostId === hostId)) throw new Error(`The project has no source on host ${hostId}.`);
-      const thread = await bb.sdk.threads.spawn({
-        projectId: request.projectId,
-        prompt: request.prompt,
-        parentThreadId: request.parentThreadId,
-        parentNotifications: "off",
-        providerId: request.profile.provider,
-        model: request.profile.model,
-        reasoningLevel: request.profile.reasoningLevel,
-        permissionMode: permissionMode(request.profile.permissionMode),
-        pluginMetadata: request.metadata,
-        environment: {
-          type: "host",
-          hostId,
-          workspace: {
-            type: "managed-worktree",
-            baseBranch: request.baseBranch === null ? { kind: "default" } : { kind: "named", name: request.baseBranch },
-          },
-        },
-      });
-      return { threadId: thread.id };
+      return spawnThread(request, { parentThreadId: request.parentThreadId, parentNotifications: "off" });
+    },
+
+    async spawnSupervisor(request) {
+      return spawnThread(request, {});
     },
 
     async getThread(threadId) {
       try {
         const found = (await bb.sdk.threads.get({ threadId })) as ThreadFields | { thread: ThreadFields };
-        const { id, projectId, status, parentThreadId, environmentId, deletedAt } = "thread" in found ? found.thread : found;
-        return { id, projectId, status, parentThreadId, environmentId, deleted: deletedAt !== null && deletedAt !== undefined };
+        const { id, projectId, status, parentThreadId, environmentId, providerId, deletedAt } = "thread" in found ? found.thread : found;
+        return { id, projectId, status, parentThreadId, environmentId, providerId: typeof providerId === "string" ? providerId : null, deleted: deletedAt !== null && deletedAt !== undefined };
       } catch (error) {
         if (isNotFound(error)) return null;
         throw error;

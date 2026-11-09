@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { loadGaps } from "../../tools/conformance/gaps.ts";
 import { parseResult } from "../../tools/conformance/result.ts";
 import { main } from "../../tools/conformance/run.ts";
 import { fakeDeps } from "../fixtures/conformance-run";
@@ -114,5 +115,21 @@ describe("pnpm run conformance -- --tier 1.5 --harness <id>", () => {
     expect(out.result.text).toMatch(/permission mode `auto`/);
     expect(out.result.text).not.toMatch(/reasoning level/);
     expect((await lab.tasks()).length).toBe(before);
+  });
+
+  it("[A1614] runs S9 to pass with the check S9.start-tools for the stub and the four harnesses, with the committed empty gap list, and exits 0 with no stale gap", async () => {
+    const gaps = await loadGaps(new URL("../../conformance/known-gaps.json", import.meta.url).pathname);
+    expect(gaps).toEqual([]);
+    const runs: string[][] = [["--tier", "1"], ["--tier", "1.5", "--harness", "claude-code"], ["--tier", "1.5", "--harness", "codex"], ["--tier", "1.5", "--harness", "pi"], ["--tier", "1.5", "--harness", "omp"]];
+    for (const argv of runs) {
+      const { deps, rec } = fakeDeps({ gaps });
+      expect(await main([...argv, "--results-dir", "out/results"], deps), argv.join(" ")).toBe(0);
+      expect(rec.out.join("\n"), argv.join(" ")).not.toMatch(/stale gap/);
+      expect(rec.out.find((line) => line.startsWith("S9 ")), argv.join(" ")).toMatch(/^S9\s+pass/);
+      const [file] = [...rec.files.keys()];
+      const s9 = parseResult(rec.files.get(file as string) as string).scenarios.find((scenario) => scenario.id === "S9");
+      expect(s9?.checks.map((check) => check.id), argv.join(" ")).toContain("S9.start-tools");
+      expect(s9?.checks.every((check) => check.ok), argv.join(" ")).toBe(true);
+    }
   });
 });

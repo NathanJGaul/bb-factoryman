@@ -1,5 +1,6 @@
 import { deliveryModeOf, type DeliveryMode, type Driver } from "../../tools/conformance/drivers/types.ts";
 import { resolveDriver } from "../../tools/conformance/drivers/index.ts";
+import { roleAdvice } from "../../src/harness/advice";
 import { contractFor } from "../../src/harness/contracts";
 import type { DispatchOptions, EventRow, Lab, Offers, ProviderState, TaskRow, ThreadFacts, ToolResult, Wake, Who } from "../../tools/conformance/port.ts";
 
@@ -39,7 +40,7 @@ export interface Faults {
   supervisorSeesWorkerSkill?: boolean;
   /** A stamped supervisor never gets its tools. */
   stampNeverArrives?: boolean;
-  /** `bb factoryman supervisor start` does not exist (today's behavior without report task H4). */
+  /** `bb factoryman supervisor start` does not exist. */
   noStartCommand?: boolean;
   /** A plugin reload adds a reconcile event. */
   reloadAddsEvent?: boolean;
@@ -65,8 +66,18 @@ export interface Faults {
   reloadChangesState?: boolean;
   /** The worktree stays after a teardown. */
   worktreeStaysAfterTeardown?: boolean;
-  /** The stamp text gives no advice for a harness that needs a clear (today's behavior without report task H4). */
+  /** The stamp text says "next turn" for every harness, so a harness that needs a clear gets no clear advice. */
   noClearAdvice?: boolean;
+  /** The stamp command fails. */
+  stampFails?: boolean;
+  /** A supervisor that `supervisor start` made lacks one of the four tools. */
+  startedLacksTool?: boolean;
+  /** A supervisor that `supervisor start` made lacks its skill. */
+  startedLacksSkill?: boolean;
+  /** A supervisor that `supervisor start` made is offered the worker's report tool. */
+  startedSeesWorkerTool?: boolean;
+  /** A supervisor that `supervisor start` made gets its tools only after a clear. */
+  startedNeedsClear?: boolean;
   /** The lab project uses this mode and not the driver's, so a test can reproduce a run that PR 5's admission rule refuses. */
   projectMode?: DeliveryMode;
   /** The worker never reports a pull request, so a `direct-PR` ship task cannot reach `review_ready`. */
@@ -100,7 +111,7 @@ export class FakeLab implements Lab {
   private wakeLog = new Map<string, Wake[]>();
   private nextTask = 1;
   private nextThread = 1;
-  private readonly supervisors = new Map<string, { label: string; stamped: boolean; cleared: boolean; turns: number }>();
+  private readonly supervisors = new Map<string, { label: string; stamped: boolean; cleared: boolean; turns: number; seeded: boolean }>();
   private readonly extraProviders: ProviderState[] = [
     { id: "acp-cursor", status: "not_installed", message: "cursor-agent was not found", installedVersion: null, minimumSupportedVersion: null, loginCommand: null },
   ];
@@ -292,6 +303,13 @@ export class FakeLab implements Lab {
       return { tools: this.faults.workerSeesSupervisorTools === true ? ["factoryman_report", ...SUPERVISOR_TOOLS] : ["factoryman_report"], skills: this.faults.workerSeesSupervisorSkill === true ? ["factoryman-worker", "factoryman-supervisor"] : ["factoryman-worker"] };
     }
     const sup = [...this.supervisors.values()].find((s) => s.label === who.label);
+    if (sup?.seeded === true) {
+      // The role was set in the spawn call, so a stamp fault does not reach it.
+      if (this.faults.startedNeedsClear === true && !sup.cleared) return { tools: [], skills: [] };
+      const tools = SUPERVISOR_TOOLS.filter((tool) => !(this.faults.startedLacksTool === true && tool === "factoryman_merge"));
+      if (this.faults.startedSeesWorkerTool === true) tools.push("factoryman_report");
+      return { tools: tools.sort(), skills: this.faults.startedLacksSkill === true ? [] : ["factoryman-supervisor"] };
+    }
     const has = sup !== undefined && sup.stamped && this.faults.stampNeverArrives !== true && (this.driver.roleChangeStep === "next-turn" || sup.cleared) && sup.turns > 0;
     if (!has && sup !== undefined && !sup.stamped && this.faults.unstampedHasTools === true) return { tools: SUPERVISOR_TOOLS, skills: [] };
     return has ? { tools: SUPERVISOR_TOOLS, skills: this.faults.supervisorSeesWorkerSkill === true ? ["factoryman-supervisor", "factoryman-worker"] : ["factoryman-supervisor"] } : { tools: [], skills: [] };
@@ -299,7 +317,7 @@ export class FakeLab implements Lab {
 
   async spawnSupervisor(label: string): Promise<string> {
     const id = `thr_s${this.nextThread++}`;
-    this.supervisors.set(id, { label, stamped: false, cleared: false, turns: 1 });
+    this.supervisors.set(id, { label, stamped: false, cleared: false, turns: 1, seeded: false });
     return id;
   }
   async tell(threadId: string, _label: string, directives: string[]): Promise<void> {
@@ -328,17 +346,23 @@ export class FakeLab implements Lab {
   async stamp(threadId: string): Promise<{ code: number; text: string }> {
     const sup = this.supervisors.get(threadId);
     if (sup === undefined) return { code: 1, text: "no such thread" };
+    if (this.faults.stampFails === true) return { code: 1, text: `Could not stamp thread ${threadId}: HTTP 500` };
     sup.stamped = true;
-    const advice = this.driver.roleChangeStep === "clear" && this.faults.noClearAdvice !== true ? " Run `bb thread clear` first." : "";
-    return { code: 0, text: `Thread ${threadId} is now a factoryman supervisor. It sees the four supervisor tools from its next session.${advice}` };
+    // The real advice for the driver's provider. The fault models a plugin that says "next turn" to every harness.
+    const provider = this.driver.provider;
+    const contract = this.faults.noClearAdvice === true ? { provider, roleChange: "next-turn" as const } : contractFor(provider);
+    return { code: 0, text: `Thread ${threadId} is now a factoryman supervisor.\n${roleAdvice(threadId, provider, contract)}` };
   }
-  async startSupervisor(label: string): Promise<{ code: number; text: string }> {
-    if (this.faults.noStartCommand === true) return { code: 2, text: "Usage: bb factoryman supervisor <thread-id>" };
-    const id = await this.spawnSupervisor(label);
-    await this.stamp(id);
-    const sup = this.supervisors.get(id);
-    if (sup !== undefined) sup.cleared = true;
-    return { code: 0, text: `Supervisor ${id} started.` };
+  async startSupervisor(label: string): Promise<{ code: number; text: string; threadId: string | null }> {
+    if (this.faults.noStartCommand === true) return { code: 2, text: "Usage: bb factoryman supervisor <thread-id>", threadId: null };
+    const id = `thr_s${this.nextThread++}`;
+    this.supervisors.set(id, { label, stamped: true, cleared: false, turns: 1, seeded: true });
+    const { provider, model } = this.driver.profile;
+    return {
+      code: 0,
+      text: `Started factoryman supervisor thread ${id} with the profile harness (${provider}, ${model}).\nThe role is set at spawn, so the thread has the four supervisor tools and the factoryman-supervisor skill from its first turn.`,
+      threadId: id,
+    };
   }
   async clear(threadId: string): Promise<void> {
     const sup = this.supervisors.get(threadId);

@@ -50,3 +50,9 @@ export function fakeOffers(log: LogLine[], who: Who): Offers {
   if (last === undefined) return { tools: [], skills: [] };
   return { tools: [...((last["pluginTools"] as string[] | undefined) ?? [])].sort(), skills: [...((last["skills"] as string[] | undefined) ?? [])].sort() };
 }
+
+/** The thread ID in the first line of the output of `supervisor start`, or null when that line is not the success line. */
+export function startedThreadId(text: string): string | null {
+  const first = text.split("\n")[0] ?? "";
+  return /^Started factoryman supervisor thread (\S+) /.exec(first)?.[1] ?? null;
+}

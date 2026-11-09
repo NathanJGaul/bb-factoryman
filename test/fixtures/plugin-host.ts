@@ -99,6 +99,8 @@ export interface FakeThread {
   status: string;
   parentThreadId: string | null;
   environmentId: string | null;
+  /** The provider that runs the thread. Absent for a thread the fixture made without one. */
+  providerId?: string;
 }
 
 class NotFound extends Error {
@@ -251,14 +253,14 @@ export async function loadWorld(options: WorldOptions = {}): Promise<World> {
     settings: options.settings,
     sdk: {
       threads: {
-        spawn: async (args: { projectId: string; parentThreadId?: string; pluginMetadata?: Record<string, unknown>; environment?: unknown }) => {
+        spawn: async (args: { projectId: string; parentThreadId?: string; providerId?: string; pluginMetadata?: Record<string, unknown>; environment?: unknown }) => {
           if (options.spawnError) throw options.spawnError;
           // Real bb answers HTTP 409 for a host that holds no source of the project (spike item 6).
           const hostId = (args.environment as { hostId?: string } | undefined)?.hostId;
           if (hostId !== undefined && !sources().some((source) => source.hostId === hostId)) throw new Error("HTTP 409: No project source configured for this host");
           const id = options.threadIds?.[spawned] ?? `thr-w${spawned + 1}`;
           spawned += 1;
-          threads.set(id, { id, projectId: args.projectId, status: "active", parentThreadId: args.parentThreadId ?? null, environmentId: `env-${id}` });
+          threads.set(id, { id, projectId: args.projectId, status: "active", parentThreadId: args.parentThreadId ?? null, environmentId: `env-${id}`, ...(args.providerId === undefined ? {} : { providerId: args.providerId }) });
           metadata.set(id, args.pluginMetadata ?? {});
           return { id };
         },

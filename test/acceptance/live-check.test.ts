@@ -88,14 +88,16 @@ describe("the live-check runbook: isolation", () => {
     const text = runbook();
     const world = await loadWorld();
     const registered = new Set((world.host.harness.inspection.registrations.cli?.commands ?? []).map((command) => command.name));
-    const allowedFlags: Record<string, string[]> = { preflight: ["--project", "--provider"], "import-registry": ["--file", "--apply"], protection: [], supervisor: [] };
+    const allowedFlags: Record<string, string[]> = { preflight: ["--project", "--provider"], "import-registry": ["--file", "--apply"], protection: [], supervisor: [], "supervisor start": ["--project", "--profile", "--prompt"] };
     const calls = [...text.matchAll(/bb factoryman ([a-z-]+)([^\n`|)]*)/g)];
     expect(calls.length).toBeGreaterThan(4);
     for (const [, command = "", rest = ""] of calls) {
       expect(registered, command).toContain(command);
       // The lab's one machine is named after the host, so every preflight call reads the name (live check finding 5.3).
       if (command === "preflight") expect(rest.trim(), "a preflight call names the machine from $MACHINE").toMatch(/^"\$MACHINE"(\s|$)/);
-      for (const flag of rest.match(/(?<![\w-])--[a-z][a-z-]*/g) ?? []) expect(allowedFlags[command], `${command} ${flag}`).toContain(flag);
+      // The stamp form `supervisor <thread>` takes no flag, and `supervisor start` takes three.
+      const form = command === "supervisor" && /^\s+start\b/.test(rest) ? "supervisor start" : command;
+      for (const flag of rest.match(/(?<![\w-])--[a-z][a-z-]*/g) ?? []) expect(allowedFlags[form], `${form} ${flag}`).toContain(flag);
     }
     // The lab's one machine is named after the host, not server (live check finding 5.3).
     expect(text).not.toMatch(/preflight server\b/);
@@ -254,7 +256,10 @@ describe("the live-check runbook: steps that a reader can follow without asking"
     expect(tier2).toContain('bblab x bb factoryman supervisor "$SUP"');
     expect(tier2.findIndex((line) => line.includes("bb thread spawn"))).toBeLessThan(tier2.indexOf('bblab x bb factoryman supervisor "$SUP"'));
     expect(tier2.indexOf('bblab x bb factoryman supervisor "$SUP"')).toBeLessThan(tier2.findIndex((line) => line.includes("bb thread tell")));
-    expect(prose(section(text, "## 7."))).toContain("The stamp applies from the thread's next session, and the thread already ran its first turn.");
+    // The old sentence ("from the thread's next session") was wrong for Codex and omp (D-125, report task H4).
+    expect(prose(section(text, "## 7."))).toContain("The stamp applies when the harness builds a new session for the thread.");
+    expect(prose(section(text, "## 7."))).toContain("bb factoryman supervisor start");
+    expect(text).not.toContain("from the thread's next session");
     expect(text).not.toMatch(/on the first turn/);
   });
 

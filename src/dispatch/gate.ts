@@ -44,6 +44,15 @@ export async function gateProfile(bb: GateBb, profile: Profile, mode: DeliveryMo
   // Admission needs no bb call and never changes for a project, so it comes first and is permanent.
   const refusal = admit(profile.provider, mode);
   if (refusal !== null) return { ok: false, code: "provider_not_admitted", message: refusal, permanent: true };
+  return gateReadiness(bb, profile, host);
+}
+
+/**
+ * Every check of `gateProfile` except the worker admission rule: the readiness, permission mode, model, and level
+ * checks (R1 to R4) on the host that will run the thread. The supervisor command uses it, because admission exists
+ * to confine workers. It fails closed on anything it cannot read (hard rule 8).
+ */
+export async function gateReadiness(bb: GateBb, profile: Profile, host: MachineInfo | null): Promise<GateResult> {
   const hostId = host?.id;
   const [providers, states, models] = await Promise.all([
     read("providers", () => bb.listProviders(hostId)),

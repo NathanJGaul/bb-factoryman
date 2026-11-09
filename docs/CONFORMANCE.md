@@ -95,14 +95,16 @@ Run `pnpm run conformance:docs` to regenerate `docs/HARNESS-SUPPORT.md` from the
 | S6 | A turn that ends with no report leaves the task `working` and wakes the supervisor once. |
 | S7 | A failing model turn fails the task, wakes the supervisor once, and keeps the cause in the evidence. |
 | S8 | An empty report, a second report, and a teardown in the wrong state are each refused and logged. |
-| S9 | A supervisor started with its role, and one stamped late, get their tools and skill after the documented step. |
+| S9 | A supervisor started with `bb factoryman supervisor start` has its four tools and its skill on its first turn. One stamped late gets them after the documented step, and the stamp command says to clear the thread when the harness needs it. |
 | S10 | A plugin reload keeps every task and state and adds no event. Tier 1 only. |
 | S11 | Teardown is refused for a dirty worktree, removes a clean one, and leaves no process behind. |
 | S12 | A wake that reaches a busy supervisor arrives exactly once. |
 
-Some checks wait for a plugin change that is still open (report task H4, the `bb factoryman supervisor start` command).
-They are written to the behavior that the report asks for, and `conformance/known-gaps.json` lists the ones that fail today.
-The checks that waited for report tasks H1 and H3 passed once the harness contracts landed, and their entries are gone.
+A check can wait for a plugin change that is still open.
+It is written to the behavior that the report asks for, and `conformance/known-gaps.json` lists the ones that fail today.
+The list is empty now.
+The checks that waited for report tasks H1 and H3 passed once the harness contracts landed.
+The S9 checks passed once `bb factoryman supervisor start` and the stamp advice landed (report task H4).
 
 ## Add a harness
 

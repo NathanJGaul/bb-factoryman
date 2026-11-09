@@ -183,8 +183,8 @@ export function createPlugin(options: PluginOptions = {}): (bb: BbPluginApi) => 
       commands: [
         {
           name: "supervisor",
-          summary: "Make a thread the supervisor, so bb offers it the four supervisor tools",
-          usage: "bb factoryman supervisor <thread-id>",
+          summary: "Start a supervisor with its role from the first turn, or make an existing thread the supervisor, so bb offers it the four supervisor tools",
+          usage: "bb factoryman supervisor <thread-id>\nbb factoryman supervisor start [--project <id>] [--profile <name>] [--prompt <text>]",
         },
         {
           name: "protection",

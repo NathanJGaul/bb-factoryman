@@ -113,3 +113,21 @@ export function resetLab(labDir: string): void {
 export function projectRowScript(projectId: string, mode: DeliveryMode): string {
   return `const D=require('better-sqlite3');const db=new D(process.env.BB_DATA_DIR+'/plugins/bb-factoryman/data.db');db.prepare('INSERT OR REPLACE INTO project_config (project_id, delivery_mode, yolo, branch_prefix, base_branch, default_machine) VALUES (?, ?, 0, NULL, ?, NULL)').run('${projectId}','${mode}','main');`;
 }
+
+/** The first prompt of a supervisor thread of the lab. The label marker lets the fake model and the log readers tell the threads apart. */
+export function supervisorPrompt(label: string): string {
+  return `[conformance:sup=${label}]\nhello`;
+}
+
+/** The arguments of `bb factoryman supervisor start` for a supervisor of the lab. The profile comes from `roles.supervisor.profile` of the project's file. */
+export function supervisorStartArgs(projectId: string, label: string): string[] {
+  return ["factoryman", "supervisor", "start", "--project", projectId, "--prompt", supervisorPrompt(label)];
+}
+
+/**
+ * The `dispatch.json` of the lab project: the driver's profile is the worker's default and the supervisor's profile,
+ * so `supervisor start` needs no flag. The text holds no single quote, because the runner writes it inside a quoted shell string.
+ */
+export function labDispatchJson(profile: unknown): string {
+  return JSON.stringify({ version: 1, profiles: { harness: profile }, default: "harness", roles: { supervisor: { profile: "harness" } }, rules: [] });
+}

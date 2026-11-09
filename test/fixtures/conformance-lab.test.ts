@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { HARNESS_IDS, resolveDriver } from "../../tools/conformance/drivers/index.ts";
 import { deliveryModeOf } from "../../tools/conformance/drivers/types.ts";
 import { contractFor } from "../../src/harness/contracts";
+import { startedThreadId } from "../../tools/conformance/readers.ts";
 import { FakeLab } from "./conformance-lab.ts";
 
 const PR = "https://github.com/conformance/lab/pull/1";
@@ -94,5 +95,41 @@ describe("the fake lab's block of an unsupported profile", () => {
     expect(mode.taskId).toBeNull();
     expect(mode.result.text).toMatch(/permission mode `auto`/);
     expect(mode.result.text).not.toMatch(/reasoning level/);
+  });
+});
+
+describe("the fake lab's supervisors", () => {
+  const SUPERVISOR_TOOLS = ["factoryman_dispatch", "factoryman_merge", "factoryman_status", "factoryman_teardown"];
+  const DRIVERS: Array<[string, "1" | "1.5"]> = [["stub", "1"], ["claude-code", "1.5"], ["codex", "1.5"], ["pi", "1.5"], ["omp", "1.5"]];
+
+  it("[U1709] starts a supervisor with a thread ID and the role seeded at spawn, so its offers are complete before any clear, on every driver", async () => {
+    for (const [id, tier] of DRIVERS) {
+      const lab = new FakeLab(id, {}, tier);
+      const started = await lab.startSupervisor("S9start");
+      expect(started.code, id).toBe(0);
+      expect(started.threadId, id).toMatch(/^thr_/);
+      // The reader that the real lab uses must find the thread in the text that the fake lab prints. A1622 links the same reader to the real command.
+      expect(startedThreadId(started.text), id).toBe(started.threadId);
+      expect(await lab.offers({ kind: "supervisor", label: "S9start" }), id).toEqual({ tools: SUPERVISOR_TOOLS, skills: ["factoryman-supervisor"] });
+    }
+    const missing = new FakeLab("pi", { noStartCommand: true });
+    expect(await missing.startSupervisor("S9start")).toMatchObject({ code: 2, threadId: null });
+  });
+
+  const ONE = "Thread THREAD is now a factoryman supervisor.\n";
+  const NEXT_TURN = `${ONE}It gets the four supervisor tools and the factoryman-supervisor skill on its next turn.`;
+  const CLEAR = (why: string) => `${ONE}${why}\nRun \`bb thread clear THREAD\` so the thread gets the four supervisor tools and the factoryman-supervisor skill.`;
+
+  it.each([
+    ["stub", "1", CLEAR("The harness acp-stub has no recorded role-change behavior.")],
+    ["claude-code", "1.5", NEXT_TURN],
+    ["codex", "1.5", CLEAR("This harness (codex) applies a new role only when its session is rebuilt.")],
+    ["pi", "1.5", NEXT_TURN],
+    ["omp", "1.5", CLEAR("This harness (acp-omp) applies a new role only when its session is rebuilt.")],
+  ] as const)("[U1710] prints the advice for the %s driver's provider after a stamp, as literal text", async (id, tier, expected) => {
+    const lab = new FakeLab(id, {}, tier);
+    const thread = await lab.spawnSupervisor("late");
+    const stamp = await lab.stamp(thread);
+    expect(stamp).toEqual({ code: 0, text: expected.replaceAll("THREAD", thread) });
   });
 });

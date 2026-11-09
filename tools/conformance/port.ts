@@ -135,7 +135,7 @@ export interface Lab {
   /** `bb factoryman supervisor <thread>`: the command's exit code and text. */
   stamp(threadId: string): Promise<{ code: number; text: string }>;
   /** `bb factoryman supervisor start ...`: the command's exit code and text. */
-  startSupervisor(label: string): Promise<{ code: number; text: string }>;
+  startSupervisor(label: string): Promise<{ code: number; text: string; threadId: string | null }>;
   clear(threadId: string): Promise<void>;
   reloadPlugin(): Promise<void>;
 

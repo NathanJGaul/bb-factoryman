@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { withDispatchedTask } from "../../test/fixtures/runtime";
 import { testRuntime } from "../../test/fixtures/runtime";
-import { modelEntry } from "../../test/fixtures/bb-port";
+import { modelEntry, providerState } from "../../test/fixtures/bb-port";
+import { answerRead, isRead } from "../../test/fixtures/validator-read";
 import { runFactorymanCommand } from "./supervisor-command";
 
 describe("bb factoryman supervisor", () => {
@@ -13,12 +14,102 @@ describe("bb factoryman supervisor", () => {
     expect(t.bb.callsTo("setThreadMetadata")).toEqual([["thr-new", { role: "supervisor" }]]);
   });
 
+  describe("the advice after a stamp", () => {
+    async function stampWith(provider: string | null | "throws" | "unknown-thread") {
+      const t = await withDispatchedTask();
+      if (provider === "throws") t.bb.getThreadError = new Error("HTTP 500");
+      else if (provider !== "unknown-thread") t.bb.addThread({ id: "thr-new", providerId: provider });
+      const result = await runFactorymanCommand(t.runtime, ["supervisor", "thr-new"]);
+      return { result, t };
+    }
+
+    it.each([["codex"], ["acp-omp"]])("[U1644] tells the owner to clear a %s thread", async (provider) => {
+      const { result } = await stampWith(provider);
+      expect(result.exitCode).toBe(0);
+      expect(result.stdout?.split("\n")[0]).toBe("Thread thr-new is now a factoryman supervisor.");
+      expect(result.stdout).toContain(`This harness (${provider})`);
+      expect(result.stdout).toContain("`bb thread clear thr-new`");
+    });
+
+    it.each([["claude-code"], ["pi"]])("[U1645] says the tools of a %s thread arrive at the next turn, with no clear", async (provider) => {
+      const { result } = await stampWith(provider);
+      expect(result.exitCode).toBe(0);
+      expect(result.stdout).toContain("on its next turn.");
+      expect(result.stdout).not.toMatch(/clear/i);
+    });
+
+    it("[U1646] gives the generic clear advice and names the provider when the provider has no contract row", async () => {
+      const { result } = await stampWith("acp-hermes-agent");
+      expect(result.exitCode).toBe(0);
+      expect(result.stdout).toContain("The harness acp-hermes-agent has no recorded role-change behavior.");
+      expect(result.stdout).toContain("`bb thread clear thr-new`");
+    });
+
+    it("[U1647] still stamps and says that bb did not name the harness when the provider is null, the thread is unknown, or the read throws", async () => {
+      for (const provider of [null, "unknown-thread", "throws"] as const) {
+        const { result, t } = await stampWith(provider);
+        expect(result.exitCode, String(provider)).toBe(0);
+        expect(result.stdout, String(provider)).toContain("bb did not say which harness the thread uses (");
+        expect(result.stdout, String(provider)).toContain("`bb thread clear thr-new`");
+        expect(t.bb.callsTo("setThreadMetadata")).toEqual([["thr-new", { role: "supervisor" }]]);
+      }
+      expect((await stampWith("throws")).result.stdout).toContain("HTTP 500");
+    });
+
+    it("[U1648] never says from its next session, for any provider", async () => {
+      for (const provider of ["codex", "acp-omp", "claude-code", "pi", "acp-x", null, "throws", "unknown-thread"] as const) {
+        const { result } = await stampWith(provider);
+        expect(`${result.stdout ?? ""}${result.stderr ?? ""}`, String(provider)).not.toContain("from its next session");
+      }
+    });
+
+    it("[U1649] refuses a recorded worker thread, stamps nothing, and reads no thread", async () => {
+      const t = await withDispatchedTask();
+      const readsBefore = t.bb.callsTo("getThread").length; // the fixture's dispatch read the worker thread already
+      const result = await runFactorymanCommand(t.runtime, ["supervisor", "thr-w1"]);
+      expect(result.exitCode).toBe(1);
+      expect(t.bb.callsTo("setThreadMetadata")).toEqual([]);
+      expect(t.bb.callsTo("getThread")).toHaveLength(readsBefore);
+    });
+
+    it("[U1650] prints no advice, exits 1 with bb's reason, and reads no thread when bb rejects the stamp", async () => {
+      const t = await withDispatchedTask();
+      const readsBefore = t.bb.callsTo("getThread").length;
+      t.bb.setMetadataError = new Error("HTTP 404: thread not found");
+      const result = await runFactorymanCommand(t.runtime, ["supervisor", "thr-new"]);
+      expect(result.exitCode).toBe(1);
+      expect(result.stderr).toContain("Could not stamp thread thr-new: HTTP 404: thread not found");
+      expect(result.stdout).toBeUndefined();
+      expect(t.bb.callsTo("getThread")).toHaveLength(readsBefore);
+    });
+  });
+
   it("[U118] refuses a recorded worker thread and stamps nothing", async () => {
     const t = await withDispatchedTask();
     const result = await runFactorymanCommand(t.runtime, ["supervisor", "thr-w1"]);
     expect(result.exitCode).not.toBe(0);
     expect(result.stderr).toMatch(/worker/i);
     expect(t.bb.callsTo("setThreadMetadata")).toEqual([]);
+  });
+
+  it("[U1642] routes the word start to the start command, and stamps any other first word as a thread ID", async () => {
+    const t = await withDispatchedTask();
+    t.bb.checkouts.set("proj-1", "/work/repo");
+    const started = await runFactorymanCommand(t.runtime, ["supervisor", "start", "--project", "proj-1"]);
+    expect(started.exitCode).toBe(1);
+    expect(started.stderr).toContain("No supervisor profile is set for project proj-1.");
+    expect(t.bb.callsTo("setThreadMetadata")).toEqual([]);
+    const stamped = await runFactorymanCommand(t.runtime, ["supervisor", "thr-new"]);
+    expect(stamped.exitCode).toBe(0);
+    expect(t.bb.callsTo("setThreadMetadata")).toEqual([["thr-new", { role: "supervisor" }]]);
+  });
+
+  it("[U1643] lists the supervisor lines first in the usage text, the stamp line and then the start line", async () => {
+    const t = await withDispatchedTask();
+    const usage = (await runFactorymanCommand(t.runtime, ["nope"])).stderr ?? "";
+    const lines = usage.split("\n");
+    expect(lines[0]).toBe("Usage: bb factoryman supervisor <thread-id>");
+    expect(lines[1]).toBe("Usage: bb factoryman supervisor start [--project <id>] [--profile <name>] [--prompt <text>]");
   });
 
   it("[U119] prints usage and exits non-zero without a thread ID or with an unknown command", async () => {
@@ -46,7 +137,9 @@ describe("bb factoryman supervisor", () => {
       expect(ok.exitCode).toBe(0);
       expect(ok.stdout).toContain("gpu-box");
       expect(ok.stdout).toMatch(/ready/);
-      expect(t.execCalls.every((call) => call.cwd === "/work/gpu")).toBe(true);
+      // The validator read (feature 011) opens a file under the home directory and needs no working directory.
+      expect(t.execCalls.filter((call) => !isRead(call.command, call.args)).every((call) => call.cwd === "/work/gpu")).toBe(true);
+      expect(t.execCalls.filter((call) => isRead(call.command, call.args)).map((call) => call.cwd)).toEqual([undefined]);
     });
 
     it("[U856] exits 1 and prints the failed check when the machine is missing something", async () => {
@@ -79,6 +172,20 @@ describe("bb factoryman supervisor", () => {
       expect(unknown.exitCode).toBe(1);
       expect(unknown.stderr).toContain("machine_unknown");
       expect(t.execCalls).toEqual([]);
+    });
+
+    it("[U1696] exits 1 with a validator_agent problem when the validator agent is not ready, and exits 0 and names the agent when it is ready", async () => {
+      const t = remoteRuntime();
+      t.bb.states = [providerState("claude"), providerState("claude-code"), providerState("codex", { status: "unauthenticated", localLoginCommand: "codex login" })];
+      t.execHandler = answerRead("agent: codex\n");
+      const failed = await runFactorymanCommand(t.runtime, ["preflight", "gpu-box", "--project", "proj-1"]);
+      expect(failed.exitCode).toBe(1);
+      expect(failed.stdout).toContain("validator_agent: codex (bb provider codex) is not ready on gpu-box");
+      t.execHandler = answerRead("agent: claude\n");
+      const ready = await runFactorymanCommand(t.runtime, ["preflight", "gpu-box", "--project", "proj-1"]);
+      expect(ready.exitCode).toBe(0);
+      expect(ready.stdout).toContain("is ready for no-mistakes mode work.");
+      expect(ready.stdout).toContain("Validator agent: claude (bb provider claude-code) is ready on gpu-box.");
     });
 
     it("[U874] says that the host which holds the clone needs no remote preflight, and runs nothing", async () => {

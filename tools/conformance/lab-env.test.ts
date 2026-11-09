@@ -2,7 +2,7 @@ import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { tmpDir } from "../../test/fixtures/git-repo.ts";
-import { labEnv, labPaths, offlineProof, pluginBuildCommand, pluginCopyArgs, projectRowScript, resetLab, type LabSettings } from "./lab-env.ts";
+import { labEnv, labPaths, offlineProof, pluginBuildCommand, pluginCopyArgs, projectRowScript, resetLab, supervisorPrompt, supervisorStartArgs, type LabSettings } from "./lab-env.ts";
 
 const settings: LabSettings = {
   labDir: "/var/tmp/bblab-conformance",
@@ -78,5 +78,13 @@ describe("projectRowScript", () => {
 
   it("[U1508] writes the mode local-only when the driver stays on the default", () => {
     expect(projectRowScript("proj_abc123", "local-only")).toContain("'proj_abc123','local-only','main'");
+  });
+});
+
+describe("the supervisor start call of the lab", () => {
+  it("[U1706] carries the project, the prompt with the label marker, and no profile flag", () => {
+    expect(supervisorPrompt("S9start")).toBe("[conformance:sup=S9start]\nhello");
+    expect(supervisorStartArgs("proj_x", "S9start")).toEqual(["factoryman", "supervisor", "start", "--project", "proj_x", "--prompt", "[conformance:sup=S9start]\nhello"]);
+    expect(supervisorStartArgs("proj_x", "S9start")).not.toContain("--profile");
   });
 });

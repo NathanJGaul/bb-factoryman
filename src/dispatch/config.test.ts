@@ -22,6 +22,7 @@ describe("parseDispatchConfig", () => {
         rules: [],
         reasoningLevels: ["none", "low", "medium", "high", "xhigh", "max"],
         standingPermission: { lowerReasoning: false },
+        roles: { supervisor: { profile: null }, validator: { agent: "observe" } },
       },
     });
     expect(emptyDispatchConfig().profiles).toEqual({});
@@ -128,5 +129,60 @@ describe("parseDispatchConfig", () => {
   it("[U709] rejects a version other than 1 and input that is not an object", () => {
     expect(failure(valid({ version: 2 }))).toMatch(/version/);
     expect(failure("text")).toMatch(/object/);
+  });
+});
+
+describe("parseDispatchConfig: roles", () => {
+  const DEFAULT_ROLES = { supervisor: { profile: null }, validator: { agent: "observe" } };
+  const roles = (raw: unknown) => {
+    const result = parseDispatchConfig(raw);
+    if (!result.ok) throw new Error(`expected the config to parse: ${result.message}`);
+    return result.config.roles;
+  };
+
+  it("[U1612] parses a version 1 file with no roles and carries the default roles", () => {
+    expect(roles(valid())).toEqual(DEFAULT_ROLES);
+  });
+
+  it("[U1613] carries a supervisor profile that names a defined profile", () => {
+    expect(roles(valid({ roles: { supervisor: { profile: "deep" } } }))).toEqual({ supervisor: { profile: "deep" }, validator: { agent: "observe" } });
+  });
+
+  it("[U1614] rejects a supervisor profile that names an undefined profile, and names it with the path", () => {
+    const message = failure(valid({ roles: { supervisor: { profile: "ghost" } } }));
+    expect(message).toMatch(/roles\.supervisor\.profile names the undefined profile `ghost`/);
+    expect(message).toMatch(/at `roles\.supervisor\.profile`/);
+  });
+
+  it("[U1615] rejects a blank supervisor profile", () => {
+    expect(failure(valid({ roles: { supervisor: { profile: "  " } } }))).toMatch(/at `roles\.supervisor\.profile`/);
+  });
+
+  it("[U1616] parses the validator agent observe", () => {
+    expect(roles(valid({ roles: { validator: { agent: "observe" } } }))).toEqual(DEFAULT_ROLES);
+  });
+
+  it.each(["inherit", "set", "anything", ""])("[U1617] rejects the validator agent %j and names the field and the accepted value", (agent) => {
+    const message = failure(valid({ roles: { validator: { agent } } }));
+    expect(message).toContain('roles.validator.agent must be "observe"');
+    expect(message).toMatch(/at `roles\.validator\.agent`/);
+  });
+
+  it.each([
+    ["roles", { roles: { surprise: 1 } }, /surprise/],
+    ["roles.supervisor", { roles: { supervisor: { surprise: 1 } } }, /surprise/],
+    ["roles.validator", { roles: { validator: { surprise: 1 } } }, /surprise/],
+  ])("[U1618] rejects an unknown key in %s", (_where, extra, pattern) => {
+    expect(failure(valid(extra))).toMatch(pattern);
+  });
+
+  it("[U1619] parses an empty roles, an empty supervisor, and an empty validator with the defaults filled in", () => {
+    expect(roles(valid({ roles: {} }))).toEqual(DEFAULT_ROLES);
+    expect(roles(valid({ roles: { supervisor: {} } }))).toEqual(DEFAULT_ROLES);
+    expect(roles(valid({ roles: { validator: {} } }))).toEqual(DEFAULT_ROLES);
+  });
+
+  it("[U1620] gives the empty config the default roles", () => {
+    expect(emptyDispatchConfig().roles).toEqual(DEFAULT_ROLES);
   });
 });

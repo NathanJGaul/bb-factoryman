@@ -10,11 +10,11 @@
     "version": "0.49.0"
   },
   "plugin": {
-    "commit": "1e7be3e",
+    "commit": "5042e16",
     "dirty": false
   },
-  "startedAt": "2026-11-09T16:03:19.361Z",
-  "finishedAt": "2026-11-09T16:06:00.712Z",
+  "startedAt": "2026-11-09T20:28:24.392Z",
+  "finishedAt": "2026-11-09T20:30:50.682Z",
   "offline": true,
   "isolation": {
     "clean": true,
@@ -95,7 +95,7 @@
           "id": "S4.branch-commit",
           "title": "The task branch holds the one commit the worker made",
           "ok": true,
-          "evidence": "git rev-list --count main..fm/t-bebc7634: 1"
+          "evidence": "git rev-list --count main..fm/t-92d1170b: 1"
         },
         {
           "id": "S4.review-ready",
@@ -131,7 +131,7 @@
           "id": "S5.supervisor-tools",
           "title": "The supervisor is offered its four tools and not the report tool",
           "ok": true,
-          "evidence": "tools: factoryman_dispatch, factoryman_merge, factoryman_status, factoryman_teardown (thread thr_9k4tukyt87)"
+          "evidence": "tools: factoryman_dispatch, factoryman_merge, factoryman_status, factoryman_teardown (thread thr_j3crimscv2)"
         },
         {
           "id": "S5.supervisor-skills",
@@ -198,17 +198,19 @@
     },
     {
       "id": "S9",
-      "verdict": "known-gap",
+      "verdict": "pass",
       "checks": [
         {
           "id": "S9.start-command",
-          "title": "`bb factoryman supervisor start` spawns a supervisor with its role",
-          "ok": false,
-          "evidence": "exit 2: Usage: bb factoryman supervisor <thread-id>\nUsage: bb factoryman preflight <machine> --project <project-id> [--provider <provider-id>]\nUsage: bb factoryman dispatch init --provider <id> [--project <id",
-          "gap": {
-            "task": "H4",
-            "reason": "the command `bb factoryman supervisor start` does not exist yet"
-          }
+          "title": "`bb factoryman supervisor start` spawns a supervisor and names its thread",
+          "ok": true,
+          "evidence": "exit 0: Started factoryman supervisor thread thr_d7r5588gp3 with the profile harness (acp-omp, mock/mock-1).\nThe role is set at spawn, so the thread has the four supervisor tools and the factoryman-supervisor"
+        },
+        {
+          "id": "S9.start-tools",
+          "title": "A supervisor started with the command has its four tools and its skill on its first turn, and no worker tool or skill",
+          "ok": true,
+          "evidence": "tools: factoryman_dispatch, factoryman_merge, factoryman_status, factoryman_teardown; skills: factoryman-supervisor"
         },
         {
           "id": "S9.unstamped-no-tools",
@@ -219,12 +221,8 @@
         {
           "id": "S9.stamp-advice",
           "title": "The stamp command tells the person to clear the thread, because this harness needs it",
-          "ok": false,
-          "evidence": "Thread thr_fswswk4hc6 is now a factoryman supervisor. It sees the four supervisor tools from its next session.",
-          "gap": {
-            "task": "H4",
-            "reason": "the stamp command says the tools arrive \"from its next session\" and does not tell the person to run `bb thread clear`, which this harness needs"
-          }
+          "ok": true,
+          "evidence": "Thread thr_9h88ajbezw is now a factoryman supervisor.\nThis harness (acp-omp) applies a new role only when its session is rebuilt.\nRun `bb thread clear thr_9h88ajbezw` so the thread gets the four supervisor tools and the factoryman-supervisor skill."
         },
         {
           "id": "S9.tools-after-step",
@@ -253,7 +251,7 @@
           "id": "S11.dirty-kept",
           "title": "The dirty worktree is still there",
           "ok": true,
-          "evidence": "worktree: /var/tmp/bblab-conformance-followup/data/plugins/environment-git-worktree/host-data/worktrees/thr_x3fi6ebi66-1/work"
+          "evidence": "worktree: /var/tmp/bblab-supervisor-start/data/plugins/environment-git-worktree/host-data/worktrees/thr_qbay2fevre-1/work"
         },
         {
           "id": "S11.clean-removed",
@@ -277,7 +275,7 @@
           "id": "S12.delivered",
           "title": "The wake arrives",
           "ok": true,
-          "evidence": "1 wake(s) for t-84d25eb7"
+          "evidence": "1 wake(s) for t-14edc45d"
         },
         {
           "id": "S12.once",
