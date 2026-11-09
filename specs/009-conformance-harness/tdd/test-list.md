@@ -168,6 +168,8 @@ Tests carry their behavior id in the title, for example `[U1301]`.
 | U1362 | Responses: a request becomes a conversation, with `function_call_output` items as tool results | AC-4.1 | example | PENDING | |
 | U1363 | Responses: a tool-call action and a text action become the event stream with `response.completed` and usage | AC-4.1 | example | PENDING | |
 | U1364 | Messages: a request becomes a conversation, with `tool_result` blocks as tool results and the system reminders kept in the text | AC-4.1 | example | PENDING | |
+| U1421 | Reads a message with the role `system` inside the messages array (Claude Code sends the sandbox text, the deferred tool list, and the skill list that way) as system text and not as a turn | AC-4.3 | example | PENDING | |
+| U1422 | Reads a request that Claude Code really sent after a role stamp: the four supervisor tools are named as deferred tools and the supervisor skill is listed, in system-role messages | AC-3.3, AC-4.3 | example | PENDING | |
 | U1365 | Messages: a tool-call action and a text action become the event stream, with `stop_reason` set | AC-4.1 | example | PENDING | |
 | U1366 | An error action becomes the error body of the format, with the status and cause text | AC-4.2 | example | PENDING | |
 

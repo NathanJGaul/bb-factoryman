@@ -34,6 +34,21 @@ describe("Messages", () => {
     expect(messages.parse({ ...request, system: "plain system" }).system).toBe("plain system");
   });
 
+  it("[U1421] reads a system-role message in the messages array as system text and not as a turn", () => {
+    const body = {
+      ...request,
+      messages: [
+        ...request.messages.slice(0, 1),
+        { role: "system", content: [{ type: "text", text: "Deferred tools: mcp__bb-bridge__factoryman_dispatch. Skills: bb-global-skills:factoryman-supervisor" }] },
+        ...request.messages.slice(1),
+      ],
+    };
+    const parsed = messages.parse(body);
+    expect(parsed.system).toContain("mcp__bb-bridge__factoryman_dispatch");
+    expect(parsed.system).toContain("You are Claude Code");
+    expect(parsed.turns).toEqual(messages.parse(request).turns);
+  });
+
   it("[U1365] renders a tool call and a text answer as the event stream with a stop reason, and as one message when not streamed", () => {
     const call = messages.render({ kind: "tool_call", name: "Bash", args: { command: "git status" } }, conversation);
     expect(call.contentType).toBe("text/event-stream");

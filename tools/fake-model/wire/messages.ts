@@ -4,11 +4,16 @@ import { callId, type Json, json, sse, stream, textOf, toolsOf } from "./shared.
 /** Anthropic Messages, the format of Claude Code. */
 function parse(body: unknown): Conversation {
   const request = (body ?? {}) as Json;
-  const system = textOf(request["system"]);
+  const system: string[] = [textOf(request["system"])];
   const turns: Turn[] = [];
   const messages = Array.isArray(request["messages"]) ? (request["messages"] as Json[]) : [];
   for (const message of messages) {
     const blocks: Json[] = typeof message["content"] === "string" ? [{ type: "text", text: message["content"] }] : Array.isArray(message["content"]) ? (message["content"] as Json[]) : [];
+    // Claude Code puts the sandbox text, the deferred tool list, and the skill list in messages with the role `system`.
+    if (message["role"] === "system") {
+      system.push(textOf(message["content"]));
+      continue;
+    }
     if (message["role"] === "assistant") {
       turns.push({
         role: "assistant",
@@ -25,7 +30,7 @@ function parse(body: unknown): Conversation {
   const tools = toolsOf(request["tools"], (tool): OfferedTool | null =>
     typeof tool["name"] === "string" ? { name: tool["name"], description: String(tool["description"] ?? ""), schema: (tool["input_schema"] ?? { type: "object", properties: {} }) as Json } : null,
   );
-  return { wire: "messages", model: String(request["model"] ?? "mock-1"), stream: request["stream"] === true, system, tools, turns };
+  return { wire: "messages", model: String(request["model"] ?? "mock-1"), stream: request["stream"] === true, system: system.filter((part) => part !== "").join("\n"), tools, turns };
 }
 
 function render(action: Exclude<Action, { kind: "delay" }>, conversation: Conversation) {

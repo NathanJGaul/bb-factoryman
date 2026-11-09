@@ -279,3 +279,13 @@ The first Claude Code run did not finish. The fake model's log showed one worker
 - red: `pnpm vitest run tools/fake-model/server.test.ts -t U1419` -> `AssertionError: expected 'tool_calls' to be 'stop'` (the 151st identical request still got a tool call)
 - green: the server counts requests per actor and ends the script with a text answer after 150. A looping harness can no longer hold the lab. `pnpm vitest run tools/fake-model` -> 30 passed; `pnpm run typecheck` and `pnpm run lint` pass.
 - note: a run stopped by hand leaves the lab up. `bblab down` stopped it, and the next run resets the lab directory.
+
+## Group 16: Claude Code's system-role messages (U1420 to U1422) - found by the second Claude Code run
+
+The second Claude Code run passed S2, S3, S4, S6, S8, and S11 and failed S5, S9, and S12: the supervisor was offered no tool and no skill, and neither was the worker's skill. The first diagnosis step was to keep the raw request bodies (U1420, `--bodies`), because the summary log could not show the cause. A partial run (`--scenario S5,S9,S12`) then wrote `model/bodies.jsonl`. The body of the supervisor request showed it: Claude Code sends the sandbox text, the deferred tool list, and the skill list as messages with the role `system` inside the `messages` array (`user, system, assistant, user, system`). The Messages parser dropped them.
+
+- red (U1420): `pnpm vitest run tools/fake-model/server.test.ts -t U1420` -> `Error: ENOENT: no such file or directory, open '.../bodies.jsonl'`
+- red (U1421): `pnpm vitest run tools/fake-model/wire/messages.test.ts` -> `AssertionError: expected 'You are Claude Code. Skill: bb-global…' to contain 'mcp__bb-bridge__factoryman_dispatch'`
+- green: the server writes the raw bodies when it gets `--bodies <file>` (the real lab passes it), and `messages.parse` reads a `system` message as system text. `pnpm vitest run tools/fake-model` -> 33 passed.
+- U1422 (the recorded request): `test/fixtures/recorded/claude-code-supervisor-after-stamp.json` holds the real request body (Claude Code 2.1.316) with the tool schemas and the main system prompt cut. The test was written after the fix, so a revert-red was run: the old `messages.ts` restored from `HEAD` -> `AssertionError: expected [] to deeply equal [ 'factoryman_dispatch', …(3) ]`, then the fix restored -> `pnpm vitest run tools/fake-model` -> 33 passed. U1422 is `TEST_AFTER` with a recorded revert-red, as in D-099.
+- lint and type check pass.
