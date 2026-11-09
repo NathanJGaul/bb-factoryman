@@ -159,3 +159,35 @@ No assertion was loosened: each test gained the read, and `[U856]` gained a chec
 - U1694 is credited to the adapted `[U838]` and to `[U844]`, which is unchanged.
 - refactor: none needed.
 - commit: see the commit that carries this entry.
+
+## Group 5c: the validator line of a hand-off (U1699 to U1705, U1719, A1608 to A1613)
+
+No stub was needed: `report.ts` already existed and the line was simply missing, so the reds are assertions.
+The fixture `execCalls` now also records `host` and `timeoutMs` of each call (a new field on a recorded object; no test compared a whole entry).
+My first acceptance design for a remote hand-off was wrong and was rewritten before the implementation: once the preflight checks the validator agent, a dispatch to a machine whose agent is not ready is refused (group 5b), so that task cannot exist.
+`[A1611]` now gives the server and gpu-box different answers (the server says codex and not ready, gpu-box says claude and ready), so only a read on gpu-box can produce the expected line.
+`[U1699]` also found a missing behavior, `U1719`, that the plan did not list: the line must not turn blank evidence into non-blank evidence, or it would defeat hard rule 3.
+It was appended to the list and to task T029, and `[U58]` (existing) already guards it.
+
+- red: `pnpm vitest run src/tools/report.test.ts test/acceptance/validator-observe.test.ts` -> 12 failed, 20 passed
+  - U1699 `AssertionError: expected 'Committed abc123.' to be 'Committed abc123.\n\nValidator agent:…'`
+  - U1700 (three tests) `AssertionError: expected 'Committed abc123.' to contain 'Validator agent: codex (bb provider c…'` and the two like it
+  - U1701 `AssertionError: expected 'Committed abc123.' to contain 'could not be observed'`
+  - U1703 `AssertionError: expected 'Committed abc123.' to be 'Committed abc123.\n\nValidator agent:…'`
+  - U1705 `AssertionError: expected [ 'pnpm' ] to deeply equal [ 'pnpm', 'sh' ]`
+  - A1608, A1609 `AssertionError: expected 'Committed abc123.' to be/contain …`
+  - A1610 `AssertionError: a list: expected '' to match /^Validator agents, in order: codex …/s`
+  - A1611 `AssertionError: the given combination of arguments (undefined and string) is invalid` (no evidence of the remote task yet)
+  - A1613 `AssertionError: expected 2 to be greater than or equal to 3` (only the dispatch preflight and the preflight command read)
+- U1702, U1704, U1719 and A1612 passed on their first run, because no line was added yet and the preflight already refused (group 5b).
+  Three failures of my first implementation then showed the other two sides of the behavior, and I fixed the code or the test, whichever was wrong:
+  - `[U1704]` failed: the observation ran before a failing custom check ended the hand-off (the check failure is only seen by the machine, in `rt.apply`). Fixed in the code: no observation when `run.failures` is not empty.
+  - `[U1701]` and `[U1703]` failed because the dispatch to gpu-box in the fixture had already made a preflight read, which the tests counted. Fixed in the tests: they count the reads before the report.
+  Deliberate mutants, both reverted from a copy of the file:
+  - the blank-evidence condition removed -> `[U58]` and `[U1719]` failed
+  - the mode condition (`task.mode === "no-mistakes"`) removed -> `[U1702]` failed
+- green: `report.ts` appends `Validator agent: ...` after a blank line to the evidence of a `no-mistakes` ship hand-off, when the evidence is not blank and no custom check failed.
+  `validatorLine` places the task's host with `hostFor`, finds the machine's name through `listMachines`, calls `observeValidatorAgent`, and turns a failed placement into the `unobserved` line.
+  Suite `pnpm test` -> 149 files, 2000 passed, 0 failed (27 s). `pnpm run typecheck` and `pnpm run lint` clean.
+- refactor: none needed.
+- commit: see the commit that carries this entry.

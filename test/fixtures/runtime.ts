@@ -16,7 +16,7 @@ export interface TestRuntime {
   bb: FakeBbPort;
   files: FakeFiles;
   lines: LogLine[];
-  execCalls: Array<{ command: string; args: readonly string[]; cwd?: string }>;
+  execCalls: Array<{ command: string; args: readonly string[]; cwd?: string; host?: string | null; timeoutMs?: number }>;
   /** Script exec results by command line; the default is a successful empty run. */
   execHandler: (command: string, args: readonly string[]) => ExecResult;
   settings: Settings;
@@ -39,7 +39,7 @@ export function testRuntime(overrides: Partial<RuntimeDeps> = {}): TestRuntime {
   const execCalls: TestRuntime["execCalls"] = [];
   const state = { execHandler: ((): ExecResult => ({ code: 0, stdout: "", stderr: "" })) as TestRuntime["execHandler"] };
   const exec: Exec = async (command, args, options) => {
-    execCalls.push({ command, args, cwd: options?.cwd });
+    execCalls.push({ command, args, cwd: options?.cwd, host: options?.host, timeoutMs: options?.timeoutMs });
     return state.execHandler(command, args);
   };
   const settings: Settings = { mergeMethod: "squash", approvalTimeoutMs: 600_000, machinePollMs: 30_000, maxWorkers: 0 };

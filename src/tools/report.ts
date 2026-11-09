@@ -2,6 +2,7 @@ import { z } from "zod";
 import { refuse } from "../machine/refusal";
 import { hostFor } from "../machines/route";
 import { errorText, type Runtime } from "../runtime";
+import { describeObservation, observeValidatorAgent } from "../validator/agent";
 import { failureText, runChecks, type CheckFact, type CheckRun } from "../workflow/checks";
 import { loadWorkflowFor } from "../workflow/load";
 import type { TaskRow } from "../store/types";
@@ -49,12 +50,36 @@ export async function report(rt: Runtime, caller: Caller, raw: unknown): Promise
     if (!checked.ok) return failure(checked.text);
     run = checked.run;
     if (run !== null) event = { ...event, checks: run.facts satisfies CheckFact[] };
+    // Blank evidence stays blank, so the line cannot make it pass the evidence gate (hard rule 3). A failed check ends the
+    // hand-off in the machine, so there is nothing to observe for it.
+    const checksFailed = run !== null && run.failures.length > 0;
+    if (task.mode === "no-mistakes" && evidence.trim() !== "" && !checksFailed) event = { ...event, evidence: `${evidence}\n\n${await validatorLine(rt, task)}` };
   }
 
   const applied = await rt.apply(task.taskId, event);
   if (applied.ok) return success(stateText(applied.task));
   const refused = refusalOutcome(applied.refusal);
   return run !== null && applied.refusal.code === "check_failed" ? { ...refused, text: `${refused.text}\n${failureText(run)}` } : refused;
+}
+
+/**
+ * The line that names the validator's agent and its readiness, for the evidence of the hand-off (report task H12,
+ * D-128). It reads on the task's machine and never throws: whatever it cannot read becomes text, and the hand-off goes on.
+ */
+async function validatorLine(rt: Runtime, task: TaskRow): Promise<string> {
+  const { bb, exec } = rt.deps;
+  let hostId: string | null = null;
+  let hostName = "the default host";
+  try {
+    hostId = await hostFor(bb, task);
+    if (hostId !== null) {
+      hostName = hostId;
+      hostName = (await bb.listMachines()).find((machine) => machine.id === hostId)?.name ?? hostId;
+    }
+  } catch (error) {
+    return describeObservation({ status: "unobserved", reason: `could not place the task's host (${errorText(error)})` }, hostName);
+  }
+  return describeObservation(await observeValidatorAgent({ bb, exec }, { hostId, hostName }), hostName);
 }
 
 type Checked = { ok: true; run: CheckRun | null } | { ok: false; text: string };
