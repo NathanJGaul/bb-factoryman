@@ -180,7 +180,7 @@ The verdict above is the verdict of the audited commit `d961810`.
 | # | Status | Evidence |
 | --- | --- | --- |
 | 1 | Cleared | `src/validator/agent.shell.test.ts` runs `READ_SCRIPT` under a real `sh` (`U1723` to `U1726`). Five mutants of the script, including `M17`, each fail it. |
-| 2 | Not clearable by a fix | The seven `TEST_AFTER` behaviors stay. The remediation added six more guards that passed on first run (`U1723` to `U1726`, `A1621`, `A1622`), so thirteen behaviors have no recorded red, each with a killing mutant. D-133 records the deviation and waits for the captain. |
+| 2 | Not clearable by a fix | The seven `TEST_AFTER` behaviors stay. The remediation added six more guards that passed on first run (`U1723` to `U1726`, `A1621`, `A1622`), so thirteen behaviors have no recorded red, each with a killing mutant. D-133 records the deviation, and the captain accepted it on 2026-11-09. |
 | 3 | Cleared | `U1689` and `U1710` use literal text. A mutant of `validatorProblem` and a mutant of `roleAdvice` each fail them. |
 | 4 | Cleared | `A1622` feeds the real command's output to `startedThreadId`, and a reworded line fails it. `U1709` now asserts through the same reader and fails when the fake lab prints another first line. |
 | 5 | Cleared | The two `if`s are gone: `U1689` is two tables, and `A1610` uses `exactly(...)` patterns. |
@@ -195,4 +195,4 @@ The verdict above is the verdict of the audited commit `d961810`.
 | 14 | Cleared | `U1722` has its own id, `SECOND` replaces the misleading `CODEX`, the bounds are exact (2 and 4), and the two titles that promised more now assert what they say. |
 
 Suite after the remediation: 151 files, 2067 tests, 0 failed, 25 s; `pnpm run check` is clean; a full run adds no temporary directory.
-The verdict stays `FAIL` under the rubric until the captain accepts D-133 or asks for rework, and a fresh audit would be the way to confirm findings 1 and 3 to 14.
+The verdict stays `FAIL` under the rubric, because the thirteen behaviors with no recorded red cannot be cleared by a fix. The captain accepted D-133 on 2026-11-09 as a recorded test-after waiver, so the cause is accepted. A fresh audit would be the way to confirm findings 1 and 3 to 14.

@@ -356,3 +356,12 @@ The test now asserts that `startedThreadId` finds the thread ID in the text that
 - first run: `pnpm vitest run test/fixtures/conformance-lab.test.ts` -> 13 passed (a guard on a fixture, so no red was possible)
 - mutant: the fake lab's first line reworded -> `[U1709]` failed. It was restored with `git checkout`.
 - commit: see the commit that carries this entry.
+
+## Decision: the captain accepted D-133 (2026-11-09)
+
+The captain accepted D-133 on 2026-11-09 as a recorded test-after waiver for the thirteen behaviors that passed on their first run: `U1649`, `U1650`, `U1702`, `U1714`, `U1716`, `U1719`, `A1612`, `U1723` to `U1726`, `A1621`, and `A1622`.
+The ground is the one of D-099, D-107, D-116, and D-122: a deliberate mutant fails each of them, and the log records the mutant.
+The message cited D-108 as one of the precedents, and D-108 is the scope entry of the harness-independence feature, so this log cites D-107, the earlier test-after waiver.
+The five `LIKELY` behaviors (`U1704`, `U1709`, `U1710`, `U1715`, `A1619`) are not part of the waiver, because their red is recorded here and only the git history cannot corroborate it.
+The audit verdict in `tdd/verification.md` stays `FAIL` as of the audited commit, because the rubric fails any `TEST_AFTER` behavior and a fix cannot clear it.
+Task `T065` is done, and `docs/DECISIONS.md` D-133 says "accepted by the captain".

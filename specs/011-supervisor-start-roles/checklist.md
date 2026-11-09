@@ -77,7 +77,7 @@ All five runs used `--lab-dir /var/tmp/bblab-supervisor-start`, bb 0.49.0, no cr
 
 ## Not done, and who owns it
 
-- [ ] CHK1650 The captain has not accepted or rejected D-133: thirteen behaviors passed on their first run (seven from the audit, six added by the remediation), each with a killing mutant, and five more are `LIKELY`. The audit verdict is `FAIL` under the rubric until then. Owner: the captain.
+- [x] CHK1650 The captain accepted D-133 on 2026-11-09 as a recorded test-after waiver for the thirteen behaviors that passed on their first run (seven from the audit, six added by the remediation), each with a killing mutant, on the precedent of D-099, D-107, D-116, and D-122. Evidence: `docs/DECISIONS.md` D-133 and `tdd/cycle-log.md` ("Decision"). The five `LIKELY` behaviors are not part of the waiver. The audit verdict stays `FAIL` as of the audited commit.
 - [ ] CHK1651 A fresh TDD audit to confirm the remediation (findings 1 and 3 to 14 of `tdd/verification.md`). The re-check in that file was written by the session that did the fixes. Owner: the next reviewer.
 - [ ] CHK1652 The reviewer-owned checklist `checklists/safety-and-observation.md` (30 items, all unchecked). Item CHK013 raises a real question: a supervisor in permission mode `full` can answer the owner's approval form (D-030). That exposure exists today for any supervisor with a shell, and this feature allows Pi as a supervisor on the report's decision D3. Owner: the reviewer, and the captain for CHK013.
 - [ ] CHK1653 The validator observation has not met a real no-mistakes install (D-134). The first no-mistakes project that the owner dispatches will show the line. Owner: the owner, at the cutover.

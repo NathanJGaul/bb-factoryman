@@ -174,9 +174,9 @@ A fix that changes a test is a step of its own, with its reason in `tdd/cycle-lo
 
 The code satisfies every functional requirement, success criterion, and acceptance scenario.
 The tasks below close the gaps that remain between the artifacts, the decision log, and the constitution.
-`T065` needs the captain and an edit cannot close it.
+`T065` needed the captain, and an edit could not close it. The captain decided on 2026-11-09, and D-133 records it.
 
-- [ ] T065 CRITICAL: get the captain's decision on D-133 (accept the thirteen behaviors that passed on their first run as a recorded deviation, or ask for rework), and record it in `docs/DECISIONS.md` with its date. Do not tick this task without the decision. per Constitution V (contradicts)
+- [X] T065 CRITICAL: get the captain's decision on D-133 (accept the thirteen behaviors that passed on their first run as a recorded deviation, or ask for rework), and record it in `docs/DECISIONS.md` with its date. Do not tick this task without the decision. per Constitution V (contradicts)
 - [X] T066 Name the tests that were retired or replaced (`U1519`, `A1508`, `U1397` and `U1398`, `U1520` and `A1507`) in `docs/DECISIONS.md` D-133, each with its reason and the test that replaced it; prove it with `pnpm vitest run test/acceptance/decision-log.test.ts`. per Constitution V and Governance (partial)
 - [X] T067 Update the `Observation` section of `specs/011-supervisor-start-roles/data-model.md` to the built shape (`auto` as an agent entry of kind `auto`, no top-level `auto` or `readyProviders`). per plan: data model (partial)
 - [X] T068 Update the "Default (no file)" row of `specs/011-supervisor-start-roles/contracts/validator-observation.md` to the text that `src/validator/agent.ts` writes. per plan: validator observation contract (partial)

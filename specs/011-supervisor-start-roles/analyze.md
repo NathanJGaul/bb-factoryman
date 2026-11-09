@@ -110,7 +110,7 @@ The status below is as of the commit that carries this section.
 
 | Finding | Status |
 | --- | --- |
-| C1 | Open. `T065` waits for the captain's decision on D-133. |
+| C1 | Resolved by `T065`: the captain accepted D-133 on 2026-11-09 as a recorded test-after waiver. |
 | C2 | Resolved by `T066`: D-133 names the retired and replaced tests with their reasons. |
 | I1, I2 | Resolved by `T067` and `T068`: the data model and the contract describe the built shape and text. |
 | I3, I6 | Not fixable by an edit, because existing tasks are never reworded or renumbered. `plan.md` records the right ids under "Amendments after implementation" (`T069`). |

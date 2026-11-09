@@ -1322,7 +1322,7 @@ The wait is a tested helper (`waitUntil`), and its call in `real-lab.ts` is chec
 The Pi result file comes from the rerun on the commit that has the wait.
 Its code differs from the commit of the other four runs only in `tools/conformance`, and `src/` is identical in both.
 
-### D-133: Thirteen behaviors passed on their first run, and the loop ran in groups (Deviation, awaiting the captain)
+### D-133: Thirteen behaviors passed on their first run, and the loop ran in groups (Deviation, accepted by the captain)
 
 Constitution principle V says that every behavior change is driven by a test that failed first.
 The TDD audit of this feature (`specs/011-supervisor-start-roles/tdd/verification.md`) returned `FAIL` for the rubric's rule that any `TEST_AFTER` behavior fails a feature.
@@ -1336,8 +1336,10 @@ The loop also ran in groups of closely related behaviors, as the earlier feature
 The repository commits only at green (D-099), so the history cannot show a test before its code in any case.
 The position is the one taken for D-099, D-107, D-116, and D-122: the rubric fails the feature, the evidence is complete, and the owner decides.
 The captain could accept the thirteen as a recorded deviation, or ask for rework.
-Rework would mean new history for tests that already fail when their property is removed, and this entry does not recommend it.
-This entry does not record an acceptance: the captain has not given one.
+Rework would mean new history for tests that already fail when their property is removed, and this entry did not recommend it.
+The captain accepted the thirteen on 2026-11-09 as a recorded test-after waiver, on the same precedent as D-099, D-107, D-116, and D-122, because a deliberate mutant fails each of them.
+The five `LIKELY` behaviors are not part of the waiver, because their red is in the cycle log and only the history cannot corroborate it.
+The audit verdict in `tdd/verification.md` stays `FAIL` as of the audited commit, and this entry is the recorded acceptance of the rubric's cause.
 
 The loop also retired or replaced some tests, each for a stated reason, and `tdd/cycle-log.md` has the detail.
 `U1519` was deleted because it asserted that three closed checks are absent from a gap list that is now empty, so it could not fail; `U1717` and `A1507` pin the empty list.

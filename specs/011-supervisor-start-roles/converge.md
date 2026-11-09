@@ -1,7 +1,7 @@
 # Convergence: supervisor start command, role advice, and the dispatch roles block
 
 **Date**: 2026-11-09
-**Outcome**: Seven tasks were appended in phase 11 of `tasks.md`. Six are done, and one (`T065`) waits for the captain.
+**Outcome**: Seven tasks were appended in phase 11 of `tasks.md`, and all seven are done. `T065` was the captain's decision on D-133, and the captain accepted it on 2026-11-09.
 **Assessed at**: `4ffde3d` for the code and the tests (nothing under `src/`, `tools/`, `test/`, or `conformance/` has changed since the live runs except the commits listed in `tdd/cycle-log.md`). The documents were edited after it by tasks `T066` to `T071`.
 
 ## What was checked
@@ -41,11 +41,11 @@ The first Pi run failed S2 to S12 on an empty model catalog, and its rerun on th
 
 ## Merge readiness
 
-Ready for review. It is **not** ready to merge by its own rules until the captain decides D-133, and that decision is `T065`.
+Ready for review. The one decision that belonged to the captain, D-133, was accepted on 2026-11-09 (`T065`), so nothing in the feature's own rules stands in the way of a merge decision.
 
 - `pnpm run check` is green: 151 files, 2067 tests, typecheck and lint clean.
 - The five runs are the end-to-end proof, and the evidence of S9 is in the result files.
-- The TDD audit (`tdd/verification.md`) returned `FAIL` for the rubric's rule that any `TEST_AFTER` behavior fails a feature. Thirteen behaviors passed on their first run, because the behavior they pin already held. Each has a killing mutant. The audit's other findings were fixed in the remediation, and the re-check section in the report says which and with what evidence. D-133 records the deviation and does not claim an acceptance.
+- The TDD audit (`tdd/verification.md`) returned `FAIL` for the rubric's rule that any `TEST_AFTER` behavior fails a feature. Thirteen behaviors passed on their first run, because the behavior they pin already held. Each has a killing mutant. The audit's other findings were fixed in the remediation, and the re-check section in the report says which and with what evidence. D-133 records the deviation, and the captain accepted it on 2026-11-09 as a recorded test-after waiver.
 - The reviewer-owned checklist `checklists/safety-and-observation.md` has 30 open questions. None blocks a task.
 
 ## Risk
@@ -68,7 +68,6 @@ Ready for review. It is **not** ready to merge by its own rules until the captai
 
 ## Remaining work
 
-- `T065`: the captain's decision on D-133.
 - A fresh TDD audit to confirm the remediation, and the reviewer's pass over the 30 requirement questions.
 - The first real no-mistakes project at the cutover shows the validator line (D-134).
 - Tier 2 for each harness (credentials, the captain's), out of scope here.
