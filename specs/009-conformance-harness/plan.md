@@ -115,37 +115,40 @@ tools/
   bblab/bblab                  # promoted from the isolation report; adds --offline and a `plan` subcommand
   bblab/bblab-evidence         # promoted
   stub-agent/stub-agent.ts     # promoted from the t01 report; adds SLEEP, silent, double-report, fail=<code>, [brain:...]
-  stub-agent/stub-agent.test.ts
-  fake-model/types.ts          # Conversation, Action, Offered
+  stub-agent/fake-mcp.ts       # a tiny stdio MCP server for the stub's tests
+  fake-model/types.ts          # Conversation, Action, Offered, Wire
   fake-model/brain.ts          # directives + markers -> the next Action (pure)
   fake-model/tools.ts          # find a tool by role, build arguments from a JSON schema
-  fake-model/wire/chat.ts      # OpenAI chat completions: request -> Conversation, Action -> response
-  fake-model/wire/responses.ts # OpenAI Responses
-  fake-model/wire/messages.ts  # Anthropic Messages
+  fake-model/instructions.ts   # the plugin tools and skills a harness names in its instruction text
+  fake-model/wire/             # chat.ts, responses.ts, messages.ts, shared.ts (OpenAI chat, OpenAI Responses, Anthropic Messages)
   fake-model/server.ts         # loopback HTTP server, request log, entry point
   conformance/cli.ts           # `pnpm run conformance`
   conformance/args.ts          # argument parsing
   conformance/run.ts           # the run: lab lifecycle, scenarios, verdicts, result file
-  conformance/lab.ts           # the real Lab over bblab
+  conformance/real-lab.ts      # the real Lab over bblab, and the lab bring-up (not unit tested; the live runs are its test)
+  conformance/lab-env.ts       # lab paths, environment, plugin copy and build commands, offline proof, lab reset
+  conformance/readers.ts       # wakes and offers from a thread log or a brain log
+  conformance/isolation.ts     # the verdict on the evidence diff
+  conformance/shell.ts         # run a command and collect its output
+  conformance/lab-scripts/     # provider-states.ts, run inside the lab
   conformance/port.ts          # the Lab interface the scenarios use
   conformance/verdict.ts       # checks + known gaps -> verdicts and the exit code
   conformance/gaps.ts          # load and validate conformance/known-gaps.json
   conformance/result.ts        # result file shape, write, read
   conformance/docs.ts          # HARNESS-SUPPORT.md generator
   conformance/docs-cli.ts      # `pnpm run conformance:docs`
-  conformance/scenarios/*.ts   # s01-readiness ... s12-wake-while-busy, index.ts
-  conformance/drivers/*.ts     # stub, claude-code, codex, pi, omp, index.ts
+  conformance/scenarios/*.ts   # s01-readiness ... s12-wake-while-busy, helpers.ts, index.ts
+  conformance/drivers/*.ts     # stub, claude-code, codex, pi, omp, bind.ts, types.ts, index.ts
 conformance/
   known-gaps.json
   results/*.json
 docs/HARNESS-SUPPORT.md        # generated
 docs/CONFORMANCE.md            # how to run the tiers
-docs/DECISIONS.md              # + D-100 onward
-test/acceptance/conformance-*.test.ts   # entry-point tests with a fake lab
+docs/DECISIONS.md              # + D-100 to D-107
+test/acceptance/conformance-*.test.ts   # entry-point tests with a fake lab or a process
+test/fixtures/conformance-lab.ts, conformance-run.ts, recorded/claude-code-supervisor-after-stamp.json
 package.json                   # + scripts conformance, conformance:docs
-tsconfig.json                  # + tools in include, allowImportingTsExtensions, erasableSyntaxOnly
-vitest.config.ts               # + tools/**/*.test.ts
-eslint.config.js               # + tools in scope, stub and fake-model globals if needed
+tsconfig.json, tools/tsconfig.json, vitest.config.ts
 ```
 
 ## Test strategy
