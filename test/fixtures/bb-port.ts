@@ -50,6 +50,9 @@ export class FakeBbPort implements BbPort {
   /** What `listModels` returns for a host ID and a provider ID, keyed `<host>/<provider>`, instead of `models`. */
   modelsByHost = new Map<string, ModelList>();
   modelsError: Error | null = null;
+  /** What `getFailureCause` returns per thread ID. A thread that is missing has no cause. */
+  failureCauses = new Map<string, string | null>();
+  failureCauseError: Error | null = null;
   /** Every terminal that `startTerminal` opened. */
   terminalRuns: Array<{ hostId: string; cwd: string | null; argv: string[] }> = [];
   /** The reads `readTerminal` returns, in order. The last one repeats. */
@@ -194,6 +197,12 @@ export class FakeBbPort implements BbPort {
     if (scripted !== null) return scripted;
     const listed = (hostId === undefined ? undefined : this.providersByHost.get(hostId)) ?? this.providers;
     return listed.map((provider) => providerState(provider.id, { status: provider.available ? "ready" : "not_installed" }));
+  }
+
+  async getFailureCause(threadId: string): Promise<string | null> {
+    this.calls.push({ method: "getFailureCause", args: [threadId] });
+    if (this.failureCauseError) throw this.failureCauseError;
+    return this.failureCauses.get(threadId) ?? null;
   }
 
   async listModels(providerId: string, hostId?: string): Promise<ModelList> {

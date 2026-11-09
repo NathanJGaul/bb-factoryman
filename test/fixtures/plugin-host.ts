@@ -115,6 +115,8 @@ export interface World {
   machines: HostFixture[];
   /** The fake terminals behind `bb.sdk.terminals`, which stand in for remote machines. */
   remote: RemoteFake;
+  /** The events in each thread's log, as `threads.events.list` returns them. A thread that is missing has none. */
+  threadEvents: Map<string, Array<{ type: string; seq: number; data: Record<string, unknown> }>>;
   /** Hold the next `providers.list` call until this promise settles. The call clears it. */
   holdProviders: Promise<void> | null;
   /** Make `threads.updatePluginMetadata` fail. */
@@ -181,6 +183,8 @@ export interface WorldOptions {
   modelsError?: Error;
   /** Make `providers.list` fail. */
   providersError?: Error;
+  /** Make `threads.events.list` fail. */
+  eventsError?: Error;
   /**
    * What `system.providerStates` returns. When it is absent, each provider of `providers.list` is `ready` when it is
    * available and `not_installed` otherwise.
@@ -271,6 +275,14 @@ export async function loadWorld(options: WorldOptions = {}): Promise<World> {
           return { ok: true, delivery: "sent" };
         },
         archive: async () => ({}),
+        events: {
+          list: async ({ threadId, types, order, limit }: { threadId: string; types?: readonly string[]; order?: string; limit?: string }) => {
+            if (options.eventsError) throw options.eventsError;
+            const rows = (world.threadEvents.get(threadId) ?? []).filter((row) => types === undefined || types.includes(row.type));
+            const sorted = [...rows].sort((a, b) => (order === "desc" ? b.seq - a.seq : a.seq - b.seq));
+            return sorted.slice(0, limit === undefined ? undefined : Number(limit)).map((row) => ({ id: `ev${row.seq}`, scope: "thread", threadId, createdAt: row.seq, ...row }));
+          },
+        },
         context: async ({ threadId }: { threadId: string }) => {
           const cost = costs.get(threadId);
           return { usage: cost === undefined ? null : { cost, estimated: true, modelContextWindow: 200000 } };
@@ -361,6 +373,7 @@ export async function loadWorld(options: WorldOptions = {}): Promise<World> {
     remote,
     failMetadata: null,
     holdProviders: null,
+    threadEvents: new Map(),
     costs,
     webhook,
     setProviderStates(states) {

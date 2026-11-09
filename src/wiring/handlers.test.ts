@@ -56,6 +56,96 @@ describe("thread.failed", () => {
     expect(failedRow(t)?.evidence).toBe("worker thread entered the error state");
   });
 
+  describe("the provider's reported cause (feature 009, H3)", () => {
+    const LOGIN = "Not logged in · Please run /login";
+    const SIGN_IN_REMEDY = "Sign in to the provider on the machine that runs the worker, then dispatch the task again.";
+    const MODEL_REMEDY = "Pick a model that `bb provider models <provider>` lists for this provider, then dispatch the task again.";
+
+    it("[U1461] follows the thread's error text with the cause", async () => {
+      const { t, handlers } = await inState("working");
+      t.bb.failureCauses.set("thr-w1", "Overloaded, try later");
+      await handlers.threadFailed({ ...thread, error: "Provider crashed" });
+      expect(failedRow(t)?.evidence).toBe('worker thread failed: Provider crashed. Provider-reported cause: "Overloaded, try later"');
+    });
+
+    it("[U1462] follows a remembered turn failure with the cause", async () => {
+      const { t, handlers } = await inState("working");
+      t.bb.failureCauses.set("thr-w1", "unexpected status 500 from upstream");
+      await handlers.turnFailed({ threadId: "thr-w1", errorInfo: { category: "bad-request", httpStatusCode: 404 } });
+      await handlers.threadFailed({ ...thread, error: null });
+      expect(failedRow(t)?.evidence).toBe('worker thread failed: provider error (category bad-request, HTTP 404). Provider-reported cause: "unexpected status 500 from upstream"');
+    });
+
+    it("[U1463] follows the fallback text with the cause", async () => {
+      const { t, handlers } = await inState("working");
+      t.bb.failureCauses.set("thr-w1", LOGIN);
+      await handlers.threadFailed({ ...thread, error: null });
+      expect(failedRow(t)?.evidence).toBe(`worker thread entered the error state. Provider-reported cause: "${LOGIN}"\nRemedy: ${SIGN_IN_REMEDY}`);
+    });
+
+    it("[U1464] adds the remedy as a second line, and leaves the cause line unchanged", async () => {
+      const { t, handlers } = await inState("working");
+      t.bb.failureCauses.set("thr-w1", "Failed to resolve Pi model openai/gpt-6-luna");
+      await handlers.threadFailed({ ...thread, error: "Command thread.start failed" });
+      const [first, second, ...rest] = (failedRow(t)?.evidence ?? "").split("\n");
+      expect(first).toBe('worker thread failed: Command thread.start failed. Provider-reported cause: "Failed to resolve Pi model openai/gpt-6-luna"');
+      expect(second).toBe(`Remedy: ${MODEL_REMEDY}`);
+      expect(rest).toEqual([]);
+    });
+
+    it("[U1464] uses the remembered HTTP status for the remedy when the cause text does not say it", async () => {
+      const { t, handlers } = await inState("working");
+      t.bb.failureCauses.set("thr-w1", "connection reset by peer");
+      await handlers.turnFailed({ threadId: "thr-w1", errorInfo: { category: "connection-failed", httpStatusCode: 401 } });
+      await handlers.threadFailed({ ...thread, error: null });
+      expect(failedRow(t)?.evidence).toContain(`Remedy: ${SIGN_IN_REMEDY}`);
+    });
+
+    it("[U1466] keeps today's evidence, still records the failure, and logs a warning when the cause read throws", async () => {
+      const { t, handlers } = await inState("working");
+      t.bb.failureCauseError = new Error("HTTP 500");
+      await handlers.threadFailed({ ...thread, error: "Provider crashed" });
+      expect(state(t)).toBe("failed");
+      expect(failedRow(t)?.evidence).toBe("worker thread failed: Provider crashed");
+      expect(t.lines.some((line) => line.level === "warn" && line.message.includes("thr-w1") && line.message.includes("HTTP 500"))).toBe(true);
+    });
+
+    it("[U1467] flattens and bounds the cause in the evidence", async () => {
+      const { t, handlers } = await inState("working");
+      t.bb.failureCauses.set("thr-w1", `first line\n\tsecond line ${"x".repeat(400)}`);
+      await handlers.threadFailed({ ...thread, error: "Provider crashed" });
+      const evidence = failedRow(t)?.evidence ?? "";
+      expect(evidence).not.toMatch(/[\t\r]/);
+      expect(evidence.split("\n")).toHaveLength(1);
+      expect(evidence).toContain('Provider-reported cause: "first line second line xxx');
+      expect(evidence.endsWith('..."')).toBe(true);
+      expect(evidence.length).toBeLessThan("worker thread failed: Provider crashed. Provider-reported cause: ".length + 300 + 4);
+    });
+
+    it("[U1468] reads the cause once, after the wait for an empty error text", async () => {
+      const { t, handlers } = await inState("working");
+      let sleepsWhenRead = -1;
+      t.bb.getFailureCause = async () => {
+        sleepsWhenRead = t.sleeps.length;
+        return LOGIN;
+      };
+      await handlers.threadFailed({ ...thread, error: null });
+      expect(sleepsWhenRead).toBe(1);
+      expect(t.sleeps).toEqual([500]);
+    });
+
+    it("[U1469] does not read the cause for a failure in a state that the handler ignores", async () => {
+      for (const ignored of ["validating", "needs_decision", "review_ready", "awaiting_approval", "merged"] as const) {
+        const { t, handlers } = await inState(ignored);
+        await handlers.threadFailed({ ...thread, error: "late" });
+        expect(t.bb.callsTo("getFailureCause"), ignored).toEqual([]);
+      }
+      const { t, handlers } = await inState("working");
+      await handlers.threadFailed({ thread: { id: "thr-unknown" }, error: "x" });
+      expect(t.bb.callsTo("getFailureCause")).toEqual([]);
+    });
+  });
+
   it("[U138] fails a blocked task", async () => {
     const { t, handlers } = await inState("blocked");
     await handlers.threadFailed({ ...thread, error: "boom" });

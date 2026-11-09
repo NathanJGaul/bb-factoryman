@@ -2,6 +2,7 @@ import type { BbPluginApi } from "@get-bb/plugin-sdk";
 import { errorText, type Runtime } from "../runtime";
 import type { TaskRow } from "../store/types";
 import { identify } from "../tools/access";
+import { boundCause, remedyFor } from "./failure-cause";
 import type { Notifier } from "./wake";
 
 export interface ThreadRef {
@@ -43,7 +44,11 @@ export class EventHandlers {
         : failure
           ? `worker thread failed: provider error (category ${failure.category ?? "unknown"}, HTTP ${failure.status ?? "unknown"})`
           : "worker thread entered the error state";
-      await this.rt.apply(task.taskId, { type: "fail", actor: "system", evidence });
+      const cause = await this.causeOf(payload.thread.id);
+      const remedy = cause === null ? null : remedyFor({ cause, category: failure?.category ?? null, status: failure?.status ?? null });
+      // The cause is the provider's own text, so it stays in quotes as data, and the remedy sits on a line of its own.
+      const full = cause === null ? evidence : `${evidence.replace(/[.\s]+$/, "")}. Provider-reported cause: "${cause}"${remedy === null ? "" : `\nRemedy: ${remedy}`}`;
+      await this.rt.apply(task.taskId, { type: "fail", actor: "system", evidence: full });
     });
   }
 
@@ -90,6 +95,18 @@ export class EventHandlers {
       const title = payload.interaction.payload?.title ?? "an unnamed interaction";
       await this.notifier.wake(task, `reports: the worker raised a question: ${title}`, null);
     });
+  }
+
+  /** Why bb says the thread failed, bounded and flattened, or null. A failed read is logged and costs the failure no evidence. */
+  private async causeOf(threadId: string): Promise<string | null> {
+    try {
+      const raw = await this.rt.deps.bb.getFailureCause(threadId);
+      const bounded = raw === null ? "" : boundCause(raw);
+      return bounded === "" ? null : bounded;
+    } catch (error) {
+      this.rt.deps.log.warn(`Could not read why worker thread ${threadId} failed: ${errorText(error)}`);
+      return null;
+    }
   }
 
   /** The non-terminal task whose recorded worker is this thread, or undefined. */

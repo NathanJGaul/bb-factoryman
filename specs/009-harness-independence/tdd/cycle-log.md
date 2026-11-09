@@ -186,3 +186,35 @@ Commit subject: "feat: remove the built-in default profile and add dispatch init
   Mutants, one at a time with the file restored: init writes with flag `w` -> A1326 and U1406 fail; init skips the profile check -> U1431 and A1328 fail; the mode order reversed -> U1426, U1427, U1437, A1324, A1325 fail; the written file without a `default` -> U1437, A1324, A1325 fail; a repeated flag accepted -> U1412 fails; a built-in default returned from the last rung -> U811, U1408, U1411, A1322 fail; `dispatch` routes any subcommand to init -> survived at first, because the other inputs print the same usage, so I added `["dispatch", "--provider", "claude", "--project", "proj-1"]` to U1442 and the mutant then failed.
 - suite: `pnpm run check` -> 103 files, 1550 passed, 0 failed.
 - refactor: none needed after the green.
+
+## Group 7: the cause of a failure (tasks T1380 to T1386, H3)
+
+Behaviors: U1445 to U1464, U1466 to U1471, A1339 to A1344.
+BASELINE behaviors carried by this group: U1465 (`[U135]`, `[U136]`, `[U137]`), U1472 (`[U128]`, `[U214]`).
+Commit subject: "feat: carry the provider's reported cause in the failure evidence (H3)".
+
+- test: `src/wiring/failure-cause.test.ts` (new, 14 cases, U1445 to U1455) against a stub whose `boundCause` returns its input and whose `remedyFor` returns null.
+- red: `pnpm vitest run src/wiring/failure-cause.test.ts` -> `8 failed | 6 passed`; U1446 (control characters kept), U1448 (no cut), and U1449 to U1454 (no remedy) fail on `Expected / Received`.
+  U1445, U1447, and U1455 passed against the stub by design.
+  Mutants: `limit < 300` -> U1447 fails; cut at 298 characters -> U1448 fails; HTTP 401 ignored -> U1453 fails.
+  The sign-in-before-model mutant (M7) survived the first U1451, because "Use /login, set an API key" matches none of the sign-in patterns.
+  I added an input that matches both families ("No model selected. Not logged in · Please run /login"), as a step of its own, and the mutant then failed U1451 (M7 killed).
+- green: `src/wiring/failure-cause.ts` holds `boundCause` (control characters become one space, spaces collapse, 300 characters with a closing `...`) and `remedyFor` (model patterns first, then sign-in patterns, HTTP 401, and the category `unauthorized`).
+  The first draft of the control-character regex tripped `no-control-regex`; it uses the Unicode category `\p{Cc}` now.
+- test: `src/bb/adapter.test.ts` gained a `getFailureCause` block (7 cases) against a stub that throws "not implemented".
+- red: `pnpm vitest run src/bb/adapter.test.ts -t "getFailureCause"` -> `7 failed`; `Error: not implemented`.
+- green: the adapter lists `provider/error` and `system/error` events, newest first, one row, and returns the `detail` or the `message`.
+  A mutant that lists oldest first fails U1456 and A1339 (M18 killed).
+  The fixtures gained `FakeBbPort.failureCauses`, `failureCauseError`, and `loadWorld`'s `threadEvents` and `eventsError`, with a `threads.events.list` fake that applies `types`, `order`, and `limit`.
+- test: `src/wiring/handlers.test.ts` (nine cases for U1461 to U1469) and `src/wiring/wake.test.ts` (U1470, U1471).
+- red: `pnpm vitest run src/wiring/handlers.test.ts src/wiring/wake.test.ts` -> `10 failed`; `expected 'worker thread failed: Provider crashed' to be 'worker thread failed: Provider crashe…'` (U1461, U1462, U1463, U1464), `expected -1 to be 1` (U1468: the cause was never read), `expected false to be true` (U1466: no warning), and `expected '[factoryman] Task t1 (ship, no-mistak…' to contain 'Evidence: xxxx…'` (U1470, U1471).
+  U1469 passed against the old code, because the old code never reads the cause; it guards the new code.
+- green: `threadFailed` builds today's evidence, reads the cause once after the wait for an empty error text, and appends the bounded cause and the remedy; a failed read is logged and costs the failure nothing; the wake limit for a `failed` task is 1200 characters.
+  `pnpm vitest run src/wiring` -> 70 passed.
+- test: `test/acceptance/harness-failure.test.ts` (new, 16 cases, A1339 to A1344).
+  It was written after the code and passed on the first run (one case failed on a wrong name for the host's log, `inspection.logs`; the field is `logEntries`).
+  The deliberate-mutant check, one at a time with the file restored: the wake limit left at 600 -> U1470 and U1471 fail, but A1341 did not, because its evidence was short.
+  I added a case with 400 characters of error text and a 300-character cause, as a step of its own, and the mutant then failed A1341 (M13 killed).
+  Other mutants: the oldest event read -> A1339 and U1456 fail; a failed read that throws out of the handler -> U1466 and A1343 fail; the cause never read -> 22 tests fail; an unbounded cause -> U1467 and A1344 fail; a remedy that ignores the turn failure's status -> U1464 fails.
+- suite: `pnpm run check` -> 105 files, 1598 passed, 0 failed.
+- refactor: none needed after the green.

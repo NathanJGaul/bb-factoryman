@@ -161,6 +161,16 @@ export function createBbPort(bb: BbPluginApi): BbPort {
       }));
     },
 
+    async getFailureCause(threadId) {
+      // Newest first, one row: the latest error is the one that ended the thread.
+      const rows = await bb.sdk.threads.events.list({ threadId, types: ["provider/error", "system/error"], order: "desc", limit: "1" });
+      const data = rows[0]?.data as { detail?: unknown; message?: unknown } | undefined;
+      for (const text of [data?.detail, data?.message]) {
+        if (typeof text === "string" && text.trim() !== "") return text;
+      }
+      return null;
+    },
+
     async listModels(providerId, hostId) {
       const response = await bb.sdk.providers.models(hostId === undefined ? { providerId } : { providerId, hostId });
       return {

@@ -64,12 +64,12 @@ A1301 to A1309 live in `test/acceptance/harness-readiness.test.ts`, A1310 to A13
 | A1336 | With a Codex ladder that ends in `ultra`, an explicit Codex profile at `ultra` clears against a baseline at `high`, and a lowered level blocks with `reasoning_lowered` | AC-5.7, FR-1342, SC-1305 | example | DONE | `test/acceptance/harness-models.test.ts` |
 | A1337 | A provider with no entry in a `reasoningLevels` record is ranked in the default ladder | AC-5.8, FR-1342 | example | DONE | `test/acceptance/harness-models.test.ts` |
 | A1338 | A failed read of the model list blocks the dispatch and leaves no task | AC-5.9, FR-1346 | example | DONE | `test/acceptance/harness-models.test.ts` |
-| A1339 | A worker that fails with a `provider/error` or `system/error` event in its log gets `fail` evidence that holds today's text and then the latest event's detail | AC-6.1, FR-1351, FR-1352 | example | PENDING | |
-| A1340 | The four causes of the report (Claude Code login, omp no model, Pi model resolution, Codex 401 with a cause event) each appear verbatim in the evidence | AC-6.2, SC-1306 | example | PENDING | |
-| A1341 | The wake message to the supervisor carries the cause and the remedy of a failed task whole | AC-6.3, FR-1353, SC-1306 | example | PENDING | |
-| A1342 | A sign-in cause and a no-model cause each add a remedy line, and the cause stays in the evidence unchanged | AC-6.4, FR-1354 | example | PENDING | |
-| A1343 | With no error event, or a failed read, the evidence is today's text, the task still fails, and the plugin logs the read failure | AC-6.5, FR-1356 | example | PENDING | |
-| A1344 | A long cause with line breaks and control characters is flattened and bounded, and shown as text the provider reported | AC-6.6, FR-1355 | example | PENDING | |
+| A1339 | A worker that fails with a `provider/error` or `system/error` event in its log gets `fail` evidence that holds today's text and then the latest event's detail | AC-6.1, FR-1351, FR-1352 | example | DONE | `test/acceptance/harness-failure.test.ts` |
+| A1340 | The four causes of the report (Claude Code login, omp no model, Pi model resolution, Codex 401 with a cause event) each appear verbatim in the evidence | AC-6.2, SC-1306 | example | DONE | `test/acceptance/harness-failure.test.ts` |
+| A1341 | The wake message to the supervisor carries the cause and the remedy of a failed task whole | AC-6.3, FR-1353, SC-1306 | example | DONE | `test/acceptance/harness-failure.test.ts` |
+| A1342 | A sign-in cause and a no-model cause each add a remedy line, and the cause stays in the evidence unchanged | AC-6.4, FR-1354 | example | DONE | `test/acceptance/harness-failure.test.ts` |
+| A1343 | With no error event, or a failed read, the evidence is today's text, the task still fails, and the plugin logs the read failure | AC-6.5, FR-1356 | example | DONE | `test/acceptance/harness-failure.test.ts` |
+| A1344 | A long cause with line breaks and control characters is flattened and bounded, and shown as text the provider reported | AC-6.6, FR-1355 | example | DONE | `test/acceptance/harness-failure.test.ts` |
 | A1345 | `docs/DECISIONS.md` holds D-100 to D-107, and D-100 records the captain's five decisions with the tasks built and open | AC-7.1, FR-1361 | example | PENDING | |
 | A1346 | D-063 keeps its text and carries an "Amended by" line | AC-7.2, FR-1361 | example | PENDING | |
 | A1347 | D-064 carries an "Amended by" line that records the per-provider ladder | AC-7.3, FR-1361 | example | PENDING | |
@@ -317,48 +317,48 @@ A1301 to A1309 live in `test/acceptance/harness-readiness.test.ts`, A1310 to A13
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| U1445 | `boundCause` leaves the four causes of the report unchanged | AC-6.2, FR-1355 | example | PENDING | |
-| U1446 | `boundCause` replaces each run of control characters, line breaks, and tabs with one space, collapses repeated spaces, and trims | AC-6.6, FR-1355 | example | PENDING | |
-| U1447 | `boundCause` leaves a text of exactly 300 characters unchanged | AC-6.6, FR-1355 (boundary) | example | PENDING | |
-| U1448 | `boundCause` cuts a text of 301 characters to 300, ending with `...` | AC-6.6, FR-1355 (boundary) | example | PENDING | |
-| U1449 | `remedyFor` gives the model remedy for "No model selected" | AC-6.4, FR-1354 | example | PENDING | |
-| U1450 | `remedyFor` gives the model remedy for "Failed to resolve Pi model" | AC-6.4, FR-1354 | example | PENDING | |
-| U1451 | `remedyFor` gives the model remedy, and not the sign-in remedy, for "No model selected. Use /login, set an API key" | AC-6.4, FR-1354 (precedence) | example | PENDING | |
-| U1452 | `remedyFor` gives the sign-in remedy for "Not logged in · Please run /login" | AC-6.4, FR-1354 | example | PENDING | |
-| U1453 | `remedyFor` gives the sign-in remedy for status 401 with unrelated text | AC-6.4, FR-1354 | example | PENDING | |
-| U1454 | `remedyFor` gives the sign-in remedy for the category `unauthorized` | AC-6.4, FR-1354 | example | PENDING | |
-| U1455 | `remedyFor` gives nothing for unrelated text with status 500 and another category | AC-6.4, FR-1354 (boundary) | example | PENDING | |
+| U1445 | `boundCause` leaves the four causes of the report unchanged | AC-6.2, FR-1355 | example | DONE | `src/wiring/failure-cause.test.ts` |
+| U1446 | `boundCause` replaces each run of control characters, line breaks, and tabs with one space, collapses repeated spaces, and trims | AC-6.6, FR-1355 | example | DONE | `src/wiring/failure-cause.test.ts` |
+| U1447 | `boundCause` leaves a text of exactly 300 characters unchanged | AC-6.6, FR-1355 (boundary) | example | DONE | `src/wiring/failure-cause.test.ts` |
+| U1448 | `boundCause` cuts a text of 301 characters to 300, ending with `...` | AC-6.6, FR-1355 (boundary) | example | DONE | `src/wiring/failure-cause.test.ts` |
+| U1449 | `remedyFor` gives the model remedy for "No model selected" | AC-6.4, FR-1354 | example | DONE | `src/wiring/failure-cause.test.ts` |
+| U1450 | `remedyFor` gives the model remedy for "Failed to resolve Pi model" | AC-6.4, FR-1354 | example | DONE | `src/wiring/failure-cause.test.ts` |
+| U1451 | `remedyFor` gives the model remedy, and not the sign-in remedy, for "No model selected. Use /login, set an API key" | AC-6.4, FR-1354 (precedence) | example | DONE | `src/wiring/failure-cause.test.ts` |
+| U1452 | `remedyFor` gives the sign-in remedy for "Not logged in · Please run /login" | AC-6.4, FR-1354 | example | DONE | `src/wiring/failure-cause.test.ts` |
+| U1453 | `remedyFor` gives the sign-in remedy for status 401 with unrelated text | AC-6.4, FR-1354 | example | DONE | `src/wiring/failure-cause.test.ts` |
+| U1454 | `remedyFor` gives the sign-in remedy for the category `unauthorized` | AC-6.4, FR-1354 | example | DONE | `src/wiring/failure-cause.test.ts` |
+| U1455 | `remedyFor` gives nothing for unrelated text with status 500 and another category | AC-6.4, FR-1354 (boundary) | example | DONE | `src/wiring/failure-cause.test.ts` |
 
 ### `src/bb/adapter.ts`: failure cause (H3)
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| U1456 | `getFailureCause` lists the types `provider/error` and `system/error` with order `desc` and limit `"1"` | FR-1351 | example | PENDING | |
-| U1457 | It returns the event's `detail` when that is a non-blank string | FR-1351 | example | PENDING | |
-| U1458 | It returns the event's `message` when `detail` is missing or blank | FR-1351 | example | PENDING | |
-| U1459 | It returns null for an empty list and for an event with a blank `detail` and `message` | AC-6.5 | example | PENDING | |
-| U1460 | An SDK error is not caught | AC-6.5 | example | PENDING | |
+| U1456 | `getFailureCause` lists the types `provider/error` and `system/error` with order `desc` and limit `"1"` | FR-1351 | example | DONE | `src/bb/adapter.test.ts` |
+| U1457 | It returns the event's `detail` when that is a non-blank string | FR-1351 | example | DONE | `src/bb/adapter.test.ts` |
+| U1458 | It returns the event's `message` when `detail` is missing or blank | FR-1351 | example | DONE | `src/bb/adapter.test.ts` |
+| U1459 | It returns null for an empty list and for an event with a blank `detail` and `message` | AC-6.5 | example | DONE | `src/bb/adapter.test.ts` |
+| U1460 | An SDK error is not caught | AC-6.5 | example | DONE | `src/bb/adapter.test.ts` |
 
 ### `src/wiring/handlers.ts` (H3)
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| U1461 | A cause follows an error-text evidence: `worker thread failed: <text>. Provider-reported cause: "<cause>"` | AC-6.1, FR-1352 | example | PENDING | |
-| U1462 | A cause follows a turn-failure evidence (category and HTTP) | AC-6.1, FR-1352 | example | PENDING | |
-| U1463 | A cause follows the fallback evidence "worker thread entered the error state" | AC-6.1, FR-1352 | example | PENDING | |
-| U1464 | A remedy adds a second line "Remedy: ..." and the cause line is unchanged | AC-6.4, FR-1354 | example | PENDING | |
+| U1461 | A cause follows an error-text evidence: `worker thread failed: <text>. Provider-reported cause: "<cause>"` | AC-6.1, FR-1352 | example | DONE | `src/wiring/handlers.test.ts` |
+| U1462 | A cause follows a turn-failure evidence (category and HTTP) | AC-6.1, FR-1352 | example | DONE | `src/wiring/handlers.test.ts` |
+| U1463 | A cause follows the fallback evidence "worker thread entered the error state" | AC-6.1, FR-1352 | example | DONE | `src/wiring/handlers.test.ts` |
+| U1464 | A remedy adds a second line "Remedy: ..." and the cause line is unchanged | AC-6.4, FR-1354 | example | DONE | `src/wiring/handlers.test.ts` |
 | U1465 | With no cause the evidence is today's text for the error-text, turn-failure, and fallback cases | AC-6.5, FR-1356 | example | BASELINE | `src/wiring/handlers.test.ts::[U135]`, `[U136]`, `[U137]` |
-| U1466 | A throw from the cause read leaves today's evidence, still records the failure, and logs a warning | AC-6.5, FR-1356 | example | PENDING | |
-| U1467 | The cause in the evidence is flattened and bounded | AC-6.6, FR-1355 | example | PENDING | |
-| U1468 | The cause is read once, after the grace wait for an empty error text | plan: edge case, grace wait | example | PENDING | |
-| U1469 | A failure in a state that the handler ignores does not read the cause | FR-1352 (boundary) | example | PENDING | |
+| U1466 | A throw from the cause read leaves today's evidence, still records the failure, and logs a warning | AC-6.5, FR-1356 | example | DONE | `src/wiring/handlers.test.ts` |
+| U1467 | The cause in the evidence is flattened and bounded | AC-6.6, FR-1355 | example | DONE | `src/wiring/handlers.test.ts` |
+| U1468 | The cause is read once, after the grace wait for an empty error text | plan: edge case, grace wait | example | DONE | `src/wiring/handlers.test.ts` |
+| U1469 | A failure in a state that the handler ignores does not read the cause | FR-1352 (boundary) | example | DONE | `src/wiring/handlers.test.ts` |
 
 ### `src/wiring/wake.ts` (H3)
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| U1470 | A `failed` task keeps evidence of exactly 1200 characters whole in the wake message | AC-6.3, FR-1353 (boundary) | example | PENDING | |
-| U1471 | A `failed` task cuts evidence of 1201 characters to 1199 and an ellipsis | AC-6.3, FR-1353 (boundary) | example | PENDING | |
+| U1470 | A `failed` task keeps evidence of exactly 1200 characters whole in the wake message | AC-6.3, FR-1353 (boundary) | example | DONE | `src/wiring/wake.test.ts` |
+| U1471 | A `failed` task cuts evidence of 1201 characters to 1199 and an ellipsis | AC-6.3, FR-1353 (boundary) | example | DONE | `src/wiring/wake.test.ts` |
 | U1472 | A task in any other state keeps 600 characters, and `needs_decision` keeps 8000 | FR-1353 (the limits stay) | example | BASELINE | `src/wiring/wake.test.ts::[U128]`, `[U214]` |
 
 ### `src/limits/queue.ts`: model checks at queue start (H2)

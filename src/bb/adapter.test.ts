@@ -304,6 +304,49 @@ describe("createBbPort", () => {
     });
   });
 
+  describe("getFailureCause", () => {
+    const row = (data: Record<string, unknown>, type = "provider/error") => ({ id: "ev1", scope: "thread", threadId: "thr-w1", seq: 9, createdAt: 1, type, data });
+    const list = (rows: unknown[]) => ({ threads: { events: { list: async () => rows } } }) as FakeSdkOverrides;
+
+    it("[U1456] lists the types provider/error and system/error, newest first, one row", async () => {
+      const { port, sdk } = setup(list([]));
+      await port.getFailureCause("thr-w1");
+      expect(sdk.callsTo("threads.events.list")).toEqual([[{ threadId: "thr-w1", types: ["provider/error", "system/error"], order: "desc", limit: "1" }]]);
+    });
+
+    it("[U1457] returns the detail of the event when it is a non-blank string", async () => {
+      const { port } = setup(list([row({ message: "Command failed", detail: "Not logged in · Please run /login" })]));
+      expect(await port.getFailureCause("thr-w1")).toBe("Not logged in · Please run /login");
+    });
+
+    it.each([[{ message: "Failed to resolve Pi model x" }], [{ message: "Failed to resolve Pi model x", detail: "   " }], [{ message: "Failed to resolve Pi model x", detail: 7 }]])(
+      "[U1458] returns the message when the detail is missing, blank, or not text: %j",
+      async (data) => {
+        const { port } = setup(list([row(data, "system/error")]));
+        expect(await port.getFailureCause("thr-w1")).toBe("Failed to resolve Pi model x");
+      },
+    );
+
+    it("[U1459] returns null for an empty list, and for an event with a blank detail and a blank message", async () => {
+      expect(await setup(list([])).port.getFailureCause("thr-w1")).toBeNull();
+      expect(await setup(list([row({ message: " ", detail: "" })])).port.getFailureCause("thr-w1")).toBeNull();
+      expect(await setup(list([row({})])).port.getFailureCause("thr-w1")).toBeNull();
+    });
+
+    it("[U1460] does not catch an SDK error", async () => {
+      const { port } = setup({
+        threads: {
+          events: {
+            list: async () => {
+              throw new Error("HTTP 500");
+            },
+          },
+        },
+      } as FakeSdkOverrides);
+      await expect(port.getFailureCause("thr-w1")).rejects.toThrow("HTTP 500");
+    });
+  });
+
   it("[U819] lists machines with ID, name, status, phase, and an online flag", async () => {
     const host = (id: string, status: string, phase: string) => ({ id, name: `name-${id}`, status, lifecycle: { phase } });
     const { port } = setup({

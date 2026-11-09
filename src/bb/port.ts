@@ -63,6 +63,11 @@ export interface BbPort {
   listModels(providerId: string, hostId?: string): Promise<ModelList>;
   /** Every machine bb knows. */
   listMachines(): Promise<MachineInfo[]>;
+  /**
+   * Why a thread failed, as bb recorded it: the `detail` (or the `message`) of the latest `provider/error` or
+   * `system/error` event in the thread's log. Null when there is no such event or it holds no text.
+   */
+  getFailureCause(threadId: string): Promise<string | null>;
   /** The cost bb recorded for a thread, or null when the provider reports none. */
   getThreadCost(threadId: string): Promise<{ amount: number; currency: string } | null>;
   /** Every project bb knows, by ID and name. */
