@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { providerState } from "../../test/fixtures/bb-port";
 import { PROFILE } from "../../test/fixtures/machine";
 import { testRuntime } from "../../test/fixtures/runtime";
 import { defaultProjectConfig } from "../store/store";
@@ -177,5 +178,71 @@ describe("factoryman_dispatch placement failures", () => {
     expect(second.ok).toBe(false);
     expect(second.text).toContain("provider_unavailable");
     expect(t.bb.callsTo("spawnWorker")).toHaveLength(1);
+  });
+});
+
+describe("factoryman_dispatch provider gate", () => {
+  it("[U1355] prints a gate block as `Dispatch blocked (<code>): <message> No task was created.`", async () => {
+    const t = setup();
+    t.bb.states = [providerState("claude", { status: "unauthenticated", localLoginCommand: "claude login" })];
+    const outcome = await dispatch(t.runtime, supervisor, valid);
+    expect(outcome).toEqual({
+      ok: false,
+      text:
+        "Dispatch blocked (provider_unavailable): The provider `claude` is not signed in on the default host (bb status: unauthenticated). " +
+        "Run `claude login` on that machine. No other provider was tried. No task was created.",
+    });
+    expect(t.runtime.deps.store.listTasks()).toEqual([]);
+    expect(t.bb.callsTo("spawnWorker")).toEqual([]);
+  });
+
+  it("[U1356] prints a read failure as `Dispatch failed: <message>. No task was created.`", async () => {
+    const t = setup();
+    t.bb.statesError = new Error("bb is down");
+    const outcome = await dispatch(t.runtime, supervisor, valid);
+    expect(outcome).toEqual({ ok: false, text: "Dispatch failed: could not read bb's provider states (bb is down). No task was created." });
+    expect(t.runtime.deps.store.listTasks()).toEqual([]);
+    expect(t.bb.callsTo("spawnWorker")).toEqual([]);
+  });
+
+  it("[U1357] blocks a task pinned to an offline machine before it reads any provider state", async () => {
+    const t = setup();
+    t.bb.machines.push({ id: "host_gpu", name: "gpu-box", status: "disconnected", phase: "active", online: false });
+    t.bb.sources.push({ hostId: "host_gpu", path: "/work/gpu", isDefault: false });
+    const outcome = await dispatch(t.runtime, supervisor, { ...valid, machine: "gpu-box" });
+    expect(outcome.ok).toBe(false);
+    expect(outcome.text).toContain("offline");
+    expect(t.bb.callsTo("getProviderStates")).toEqual([]);
+    expect(t.bb.callsTo("listProviders")).toEqual([]);
+    expect(t.bb.callsTo("spawnWorker")).toEqual([]);
+  });
+});
+
+describe("factoryman_dispatch with no built-in default", () => {
+  const CHECKOUT = "/work/repo";
+  const configure = (t: ReturnType<typeof setup>, dispatchJson: unknown) => {
+    t.bb.checkouts.set("proj-1", CHECKOUT);
+    t.files.files.set(`${CHECKOUT}/.bb/factoryman/dispatch.json`, JSON.stringify(dispatchJson));
+  };
+  const steady = { provider: "claude", model: "opus", reasoningLevel: "high", permissionMode: "accept-edits" };
+
+  it("[U1411] says the profile came from the configured default, and names no built-in default", async () => {
+    const t = setup();
+    configure(t, { version: 1, profiles: { steady }, default: "steady", rules: [] });
+    const outcome = await dispatch(t.runtime, supervisor, { kind: "ship", description: "Add a --json flag to the status command." });
+    expect(outcome.ok).toBe(true);
+    expect(outcome.text).toContain("Profile: claude opus high accept-edits, from the configured default.");
+    expect(outcome.text).not.toMatch(/built-in/i);
+  });
+
+  it("[U1477] blocks a dispatch with no profile source, prints the init hint, and creates no task", async () => {
+    const t = setup();
+    const outcome = await dispatch(t.runtime, supervisor, { kind: "ship", description: "Add a --json flag to the status command." });
+    expect(outcome.ok).toBe(false);
+    expect(outcome.text).toContain("Dispatch blocked (no_default_profile)");
+    expect(outcome.text).toContain("bb factoryman dispatch init --provider <id>");
+    expect(outcome.text).toContain("No task was created.");
+    expect(t.runtime.deps.store.listTasks()).toEqual([]);
+    expect(t.bb.callsTo("spawnWorker")).toEqual([]);
   });
 });

@@ -1,8 +1,19 @@
-import type { BbPort, InputRequest, InputResult, MachineInfo, ProjectSource, ProviderAvailability, SpawnWorkerRequest, TerminalRead, ThreadInfo } from "../../src/bb/port";
+import { DEFAULT_MODEL_IDS } from "./models";
+import type { BbPort, InputRequest, InputResult, MachineInfo, ProjectSource, ModelEntry, ModelList, ProviderAvailability, ProviderState, SpawnWorkerRequest, TerminalRead, ThreadInfo } from "../../src/bb/port";
 
 export interface RecordedCall {
   method: string;
   args: unknown[];
+}
+
+/** A model for a test. The default lists the levels low to max, all known. */
+export function modelEntry(id: string, overrides: Partial<ModelEntry> = {}): ModelEntry {
+  return { id, model: id, isDefault: false, defaultReasoningLevel: "", reasoningLevels: ["low", "medium", "high", "xhigh", "max"], reasoningKnown: true, ...overrides };
+}
+
+/** A provider state for a test. The default is a ready provider with no versions and no login command. */
+export function providerState(providerId: string, overrides: Partial<ProviderState> = {}): ProviderState {
+  return { providerId, status: "ready", installedVersion: null, minimumSupportedVersion: null, localLoginCommand: null, statusMessage: null, ...overrides };
 }
 
 /** A hand-written `BbPort` that records calls and returns scripted results. */
@@ -24,6 +35,22 @@ export class FakeBbPort implements BbPort {
   /** What `listProviders` returns for a given host ID, instead of `providers`. */
   providersByHost = new Map<string, ProviderAvailability[]>();
   providersError: Error | null = null;
+  /**
+   * What `getProviderStates` returns. While it is null, every listed provider is `ready` when its `available` flag is
+   * true and `not_installed` otherwise, so a test that scripts only `providers` keeps its meaning.
+   */
+  states: ProviderState[] | null = null;
+  /** What `getProviderStates` returns for a given host ID, instead of `states`. */
+  statesByHost = new Map<string, ProviderState[]>();
+  statesError: Error | null = null;
+  /** What `listModels` returns for a provider ID. A provider that is missing lists `DEFAULT_MODEL_IDS`. */
+  models = new Map<string, ModelList>();
+  /** What `listModels` returns for a host ID and a provider ID, keyed `<host>/<provider>`, instead of `models`. */
+  modelsByHost = new Map<string, ModelList>();
+  modelsError: Error | null = null;
+  /** What `getFailureCause` returns per thread ID. A thread that is missing has no cause. */
+  failureCauses = new Map<string, string | null>();
+  failureCauseError: Error | null = null;
   /** Every terminal that `startTerminal` opened. */
   terminalRuns: Array<{ hostId: string; cwd: string | null; argv: string[] }> = [];
   /** The reads `readTerminal` returns, in order. The last one repeats. */
@@ -159,6 +186,28 @@ export class FakeBbPort implements BbPort {
     this.calls.push({ method: "listProviders", args: [hostId] });
     if (this.providersError) throw this.providersError;
     return (hostId === undefined ? undefined : this.providersByHost.get(hostId)) ?? this.providers;
+  }
+
+  async getProviderStates(hostId?: string): Promise<ProviderState[]> {
+    this.calls.push({ method: "getProviderStates", args: [hostId] });
+    if (this.statesError) throw this.statesError;
+    const scripted = (hostId === undefined ? undefined : this.statesByHost.get(hostId)) ?? this.states;
+    if (scripted !== null) return scripted;
+    const listed = (hostId === undefined ? undefined : this.providersByHost.get(hostId)) ?? this.providers;
+    return listed.map((provider) => providerState(provider.id, { status: provider.available ? "ready" : "not_installed" }));
+  }
+
+  async getFailureCause(threadId: string): Promise<string | null> {
+    this.calls.push({ method: "getFailureCause", args: [threadId] });
+    if (this.failureCauseError) throw this.failureCauseError;
+    return this.failureCauses.get(threadId) ?? null;
+  }
+
+  async listModels(providerId: string, hostId?: string): Promise<ModelList> {
+    this.calls.push({ method: "listModels", args: [providerId, hostId] });
+    if (this.modelsError) throw this.modelsError;
+    const scripted = (hostId === undefined ? undefined : this.modelsByHost.get(`${hostId}/${providerId}`)) ?? this.models.get(providerId);
+    return scripted ?? { models: DEFAULT_MODEL_IDS.map((id) => modelEntry(id)), loadError: null };
   }
 
   async listMachines(): Promise<MachineInfo[]> {

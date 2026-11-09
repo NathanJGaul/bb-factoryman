@@ -61,6 +61,30 @@ export default tseslint.config(
     },
   },
   {
+    // The harness contract table is data only. It imports nothing, so no bb change and no other layer can reach it.
+    files: ["src/harness/**/*.ts"],
+    ignores: ["**/*.test.ts"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          paths: nodeBuiltins.map((name) => ({
+            name,
+            message: "src/harness/ is data only and imports nothing.",
+          })),
+          patterns: [{ group: ["**"], message: "src/harness/ is data only and imports nothing." }],
+        },
+      ],
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector: "ImportExpression",
+          message: "src/harness/ is data only and loads no module.",
+        },
+      ],
+    },
+  },
+  {
     // The frontend bundle loads in the browser on every page of the bb app. It must carry no server code,
     // no Node built-in, and no schema library, so the bundle stays small and the server stays out of it.
     files: ["src/app.tsx", "src/app/**/*.{ts,tsx}", "src/approval/**/*.ts"],

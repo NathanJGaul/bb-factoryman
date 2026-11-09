@@ -1,19 +1,82 @@
-import type { ProviderAvailability } from "../bb/port";
+import type { ModelList, ProviderAvailability, ProviderState } from "../bb/port";
+import { contractFor } from "../harness/contracts";
 import type { Profile } from "../machine/types";
+
+/** What bb reports about the profile's provider on the host that will run the worker. */
+export interface ProfileFacts {
+  /** The machine's name, or "the default host". Messages name it. */
+  host: string;
+  providers: readonly ProviderAvailability[];
+  states: readonly ProviderState[];
+  /** The models that bb lists for the provider on that host. */
+  models: ModelList;
+}
+
+const NO_OTHER = "No other provider was tried.";
+
+/**
+ * Why a provider cannot run a worker on a host, or null when bb reports it `ready`. Only `ready` passes: every other
+ * status, a state that bb does not report, and a status that this plugin does not know all block (hard rule 8).
+ * The text has no closing sentence, so the machine preflight can reuse it.
+ */
+export function readinessProblem(providerId: string, states: readonly ProviderState[], host: string): string | null {
+  const found = states.find((candidate) => candidate.providerId === providerId);
+  const name = `The provider \`${providerId}\``;
+  if (found === undefined) {
+    return `bb reports no state for the provider \`${providerId}\` on ${host}. It reports: ${states.map((state) => state.providerId).join(", ") || "none"}.`;
+  }
+  const signIn = found.localLoginCommand === null ? "Sign in to it on that machine." : `Run \`${found.localLoginCommand}\` on that machine.`;
+  switch (found.status) {
+    case "ready":
+      return null;
+    case "not_installed":
+      return `${name} is not installed on ${host} (bb status: not_installed). Install its CLI there.`;
+    case "unauthenticated":
+      return `${name} is not signed in on ${host} (bb status: unauthenticated). ${signIn}`;
+    case "expired":
+      return `${name} has an expired login on ${host} (bb status: expired). ${signIn}`;
+    case "unsupported_version":
+      return `${name} is too old on ${host} (bb status: unsupported_version): installed ${found.installedVersion ?? "unknown"}, minimum ${found.minimumSupportedVersion ?? "unknown"}. Update its CLI there.`;
+    case "unknown":
+      return `${name} is in a state that bb does not describe on ${host} (bb status: unknown)${found.statusMessage === null ? "" : `: ${found.statusMessage}`}.`;
+  }
+}
 
 /**
  * Check a resolved profile against what bb reports. Returns the reason to
  * block, or null when the profile can run. A provider that bb does not list
  * counts as unavailable, so the check fails closed (spike item 29).
  */
-export function checkProfile(profile: Profile, providers: readonly ProviderAvailability[]): string | null {
+export function checkProfile(profile: Profile, facts: ProfileFacts): string | null {
+  const notReady = readinessProblem(profile.provider, facts.states, facts.host);
+  return notReady !== null ? `${notReady} ${NO_OTHER}` : checkSupport(profile, facts);
+}
+
+/**
+ * Everything in `checkProfile` after readiness: the provider is listed, and it offers the permission mode, the
+ * model, and the level. `dispatch init` uses it alone, because a starter file does not need a ready provider.
+ */
+export function checkSupport(profile: Profile, facts: Omit<ProfileFacts, "states">): string | null {
+  const { providers } = facts;
   const found = providers.find((candidate) => candidate.id === profile.provider);
   if (found === undefined || !found.available) {
     const known = providers.filter((candidate) => candidate.available).map((candidate) => candidate.id);
-    return `The provider \`${profile.provider}\` is not available in bb. Available providers: ${known.length > 0 ? known.join(", ") : "none"}. No other provider was tried.`;
+    return `The provider \`${profile.provider}\` is not available in bb. Available providers: ${known.length > 0 ? known.join(", ") : "none"}. ${NO_OTHER}`;
   }
   if (!found.permissionModes.includes(profile.permissionMode)) {
     return `The provider \`${profile.provider}\` does not offer the permission mode \`${profile.permissionMode}\`. It offers: ${found.permissionModes.join(", ") || "none"}.`;
+  }
+  // bb lists levels for each model, and the provider-wide list is only a coarse ladder (R4).
+  const listed = facts.models.models.find((entry) => entry.id === profile.model || entry.model === profile.model);
+  if (listed !== undefined && listed.reasoningKnown) {
+    return listed.reasoningLevels.includes(profile.reasoningLevel)
+      ? null
+      : `The model \`${profile.model}\` of the provider \`${profile.provider}\` does not list the reasoning level \`${profile.reasoningLevel}\`. It lists: ${listed.reasoningLevels.join(", ") || "none"}.`;
+  }
+  if (listed === undefined && contractFor(profile.provider).unlistedModels === "refused") {
+    const { loadError } = facts.models;
+    const loadText = loadError === null ? "" : ` bb could not load the models (${loadError.code}${loadError.detail === null ? "" : `: ${loadError.detail}`}).`;
+    return `The model \`${profile.model}\` is not listed for the provider \`${profile.provider}\` on ${facts.host}. It lists: ${facts.models.models.map((entry) => entry.id).join(", ") || "no models"}.${loadText}`;
   }
   if (found.reasoningLevels.length > 0 && !found.reasoningLevels.includes(profile.reasoningLevel)) {
     return `The provider \`${profile.provider}\` does not list the reasoning level \`${profile.reasoningLevel}\`. It lists: ${found.reasoningLevels.join(", ")}.`;

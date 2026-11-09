@@ -1,5 +1,5 @@
 import { pickMachine } from "../dispatch/placement";
-import { checkProfile } from "../dispatch/availability";
+import { gateProfile } from "../dispatch/gate";
 import type { DeliveryMode, TaskKind, TaskState } from "../machine/types";
 import { preflightOnce } from "../machines/preflight";
 import { errorText, type Runtime } from "../runtime";
@@ -120,9 +120,14 @@ async function startOne(rt: Runtime, task: TaskRow, raw: unknown): Promise<boole
       }
       host = placement.machine;
     }
-    const problem = checkProfile(request.profile, await bb.listProviders(host?.id));
-    if (problem !== null) {
-      log.warn(`Task ${task.taskId} stays queued: ${problem}`);
+    const gate = await gateProfile(bb, request.profile, task.mode, host);
+    if (!gate.ok) {
+      // A refusal that cannot change (the provider is never admitted in this mode) fails the task. Anything else waits.
+      if (gate.code === "provider_not_admitted") {
+        await rt.apply(task.taskId, { type: "fail", actor: "system", evidence: `The queued task can no longer start: ${gate.message}` });
+        return false;
+      }
+      log.warn(`Task ${task.taskId} stays queued: ${gate.message}`);
       return false;
     }
     const sourcePath = host === null ? null : (sources.find((source) => source.hostId === host.id)?.path ?? null);

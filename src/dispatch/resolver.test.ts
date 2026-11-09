@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { Profile } from "../machine/types";
-import { BUILTIN_PROFILE, RulesTableResolver } from "./resolver";
+import * as resolverModule from "./resolver";
+import { RulesTableResolver } from "./resolver";
 import { emptyDispatchConfig } from "./config";
 import type { DispatchConfig, Rule, TaskFacts } from "./types";
 
@@ -19,7 +20,7 @@ const resolver = new RulesTableResolver();
 const resolve = (cfg: DispatchConfig, facts: Partial<TaskFacts> = {}, choice = {}) => resolver.resolve({ ...TASK, ...facts }, cfg, choice);
 
 describe("RulesTableResolver precedence", () => {
-  it("[U710] lets an explicit profile win over a matching rule, the default, and the built-in default", () => {
+  it("[U710] lets an explicit profile win over a matching rule and the default", () => {
     const cfg = config([rule("r", { kind: "ship" }, "fast")], { default: "steady", standingPermission: { lowerReasoning: true } });
     expect(resolve(cfg, {}, { profile: deep })).toEqual({ status: "clear", profile: deep, source: "override", ruleId: null, machine: null });
   });
@@ -57,7 +58,8 @@ describe("RulesTableResolver precedence", () => {
     expect(resolve(config([rule("m", { kind: "ship" })]))).toMatchObject({ source: "rule", machine: null });
     expect(resolve(config([], { default: "steady" }))).toMatchObject({ source: "default", machine: null });
     expect(resolve(config(), {}, { profile: deep })).toMatchObject({ source: "override", machine: null });
-    expect(resolve(config())).toMatchObject({ source: "builtin", machine: null });
+    // With no source at all the resolver blocks (U1408) and carries no machine.
+    expect(resolve(config())).toMatchObject({ status: "blocked", code: "no_default_profile" });
   });
 
   it("[U812] is ambiguous when two matching rules have equal profiles and different machines", () => {
@@ -88,9 +90,19 @@ describe("RulesTableResolver precedence", () => {
     expect(resolve(config([rule("scouting", { kind: "scout" })], { default: "steady" }))).toEqual({ status: "clear", profile: steady, source: "default", ruleId: null, machine: null });
   });
 
-  it("[U717] applies the built-in default when there is no rule match and no default", () => {
-    expect(resolve(config())).toEqual({ status: "clear", profile: BUILTIN_PROFILE, source: "builtin", ruleId: null, machine: null });
-    expect(BUILTIN_PROFILE).toEqual({ provider: "claude-code", model: "claude-sonnet-5-5", reasoningLevel: "high", permissionMode: "auto" });
+  const NO_PROFILE_MESSAGE =
+    "No profile applies to this task. The project has no `default` in `.bb/factoryman/dispatch.json`, and no rule matches. " +
+    "The plugin does not choose a harness for you. Run `bb factoryman dispatch init --provider <id>` to write a starter file, set `default` in dispatch.json, or pass `profile`.";
+
+  it("[U1408] blocks with no_default_profile when there is no override, no matching rule, and no default", () => {
+    expect(resolve(config())).toEqual({ status: "blocked", code: "no_default_profile", message: NO_PROFILE_MESSAGE });
+    // A rule that does not match the task leaves the same block.
+    expect(resolve(config([rule("scouting", { kind: "scout" })]))).toEqual({ status: "blocked", code: "no_default_profile", message: NO_PROFILE_MESSAGE });
+  });
+
+  it("[U1410] exports no BUILTIN_PROFILE", () => {
+    // The sources that a result can have are pinned by U811, U1408, and U1409; this test pins the export.
+    expect(Object.keys(resolverModule)).not.toContain("BUILTIN_PROFILE");
   });
 });
 
@@ -157,8 +169,46 @@ describe("RulesTableResolver reasoning floor", () => {
     expect(resolve(offLadderBase, {}, { profile: { ...deep, reasoningLevel: "ultracode" } }).status).toBe("clear");
   });
 
-  it("[U726] sets no baseline from the built-in default, so a low explicit level is clear", () => {
+  it("[U726] sets no baseline when no rule matches and there is no default, so a low explicit level is clear", () => {
     expect(resolve(config(), {}, { profile: fast }).status).toBe("clear");
+  });
+
+  describe("a ladder for each provider", () => {
+    const CODEX_LADDER = ["none", "low", "medium", "high", "xhigh", "max", "ultra"];
+    const codexHigh: Profile = { provider: "codex", model: "gpt-6-luna", reasoningLevel: "high", permissionMode: "auto" };
+    const codexConfig = (reasoningLevels: DispatchConfig["reasoningLevels"]) => config([rule("r", { kind: "ship" }, "codexHigh")], { profiles: { codexHigh, deep }, reasoningLevels });
+
+    it("[U1400] clears a Codex profile at ultra against a Codex baseline at high, with a Codex ladder that ends in ultra", () => {
+      const result = resolve(codexConfig({ codex: CODEX_LADDER }), {}, { profile: { ...codexHigh, reasoningLevel: "ultra" } });
+      expect(result.status).toBe("clear");
+    });
+
+    it("[U1401] blocks a lowered Codex level with reasoning_lowered, and not with cannot be ranked, on the same ladder", () => {
+      const result = resolve(codexConfig({ codex: CODEX_LADDER }), {}, { profile: { ...codexHigh, reasoningLevel: "low" } });
+      expect(result).toMatchObject({ status: "blocked", code: "reasoning_lowered" });
+      expect((result as { message: string }).message).toContain("is below");
+      expect((result as { message: string }).message).not.toContain("cannot be ranked");
+    });
+
+    it("[U1402] ranks a provider that the record omits in the default ladder", () => {
+      const cfg = codexConfig({ claude: ["low", "ultracode"] });
+      expect(resolve(cfg, {}, { profile: { ...codexHigh, reasoningLevel: "low" } })).toMatchObject({ status: "blocked", code: "reasoning_lowered" });
+      expect(resolve(cfg, {}, { profile: { ...codexHigh, reasoningLevel: "max" } }).status).toBe("clear");
+      // ultra is off the default ladder, so it cannot be ranked there.
+      const offLadder = resolve(cfg, {}, { profile: { ...codexHigh, reasoningLevel: "ultra" } });
+      expect(offLadder).toMatchObject({ status: "blocked", code: "reasoning_lowered" });
+      expect((offLadder as { message: string }).message).toContain("cannot be ranked");
+    });
+
+    it("[U1403] blocks with cannot be ranked when the baseline's level is not on the explicit profile's ladder, and standing permission lifts the block", () => {
+      const claudeDeepBase: Profile = { provider: "claude-code", model: "m", reasoningLevel: "ultracode", permissionMode: "auto" };
+      const cfg = config([rule("r", { kind: "ship" }, "base")], { profiles: { base: claudeDeepBase }, reasoningLevels: { codex: CODEX_LADDER } });
+      const blocked = resolve(cfg, {}, { profile: { ...codexHigh, reasoningLevel: "max" } });
+      expect(blocked).toMatchObject({ status: "blocked", code: "reasoning_lowered" });
+      expect((blocked as { message: string }).message).toContain("cannot be ranked");
+      const lifted = { ...cfg, standingPermission: { lowerReasoning: true } };
+      expect(resolve(lifted, {}, { profile: { ...codexHigh, reasoningLevel: "max" } }).status).toBe("clear");
+    });
   });
 
   it("[U727] blocks an explicit level below any candidate when the baseline is ambiguous", () => {

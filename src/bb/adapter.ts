@@ -1,5 +1,5 @@
 import type { BbPluginApi } from "@get-bb/plugin-sdk";
-import type { BbPort, InputResult, Json, MachineInfo, ProjectSource, TerminalRead } from "./port";
+import type { BbPort, InputResult, Json, MachineInfo, ProjectSource, ProviderStatus, TerminalRead } from "./port";
 
 const PERMISSION_MODES = ["accept-edits", "auto", "full"] as const;
 type PermissionMode = (typeof PERMISSION_MODES)[number];
@@ -8,6 +8,8 @@ function permissionMode(value: string): PermissionMode {
   if ((PERMISSION_MODES as readonly string[]).includes(value)) return value as PermissionMode;
   throw new Error(`Unknown permission mode \`${value}\`.`);
 }
+
+const PROVIDER_STATUSES: readonly ProviderStatus[] = ["ready", "not_installed", "unauthenticated", "expired", "unsupported_version", "unknown"];
 
 interface ThreadFields {
   id: string;
@@ -156,6 +158,44 @@ export function createBbPort(bb: BbPluginApi): BbPort {
         available: provider.available,
         permissionModes: [...provider.capabilities.permissionModes],
         reasoningLevels: (provider.reasoningLevels ?? []).map((level) => level.id),
+      }));
+    },
+
+    async getFailureCause(threadId) {
+      // Newest first, one row: the latest error is the one that ended the thread.
+      const rows = await bb.sdk.threads.events.list({ threadId, types: ["provider/error", "system/error"], order: "desc", limit: "1" });
+      const data = rows[0]?.data as { detail?: unknown; message?: unknown } | undefined;
+      for (const text of [data?.detail, data?.message]) {
+        if (typeof text === "string" && text.trim() !== "") return text;
+      }
+      return null;
+    },
+
+    async listModels(providerId, hostId) {
+      const response = await bb.sdk.providers.models(hostId === undefined ? { providerId } : { providerId, hostId });
+      return {
+        models: response.models.map((entry) => ({
+          id: entry.id,
+          model: entry.model,
+          isDefault: entry.isDefault,
+          defaultReasoningLevel: entry.defaultReasoningEffort,
+          reasoningLevels: entry.supportedReasoningEfforts.map((effort) => effort.reasoningEffort),
+          reasoningKnown: entry.reasoningDiscovery === "known",
+        })),
+        loadError: response.modelLoadError === null ? null : { code: response.modelLoadError.code, detail: response.modelLoadError.detail },
+      };
+    },
+
+    async getProviderStates(hostId) {
+      const response = await bb.sdk.system.providerStates(hostId === undefined ? undefined : { hostId });
+      return response.providers.map((state) => ({
+        providerId: state.providerId,
+        // A status that this plugin does not know is not ready. Reading it as unknown keeps the gate closed.
+        status: PROVIDER_STATUSES.includes(state.status as ProviderStatus) ? (state.status as ProviderStatus) : "unknown",
+        installedVersion: state.installedVersion,
+        minimumSupportedVersion: state.minimumSupportedVersion,
+        localLoginCommand: state.localLoginCommand,
+        statusMessage: state.statusMessage,
       }));
     },
 

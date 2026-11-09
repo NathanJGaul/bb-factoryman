@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { emptyDispatchConfig, parseDispatchConfig } from "./config";
+import { DEFAULT_REASONING_LEVELS, emptyDispatchConfig, ladderFor, parseDispatchConfig } from "./config";
 
 const PROFILE = { provider: "claude", model: "opus", reasoningLevel: "high", permissionMode: "auto" };
 const valid = (extra: Record<string, unknown> = {}) => ({ version: 1, profiles: { deep: PROFILE }, rules: [], ...extra });
@@ -68,6 +68,56 @@ describe("parseDispatchConfig", () => {
 
   it("[U707] rejects a ladder with a repeated level", () => {
     expect(failure(valid({ reasoningLevels: ["low", "high", "low"] }))).toMatch(/duplicate|repeat/i);
+  });
+
+  describe("reasoningLevels as an array or a record by provider", () => {
+    const LADDERS = { codex: ["none", "low", "medium", "high", "xhigh", "max", "ultra"], "claude-code": ["low", "medium", "high", "xhigh", "ultracode", "max"] };
+
+    it("[U1389] accepts an array and keeps it", () => {
+      const result = parseDispatchConfig(valid({ reasoningLevels: ["low", "high"] }));
+      expect(result.ok && result.config.reasoningLevels).toEqual(["low", "high"]);
+    });
+
+    it("[U1390] accepts a record from provider ID to array and keeps it", () => {
+      const result = parseDispatchConfig(valid({ reasoningLevels: LADDERS }));
+      expect(result.ok && result.config.reasoningLevels).toEqual(LADDERS);
+    });
+
+    it("[U1391] rejects a record with a blank key", () => {
+      expect(failure(valid({ reasoningLevels: { " ": ["low"] } }))).toMatch(/ at `reasoningLevels`$/);
+    });
+
+    it("[U1392] rejects an empty array at the top level and inside a record, and accepts an array of one level", () => {
+      expect(failure(valid({ reasoningLevels: [] }))).toMatch(/ at `reasoningLevels`$/);
+      expect(failure(valid({ reasoningLevels: { codex: [] } }))).toMatch(/ at `reasoningLevels(\.codex)?`$/);
+      expect(parseDispatchConfig(valid({ reasoningLevels: ["low"] })).ok).toBe(true);
+      expect(parseDispatchConfig(valid({ reasoningLevels: { codex: ["low"] } })).ok).toBe(true);
+    });
+
+    it("[U1393] rejects a record entry with a repeated level", () => {
+      expect(failure(valid({ reasoningLevels: { codex: ["low", "high", "low"] } }))).toMatch(/duplicate|repeat/i);
+    });
+
+    it.each([["a string", "low"], ["a number", 3], ["null", null], ["a record of strings", { codex: "low" }]])("[U1395] rejects reasoningLevels that is %s", (_label, value) => {
+      expect(parseDispatchConfig(valid({ reasoningLevels: value })).ok).toBe(false);
+    });
+  });
+
+  describe("ladderFor", () => {
+    it("[U1396] returns the array for any provider when the setting is an array", () => {
+      expect(ladderFor(["low", "high"], "claude-code")).toEqual(["low", "high"]);
+      expect(ladderFor(["low", "high"], "anything")).toEqual(["low", "high"]);
+    });
+
+    it("[U1397] returns the record's entry for a provider that has one", () => {
+      expect(ladderFor({ codex: ["low", "ultra"], pi: ["low"] }, "codex")).toEqual(["low", "ultra"]);
+    });
+
+    it("[U1398] returns the default ladder for a provider that the record omits, including an inherited key", () => {
+      expect(ladderFor({ codex: ["low", "ultra"] }, "pi")).toEqual([...DEFAULT_REASONING_LEVELS]);
+      expect(ladderFor({ codex: ["low", "ultra"] }, "constructor")).toEqual([...DEFAULT_REASONING_LEVELS]);
+      expect(ladderFor({}, "pi")).toEqual([...DEFAULT_REASONING_LEVELS]);
+    });
   });
 
   it("[U708] rejects a profile with a missing field or an unknown permission mode", () => {

@@ -1,16 +1,13 @@
 import type { Profile } from "../machine/types";
-import type { Candidate, Choice, DispatchConfig, DispatchResolver, Resolution, Rule, TaskFacts } from "./types";
+import { ladderFor, type Candidate, type Choice, type DispatchConfig, type DispatchResolver, type Resolution, type Rule, type TaskFacts } from "./types";
 
 /**
- * The last resort when nothing else names a profile (D-063). It is not an
- * owner declaration, so it sets no reasoning floor (D-064).
+ * What the last rung says. The plugin has no built-in profile (D-112): a project that names no profile gets no
+ * harness, and the owner is told how to choose one.
  */
-export const BUILTIN_PROFILE: Profile = {
-  provider: "claude-code",
-  model: "claude-sonnet-5-5",
-  reasoningLevel: "high",
-  permissionMode: "auto",
-};
+const NO_PROFILE_MESSAGE =
+  "No profile applies to this task. The project has no `default` in `.bb/factoryman/dispatch.json`, and no rule matches. " +
+  "The plugin does not choose a harness for you. Run `bb factoryman dispatch init --provider <id>` to write a starter file, set `default` in dispatch.json, or pass `profile`.";
 
 const sameProfile = (a: Profile, b: Profile): boolean =>
   a.provider === b.provider && a.model === b.model && a.reasoningLevel === b.reasoningLevel && a.permissionMode === b.permissionMode;
@@ -39,7 +36,7 @@ function matches(rule: Rule, facts: TaskFacts): boolean {
   return true;
 }
 
-function blocked(code: "reasoning_lowered" | "rule_not_applicable" | "invalid_choice", message: string): Resolution {
+function blocked(code: "reasoning_lowered" | "rule_not_applicable" | "invalid_choice" | "no_default_profile", message: string): Resolution {
   return { status: "blocked", code, message };
 }
 
@@ -74,7 +71,8 @@ export class RulesTableResolver implements DispatchResolver {
               ? [{ profile: config.profiles[config.default] as Profile, from: "the configured default" }]
               : [];
         for (const { profile, from } of baselines) {
-          const reason = loweredReason(choice.profile.reasoningLevel, profile.reasoningLevel, config.reasoningLevels, from);
+          // Both levels are ranked in the explicit profile's own ladder. A baseline level off that ladder cannot be ranked.
+          const reason = loweredReason(choice.profile.reasoningLevel, profile.reasoningLevel, ladderFor(config.reasoningLevels, choice.profile.provider), from);
           if (reason !== null) return blocked("reasoning_lowered", reason);
         }
       }
@@ -98,6 +96,6 @@ export class RulesTableResolver implements DispatchResolver {
     if (config.default !== null) {
       return { status: "clear", profile: config.profiles[config.default] as Profile, source: "default", ruleId: null, machine: null };
     }
-    return { status: "clear", profile: BUILTIN_PROFILE, source: "builtin", ruleId: null, machine: null };
+    return blocked("no_default_profile", NO_PROFILE_MESSAGE);
   }
 }

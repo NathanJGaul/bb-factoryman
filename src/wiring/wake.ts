@@ -7,6 +7,8 @@ import { clip } from "../tools/results";
 export const WAKE_STATES: readonly string[] = ["needs_decision", "review_ready", "report_ready", "blocked", "failed"];
 
 const EVIDENCE_LIMIT = 600;
+/** A failed task also carries the provider's cause and a remedy line, so it keeps twice as much (D-115). */
+const FAILURE_LIMIT = 1200;
 /** Findings travel in the evidence of a `needs_decision` task, and the supervisor needs all of them. */
 const FINDINGS_LIMIT = 8000;
 
@@ -49,7 +51,7 @@ export class Notifier {
   private text(task: TaskRow, phrase: string, evidence: string | null): string {
     const lines = [`[factoryman] Task ${task.taskId} (${task.kind}, ${task.mode}) ${phrase}.`];
     if (evidence !== null && evidence.trim() !== "") {
-      lines.push(`Evidence: ${clip(evidence, task.state === "needs_decision" ? FINDINGS_LIMIT : EVIDENCE_LIMIT)}`);
+      lines.push(`Evidence: ${clip(evidence, task.state === "needs_decision" ? FINDINGS_LIMIT : task.state === "failed" ? FAILURE_LIMIT : EVIDENCE_LIMIT)}`);
     }
     lines.push(`Worker thread: ${task.workerThreadId ?? "none"}. Branch: ${task.branch ?? "none"}.`);
     return lines.join("\n");

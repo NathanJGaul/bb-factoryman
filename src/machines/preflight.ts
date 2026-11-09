@@ -1,5 +1,6 @@
 import type { BbPort, MachineInfo } from "../bb/port";
 import type { Exec, ExecResult } from "../exec";
+import { readinessProblem } from "../dispatch/availability";
 import type { DeliveryMode } from "../machine/types";
 
 export interface Problem {
@@ -16,7 +17,7 @@ export interface PreflightInput {
   provider: string | null;
 }
 
-type Deps = { bb: Pick<BbPort, "listProviders">; exec: Exec };
+type Deps = { bb: Pick<BbPort, "listProviders" | "getProviderStates">; exec: Exec };
 
 const reason = (result: ExecResult): string => result.error ?? (result.stderr.trim() || `exit code ${String(result.code)}`);
 
@@ -35,16 +36,18 @@ export async function runPreflight(deps: Deps, input: PreflightInput): Promise<P
   };
 
   try {
-    const providers = await deps.bb.listProviders(host.id);
-    const usable = providers.filter((candidate) => candidate.available);
-    const present = provider === null ? usable.length > 0 : usable.some((candidate) => candidate.id === provider);
-    if (!present) {
+    const [providers, states] = await Promise.all([deps.bb.listProviders(host.id), deps.bb.getProviderStates(host.id)]);
+    // A provider counts only when bb lists it and reports it ready on this host.
+    const listed = new Set(providers.filter((candidate) => candidate.available).map((candidate) => candidate.id));
+    const problem = provider === null ? null : readinessProblem(provider, states, host.name);
+    const anyReady = states.some((state) => state.status === "ready" && listed.has(state.providerId));
+    if (provider === null ? !anyReady : problem !== null || !listed.has(provider)) {
       problems.push({
         check: "agent_cli",
         message:
           provider === null
             ? `No agent CLI is available on ${host.name}. Install one and sign in on that machine.`
-            : `The agent CLI for \`${provider}\` is not available on ${host.name}. Install it and sign in on that machine.`,
+            : (problem ?? `The agent CLI for \`${provider}\` is not available on ${host.name}. Install it and sign in on that machine.`),
       });
     }
   } catch (error) {

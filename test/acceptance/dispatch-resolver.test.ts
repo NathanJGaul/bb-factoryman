@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from "vitest";
 import type { DispatchResolver } from "../../src/dispatch/types";
 import { makeCheckout, removeCheckouts } from "../fixtures/checkout";
-import { loadWorld, providerFixture } from "../fixtures/plugin-host";
+import { loadWorld, modelFixture, providerFixture, stateFixture } from "../fixtures/plugin-host";
 
 afterEach(removeCheckouts);
 
@@ -82,12 +82,13 @@ describe("dispatch profile resolution through the plugin factory", () => {
     expect(spawned(world)).toMatchObject({ model: "opus" });
   });
 
-  it("[A706] uses the configured default when no rule matches, and the built-in default when there is none", async () => {
+  it("[A706] uses the configured default when no rule matches, and blocks when there is none", async () => {
     const withDefault = await dispatchWith(config({ default: "steady" }), TASK);
     expect(spawned(withDefault.world)).toMatchObject({ model: "sonnet", reasoningLevel: "high" });
-    const builtin = await dispatchWith(config(), TASK);
-    expect(builtin.result.isError).toBe(false);
-    expect(spawned(builtin.world)).toMatchObject({ providerId: "claude-code", model: "claude-sonnet-5-5", reasoningLevel: "high", permissionMode: "auto" });
+    const none = await dispatchWith(config(), TASK);
+    expect(none.result.isError).toBe(true);
+    expect(none.result.text).toContain("no_default_profile");
+    expect(none.world.sdkCalls("threads.spawn")).toEqual([]);
   });
 
   it("[A707] refuses a call with both a profile and a rule before anything is read or spawned", async () => {
@@ -123,13 +124,27 @@ describe("dispatch profile resolution through the plugin factory", () => {
     expect(world.store.listTasks()).toEqual([]);
   });
 
+  // The model's own levels decide when bb knows them (feature 009, H2). This model's levels are unknown, so the provider's list applies.
+  const UNKNOWN_LEVELS = { claude: { models: [modelFixture("opus", { reasoningDiscovery: "unknown" })] } };
+  it.each<[string, unknown[], string, Parameters<typeof loadWorld>[0]]>([
+    // Readiness comes first (feature 009): bb's state for the provider explains these two now.
+    ["unavailable", [providerFixture("claude", { available: false })], "is not installed", {}],
+    ["not listed", [providerFixture("codex")], "bb reports no state for the provider `claude`", {}],
+    ["a permission mode it does not list", [providerFixture("claude", { capabilities: { permissionModes: ["accept-edits"] } })], "permission mode", {}],
+    ["a reasoning level it does not list", [providerFixture("claude", { reasoningLevels: [{ id: "low", label: "low" }] })], "reasoning level", { models: UNKNOWN_LEVELS }],
+  ])("[A710] blocks a provider that bb reports as %s", async (_label, providers, text, extra) => {
+    const { world, result } = await dispatchWith(config(), { ...TASK, profile: EXPLICIT }, { providers, ...extra });
+    expect(result.isError).toBe(true);
+    expect(result.text).toContain(text);
+    expect(world.sdkCalls("threads.spawn")).toEqual([]);
+  });
+
+  // bb says the provider is ready, and its own listing says otherwise: the listing still blocks (the check after readiness).
   it.each<[string, unknown[], string]>([
-    ["unavailable", [providerFixture("claude", { available: false })], "not available"],
-    ["not listed", [providerFixture("codex")], "not available"],
-    ["a permission mode it does not list", [providerFixture("claude", { capabilities: { permissionModes: ["accept-edits"] } })], "permission mode"],
-    ["a reasoning level it does not list", [providerFixture("claude", { reasoningLevels: [{ id: "low", label: "low" }] })], "reasoning level"],
-  ])("[A710] blocks a provider that bb reports as %s", async (_label, providers, text) => {
-    const { world, result } = await dispatchWith(config(), { ...TASK, profile: EXPLICIT }, { providers });
+    ["is listed but not available", [providerFixture("claude", { available: false })], "The provider `claude` is not available in bb. Available providers: none."],
+    ["is not listed", [providerFixture("codex")], "The provider `claude` is not available in bb. Available providers: codex."],
+  ])("[A710] blocks a provider that bb reports as ready when the provider %s", async (_label, providers, text) => {
+    const { world, result } = await dispatchWith(config(), { ...TASK, profile: EXPLICIT }, { providers, providerStates: [stateFixture("claude")] });
     expect(result.isError).toBe(true);
     expect(result.text).toContain(text);
     expect(world.sdkCalls("threads.spawn")).toEqual([]);
@@ -161,11 +176,12 @@ describe("dispatch profile resolution through the plugin factory", () => {
     expect(spawned(world)).toMatchObject({ model: "stub-model" });
   });
 
-  it("[A713] gives the built-in default when dispatch.json is absent", async () => {
-    const world = await loadWorld({ checkout: makeCheckout() });
+  it("[A713] blocks with the init hint when dispatch.json is absent, because the plugin has no built-in default", async () => {
+    const world = await loadWorld({ checkout: makeCheckout(), bareConfig: true });
     const result = await world.call("factoryman_dispatch", TASK);
-    expect(result.isError).toBe(false);
-    expect(spawned(world)).toMatchObject({ providerId: "claude-code", model: "claude-sonnet-5-5" });
+    expect(result.isError).toBe(true);
+    expect(result.text).toContain("bb factoryman dispatch init --provider <id>");
+    expect(world.sdkCalls("threads.spawn")).toEqual([]);
   });
   it("[A715] fails closed when bb's provider list cannot be read", async () => {
     const world = await loadWorld({ checkout: makeCheckout({ dispatch: config() }), providersError: new Error("bb is down") });
@@ -206,7 +222,9 @@ describe("dispatch profile resolution through the plugin factory", () => {
 
     const tagged = await dispatchWith(config({ rules }), { ...TASK, tags: ["docs"] });
     expect(spawned(tagged.world)).toMatchObject({ model: "sonnet" });
-    const untagged = await dispatchWith(config({ rules }), TASK);
+    // No rule matches an untagged task, so the configured default applies.
+    const fallback = { provider: "claude-code", model: "claude-sonnet-5-5", reasoningLevel: "high", permissionMode: "auto" };
+    const untagged = await dispatchWith(config({ rules, profiles: { ...PROFILES, fallback }, default: "fallback" }), TASK);
     expect(spawned(untagged.world)).toMatchObject({ providerId: "claude-code" });
   });
 });

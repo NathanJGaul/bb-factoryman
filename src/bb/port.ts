@@ -57,8 +57,17 @@ export interface BbPort {
   setThreadMetadata(threadId: string, metadata: Record<string, Json>): Promise<void>;
   /** Every provider bb knows, with its availability on `hostId`, or on the default host when it is absent. */
   listProviders(hostId?: string): Promise<ProviderAvailability[]>;
+  /** What bb says about each provider's readiness on `hostId`, or on the default host when it is absent. */
+  getProviderStates(hostId?: string): Promise<ProviderState[]>;
+  /** The models that bb lists for a provider on `hostId`, or on the default host when it is absent. */
+  listModels(providerId: string, hostId?: string): Promise<ModelList>;
   /** Every machine bb knows. */
   listMachines(): Promise<MachineInfo[]>;
+  /**
+   * Why a thread failed, as bb recorded it: the `detail` (or the `message`) of the latest `provider/error` or
+   * `system/error` event in the thread's log. Null when there is no such event or it holds no text.
+   */
+  getFailureCause(threadId: string): Promise<string | null>;
   /** The cost bb recorded for a thread, or null when the provider reports none. */
   getThreadCost(threadId: string): Promise<{ amount: number; currency: string } | null>;
   /** Every project bb knows, by ID and name. */
@@ -78,6 +87,40 @@ export interface ProviderAvailability {
   permissionModes: string[];
   /** Reasoning level IDs. An empty list means bb reported none. */
   reasoningLevels: string[];
+}
+
+/** bb's readiness verdict for a provider. Only `ready` lets a worker start. */
+export type ProviderStatus = "ready" | "not_installed" | "unauthenticated" | "expired" | "unsupported_version" | "unknown";
+
+/** One provider's state on one host, cut to the fields that the dispatch gate reads. */
+export interface ProviderState {
+  providerId: string;
+  status: ProviderStatus;
+  installedVersion: string | null;
+  minimumSupportedVersion: string | null;
+  /** The command to run on the host that holds the CLI, or null when bb gives none. */
+  localLoginCommand: string | null;
+  statusMessage: string | null;
+}
+
+/** One model as bb lists it for a provider. */
+export interface ModelEntry {
+  id: string;
+  /** The model name. A profile names a model by `id` or by this. */
+  model: string;
+  isDefault: boolean;
+  /** The reasoning level bb picks for the model. May be empty. */
+  defaultReasoningLevel: string;
+  /** The levels the model lists. */
+  reasoningLevels: string[];
+  /** True when bb knows the model's levels. When false, only the provider-wide list applies. */
+  reasoningKnown: boolean;
+}
+
+/** What bb answers when asked for a provider's models. An empty list with a load error means bb could not read the catalog. */
+export interface ModelList {
+  models: ModelEntry[];
+  loadError: { code: string; detail: string | null } | null;
 }
 
 /** A machine as bb reports it: an enrolled host (spike items 6 and 7). */

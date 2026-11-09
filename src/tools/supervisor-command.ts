@@ -1,3 +1,4 @@
+import { INIT_USAGE, runDispatchInit } from "../dispatch/init";
 import { pickMachine } from "../dispatch/placement";
 import { reportText, runPreflight } from "../machines/preflight";
 import { protectionSteps } from "../limits/protection";
@@ -14,6 +15,7 @@ export interface CommandResult {
 const USAGE =
   "Usage: bb factoryman supervisor <thread-id>\n" +
   "Usage: bb factoryman preflight <machine> --project <project-id> [--provider <provider-id>]\n" +
+  INIT_USAGE +
   "Usage: bb factoryman protection <owner/repo> [--branch <branch>] [--check <name>]\n" +
   "Usage: bb factoryman import-registry --file <path>\n";
 
@@ -29,11 +31,15 @@ export interface CommandContext {
  *
  * `bb factoryman preflight <machine> --project <id>` reports what a remote
  * machine is missing, and changes nothing.
+ *
+ * `bb factoryman dispatch init --provider <id>` writes a starter dispatch.json
+ * for a project, and writes nothing when one exists (D-112).
  */
 export async function runFactorymanCommand(rt: Runtime, argv: string[], ctx: CommandContext = {}): Promise<CommandResult> {
   const [command, ...rest] = argv;
   if (command === "supervisor") return supervisor(rt, rest);
   if (command === "preflight") return preflight(rt, rest, ctx);
+  if (command === "dispatch") return rest[0] === "init" ? runDispatchInit(rt, rest.slice(1), ctx) : { exitCode: 2, stderr: USAGE };
   if (command === "protection") return protection(rest);
   if (command === "import-registry") return importRegistry(rt, rest);
   return { exitCode: 2, stderr: USAGE };

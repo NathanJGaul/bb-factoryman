@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { withDispatchedTask } from "../../test/fixtures/runtime";
 import { testRuntime } from "../../test/fixtures/runtime";
+import { modelEntry } from "../../test/fixtures/bb-port";
 import { runFactorymanCommand } from "./supervisor-command";
 
 describe("bb factoryman supervisor", () => {
@@ -171,5 +172,43 @@ describe("bb factoryman supervisor", () => {
       expect(denied.exitCode).toBe(1);
       expect(denied.stderr).toContain("EACCES");
     });
+  });
+});
+
+describe("bb factoryman dispatch", () => {
+  const INIT_LINE = "Usage: bb factoryman dispatch init --provider <id> [--project <id>] [--model <id>] [--level <id>] [--mode <mode>]";
+
+  function initRuntime() {
+    const t = testRuntime();
+    t.bb.checkouts.set("proj-1", "/work/repo");
+    t.bb.models.set("claude", { models: [modelEntry("opus", { isDefault: true, defaultReasoningLevel: "high" })], loadError: null });
+    return t;
+  }
+
+  it("[U1441] routes dispatch init to the init command", async () => {
+    const t = initRuntime();
+    const result = await runFactorymanCommand(t.runtime, ["dispatch", "init", "--provider", "claude", "--project", "proj-1"]);
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).toContain("Wrote /work/repo/.bb/factoryman/dispatch.json.");
+    expect(t.files.writes).toEqual(["/work/repo/.bb/factoryman/dispatch.json"]);
+  });
+
+  it("[U1441] takes the project from the command context", async () => {
+    const t = initRuntime();
+    const result = await runFactorymanCommand(t.runtime, ["dispatch", "init", "--provider", "claude"], { projectId: "proj-1" });
+    expect(result.exitCode).toBe(0);
+  });
+
+  it.each([[["dispatch"]], [["dispatch", "nope"]], [["dispatch", "--provider", "claude"]], [["dispatch", "--provider", "claude", "--project", "proj-1"]]])("[U1442] prints the usage and exits 2 for %j", async (argv) => {
+    const t = initRuntime();
+    const result = await runFactorymanCommand(t.runtime, argv);
+    expect(result.exitCode).toBe(2);
+    expect(result.stderr).toContain(INIT_LINE);
+    expect(t.files.writes).toEqual([]);
+  });
+
+  it("[U1443] lists the init line in the usage text of the command", async () => {
+    const t = initRuntime();
+    expect((await runFactorymanCommand(t.runtime, ["nope"])).stderr).toContain(`${INIT_LINE}\n`);
   });
 });

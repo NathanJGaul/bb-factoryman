@@ -70,6 +70,18 @@ describe("Notifier", () => {
     expect(sent(over.t)[0]).toContain(`Evidence: ${"x".repeat(599)}…\n`);
   });
 
+  it("[U1470] keeps the evidence of a failed task whole at exactly 1200 characters", async () => {
+    const { t } = await wired();
+    await t.runtime.apply("t1", { type: "fail", actor: "system", evidence: "x".repeat(1200) });
+    expect(sent(t)[0]).toContain(`Evidence: ${"x".repeat(1200)}\n`);
+  });
+
+  it("[U1471] cuts the evidence of a failed task of 1201 characters to 1199 and an ellipsis", async () => {
+    const { t } = await wired();
+    await t.runtime.apply("t1", { type: "fail", actor: "system", evidence: "x".repeat(1201) });
+    expect(sent(t)[0]).toContain(`Evidence: ${"x".repeat(1199)}…\n`);
+  });
+
   it("[U129] sends to the parent of the worker thread as the port reports it", async () => {
     const { t } = await wired();
     t.bb.threads.get("thr-w1")!.parentThreadId = "thr-other-parent";

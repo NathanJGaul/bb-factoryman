@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { checkProfile } from "../dispatch/availability";
+import { gateProfile } from "../dispatch/gate";
 import { loadDispatchConfig } from "../dispatch/load";
 import type { MachineInfo } from "../bb/port";
 import { pickMachine, type MachineChoice } from "../dispatch/placement";
@@ -82,7 +82,7 @@ async function place(rt: Runtime, projectId: string, choice: MachineChoice): Pro
   }
 }
 
-const SOURCE_TEXT = { rule: "rule", default: "the configured default", builtin: "the built-in default" } as const;
+const SOURCE_TEXT = { rule: "rule", default: "the configured default" } as const;
 
 /**
  * Create a task and its worker. The dispatch resolver picks the profile when
@@ -136,11 +136,10 @@ export async function dispatch(rt: Runtime, caller: Caller, raw: unknown): Promi
   const hostId = host?.id ?? null;
   const hostName = host?.name ?? null;
 
-  try {
-    const problem = checkProfile(profile, await bb.listProviders(hostId ?? undefined));
-    if (problem !== null) return failure(`Dispatch blocked (provider_unavailable): ${problem} No task was created.`);
-  } catch (error) {
-    return failure(`Dispatch failed: could not read bb's providers (${errorText(error)}). No task was created.`);
+  // One gate applies every profile check, here and when the queue starts the task. A read it cannot make blocks (hard rule 8).
+  const gate = await gateProfile(bb, profile, config.deliveryMode, host);
+  if (!gate.ok) {
+    return failure(gate.code === "read_failed" ? `Dispatch failed: ${gate.message}. No task was created.` : `Dispatch blocked (${gate.code}): ${gate.message} No task was created.`);
   }
 
   // A remote machine must pass the preflight first. The host that holds the clone is the server's own environment, so it skips it.

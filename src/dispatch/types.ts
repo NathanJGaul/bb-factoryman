@@ -31,8 +31,11 @@ export interface DispatchConfig {
   /** A key of `profiles`, or null when the file sets none. */
   readonly default: string | null;
   readonly rules: readonly Rule[];
-  /** Reasoning levels from lowest to highest. */
-  readonly reasoningLevels: readonly string[];
+  /**
+   * Reasoning levels from lowest to highest: one ladder for every provider, or a record from provider ID to its own
+   * ladder (a provider that the record omits uses the default ladder). Read it with `ladderFor`.
+   */
+  readonly reasoningLevels: readonly string[] | Readonly<Record<string, readonly string[]>>;
   readonly standingPermission: StandingPermission;
 }
 
@@ -50,9 +53,9 @@ export interface Choice {
   readonly rule?: string;
 }
 
-export type ProfileSource = "override" | "rule" | "default" | "builtin";
+export type ProfileSource = "override" | "rule" | "default";
 
-export type BlockCode = "reasoning_lowered" | "rule_not_applicable" | "invalid_choice" | "config_invalid" | "provider_unavailable";
+export type BlockCode = "reasoning_lowered" | "rule_not_applicable" | "invalid_choice" | "config_invalid" | "provider_unavailable" | "provider_not_admitted" | "no_default_profile";
 
 export interface Candidate {
   readonly ruleId: string;
@@ -76,4 +79,18 @@ export type Resolution =
 /** A resolver turns task facts and a config into a profile. A faster classifier can replace the rules table. */
 export interface DispatchResolver {
   resolve(facts: TaskFacts, config: DispatchConfig, choice: Choice): Resolution;
+}
+
+/** Lowest to highest. The owner can replace it, because reasoning level IDs belong to each provider (spike item 29). */
+export const DEFAULT_REASONING_LEVELS = ["none", "low", "medium", "high", "xhigh", "max"] as const;
+
+/**
+ * The ladder for one provider. An array applies to every provider. A record applies its entry to that provider and
+ * leaves every other provider on the default ladder, because level IDs belong to one provider (D-113).
+ * It sits here, with no imports, so the resolver stays pure (test A718).
+ */
+export function ladderFor(levels: DispatchConfig["reasoningLevels"], providerId: string): readonly string[] {
+  if (Array.isArray(levels)) return levels;
+  const byProvider = levels as Readonly<Record<string, readonly string[]>>;
+  return Object.hasOwn(byProvider, providerId) ? (byProvider[providerId] as readonly string[]) : DEFAULT_REASONING_LEVELS;
 }

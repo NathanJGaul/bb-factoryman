@@ -1,4 +1,5 @@
 import { createFakePluginHost, makeThreadResponse, type FakePluginHost } from "@get-bb/plugin-sdk/testing";
+import { nodeFiles, type Files } from "../../src/files";
 import { createPlugin } from "../../src/server";
 import type { Validator } from "../../src/validator/types";
 import type { ExecResult } from "../../src/exec";
@@ -6,6 +7,7 @@ import { defaultProjectConfig } from "../../src/store/store";
 import { openSqliteStore } from "../../src/store/sqlite";
 import type { ProjectConfig } from "../../src/store/types";
 import { frame } from "./frame";
+import { DEFAULT_MODEL_IDS } from "./models";
 import { skillNamesOnDisk } from "./skills";
 import type { DispatchResolver } from "../../src/dispatch/types";
 
@@ -16,6 +18,40 @@ export function providerFixture(id: string, overrides: Record<string, unknown> =
     available: true,
     capabilities: { permissionModes: ["accept-edits", "auto", "full"] },
     reasoningLevels: ["low", "medium", "high", "xhigh", "max"].map((level) => ({ id: level, label: level })),
+    ...overrides,
+  };
+}
+
+/** A provider state as `bb.sdk.system.providerStates` returns it, cut to the fields the plugin reads. */
+export function stateFixture(providerId: string, overrides: Record<string, unknown> = {}) {
+  return {
+    providerId,
+    displayName: providerId,
+    status: "ready",
+    installedVersion: null,
+    minimumSupportedVersion: null,
+    localLoginCommand: null,
+    loginCommand: null,
+    statusMessage: null,
+    accountEmail: null,
+    planLabel: null,
+    canInstall: false,
+    canUpdate: false,
+    ...overrides,
+  };
+}
+
+/** A model as `bb.sdk.providers.models` returns it, cut to the fields the plugin reads. */
+export function modelFixture(id: string, overrides: Record<string, unknown> = {}) {
+  return {
+    id,
+    model: id,
+    displayName: id,
+    description: "",
+    isDefault: false,
+    defaultReasoningEffort: "",
+    reasoningDiscovery: "known",
+    supportedReasoningEfforts: ["low", "medium", "high", "xhigh", "max"].map((reasoningEffort) => ({ reasoningEffort, description: "" })),
     ...overrides,
   };
 }
@@ -77,6 +113,8 @@ export interface World {
   machines: HostFixture[];
   /** The fake terminals behind `bb.sdk.terminals`, which stand in for remote machines. */
   remote: RemoteFake;
+  /** The events in each thread's log, as `threads.events.list` returns them. A thread that is missing has none. */
+  threadEvents: Map<string, Array<{ type: string; seq: number; data: Record<string, unknown> }>>;
   /** Hold the next `providers.list` call until this promise settles. The call clears it. */
   holdProviders: Promise<void> | null;
   /** Make `threads.updatePluginMetadata` fail. */
@@ -85,6 +123,10 @@ export interface World {
   costs: Map<string, { amount: number; currency: string }>;
   /** The webhook receiver. */
   webhook: WebhookFake;
+  /** Change the models `providers.models` lists for one provider from now on. Without a list, the default test models apply again. */
+  setModels(providerId: string, list?: { models: unknown[]; modelLoadError?: unknown }): void;
+  /** Change what `system.providerStates` returns from now on. Without an argument, the default derived from `providers.list` applies again. */
+  setProviderStates(states?: unknown[]): void;
   /** Move the plugin's clock forward by `ms`. */
   skewClock(ms: number): void;
   metadata: Map<string, Record<string, unknown>>;
@@ -131,8 +173,25 @@ export interface WorldOptions {
   sources?: SourceFixture[];
   /** What `providers.list` returns per host ID, instead of `providers`. */
   providersByHost?: Record<string, unknown[]>;
+  /** The models `providers.models` lists, per provider ID. A provider that is missing lists the default test models. */
+  models?: Record<string, { models: unknown[]; modelLoadError?: unknown }>;
+  /** The models `providers.models` lists, keyed `<host>/<provider>`, instead of `models`. */
+  modelsByHost?: Record<string, { models: unknown[]; modelLoadError?: unknown }>;
+  /** Make `providers.models` fail. */
+  modelsError?: Error;
   /** Make `providers.list` fail. */
   providersError?: Error;
+  /** Make `threads.events.list` fail. */
+  eventsError?: Error;
+  /**
+   * What `system.providerStates` returns. When it is absent, each provider of `providers.list` is `ready` when it is
+   * available and `not_installed` otherwise.
+   */
+  providerStates?: unknown[];
+  /** What `system.providerStates` returns per host ID, instead of `providerStates`. */
+  providerStatesByHost?: Record<string, unknown[]>;
+  /** Make `system.providerStates` fail. */
+  providerStatesError?: Error;
   /** Make `projects.get` fail. */
   projectError?: Error;
   /** Make `hosts.list` fail. */
@@ -141,8 +200,34 @@ export interface WorldOptions {
   projectList?: Array<{ id: string; name: string }>;
   /** Replace the rules-table resolver. */
   resolver?: DispatchResolver;
+  /** Switch the worker tool hint on. The plugin's default is off. */
+  toolHints?: boolean;
+  /** Give the project no default profile when its checkout has no `dispatch.json`, as a real project has none. The world otherwise supplies `TEST_DEFAULT_DISPATCH`. */
+  bareConfig?: boolean;
   /** Run some commands for real. Return undefined to fall back to the scripted handler. */
   exec?: (command: string, args: readonly string[], cwd: string | undefined) => Promise<ExecResult> | undefined;
+}
+
+/**
+ * The `dispatch.json` that a test project has when it ships none. Before feature 009 the plugin supplied this
+ * profile itself, and many tests dispatch without naming a profile. A world keeps that meaning by reading this file
+ * where the checkout has none. The lowered-reasoning permission is on, because the old built-in set no floor (D-064).
+ * A test of the no-default block passes `bareConfig: true`.
+ */
+export const TEST_DEFAULT_DISPATCH = {
+  version: 1,
+  profiles: { "test-default": { provider: "claude-code", model: "claude-sonnet-5-5", reasoningLevel: "high", permissionMode: "auto" } },
+  default: "test-default",
+  rules: [],
+  standingPermission: { lowerReasoning: true },
+};
+
+/** Files that read a project's `dispatch.json` from the checkout, and the test default when the checkout has none. */
+function filesWithTestDefault(): Files {
+  return {
+    readText: async (path) => (await nodeFiles.readText(path)) ?? (path.endsWith("/.bb/factoryman/dispatch.json") ? JSON.stringify(TEST_DEFAULT_DISPATCH) : null),
+    writeNew: (path, text) => nodeFiles.writeNew(path, text),
+  };
 }
 
 /** Load the real plugin factory into the fake host, with a small in-memory bb behind `bb.sdk`. */
@@ -188,6 +273,14 @@ export async function loadWorld(options: WorldOptions = {}): Promise<World> {
           return { ok: true, delivery: "sent" };
         },
         archive: async () => ({}),
+        events: {
+          list: async ({ threadId, types, order, limit }: { threadId: string; types?: readonly string[]; order?: string; limit?: string }) => {
+            if (options.eventsError) throw options.eventsError;
+            const rows = (world.threadEvents.get(threadId) ?? []).filter((row) => types === undefined || types.includes(row.type));
+            const sorted = [...rows].sort((a, b) => (order === "desc" ? b.seq - a.seq : a.seq - b.seq));
+            return sorted.slice(0, limit === undefined ? undefined : Number(limit)).map((row) => ({ id: `ev${row.seq}`, scope: "thread", threadId, createdAt: row.seq, ...row }));
+          },
+        },
         context: async ({ threadId }: { threadId: string }) => {
           const cost = costs.get(threadId);
           return { usage: cost === undefined ? null : { cost, estimated: true, modelContextWindow: 200000 } };
@@ -217,6 +310,23 @@ export async function loadWorld(options: WorldOptions = {}): Promise<World> {
           if (held !== null) await held;
           const byHost = args?.hostId === undefined ? undefined : options.providersByHost?.[args.hostId];
           return byHost ?? options.providers ?? [providerFixture("claude"), providerFixture("claude-code")];
+        },
+        models: async (args?: { providerId?: string; hostId?: string }) => {
+          if (options.modelsError) throw options.modelsError;
+          const key = `${args?.hostId ?? ""}/${args?.providerId ?? ""}`;
+          const scripted = options.modelsByHost?.[key] ?? options.models?.[args?.providerId ?? ""];
+          const list = scripted ?? { models: DEFAULT_MODEL_IDS.map((id) => modelFixture(id)) };
+          return { modelLoadError: null, selectedOnlyModels: [], providers: [], ...list };
+        },
+      },
+      system: {
+        providerStates: async (args?: { hostId?: string }) => {
+          if (options.providerStatesError) throw options.providerStatesError;
+          const byHost = args?.hostId === undefined ? undefined : options.providerStatesByHost?.[args.hostId];
+          if (byHost !== undefined) return { providers: byHost };
+          if (options.providerStates !== undefined) return { providers: options.providerStates };
+          const listed = ((args?.hostId === undefined ? undefined : options.providersByHost?.[args.hostId]) ?? options.providers ?? [providerFixture("claude"), providerFixture("claude-code")]) as Array<{ id: string; available: boolean }>;
+          return { providers: listed.map((provider) => stateFixture(provider.id, { status: provider.available ? "ready" : "not_installed" })) };
         },
       },
       hosts: {
@@ -261,8 +371,18 @@ export async function loadWorld(options: WorldOptions = {}): Promise<World> {
     remote,
     failMetadata: null,
     holdProviders: null,
+    threadEvents: new Map(),
     costs,
     webhook,
+    setProviderStates(states) {
+      options.providerStates = states;
+    },
+    setModels(providerId, list) {
+      const next = { ...options.models };
+      if (list === undefined) delete next[providerId];
+      else next[providerId] = list;
+      options.models = next;
+    },
     skewClock(ms) {
       skew += ms;
     },
@@ -323,6 +443,8 @@ export async function loadWorld(options: WorldOptions = {}): Promise<World> {
     sleep: async (ms) => (world.sleepHook ? world.sleepHook(ms) : new Promise<void>((resolve) => setTimeout(resolve, 1))),
     validator: options.validator,
     resolver: options.resolver,
+    toolHints: options.toolHints,
+    files: options.bareConfig === true ? undefined : filesWithTestDefault(),
     fetch: async (url, init) => {
       webhook.calls.push({ url, init });
       if (webhook.result instanceof Error) throw webhook.result;

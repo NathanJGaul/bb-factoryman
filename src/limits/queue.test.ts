@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { modelEntry, providerState } from "../../test/fixtures/bb-port";
 import { PROFILE_OK_FOR_QUEUE } from "../../test/fixtures/queue";
 import { testRuntime, type TestRuntime } from "../../test/fixtures/runtime";
 import type { TaskRow } from "../store/types";
@@ -30,6 +31,7 @@ const queue = (t: TestRuntime, request: QueuedRequest = REQUEST, projectId = "pr
   return queued.taskId;
 };
 const state = (t: TestRuntime, id: string) => t.runtime.deps.store.getTask(id)?.state;
+const warnings = (t: TestRuntime) => t.lines.filter((line) => line.level === "warn").map((line) => line.message);
 
 describe("running workers and caps", () => {
   it("[U1005] counts working, blocked, validating, and needs_decision workers and nothing else", () => {
@@ -108,6 +110,63 @@ describe("drain", () => {
     await drain(t.runtime);
     expect(state(t, id)).toBe("queued");
     expect(t.bb.callsTo("spawnWorker")).toEqual([]);
+  });
+
+  it("[U1351] leaves a task queued, spawns nothing, and logs the message when its provider is not signed in", async () => {
+    const t = setup();
+    const id = queue(t);
+    t.bb.states = [providerState(PROFILE_OK_FOR_QUEUE.provider, { status: "unauthenticated", localLoginCommand: "claude login" })];
+    await drain(t.runtime);
+    expect(state(t, id)).toBe("queued");
+    expect(t.bb.callsTo("spawnWorker")).toEqual([]);
+    expect(warnings(t).join("\n")).toContain("stays queued");
+    expect(warnings(t).join("\n")).toContain("Run `claude login` on that machine.");
+    // The same task starts once the provider is ready.
+    t.bb.states = null;
+    await drain(t.runtime);
+    expect(state(t, id)).toBe("working");
+  });
+
+  it("[U1352] leaves a task queued when the provider states cannot be read", async () => {
+    const t = setup();
+    const id = queue(t);
+    t.bb.statesError = new Error("bb is down");
+    await drain(t.runtime);
+    expect(state(t, id)).toBe("queued");
+    expect(t.bb.callsTo("spawnWorker")).toEqual([]);
+    expect(warnings(t).join("\n")).toContain("could not read bb's provider states (bb is down)");
+  });
+
+  it("[U1367] fails a queued pi task in local-only mode with evidence, and spawns nothing", async () => {
+    const t = setup();
+    const queued = enqueue(t.runtime, { projectId: "proj-1", kind: "ship", mode: "local-only", request: { ...REQUEST, profile: { provider: "pi", model: "m", reasoningLevel: "medium", permissionMode: "full" } } });
+    if (!queued.ok) throw new Error(queued.message);
+    await drain(t.runtime);
+    expect(state(t, queued.taskId)).toBe("failed");
+    const failed = t.runtime.deps.store.listEvents({ taskId: queued.taskId }).findLast((row) => row.event === "fail");
+    expect(failed?.evidence).toMatch(/^The queued task can no longer start: The provider `pi` is not admitted for local-only projects\./);
+    expect(t.bb.callsTo("spawnWorker")).toEqual([]);
+  });
+
+  it("[U1368] does not fail a queued task whose provider fails a readiness check, which is transient", async () => {
+    const t = setup();
+    const id = queue(t);
+    t.bb.states = [providerState(PROFILE_OK_FOR_QUEUE.provider, { status: "expired" })];
+    await drain(t.runtime);
+    expect(state(t, id)).toBe("queued");
+  });
+
+  it("[U1473] leaves a queued task queued, spawns nothing, and logs the message when bb no longer lists its model", async () => {
+    const t = setup();
+    const id = queue(t);
+    t.bb.models.set(PROFILE_OK_FOR_QUEUE.provider, { models: [modelEntry("some-other-model")], loadError: null });
+    await drain(t.runtime);
+    expect(state(t, id)).toBe("queued");
+    expect(t.bb.callsTo("spawnWorker")).toEqual([]);
+    expect(warnings(t).join("\n")).toContain(`The model \`${PROFILE_OK_FOR_QUEUE.model}\` is not listed`);
+    t.bb.models.clear();
+    await drain(t.runtime);
+    expect(state(t, id)).toBe("working");
   });
 
   it("[U1009] drains when a task leaves the running states, and not otherwise", async () => {

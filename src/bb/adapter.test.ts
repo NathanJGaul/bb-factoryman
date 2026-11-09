@@ -190,6 +190,163 @@ describe("createBbPort", () => {
     ]);
   });
 
+  describe("getProviderStates", () => {
+    const entry = (overrides: Record<string, unknown> = {}) => ({
+      providerId: "codex",
+      displayName: "Codex",
+      status: "unauthenticated",
+      installedVersion: "0.166.0",
+      minimumSupportedVersion: "0.136.0",
+      localLoginCommand: "codex login",
+      loginCommand: "codex login --remote",
+      statusMessage: "Not signed in",
+      accountEmail: null,
+      canInstall: false,
+      canUpdate: false,
+      planLabel: null,
+      ...overrides,
+    });
+
+    it("[U1318] calls providerStates with no argument for no host, and with the host ID for a host", async () => {
+      const { port, sdk } = setup({ system: { providerStates: async () => ({ providers: [] }) } } as FakeSdkOverrides);
+      await port.getProviderStates();
+      await port.getProviderStates("h2");
+      expect(sdk.callsTo("system.providerStates")).toEqual([[undefined], [{ hostId: "h2" }]]);
+    });
+
+    it("[U1319] keeps the provider ID, status, versions, local login command, and status message of each entry, in order", async () => {
+      const { port } = setup({
+        system: { providerStates: async () => ({ providers: [entry(), entry({ providerId: "pi", status: "ready", installedVersion: null, minimumSupportedVersion: null, localLoginCommand: null, statusMessage: null })] }) },
+      } as FakeSdkOverrides);
+      expect(await port.getProviderStates()).toEqual([
+        { providerId: "codex", status: "unauthenticated", installedVersion: "0.166.0", minimumSupportedVersion: "0.136.0", localLoginCommand: "codex login", statusMessage: "Not signed in" },
+        { providerId: "pi", status: "ready", installedVersion: null, minimumSupportedVersion: null, localLoginCommand: null, statusMessage: null },
+      ]);
+    });
+
+    it("[U1320] reads a status outside the six known values as unknown", async () => {
+      const { port } = setup({ system: { providerStates: async () => ({ providers: [entry({ status: "rate_limited" }), entry({ status: undefined })] }) } } as FakeSdkOverrides);
+      expect((await port.getProviderStates()).map((state) => state.status)).toEqual(["unknown", "unknown"]);
+    });
+
+    it.each(["ready", "not_installed", "unauthenticated", "expired", "unsupported_version", "unknown"])("[U1320] keeps the known status %s", async (status) => {
+      const { port } = setup({ system: { providerStates: async () => ({ providers: [entry({ status })] }) } } as FakeSdkOverrides);
+      expect((await port.getProviderStates())[0]?.status).toBe(status);
+    });
+
+    it("[U1321] does not catch an SDK error", async () => {
+      const { port } = setup({
+        system: {
+          providerStates: async () => {
+            throw new Error("HTTP 500");
+          },
+        },
+      } as FakeSdkOverrides);
+      await expect(port.getProviderStates()).rejects.toThrow("HTTP 500");
+    });
+  });
+
+  describe("listModels", () => {
+    const model = (overrides: Record<string, unknown> = {}) => ({
+      id: "openai/gpt-6-luna",
+      model: "gpt-6-luna",
+      displayName: "GPT 6 Luna",
+      description: "",
+      isDefault: true,
+      defaultReasoningEffort: "medium",
+      reasoningDiscovery: "known",
+      supportedReasoningEfforts: [
+        { reasoningEffort: "low", description: "" },
+        { reasoningEffort: "medium", description: "" },
+      ],
+      ...overrides,
+    });
+    const answer = (models: unknown[], modelLoadError: unknown = null) => ({ models, modelLoadError, selectedOnlyModels: [], providers: [] });
+
+    it("[U1369] passes the provider ID, and passes the host ID only when one is given", async () => {
+      const { port, sdk } = setup({ providers: { models: async () => answer([]) } } as FakeSdkOverrides);
+      await port.listModels("pi");
+      await port.listModels("pi", "h2");
+      expect(sdk.callsTo("providers.models")).toEqual([[{ providerId: "pi" }], [{ providerId: "pi", hostId: "h2" }]]);
+    });
+
+    it("[U1370] keeps the ID, the model name, the default flag, the default level, and the levels of each model", async () => {
+      const { port } = setup({ providers: { models: async () => answer([model(), model({ id: "other", model: "other", isDefault: false, defaultReasoningEffort: "", supportedReasoningEfforts: [] })]) } } as FakeSdkOverrides);
+      expect((await port.listModels("pi")).models).toEqual([
+        { id: "openai/gpt-6-luna", model: "gpt-6-luna", isDefault: true, defaultReasoningLevel: "medium", reasoningLevels: ["low", "medium"], reasoningKnown: true },
+        { id: "other", model: "other", isDefault: false, defaultReasoningLevel: "", reasoningLevels: [], reasoningKnown: true },
+      ]);
+    });
+
+    it("[U1371] reads reasoningDiscovery known as true and unknown as false", async () => {
+      const { port } = setup({ providers: { models: async () => answer([model({ reasoningDiscovery: "known" }), model({ id: "b", reasoningDiscovery: "unknown" })]) } } as FakeSdkOverrides);
+      expect((await port.listModels("pi")).models.map((entry) => entry.reasoningKnown)).toEqual([true, false]);
+    });
+
+    it("[U1372] reads a model load error as code and detail, and an absent one as null", async () => {
+      const failed = setup({ providers: { models: async () => answer([], { code: "auth_required", detail: "Run pi login", providerId: "pi" }) } } as FakeSdkOverrides);
+      expect((await failed.port.listModels("pi")).loadError).toEqual({ code: "auth_required", detail: "Run pi login" });
+      const noDetail = setup({ providers: { models: async () => answer([], { code: "timeout", detail: null, providerId: "pi" }) } } as FakeSdkOverrides);
+      expect((await noDetail.port.listModels("pi")).loadError).toEqual({ code: "timeout", detail: null });
+      const fine = setup({ providers: { models: async () => answer([model()]) } } as FakeSdkOverrides);
+      expect((await fine.port.listModels("pi")).loadError).toBeNull();
+    });
+
+    it("[U1373] does not catch an SDK error", async () => {
+      const { port } = setup({
+        providers: {
+          models: async () => {
+            throw new Error("HTTP 500");
+          },
+        },
+      } as FakeSdkOverrides);
+      await expect(port.listModels("pi")).rejects.toThrow("HTTP 500");
+    });
+  });
+
+  describe("getFailureCause", () => {
+    const row = (data: Record<string, unknown>, type = "provider/error") => ({ id: "ev1", scope: "thread", threadId: "thr-w1", seq: 9, createdAt: 1, type, data });
+    const list = (rows: unknown[]) => ({ threads: { events: { list: async () => rows } } }) as FakeSdkOverrides;
+
+    it("[U1456] lists the types provider/error and system/error, newest first, one row", async () => {
+      const { port, sdk } = setup(list([]));
+      await port.getFailureCause("thr-w1");
+      expect(sdk.callsTo("threads.events.list")).toEqual([[{ threadId: "thr-w1", types: ["provider/error", "system/error"], order: "desc", limit: "1" }]]);
+    });
+
+    it("[U1457] returns the detail of the event when it is a non-blank string", async () => {
+      const { port } = setup(list([row({ message: "Command failed", detail: "Not logged in · Please run /login" })]));
+      expect(await port.getFailureCause("thr-w1")).toBe("Not logged in · Please run /login");
+    });
+
+    it.each([[{ message: "Failed to resolve Pi model x" }], [{ message: "Failed to resolve Pi model x", detail: "   " }], [{ message: "Failed to resolve Pi model x", detail: 7 }]])(
+      "[U1458] returns the message when the detail is missing, blank, or not text: %j",
+      async (data) => {
+        const { port } = setup(list([row(data, "system/error")]));
+        expect(await port.getFailureCause("thr-w1")).toBe("Failed to resolve Pi model x");
+      },
+    );
+
+    it("[U1459] returns null for an empty list, and for an event with a blank detail and a blank message", async () => {
+      expect(await setup(list([])).port.getFailureCause("thr-w1")).toBeNull();
+      expect(await setup(list([row({ message: " ", detail: "" })])).port.getFailureCause("thr-w1")).toBeNull();
+      expect(await setup(list([row({})])).port.getFailureCause("thr-w1")).toBeNull();
+    });
+
+    it("[U1460] does not catch an SDK error", async () => {
+      const { port } = setup({
+        threads: {
+          events: {
+            list: async () => {
+              throw new Error("HTTP 500");
+            },
+          },
+        },
+      } as FakeSdkOverrides);
+      await expect(port.getFailureCause("thr-w1")).rejects.toThrow("HTTP 500");
+    });
+  });
+
   it("[U819] lists machines with ID, name, status, phase, and an online flag", async () => {
     const host = (id: string, status: string, phase: string) => ({ id, name: `name-${id}`, status, lifecycle: { phase } });
     const { port } = setup({

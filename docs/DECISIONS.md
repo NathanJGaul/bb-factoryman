@@ -503,8 +503,7 @@ Milestone 7 reads only `dispatch.json` there.
 Milestone 9 adds the rest of the workflow config and reuses the same directory.
 The checkout is the project's default `local_path` source (`BbPort.getProjectCheckout`).
 bb does not say whether that source sits on the server machine.
-If it sits on a remote machine, the path will not exist on the server, the file reads as absent, and the built-in default applies.
-That fallback is silent for the owner, so the dispatch result names the profile source ("from the built-in default").
+If it sits on a remote machine, the path will not exist on the server, the file reads as absent, and dispatch blocks with a `dispatch init` hint (D-112 removed the built-in default that once applied here).
 The live check in milestone 11 confirms the path on a real project.
 
 ### D-063: The built-in default profile is `claude-code`, `claude-sonnet-5-5`, `high`, `auto` (Gap)
@@ -515,16 +514,21 @@ The owner replaces it with `default` in `dispatch.json`.
 If the built-in provider is unavailable, dispatch blocks (FR-708).
 It never falls back to another provider.
 
+Amended by D-112: the built-in profile is removed, and a project that names no profile gets a block and a `dispatch init` hint.
+The text above records the decision as it stood.
+
 ### D-064: The reasoning floor compares an explicit profile with the owner's declarations (Gap)
 
 firstmate never lowers the reasoning level to save quota without standing permission.
 The resolver has no quota data, so the only way it can lower a level is an explicit override that sits below what the owner declared.
 The baseline is the profiles of the matching rules, or else the configured default.
-The built-in default sets none.
 A level below any baseline profile blocks with `reasoning_lowered`, unless `standingPermission.lowerReasoning` is true in the file.
 Reasoning level IDs are provider-specific (spike item 29), so the ladder lives in the config and defaults to `none, low, medium, high, xhigh, max`.
 When two levels differ and either one is off the ladder, the check blocks, because it cannot rank them.
 Choosing a rule with `rule` takes the profile from the owner's file, so it needs no check.
+
+Amended by D-113: the ladder can be one array for every provider or a record from provider ID to its own ladder.
+The text above records the decision as it stood.
 
 ### D-065: Ambiguity needs distinct profiles, and conditions are exact (Gap)
 
@@ -959,3 +963,185 @@ The tier 1 and tier 1.5 live runs found defects that only a real lab shows, so s
 The real lab (`tools/conformance/real-lab.ts`) has no unit test. The live runs are its test, and the result files keep their output.
 The captain accepted the 26 test-after behaviors as a recorded deviation on 2026-11-09, on the same precedent as D-099.
 They are A1301 to A1306, A1308 to A1313, A1316 to A1321, A1324, A1326 to A1328, A1330, U1422, U1427, and U1428, each with a revert-red or a killing mutant in `tdd/cycle-log.md` and `tdd/verification.md`.
+
+## Harness independence
+
+### D-108: Harness independence: the scope and the captain's five decisions (Decided by the captain)
+
+The scout report `data/bb-factoryman-harness-independence/report.md` of 2026-11-08 ran real Claude Code, Codex, Pi, and omp CLIs against a fake model in the isolated lab.
+It found that the plugin already spawns on any bb provider.
+The coupling to Claude Code sat in the plugin's assumptions: what "available" means, which harness is the silent default, how a model level is checked, and what a failure says.
+The captain accepted all five recommendations of the report's section 8 on 2026-11-08:
+
+- D1 A: a harness counts as supported when it passes tier 1.5 (S1 to S9, S11, S12) and, once, tier 2 (S3, S4, M1 to M4).
+- D2 A: one dedicated OpenAI API key with a provider-side dollar cap funds tier 2 for Codex, Pi, and omp.
+  The Claude run keeps the funding that D-092 records.
+- D3 A: Pi workers are admitted in `direct-PR` and `no-mistakes` modes and refused in `local-only` until D-030 closes (D-111).
+- D4 B: the plugin picks the worker's harness, a person picks the supervisor's, and the validator's agent is observed and readiness-checked and never written.
+- D5 A: the built-in default profile is removed, and dispatch blocks with a `dispatch init` hint (D-112).
+
+This release builds six tasks of the report's section 7: H5 (the contract table), H1 (the readiness gate), H11 (the permission floor), H10 (the default profile), H2 (model-aware checks), and H3 (cause-bearing failure evidence).
+The tasks H4 (`supervisor start`), H6 to H9 (the conformance suite, the fake model server, the offline lab, and the docs rewrite), H12 (the `roles` block), H13 (the tier 2 runs), and H14 (a worker hint that is on) stay open.
+D1, D2, and D4 are recorded here and not built, because they gate H4, H7, H9, H12, and H13.
+No hard rule changes.
+The constitution lists milestones 1 to 11 as its scope.
+The captain's task extends that scope, as D-068 did, and this release leaves the constitution text as it is.
+Amended by D-117: the captain ordered the constitution amended on 2026-11-09, so the sentence above no longer holds.
+
+### D-109: Readiness comes from bb's provider states, and it fails closed (Gap)
+
+`available` in `bb provider list` means that the CLI is installed.
+It does not mean that the CLI is signed in.
+The report saw Codex `available: true` and `unauthenticated`, and the live check (t01 finding 5.9) saw `claude-code` available with no CLI.
+Dispatch, the queue start, and the remote preflight now pass a provider only when `bb.sdk.system.providerStates` reports `ready` on the host that runs the worker.
+Every other status blocks: `not_installed`, `unauthenticated`, `expired`, `unsupported_version`, and `unknown`.
+A provider with no state, a status that the plugin does not know, and a failed read block too.
+The block message names the provider, the host, and bb's status, and it carries bb's login command or the installed and minimum versions.
+One function, `gateProfile`, applies the check for dispatch and for the queue start, so no path to a spawn skips it.
+The preflight reuses the same text for a remote machine.
+A blocked dispatch creates no task and uses no slot of the day cap.
+This closes t01 finding 5.9.
+One point stays open for the live check: a custom ACP agent that `providerStates` omits is blocked, and the tier 1 stub agent may be one.
+If bb omits ACP agents, the follow-up is an explicit opt-in in the contract table, and not a default that passes.
+
+### D-110: The harness contract table is data, and it has five columns the report did not list (Deviation from the report, section 6.2)
+
+`src/harness/contracts.ts` holds one row for `claude-code`, `codex`, `pi`, and `acp-omp`, and a generic row for every other provider.
+The module imports nothing, and lint enforces that.
+The lookup matches the provider ID exactly and returns the generic row for anything else, including inherited object keys such as `constructor`.
+The values come from the report's table and were observed with bb 0.49.0.
+The table adds five columns that the report did not list, each for a stated reason:
+
+- `unlistedModels`: the report's rule R4 says "the model is listed or the provider accepts unlisted ids", and that fact needs a home.
+  Claude Code and Codex accept, and every other row refuses.
+- `sandbox`, `refusedModes`, and `refusalReason`: H11 records Pi's `full`-only policy as a contract rule, and the admission message needs the reason.
+- `toolHint`: the one-line hint for a worker, for the two routes that are not a plain function.
+
+`bb.agents.configure` now reads `context.provider.id`.
+It returns the hint in `instructions` only for a worker thread on a provider whose row has one, and only when the plugin runs with `toolHints` on.
+The option is off by default and sits on the composition root, not in the owner's config, because task H14 decides whether a real model needs the hint.
+The hint is a constant of the table, so no thread metadata enters it.
+
+### D-111: Pi is admitted in `direct-PR` and `no-mistakes` modes and refused in `local-only` (Decided by the captain, D3 A)
+
+Pi offers only the `full` permission mode.
+A Pi worker therefore has no sandbox, and it can run `bb thread interactions respond`, which answers the owner's merge form (D-030, D-095).
+In `direct-PR` and `no-mistakes` modes, branch protection and scoped tokens are the backstop (`docs/BRANCH-PROTECTION.md`).
+`local-only` mode has no such backstop.
+Dispatch refuses a profile whose provider's row lists the project's effective delivery mode in `refusedModes`, with the code `provider_not_admitted`.
+The check runs first, from the table alone, and it applies to every profile source and to the queue start.
+At the queue start a refusal fails the task with evidence, because it cannot change, and every other block keeps the task queued.
+The rule keys on the delivery mode, as the captain's decision words it, so a scout task on Pi in a `local-only` project is refused too.
+The captain can relax that later.
+Nothing falls back to another provider.
+D-030 and D-095 stay open, and Pi returns to `local-only` mode when the approval-form work closes the agent-answer route.
+
+The rule keys on the bb provider ID `pi`, because the captain's decision D3 names Pi only.
+A harness that runs Pi behind another provider ID, such as an ACP registry entry, gets the generic row.
+The generic row has `sandbox: "unknown"` and no refused mode, so that provider is admitted in `local-only` mode.
+The captain kept the rule as built (2026-11-08): a harness behind another provider ID gets its own contract row, with its sandbox and refused modes, when someone admits it.
+The readiness and model checks still judge such a provider until then.
+
+### D-112: The built-in default profile is removed, and `dispatch init` writes a starter file (Decided by the captain, D5 A)
+
+This amends D-063.
+`BUILTIN_PROFILE` is gone, and so is the `builtin` profile source.
+When no override, no matching rule, and no `default` apply, the resolver blocks with the code `no_default_profile`.
+The message says to run `bb factoryman dispatch init --provider <id>`, to set `default` in `dispatch.json`, or to pass `profile`.
+A project that relied on the built-in default now blocks until its owner does one of those.
+`bb factoryman dispatch init --provider <id> [--project <id>] [--model <id>] [--level <id>] [--mode <mode>]` writes `.bb/factoryman/dispatch.json` with one profile and `default` set to it.
+The model is bb's default model for the provider, the level is the model's default level (then `medium`, then the first listed), and the mode is `auto`, then `accept-edits`, then `full`.
+A flag replaces a value, and the command checks the final profile against what bb lists before it writes.
+It does not check readiness, because a starter file does not need a ready provider, and dispatch checks readiness each time.
+This is the first time the plugin writes into a project checkout.
+The write is an exclusive create, so the command never changes an existing file, valid or not.
+The command is not a tool, so a supervisor agent cannot call it, and it reads and writes no credential.
+`docs/DESIGN.md` and `docs/LIVE-CHECK.md` no longer name a built-in default.
+The test world supplies the old built-in profile as a default `dispatch.json` where a checkout has none (see D-115), so tests of other behavior keep their meaning.
+
+### D-113: Reasoning ladders are per provider (Gap)
+
+This amends D-064.
+Level IDs belong to one provider (spike item 29), so one ladder cannot rank Claude's `ultracode` and Codex's `ultra`.
+`reasoningLevels` in `dispatch.json` accepts either an array, which applies to every provider as before, or a record from provider ID to its own array.
+A key must not be blank, an array must not be empty, and no array may repeat a level.
+The resolver ranks the explicit profile's level and the baseline's level in the ladder of the explicit profile's provider.
+A provider that the record omits uses the default ladder.
+A baseline level that is not on that ladder cannot be ranked, so it still blocks with `reasoning_lowered` unless the owner grants `standingPermission.lowerReasoning`.
+That keeps the rule fail closed for a comparison across providers.
+`ladderFor` and the default ladder sit in `src/dispatch/types.ts`, which has no imports, because test A718 keeps the resolver pure.
+
+### D-114: Model checks read bb's per-model list, and an unlisted model follows the row (Gap)
+
+bb lists reasoning levels for each model, and the provider-wide list is only a coarse ladder.
+When bb lists the model and knows its levels, the model's levels decide.
+That lets omp's `off` pass and refuses a level that the model lacks.
+When bb does not know the model's levels, the provider-wide list decides, as before.
+When bb does not list the model, the row decides: Claude Code and Codex accept it and use the provider-wide list, and every other provider refuses it and lists the models that bb offers.
+If bb gives a load error, such as `auth_required` for Pi without a login, the message adds it.
+A profile's model matches a listed model by its `id` or by its `model` name, because the scout did not settle which field a spawn resolves.
+The live check settles it.
+A failed read of the model list blocks the dispatch.
+
+### D-115: Failure evidence quotes the provider's cause, and some existing tests changed (Gap)
+
+When a worker thread fails, the plugin reads the latest `provider/error` or `system/error` event of its log through `bb.sdk.threads.events.list`.
+The `detail` of that event, or its `message` when there is no detail, goes into the `fail` evidence after the text that the plugin already wrote.
+The cause is the provider's own text, so the plugin removes control characters, collapses spaces, cuts it to 300 characters, and quotes it as reported text.
+When the cause means "not signed in" or "no model", the evidence adds a `Remedy:` line.
+The patterns are advisory and check the model family first, because an omp no-model message also says "/login".
+A miss costs the hint and nothing else, and the remedy never replaces the cause.
+A failed read leaves today's evidence and logs a warning.
+The wake message for a `failed` task keeps 1200 characters of evidence instead of 600, so the cause and the remedy survive.
+Existing tests changed only where a requirement changed what they assert (precedent: D-067):
+
+- `src/dispatch/availability.test.ts`: the call moved to the facts object, with the assertions unchanged (group 3).
+- `test/acceptance/dispatch-resolver.test.ts`: [A710] expects the readiness text for an unavailable or unlisted provider, and a model with unknown levels for the level case (groups 3 and 5); [A706] and [A713] expect the block instead of the built-in profile, and [A717] names a configured default (group 6).
+- `src/dispatch/resolver.test.ts`: [U710] and [U726] changed their titles, [U717] was replaced by the opposite assertion U1408, and [U811] lost its `builtin` line (group 6).
+- `test/acceptance/limits-queue.test.ts` [A1025] and [A1026]: the project's `dispatch.json` gained a `default` (group 6).
+- `test/acceptance/machine-placement.test.ts` [A826]: the call names a profile (group 6).
+- `src/dispatch/gate.test.ts` and `test/acceptance/harness-admission.test.ts`: Pi's model is listed in bb, because Pi refuses an unlisted model (group 5).
+
+The suite relied on the built-in profile in many acceptance tests.
+`loadWorld` now supplies that profile as a default `dispatch.json` (with `standingPermission.lowerReasoning` on, because the built-in set no floor) wherever a checkout has none.
+A test that wants the real block passes `bareConfig: true`.
+
+### D-116: 71 behaviors came after their code (Deviation, accepted by the captain)
+
+Constitution principle V says that every behavior change is driven by a test that failed first.
+The TDD audit of this feature (`specs/009-harness-independence/tdd/verification.md`) classes 71 of its 223 behaviors `TEST_AFTER`, because no red is recorded for them.
+Two groups make up the 71.
+Forty-two are acceptance tests written after the code they cover, and each passed on its first run: A1301 to A1311, A1313, A1316 to A1344, and A1350.
+The playbook opens the outer loop first.
+This feature wrote the unit tests and the code first, and wrote five of the seven acceptance files afterwards.
+Twenty-nine are unit tests that passed on their first run: U1306, U1307, U1312, U1315, U1316, U1336, U1346, U1357, U1359 to U1362, U1368, U1376 to U1378, U1383 to U1385, U1389, U1391, U1395, U1396, U1407, U1445, U1447, U1455, U1469, and U1473.
+Most of them pin a behavior that was already true against the stub or the old code (the hint stays off, a ready provider passes, Pi stays admitted in the other two modes).
+The repository commits only on green (D-099), so the history cannot show a test before its code, and the order cannot be rewritten afterwards.
+In place of a red, `tdd/cycle-log.md` holds a revert-red ledger: 58 deliberate mutants of the production code, each applied alone and restored byte for byte, and for every one of the 71 behaviors at least one mutant that makes its test fail.
+No mutant survived, and no mutant sits inside a behavior that the audit marks `DONE`.
+The audit's other blocking findings were repaired in tasks T1399 to T1401: a vacuous assertion in the docs test, two expectations computed by the code under test, and fifteen `BASELINE` behaviors that tasks had ticked.
+The count here is about ten times the seven of D-099.
+The captain accepted the 71 as a recorded deviation, as for the earlier factoryman milestones (D-099), on 2026-11-08.
+Each is a guard that fails when its property is removed, and the ledger holds the killing mutant of each.
+The audit did not recommend the rework, and the captain did not order it.
+The pull request description names the ledger.
+The audit's verdict stays `FAIL` as the rubric computes it, because an auditor does not accept an exception, and the note stays in `tdd/verification.md`.
+
+### D-117: Constitution 1.3.0 adds harness independence to the scope (Decided by the captain)
+
+Principle VI listed milestones 1 to 11 as the scope.
+D-108 extended it by the captain's task and left the text as it was, as D-068 did.
+The analysis of this feature raised the open question as finding C2, because Governance says that an amendment needs a written reason here and a version bump there.
+The captain ordered the amendment on 2026-11-09 ("bump the rules").
+Constitution version 1.3.0 adds one scope line to Principle VI.
+The line names harness independence: the report tasks H5 (the contract table), H1 (the readiness gate), H11 (the permission floor), H2 (model-aware checks), H10 (no built-in default profile, and `dispatch init`), and H3 (cause-bearing failure evidence), and the captain's decisions D1 to D5 in section 8 of the harness-independence report.
+It is a minor bump, because it materially expands the scope guidance and adds no principle.
+The rest of Principle VI is unchanged, including the rule that features from the design's non-goals list need approval first, and so are the eight hard rules.
+The "Current scope" text of `CLAUDE.md` is not part of this amendment.
+D-108 keeps its text and carries an "Amended by D-117" line, as D-063 and D-064 do.
+Finding C2 of `specs/009-harness-independence/analyze.md` is resolved.
+
+About the number: this entry takes D-117, the next free number after D-116, on purpose.
+The default branch already holds the entries 100 to 107 of another feature (the conformance harness).
+When this branch was rebased onto it, the nine entries of the "Harness independence" section above were renumbered from the numbers 100 to 108 to the numbers 108 to 116, in order, with every reference to them in code comments, docs, and specs.
+This entry kept D-117 so that it did not collide with that renumbering.
