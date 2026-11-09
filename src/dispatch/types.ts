@@ -53,9 +53,9 @@ export interface Choice {
   readonly rule?: string;
 }
 
-export type ProfileSource = "override" | "rule" | "default" | "builtin";
+export type ProfileSource = "override" | "rule" | "default";
 
-export type BlockCode = "reasoning_lowered" | "rule_not_applicable" | "invalid_choice" | "config_invalid" | "provider_unavailable" | "provider_not_admitted";
+export type BlockCode = "reasoning_lowered" | "rule_not_applicable" | "invalid_choice" | "config_invalid" | "provider_unavailable" | "provider_not_admitted" | "no_default_profile";
 
 export interface Candidate {
   readonly ruleId: string;

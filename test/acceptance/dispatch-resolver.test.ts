@@ -82,12 +82,13 @@ describe("dispatch profile resolution through the plugin factory", () => {
     expect(spawned(world)).toMatchObject({ model: "opus" });
   });
 
-  it("[A706] uses the configured default when no rule matches, and the built-in default when there is none", async () => {
+  it("[A706] uses the configured default when no rule matches, and blocks when there is none", async () => {
     const withDefault = await dispatchWith(config({ default: "steady" }), TASK);
     expect(spawned(withDefault.world)).toMatchObject({ model: "sonnet", reasoningLevel: "high" });
-    const builtin = await dispatchWith(config(), TASK);
-    expect(builtin.result.isError).toBe(false);
-    expect(spawned(builtin.world)).toMatchObject({ providerId: "claude-code", model: "claude-sonnet-5-5", reasoningLevel: "high", permissionMode: "auto" });
+    const none = await dispatchWith(config(), TASK);
+    expect(none.result.isError).toBe(true);
+    expect(none.result.text).toContain("no_default_profile");
+    expect(none.world.sdkCalls("threads.spawn")).toEqual([]);
   });
 
   it("[A707] refuses a call with both a profile and a rule before anything is read or spawned", async () => {
@@ -209,7 +210,9 @@ describe("dispatch profile resolution through the plugin factory", () => {
 
     const tagged = await dispatchWith(config({ rules }), { ...TASK, tags: ["docs"] });
     expect(spawned(tagged.world)).toMatchObject({ model: "sonnet" });
-    const untagged = await dispatchWith(config({ rules }), TASK);
+    // No rule matches an untagged task, so the configured default applies.
+    const fallback = { provider: "claude-code", model: "claude-sonnet-5-5", reasoningLevel: "high", permissionMode: "auto" };
+    const untagged = await dispatchWith(config({ rules, profiles: { ...PROFILES, fallback }, default: "fallback" }), TASK);
     expect(spawned(untagged.world)).toMatchObject({ providerId: "claude-code" });
   });
 });

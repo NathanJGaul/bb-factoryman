@@ -217,3 +217,32 @@ describe("factoryman_dispatch provider gate", () => {
     expect(t.bb.callsTo("spawnWorker")).toEqual([]);
   });
 });
+
+describe("factoryman_dispatch with no built-in default", () => {
+  const CHECKOUT = "/work/repo";
+  const configure = (t: ReturnType<typeof setup>, dispatchJson: unknown) => {
+    t.bb.checkouts.set("proj-1", CHECKOUT);
+    t.files.files.set(`${CHECKOUT}/.bb/factoryman/dispatch.json`, JSON.stringify(dispatchJson));
+  };
+  const steady = { provider: "claude", model: "opus", reasoningLevel: "high", permissionMode: "accept-edits" };
+
+  it("[U1411] says the profile came from the configured default, and names no built-in default", async () => {
+    const t = setup();
+    configure(t, { version: 1, profiles: { steady }, default: "steady", rules: [] });
+    const outcome = await dispatch(t.runtime, supervisor, { kind: "ship", description: "Add a --json flag to the status command." });
+    expect(outcome.ok).toBe(true);
+    expect(outcome.text).toContain("Profile: claude opus high accept-edits, from the configured default.");
+    expect(outcome.text).not.toMatch(/built-in/i);
+  });
+
+  it("[U1411] blocks a dispatch with no profile source and prints the init hint", async () => {
+    const t = setup();
+    const outcome = await dispatch(t.runtime, supervisor, { kind: "ship", description: "Add a --json flag to the status command." });
+    expect(outcome.ok).toBe(false);
+    expect(outcome.text).toContain("Dispatch blocked (no_default_profile)");
+    expect(outcome.text).toContain("bb factoryman dispatch init --provider <id>");
+    expect(outcome.text).toContain("No task was created.");
+    expect(t.runtime.deps.store.listTasks()).toEqual([]);
+    expect(t.bb.callsTo("spawnWorker")).toEqual([]);
+  });
+});

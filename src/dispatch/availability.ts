@@ -48,9 +48,16 @@ export function readinessProblem(providerId: string, states: readonly ProviderSt
  * counts as unavailable, so the check fails closed (spike item 29).
  */
 export function checkProfile(profile: Profile, facts: ProfileFacts): string | null {
-  const { providers } = facts;
   const notReady = readinessProblem(profile.provider, facts.states, facts.host);
-  if (notReady !== null) return `${notReady} ${NO_OTHER}`;
+  return notReady !== null ? `${notReady} ${NO_OTHER}` : checkSupport(profile, facts);
+}
+
+/**
+ * Everything in `checkProfile` after readiness: the provider is listed, and it offers the permission mode, the
+ * model, and the level. `dispatch init` uses it alone, because a starter file does not need a ready provider.
+ */
+export function checkSupport(profile: Profile, facts: Omit<ProfileFacts, "states">): string | null {
+  const { providers } = facts;
   const found = providers.find((candidate) => candidate.id === profile.provider);
   if (found === undefined || !found.available) {
     const known = providers.filter((candidate) => candidate.available).map((candidate) => candidate.id);

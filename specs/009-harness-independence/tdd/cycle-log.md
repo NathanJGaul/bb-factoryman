@@ -147,3 +147,42 @@ Commit subject: "feat: check the model and its levels against what bb lists (H2)
   No assertion was loosened. The new setups make the old reasons explicit.
 - suite: `pnpm run check` -> 101 files, 1486 passed, 0 failed.
 - refactor: none needed after the green.
+
+## Group 6: no built-in default, the exclusive write, and `dispatch init` (tasks T1370 to T1379, H10)
+
+Behaviors: U1405 to U1408, U1410 to U1444, A1322 to A1329.
+BASELINE behavior carried by this group: U1409 (`[U711]`, `[U716]`, `[U744]`).
+Commit subject: "feat: remove the built-in default profile and add dispatch init (H10)".
+
+- test: `src/files.test.ts` gained three `writeNew` cases against a stub that throws "not implemented".
+- red: `pnpm vitest run src/files.test.ts` -> `2 failed | 4 passed`; `Error: not implemented` for U1405 and U1406.
+  U1407 passed against the stub because the stub also throws.
+  A mutant check after the green found that the first version of U1407 did not exercise the write's own error handling (a mutant that returned "exists" for every error survived).
+  I added a second assertion with a 300-character file name (`ENAMETOOLONG`, raised by the write and not by `mkdir`), and the mutant then failed U1407.
+- green: `nodeFiles.writeNew` creates the directory and opens the file with `flag: "wx"`, mapping `EEXIST` to "exists".
+  A mutant with flag `w` fails U1406 and A1326 (M8 killed).
+  `FakeFiles` gained `writeNew`, `writes`, and `writeErrors`.
+- test: `src/dispatch/resolver.test.ts` U1408 and U1410, `src/tools/dispatch.test.ts` U1411 (two cases), and `test/acceptance/dispatch-resolver.test.ts` [A706].
+- red: `pnpm vitest run src/dispatch/resolver.test.ts src/tools/dispatch.test.ts test/acceptance/dispatch-resolver.test.ts` -> `4 failed | 77 passed`; `expected { status: 'clear', …(4) } to deeply equal { status: 'blocked', …(2) }` (U1408), `expected [ 'BUILTIN_PROFILE', …(1) ] to not include 'BUILTIN_PROFILE'` (U1410), `expected true to be false` (U1411 block), `expected false to be true` (A706).
+- green: `BUILTIN_PROFILE` and the `builtin` source are gone, and the last rung returns `blocked` with `no_default_profile` and the message of the contract.
+- existing tests that changed, forced by the requirement (D-107):
+  `src/dispatch/resolver.test.ts` [U710] (title only: it no longer names the built-in default), [U717] (its assertion applied the built-in default; U1408 now states the reverse, so the old assertion is retired and not kept), [U726] (title only), [U811] (its last line asserted `source: "builtin"`; it now asserts the block);
+  `test/acceptance/dispatch-resolver.test.ts` [A706] (the second half asserted the built-in profile; it now asserts the block) and [A717] (the untagged case now names a configured `default`);
+  `test/acceptance/limits-queue.test.ts` [A1025], [A1026] (the project's `dispatch.json` now has a `default`, because the queued task relied on the built-in);
+  `test/acceptance/machine-placement.test.ts` [A826] (the call names a profile, because the project has no readable checkout and the block now comes first).
+  The suite also relied on the built-in in about forty other acceptance tests.
+  `loadWorld` now supplies `TEST_DEFAULT_DISPATCH` (the old built-in profile as a `default`, with `standingPermission.lowerReasoning` on because the built-in set no floor, D-064) wherever a checkout has no `dispatch.json`.
+  A test that wants the real block passes `bareConfig: true`.
+  That keeps every one of those tests asserting what it asserted.
+- test: `src/dispatch/init.test.ts` (new, 34 cases, U1412 to U1440) against a stub `runDispatchInit` that throws "not implemented".
+- red: `pnpm vitest run src/dispatch/init.test.ts` -> `34 failed`; every case fails with `Error: not implemented`.
+- green: `src/dispatch/init.ts` implements the command of `contracts/cli-dispatch-init.md`; `checkSupport` was split out of `checkProfile` first, as a structural step on green, so the command can run the same checks minus readiness.
+  `pnpm vitest run src/dispatch/init.test.ts` -> 34 passed.
+- test: `src/tools/supervisor-command.test.ts` (U1441 to U1443) and `src/server.test.ts` (U1444).
+- red: `pnpm vitest run src/tools/supervisor-command.test.ts src/server.test.ts` -> `7 failed`; `expected 2 to be +0` (the command did not route `dispatch`) and `expected undefined to match object { Object (usage) }` (no CLI entry).
+- green: `runFactorymanCommand` routes `dispatch init`, the usage text lists the line, and `createPlugin` registers the `dispatch` entry. 32 tests passed in the two files.
+- test: `test/acceptance/harness-default.test.ts` (new, 16 cases, A1322 to A1329).
+  It was written after the code and passed on the first run, so the deliberate-mutant check applies.
+  Mutants, one at a time with the file restored: init writes with flag `w` -> A1326 and U1406 fail; init skips the profile check -> U1431 and A1328 fail; the mode order reversed -> U1426, U1427, U1437, A1324, A1325 fail; the written file without a `default` -> U1437, A1324, A1325 fail; a repeated flag accepted -> U1412 fails; a built-in default returned from the last rung -> U811, U1408, U1411, A1322 fail; `dispatch` routes any subcommand to init -> survived at first, because the other inputs print the same usage, so I added `["dispatch", "--provider", "claude", "--project", "proj-1"]` to U1442 and the mutant then failed.
+- suite: `pnpm run check` -> 103 files, 1550 passed, 0 failed.
+- refactor: none needed after the green.

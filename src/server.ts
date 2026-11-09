@@ -197,6 +197,11 @@ export function createPlugin(options: PluginOptions = {}): (bb: BbPluginApi) => 
           usage: "bb factoryman import-registry --file <path>",
         },
         {
+          name: "dispatch",
+          summary: "Write a starter dispatch.json for a project, so dispatch has a default harness. It never overwrites a file",
+          usage: "bb factoryman dispatch init --provider <id> [--project <id>] [--model <id>] [--level <id>] [--mode <mode>]",
+        },
+        {
           name: "preflight",
           summary: "Report what a remote machine is missing before the first dispatch",
           usage: "bb factoryman preflight <machine> --project <project-id> [--provider <provider-id>]",

@@ -156,7 +156,11 @@ describe("a queued task keeps everything it was dispatched with", () => {
       workflow: { version: 1, project: { branchPrefix: "wip/" }, limits: { maxWorkers: 1 } },
       dispatch: {
         version: 1,
-        profiles: { strict: { provider: "claude", model: "opus-strict", reasoningLevel: "xhigh", permissionMode: "auto" } },
+        profiles: {
+          strict: { provider: "claude", model: "opus-strict", reasoningLevel: "xhigh", permissionMode: "auto" },
+          plain: { provider: "claude-code", model: "claude-sonnet-5-5", reasoningLevel: "high", permissionMode: "auto" },
+        },
+        default: "plain",
         rules: [{ id: "tagged", when: { tags: ["deep"] }, profile: "strict" }],
       },
     });

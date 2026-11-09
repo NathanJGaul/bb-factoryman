@@ -47,14 +47,14 @@ A1301 to A1309 live in `test/acceptance/harness-readiness.test.ts`, A1310 to A13
 | A1319 | A profile on `claude-code`, `codex`, `acp-omp`, or an unknown provider is never refused by the admission rule in any mode | AC-3.4, FR-1326 | example | DONE | `test/acceptance/harness-admission.test.ts` |
 | A1320 | A queued Pi task in a `local-only` project fails with evidence when its slot frees and starts no worker | AC-3.5, FR-1325 | example | DONE | `test/acceptance/harness-admission.test.ts` |
 | A1321 | A refused Pi dispatch spawns no worker on any other provider | AC-3.6, FR-1314 | example | DONE | `test/acceptance/harness-admission.test.ts` |
-| A1322 | A project with no `dispatch.json` blocks a dispatch with the `dispatch init` hint and creates no task | AC-4.1, FR-1331, SC-1304 | example | PENDING | |
-| A1323 | An explicit profile, a matching rule, and a configured default each resolve as before, in the same order | AC-4.2, FR-1331 | example | PENDING | |
-| A1324 | `bb factoryman dispatch init --provider <id>` writes `.bb/factoryman/dispatch.json` with one profile built from what bb lists, sets it as the default, and prints the path and the profile | AC-4.3, FR-1334, FR-1335, FR-1336 | example | PENDING | |
-| A1325 | The plugin's parser accepts the written file, and the next dispatch in that project resolves to the profile with the source "the configured default" | AC-4.4, FR-1335, SC-1304 | example | PENDING | |
-| A1326 | Running the command when a `dispatch.json` exists, valid or not, writes nothing and leaves the file as it was | AC-4.5, FR-1334 | example | PENDING | |
-| A1327 | The command exits with a clear message and writes nothing for an unknown provider, an unknown checkout, a provider with no model and no `--model`, and a missing flag | AC-4.6, FR-1333 | example | PENDING | |
-| A1328 | `--model`, `--level`, and `--mode` replace the values taken from bb, and a value that bb would block stops the write | AC-4.7, FR-1336 | example | PENDING | |
-| A1329 | The command calls no bb method that changes state and reads no credential | AC-4.8, FR-1337 | example | PENDING | |
+| A1322 | A project with no `dispatch.json` blocks a dispatch with the `dispatch init` hint and creates no task | AC-4.1, FR-1331, SC-1304 | example | DONE | `test/acceptance/harness-default.test.ts` |
+| A1323 | An explicit profile, a matching rule, and a configured default each resolve as before, in the same order | AC-4.2, FR-1331 | example | DONE | `test/acceptance/harness-default.test.ts` |
+| A1324 | `bb factoryman dispatch init --provider <id>` writes `.bb/factoryman/dispatch.json` with one profile built from what bb lists, sets it as the default, and prints the path and the profile | AC-4.3, FR-1334, FR-1335, FR-1336 | example | DONE | `test/acceptance/harness-default.test.ts` |
+| A1325 | The plugin's parser accepts the written file, and the next dispatch in that project resolves to the profile with the source "the configured default" | AC-4.4, FR-1335, SC-1304 | example | DONE | `test/acceptance/harness-default.test.ts` |
+| A1326 | Running the command when a `dispatch.json` exists, valid or not, writes nothing and leaves the file as it was | AC-4.5, FR-1334 | example | DONE | `test/acceptance/harness-default.test.ts` |
+| A1327 | The command exits with a clear message and writes nothing for an unknown provider, an unknown checkout, a provider with no model and no `--model`, and a missing flag | AC-4.6, FR-1333 | example | DONE | `test/acceptance/harness-default.test.ts` |
+| A1328 | `--model`, `--level`, and `--mode` replace the values taken from bb, and a value that bb would block stops the write | AC-4.7, FR-1336 | example | DONE | `test/acceptance/harness-default.test.ts` |
+| A1329 | The command calls no bb method that changes state and reads no credential | AC-4.8, FR-1337 | example | DONE | `test/acceptance/harness-default.test.ts` |
 | A1330 | A profile on omp with level `off` dispatches when the model lists `off` and the provider-wide list does not | AC-5.1, FR-1344, SC-1305 | example | DONE | `test/acceptance/harness-models.test.ts` |
 | A1331 | A level that the named model does not list is refused, and the message names the model and the levels it lists | AC-5.2, FR-1344, SC-1305 | example | DONE | `test/acceptance/harness-models.test.ts` |
 | A1332 | An unlisted model on Pi is refused with the list of models bb offers, or with "no models" and the load error | AC-5.3, FR-1345, SC-1305 | example | DONE | `test/acceptance/harness-models.test.ts` |
@@ -257,61 +257,61 @@ A1301 to A1309 live in `test/acceptance/harness-readiness.test.ts`, A1310 to A13
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| U1405 | `writeNew` creates the missing directory and the file and returns `written` | FR-1334 | example | PENDING | |
-| U1406 | `writeNew` returns `exists` for an existing file and leaves its content unchanged | AC-4.5, FR-1334 | example | PENDING | |
-| U1407 | `writeNew` rethrows a failure that is not "exists" (for example a path below a file) | FR-1334 | example | PENDING | |
+| U1405 | `writeNew` creates the missing directory and the file and returns `written` | FR-1334 | example | DONE | `src/files.test.ts` |
+| U1406 | `writeNew` returns `exists` for an existing file and leaves its content unchanged | AC-4.5, FR-1334 | example | DONE | `src/files.test.ts` |
+| U1407 | `writeNew` rethrows a failure that is not "exists" (for example a path below a file) | FR-1334 | example | DONE | `src/files.test.ts` |
 
 ### `src/dispatch/resolver.ts` and `src/tools/dispatch.ts`: no built-in default (H10)
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| U1408 | With no override, no matching rule, and no default, the resolver returns `blocked` with code `no_default_profile` and the message that names `bb factoryman dispatch init --provider <id>` | AC-4.1, FR-1331 | example | PENDING | |
+| U1408 | With no override, no matching rule, and no default, the resolver returns `blocked` with code `no_default_profile` and the message that names `bb factoryman dispatch init --provider <id>` | AC-4.1, FR-1331 | example | DONE | `src/dispatch/resolver.test.ts` |
 | U1409 | An explicit profile, a rule, and a configured default still resolve, in that order | AC-4.2 | example | BASELINE | `src/dispatch/resolver.test.ts::[U711]`, `[U716]`, `[U744]` |
-| U1410 | The resolver module exports no `BUILTIN_PROFILE`, and no resolution has the source `builtin` | FR-1331, FR-1332 | example | PENDING | |
-| U1411 | The dispatch success text for a configured default says "the configured default", and no source text names a built-in default | FR-1332 | example | PENDING | |
+| U1410 | The resolver module exports no `BUILTIN_PROFILE`, and no resolution has the source `builtin` | FR-1331, FR-1332 | example | DONE | `src/dispatch/resolver.test.ts` |
+| U1411 | The dispatch success text for a configured default says "the configured default", and no source text names a built-in default | FR-1332 | example | DONE | `src/tools/dispatch.test.ts` |
 
 ### `src/dispatch/init.ts` (H10)
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| U1412 | A call with no `--provider` prints the usage and exits 2 | FR-1333, AC-4.6 | example | PENDING | |
-| U1413 | A call with no `--project` and no project in the context prints the usage and exits 2 | FR-1333, AC-4.6 | example | PENDING | |
-| U1414 | A flag with no value prints the usage and exits 2 | FR-1333 | example | PENDING | |
-| U1415 | A flag with a blank value prints the usage and exits 2 | FR-1333 | example | PENDING | |
-| U1416 | A repeated flag prints the usage and exits 2 | FR-1333 | example | PENDING | |
-| U1417 | An unknown flag prints the usage and exits 2 | FR-1333 | example | PENDING | |
-| U1418 | The project comes from the context when `--project` is absent, and `--project` wins when both are set | FR-1333 | example | PENDING | |
-| U1419 | The default model is the one bb marks `isDefault` | FR-1336 | example | PENDING | |
-| U1420 | With no default model marked, the first listed model is used | FR-1336 | example | PENDING | |
-| U1421 | With no models and no `--model`, the command exits 1 with "bb lists no models for `<id>`. Pass --model <id>." and writes nothing | AC-4.6, FR-1336 | example | PENDING | |
-| U1422 | The level is the model's default level when it is not empty | FR-1336 | example | PENDING | |
-| U1423 | With no default level, the level is `medium` when the model lists it | FR-1336 | example | PENDING | |
-| U1424 | With no default level and no `medium`, the level is the first level the model lists | FR-1336 | example | PENDING | |
-| U1425 | With no levels at all and no `--level`, the command exits 1 with "Pass --level <id>." | AC-4.6, FR-1336 | example | PENDING | |
-| U1426 | The mode is `auto` when the provider offers it | FR-1336 | example | PENDING | |
-| U1427 | The mode is `accept-edits` when the provider offers no `auto` (omp) | FR-1336 | example | PENDING | |
-| U1428 | The mode is `full` when the provider offers only that (Pi) | FR-1336 | example | PENDING | |
-| U1429 | A provider that offers no mode makes the command exit 1 with "The provider offers no permission mode." | AC-4.6, FR-1336 | example | PENDING | |
-| U1430 | `--model`, `--level`, and `--mode` each replace the matching value | AC-4.7 | example | PENDING | |
-| U1431 | A profile that bb would block (an unlisted model on a refusing provider, a level the model lacks, a mode the provider lacks) exits 1 with the message that dispatch prints, and writes nothing | AC-4.7, FR-1336 | example | PENDING | |
-| U1432 | A provider that bb does not list exits 1, names the listed provider IDs, and writes nothing | AC-4.6 | example | PENDING | |
-| U1433 | A project with no local checkout exits 1 with "has no local checkout on the server" and writes nothing | AC-4.6 | example | PENDING | |
-| U1434 | A throw from the models read exits 1 with "Could not read bb's models" and writes nothing | AC-4.6 | example | PENDING | |
-| U1435 | An existing file, valid or invalid, exits 1 with "already exists, so nothing was written" and leaves the file unchanged | AC-4.5, FR-1334 | example | PENDING | |
-| U1436 | A throw from the write exits 1 with "Could not write <path>" | FR-1334 | example | PENDING | |
-| U1437 | The written text parses with `parseDispatchConfig`, holds `version` 1, one profile keyed by the provider ID, `default` set to it, and `rules` empty, uses two-space indentation, and ends with a newline | AC-4.3, AC-4.4, FR-1335 | example | PENDING | |
-| U1438 | The success output is "Wrote <path>.", the profile line, and the note that readiness is checked at dispatch | AC-4.3 | example | PENDING | |
-| U1439 | The command does not check readiness: a provider that is not ready still gets a file | plan: init skips readiness | example | PENDING | |
-| U1440 | The command makes only read calls to bb | AC-4.8, FR-1337 | example | PENDING | |
+| U1412 | A call with no `--provider` prints the usage and exits 2 | FR-1333, AC-4.6 | example | DONE | `src/dispatch/init.test.ts` |
+| U1413 | A call with no `--project` and no project in the context prints the usage and exits 2 | FR-1333, AC-4.6 | example | DONE | `src/dispatch/init.test.ts` |
+| U1414 | A flag with no value prints the usage and exits 2 | FR-1333 | example | DONE | `src/dispatch/init.test.ts` |
+| U1415 | A flag with a blank value prints the usage and exits 2 | FR-1333 | example | DONE | `src/dispatch/init.test.ts` |
+| U1416 | A repeated flag prints the usage and exits 2 | FR-1333 | example | DONE | `src/dispatch/init.test.ts` |
+| U1417 | An unknown flag prints the usage and exits 2 | FR-1333 | example | DONE | `src/dispatch/init.test.ts` |
+| U1418 | The project comes from the context when `--project` is absent, and `--project` wins when both are set | FR-1333 | example | DONE | `src/dispatch/init.test.ts` |
+| U1419 | The default model is the one bb marks `isDefault` | FR-1336 | example | DONE | `src/dispatch/init.test.ts` |
+| U1420 | With no default model marked, the first listed model is used | FR-1336 | example | DONE | `src/dispatch/init.test.ts` |
+| U1421 | With no models and no `--model`, the command exits 1 with "bb lists no models for `<id>`. Pass --model <id>." and writes nothing | AC-4.6, FR-1336 | example | DONE | `src/dispatch/init.test.ts` |
+| U1422 | The level is the model's default level when it is not empty | FR-1336 | example | DONE | `src/dispatch/init.test.ts` |
+| U1423 | With no default level, the level is `medium` when the model lists it | FR-1336 | example | DONE | `src/dispatch/init.test.ts` |
+| U1424 | With no default level and no `medium`, the level is the first level the model lists | FR-1336 | example | DONE | `src/dispatch/init.test.ts` |
+| U1425 | With no levels at all and no `--level`, the command exits 1 with "Pass --level <id>." | AC-4.6, FR-1336 | example | DONE | `src/dispatch/init.test.ts` |
+| U1426 | The mode is `auto` when the provider offers it | FR-1336 | example | DONE | `src/dispatch/init.test.ts` |
+| U1427 | The mode is `accept-edits` when the provider offers no `auto` (omp) | FR-1336 | example | DONE | `src/dispatch/init.test.ts` |
+| U1428 | The mode is `full` when the provider offers only that (Pi) | FR-1336 | example | DONE | `src/dispatch/init.test.ts` |
+| U1429 | A provider that offers no mode makes the command exit 1 with "The provider offers no permission mode." | AC-4.6, FR-1336 | example | DONE | `src/dispatch/init.test.ts` |
+| U1430 | `--model`, `--level`, and `--mode` each replace the matching value | AC-4.7 | example | DONE | `src/dispatch/init.test.ts` |
+| U1431 | A profile that bb would block (an unlisted model on a refusing provider, a level the model lacks, a mode the provider lacks) exits 1 with the message that dispatch prints, and writes nothing | AC-4.7, FR-1336 | example | DONE | `src/dispatch/init.test.ts` |
+| U1432 | A provider that bb does not list exits 1, names the listed provider IDs, and writes nothing | AC-4.6 | example | DONE | `src/dispatch/init.test.ts` |
+| U1433 | A project with no local checkout exits 1 with "has no local checkout on the server" and writes nothing | AC-4.6 | example | DONE | `src/dispatch/init.test.ts` |
+| U1434 | A throw from the models read exits 1 with "Could not read bb's models" and writes nothing | AC-4.6 | example | DONE | `src/dispatch/init.test.ts` |
+| U1435 | An existing file, valid or invalid, exits 1 with "already exists, so nothing was written" and leaves the file unchanged | AC-4.5, FR-1334 | example | DONE | `src/dispatch/init.test.ts` |
+| U1436 | A throw from the write exits 1 with "Could not write <path>" | FR-1334 | example | DONE | `src/dispatch/init.test.ts` |
+| U1437 | The written text parses with `parseDispatchConfig`, holds `version` 1, one profile keyed by the provider ID, `default` set to it, and `rules` empty, uses two-space indentation, and ends with a newline | AC-4.3, AC-4.4, FR-1335 | example | DONE | `src/dispatch/init.test.ts` |
+| U1438 | The success output is "Wrote <path>.", the profile line, and the note that readiness is checked at dispatch | AC-4.3 | example | DONE | `src/dispatch/init.test.ts` |
+| U1439 | The command does not check readiness: a provider that is not ready still gets a file | plan: init skips readiness | example | DONE | `src/dispatch/init.test.ts` |
+| U1440 | The command makes only read calls to bb | AC-4.8, FR-1337 | example | DONE | `src/dispatch/init.test.ts` |
 
 ### `src/tools/supervisor-command.ts` and `src/server.ts` (H10)
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| U1441 | `dispatch init` is routed to the init command | FR-1333 | example | PENDING | |
-| U1442 | `dispatch` with no subcommand or an unknown one prints the usage and exits 2 | FR-1333 | example | PENDING | |
-| U1443 | The usage text lists the `dispatch init` line | FR-1338 | example | PENDING | |
-| U1444 | The plugin registers a `dispatch` CLI entry with the usage line from the contract | FR-1333 | example | PENDING | |
+| U1441 | `dispatch init` is routed to the init command | FR-1333 | example | DONE | `src/tools/supervisor-command.test.ts` |
+| U1442 | `dispatch` with no subcommand or an unknown one prints the usage and exits 2 | FR-1333 | example | DONE | `src/tools/supervisor-command.test.ts` |
+| U1443 | The usage text lists the `dispatch init` line | FR-1338 | example | DONE | `src/tools/supervisor-command.test.ts` |
+| U1444 | The plugin registers a `dispatch` CLI entry with the usage line from the contract | FR-1333 | example | DONE | `src/server.test.ts` |
 
 ### `src/wiring/failure-cause.ts` (H3)
 

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { Profile } from "../machine/types";
-import { BUILTIN_PROFILE, RulesTableResolver } from "./resolver";
+import * as resolverModule from "./resolver";
+import { RulesTableResolver } from "./resolver";
 import { emptyDispatchConfig } from "./config";
 import type { DispatchConfig, Rule, TaskFacts } from "./types";
 
@@ -19,7 +20,7 @@ const resolver = new RulesTableResolver();
 const resolve = (cfg: DispatchConfig, facts: Partial<TaskFacts> = {}, choice = {}) => resolver.resolve({ ...TASK, ...facts }, cfg, choice);
 
 describe("RulesTableResolver precedence", () => {
-  it("[U710] lets an explicit profile win over a matching rule, the default, and the built-in default", () => {
+  it("[U710] lets an explicit profile win over a matching rule and the default", () => {
     const cfg = config([rule("r", { kind: "ship" }, "fast")], { default: "steady", standingPermission: { lowerReasoning: true } });
     expect(resolve(cfg, {}, { profile: deep })).toEqual({ status: "clear", profile: deep, source: "override", ruleId: null, machine: null });
   });
@@ -57,7 +58,8 @@ describe("RulesTableResolver precedence", () => {
     expect(resolve(config([rule("m", { kind: "ship" })]))).toMatchObject({ source: "rule", machine: null });
     expect(resolve(config([], { default: "steady" }))).toMatchObject({ source: "default", machine: null });
     expect(resolve(config(), {}, { profile: deep })).toMatchObject({ source: "override", machine: null });
-    expect(resolve(config())).toMatchObject({ source: "builtin", machine: null });
+    // With no source at all the resolver blocks (U1408) and carries no machine.
+    expect(resolve(config())).toMatchObject({ status: "blocked", code: "no_default_profile" });
   });
 
   it("[U812] is ambiguous when two matching rules have equal profiles and different machines", () => {
@@ -88,9 +90,25 @@ describe("RulesTableResolver precedence", () => {
     expect(resolve(config([rule("scouting", { kind: "scout" })], { default: "steady" }))).toEqual({ status: "clear", profile: steady, source: "default", ruleId: null, machine: null });
   });
 
-  it("[U717] applies the built-in default when there is no rule match and no default", () => {
-    expect(resolve(config())).toEqual({ status: "clear", profile: BUILTIN_PROFILE, source: "builtin", ruleId: null, machine: null });
-    expect(BUILTIN_PROFILE).toEqual({ provider: "claude-code", model: "claude-sonnet-5-5", reasoningLevel: "high", permissionMode: "auto" });
+  const NO_PROFILE_MESSAGE =
+    "No profile applies to this task. The project has no `default` in `.bb/factoryman/dispatch.json`, and no rule matches. " +
+    "The plugin does not choose a harness for you. Run `bb factoryman dispatch init --provider <id>` to write a starter file, set `default` in dispatch.json, or pass `profile`.";
+
+  it("[U1408] blocks with no_default_profile when there is no override, no matching rule, and no default", () => {
+    expect(resolve(config())).toEqual({ status: "blocked", code: "no_default_profile", message: NO_PROFILE_MESSAGE });
+    // A rule that does not match the task leaves the same block.
+    expect(resolve(config([rule("scouting", { kind: "scout" })]))).toEqual({ status: "blocked", code: "no_default_profile", message: NO_PROFILE_MESSAGE });
+  });
+
+  it("[U1410] exports no BUILTIN_PROFILE, and no resolution has the source builtin", () => {
+    expect(Object.keys(resolverModule)).not.toContain("BUILTIN_PROFILE");
+    const sources = new Set<string>();
+    for (const cfg of [config(), config([rule("r", { kind: "ship" })]), config([], { default: "steady" })]) {
+      const result = resolve(cfg);
+      if (result.status === "clear") sources.add(result.source);
+    }
+    expect(resolve(config(), {}, { profile: deep })).toMatchObject({ source: "override" });
+    expect([...sources].sort()).toEqual(["default", "rule"]);
   });
 });
 
@@ -157,7 +175,7 @@ describe("RulesTableResolver reasoning floor", () => {
     expect(resolve(offLadderBase, {}, { profile: { ...deep, reasoningLevel: "ultracode" } }).status).toBe("clear");
   });
 
-  it("[U726] sets no baseline from the built-in default, so a low explicit level is clear", () => {
+  it("[U726] sets no baseline when no rule matches and there is no default, so a low explicit level is clear", () => {
     expect(resolve(config(), {}, { profile: fast }).status).toBe("clear");
   });
 

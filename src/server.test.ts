@@ -85,6 +85,14 @@ describe("createPlugin", () => {
     expect(handled).toEqual(["experimental_host.deleted", "interaction.pending", "thread.archived", "thread.deleted", "thread.failed", "thread.idle", "turn.failed"]);
   });
 
+  it("[U1444] registers a dispatch command with the init usage line", async () => {
+    const host = createFakePluginHost({ pluginId: "factoryman" });
+    await createPlugin()(host.bb);
+    const command = host.harness.inspection.registrations.cli?.commands.find((entry) => entry.name === "dispatch");
+    expect(command).toMatchObject({ usage: "bb factoryman dispatch init --provider <id> [--project <id>] [--model <id>] [--level <id>] [--mode <mode>]" });
+    expect(command?.summary).toMatch(/starter/i);
+  });
+
   it("[U876] defines the machine check interval setting with a default of 30 seconds", async () => {
     const host = createFakePluginHost({ pluginId: "factoryman" });
     await createPlugin()(host.bb);

@@ -1,4 +1,5 @@
 import { createFakePluginHost, makeThreadResponse, type FakePluginHost } from "@get-bb/plugin-sdk/testing";
+import { nodeFiles, type Files } from "../../src/files";
 import { createPlugin } from "../../src/server";
 import type { Validator } from "../../src/validator/types";
 import type { ExecResult } from "../../src/exec";
@@ -199,8 +200,32 @@ export interface WorldOptions {
   resolver?: DispatchResolver;
   /** Switch the worker tool hint on. The plugin's default is off. */
   toolHints?: boolean;
+  /** Give the project no default profile when its checkout has no `dispatch.json`, as a real project has none. The world otherwise supplies `TEST_DEFAULT_DISPATCH`. */
+  bareConfig?: boolean;
   /** Run some commands for real. Return undefined to fall back to the scripted handler. */
   exec?: (command: string, args: readonly string[], cwd: string | undefined) => Promise<ExecResult> | undefined;
+}
+
+/**
+ * The `dispatch.json` that a test project has when it ships none. Before feature 009 the plugin supplied this
+ * profile itself, and many tests dispatch without naming a profile. A world keeps that meaning by reading this file
+ * where the checkout has none. The lowered-reasoning permission is on, because the old built-in set no floor (D-064).
+ * A test of the no-default block passes `bareConfig: true`.
+ */
+export const TEST_DEFAULT_DISPATCH = {
+  version: 1,
+  profiles: { "test-default": { provider: "claude-code", model: "claude-sonnet-5-5", reasoningLevel: "high", permissionMode: "auto" } },
+  default: "test-default",
+  rules: [],
+  standingPermission: { lowerReasoning: true },
+};
+
+/** Files that read a project's `dispatch.json` from the checkout, and the test default when the checkout has none. */
+function filesWithTestDefault(): Files {
+  return {
+    readText: async (path) => (await nodeFiles.readText(path)) ?? (path.endsWith("/.bb/factoryman/dispatch.json") ? JSON.stringify(TEST_DEFAULT_DISPATCH) : null),
+    writeNew: (path, text) => nodeFiles.writeNew(path, text),
+  };
 }
 
 /** Load the real plugin factory into the fake host, with a small in-memory bb behind `bb.sdk`. */
@@ -408,6 +433,7 @@ export async function loadWorld(options: WorldOptions = {}): Promise<World> {
     validator: options.validator,
     resolver: options.resolver,
     toolHints: options.toolHints,
+    files: options.bareConfig === true ? undefined : filesWithTestDefault(),
     fetch: async (url, init) => {
       webhook.calls.push({ url, init });
       if (webhook.result instanceof Error) throw webhook.result;

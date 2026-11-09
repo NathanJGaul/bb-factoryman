@@ -128,7 +128,9 @@ describe("machine placement through factoryman_dispatch", () => {
   it("[A814] refuses a local-only dispatch to a machine other than the clone host, and spawns nothing", async () => {
     const world = await setup();
     world.setProject({ deliveryMode: "local-only" });
-    const result = await world.call("factoryman_dispatch", { ...TASK, machine: "gpu-box" });
+    // The project has no checkout the plugin can read, so it names the profile itself.
+    const profile = { provider: "claude-code", model: "claude-sonnet-5-5", reasoningLevel: "high", permissionMode: "auto" };
+    const result = await world.call("factoryman_dispatch", { ...TASK, machine: "gpu-box", profile });
     expect(result.isError).toBe(true);
     expect(result.text).toContain("machine_mismatch");
     expect(world.sdkCalls("threads.spawn")).toEqual([]);
@@ -164,7 +166,9 @@ describe("local-only without a clone host", () => {
       ],
     });
     world.setProject({ deliveryMode: "local-only" });
-    const result = await world.call("factoryman_dispatch", { ...TASK, machine: "gpu-box" });
+    // The project has no checkout the plugin can read, so the call names the profile itself.
+    const profile = { provider: "claude-code", model: "claude-sonnet-5-5", reasoningLevel: "high", permissionMode: "auto" };
+    const result = await world.call("factoryman_dispatch", { ...TASK, machine: "gpu-box", profile });
     expect(result.isError).toBe(true);
     expect(result.text).toContain("machine_mismatch");
     expect(world.sdkCalls("threads.spawn")).toEqual([]);

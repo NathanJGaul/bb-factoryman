@@ -82,7 +82,7 @@ async function place(rt: Runtime, projectId: string, choice: MachineChoice): Pro
   }
 }
 
-const SOURCE_TEXT = { rule: "rule", default: "the configured default", builtin: "the built-in default" } as const;
+const SOURCE_TEXT = { rule: "rule", default: "the configured default" } as const;
 
 /**
  * Create a task and its worker. The dispatch resolver picks the profile when
