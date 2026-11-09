@@ -322,3 +322,10 @@ So the plugin sees a worker that finished a turn without reporting, and the supe
 
 - red: `pnpm vitest run tools/conformance` -> U1332 `AssertionError: claude-code: expected undefined to be 'fails'`; U1424 (the omp S7 checks); U1425 `AssertionError: expected '| S7 | pass | Failure |  |' to contain 'ends the turn normally'`
 - green: `Driver.failure.mode`, `Check.note` (also in the result schema), the `ends-quiet` branch of S7, and the notes in the document's detail column. One test pattern was corrected: U1424 looked for "ends the turn normally" and the note says "ends a failing model turn normally"; the test now matches the note. `pnpm vitest run tools/conformance` -> all pass; type check and lint pass.
+
+## Group 17: the server's command line (U1426) - found by reading `git status` after a test run
+
+A file named `--port` appeared in the repository root and was committed by mistake with the regeneration commit (removed in the next commit). It held request bodies. The server entry point read an option as `argv[argv.indexOf(flag) + 1]`; for an option that was not on the command line, `indexOf` returns -1 and the expression reads `argv[0]`, which was `--port`. So a missing `--bodies` made the server write its bodies into a file named `--port`. The acceptance test starts the server without `--bodies`.
+
+- red: `pnpm vitest run test/acceptance/conformance-fake-model.test.ts` -> U1426 `AssertionError: expected [ '--port' ] to deeply equal []`
+- green: `value(flag)` returns `undefined` when the flag is absent. `pnpm vitest run test/acceptance/conformance-fake-model.test.ts tools/fake-model` -> 39 passed. The real lab passes `--bodies` explicitly, so the live runs were not affected. Type check and lint pass.

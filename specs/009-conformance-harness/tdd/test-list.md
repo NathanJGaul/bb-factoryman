@@ -184,6 +184,7 @@ Tests carry their behavior id in the title, for example `[U1301]`.
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
+| U1426 | Takes an option only when it is on the command line: a missing `--bodies` or `--log` never reads another argument as its value, and a missing `--log` is refused | AC-4.3 | example | PENDING | |
 | U1420 | Keeps the raw request body of every request in a second file when asked, so a new harness can be diagnosed and its bodies can become test fixtures | AC-4.3 | example | PENDING | |
 
 ### `tools/fake-model/server.ts` (added)

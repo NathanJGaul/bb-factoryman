@@ -149,7 +149,7 @@ export function startServer(options: { port: number; logFile: string; bodiesFile
 }
 
 function main(argv: string[]): void {
-  const value = (flag: string) => argv[argv.indexOf(flag) + 1];
+  const value = (flag: string) => (argv.includes(flag) ? argv[argv.indexOf(flag) + 1] : undefined);
   const port = Number(value("--port") ?? "0");
   const logFile = value("--log");
   if (!Number.isInteger(port) || logFile === undefined) {
