@@ -36,7 +36,7 @@ export async function loadGaps(path: string): Promise<Gap[]> {
   try {
     text = await readFile(path, "utf8");
   } catch (error) {
-    throw new Error(`Cannot read known-gaps.json at ${path}: ${error instanceof Error ? error.message : String(error)}`);
+    throw new Error(`Cannot read known-gaps.json at ${path}: ${error instanceof Error ? error.message : String(error)}`, { cause: error });
   }
   return parseGaps(text);
 }
