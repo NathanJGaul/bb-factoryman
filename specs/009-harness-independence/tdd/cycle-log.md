@@ -218,3 +218,22 @@ Commit subject: "feat: carry the provider's reported cause in the failure eviden
   Other mutants: the oldest event read -> A1339 and U1456 fail; a failed read that throws out of the handler -> U1466 and A1343 fail; the cause never read -> 22 tests fail; an unbounded cause -> U1467 and A1344 fail; a remedy that ignores the turn failure's status -> U1464 fails.
 - suite: `pnpm run check` -> 105 files, 1598 passed, 0 failed.
 - refactor: none needed after the green.
+
+## Group 8: the decision record and the docs (tasks T1390 to T1394, story 7)
+
+Behaviors: A1345 to A1348.
+Commit subject: "docs: record the harness-independence decisions D-100 to D-107".
+
+- test: `test/acceptance/harness-docs.test.ts` (new, 6 cases) was written before any doc changed.
+- red: `pnpm vitest run test/acceptance/harness-docs.test.ts` -> `6 failed`; `expected [ 99 ] to deeply equal [ 99, 100, 101, 102, 103, 104, …(3) ]` (A1345), `expected '\nThe design lists "the plugin\'s bui…' to match /Amended by D-104/` (A1346), `... /Amended by D-105/` (A1347), `docs/DESIGN.md: ... not to match /built-in default/i` (A1348), and the two string checks on `docs/DESIGN.md` and `docs/LIVE-CHECK.md`.
+- green: `docs/DECISIONS.md` gained D-100 to D-107 and an "Amended by" line in D-063 and D-064 (their text is unchanged); `docs/DESIGN.md` rung 4 and the `docs/LIVE-CHECK.md` line name the block and `dispatch init`.
+  The first wording of both lines said "The plugin has no built-in default", which the test (rightly) rejects as a mention, so they say "The plugin picks no harness for you" and "The plugin picks no profile itself".
+  `pnpm vitest run test/acceptance/harness-docs.test.ts test/acceptance/live-check.test.ts` -> 16 passed.
+- plan refinement: the A1348 row of the test list said that `CLAUDE.md` is unchanged.
+  A unit test cannot know the base commit, and pinning a hash would block every later edit.
+  The row now says that the final gate checks it against the base commit (T1397), and the docs test checks the docs and skills only.
+- also in this group (no behavior id): `test/acceptance/dispatch-resolver.test.ts` [A713] ("gives the built-in default when dispatch.json is absent") would have kept passing for the wrong reason, because the test world supplies a default.
+  It now uses `bareConfig` and asserts the init hint.
+  The note on the tdd profile (`.specify/memory/tdd-profile.md`, task T1393) lists the new fixtures and options.
+- suite: `pnpm run check` -> 106 files, 1604 passed, 0 failed.
+- refactor: none needed.

@@ -120,11 +120,11 @@ H2 comes before H10 because `dispatch init` reads bb's model list (`research.md`
 **Goal**: `docs/DECISIONS.md`, `docs/DESIGN.md`, and `docs/LIVE-CHECK.md` agree with the code.
 **Independent test**: `test/acceptance/harness-docs.test.ts` passes.
 
-- [ ] T1390 [US7] [A1345] [A1346] [A1347] [A1348] Write the red tests in `test/acceptance/harness-docs.test.ts`: `docs/DECISIONS.md` holds D-100 to D-107 in order with a heading and a status each; D-100 names D1 to D5 and the tasks built and open; D-063 and D-064 keep their text and carry an "Amended by" line; no file under `docs/` or `skills/` says that the plugin has a built-in default profile; `docs/DESIGN.md` rung 4 and `docs/LIVE-CHECK.md` no longer name it; `CLAUDE.md` is byte for byte unchanged (compare with `git show HEAD:CLAUDE.md`).
-- [ ] T1391 [US7] [A1345] [A1346] [A1347] Write D-100 to D-107 and the "Amended by" lines for D-063 and D-064 in `docs/DECISIONS.md` (one sentence per line, sentence case headings, active voice). D-107 lists every existing test that changed with its cycle number.
-- [ ] T1392 [P] [US7] [A1348] Change rung 4 of the precedence list in `docs/DESIGN.md` to say that dispatch blocks and names `bb factoryman dispatch init`, and change the "built-in default" line of `docs/LIVE-CHECK.md` (section 3, the dispatch config row) to match.
-- [ ] T1393 [P] [US7] Add a note to `.specify/memory/tdd-profile.md` for the new fixtures and options (`providerStates`, `models`, `threadEvents`, `toolHints`, `FakeFiles.writeNew`) and for the 009 test files.
-- [ ] T1394 [US7] [A1345] [A1346] [A1347] [A1348] Outer loop: the story 7 tests are green and `pnpm run check` is green.
+- [X] T1390 [US7] [A1345] [A1346] [A1347] [A1348] Write the red tests in `test/acceptance/harness-docs.test.ts`: `docs/DECISIONS.md` holds D-100 to D-107 in order with a heading and a status each; D-100 names D1 to D5 and the tasks built and open; D-063 and D-064 keep their text and carry an "Amended by" line; no file under `docs/` or `skills/` says that the plugin has a built-in default profile; `docs/DESIGN.md` rung 4 and `docs/LIVE-CHECK.md` no longer name it; `CLAUDE.md` is byte for byte unchanged (compare with `git show HEAD:CLAUDE.md`).
+- [X] T1391 [US7] [A1345] [A1346] [A1347] Write D-100 to D-107 and the "Amended by" lines for D-063 and D-064 in `docs/DECISIONS.md` (one sentence per line, sentence case headings, active voice). D-107 lists every existing test that changed with its cycle number.
+- [X] T1392 [P] [US7] [A1348] Change rung 4 of the precedence list in `docs/DESIGN.md` to say that dispatch blocks and names `bb factoryman dispatch init`, and change the "built-in default" line of `docs/LIVE-CHECK.md` (section 3, the dispatch config row) to match.
+- [X] T1393 [P] [US7] Add a note to `.specify/memory/tdd-profile.md` for the new fixtures and options (`providerStates`, `models`, `threadEvents`, `toolHints`, `FakeFiles.writeNew`) and for the 009 test files.
+- [X] T1394 [US7] [A1345] [A1346] [A1347] [A1348] Outer loop: the story 7 tests are green and `pnpm run check` is green.
 
 ## Phase 9: Polish and the final gate
 

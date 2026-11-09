@@ -1,0 +1,77 @@
+import { readdirSync, readFileSync, statSync } from "node:fs";
+import { join } from "node:path";
+import { describe, expect, it } from "vitest";
+import { section } from "../fixtures/markdown";
+
+const root = new URL("../../", import.meta.url);
+const read = (path: string): string => readFileSync(new URL(path, root), "utf8");
+const decisions = (): string => read("docs/DECISIONS.md");
+
+const HEADING = /^### D-(\d+): (.+) \((.+)\)$/;
+const decisionHeadings = (text: string) =>
+  text
+    .split("\n")
+    .map((line) => HEADING.exec(line))
+    .filter((match): match is RegExpExecArray => match !== null)
+    .map((match) => ({ number: Number(match[1]), title: match[2] as string, status: match[3] as string }));
+
+/** Every Markdown file under a directory of the repository, as a path relative to the repository root. */
+function markdownIn(dir: string): string[] {
+  const base = new URL(`${dir}/`, root);
+  const walk = (current: string): string[] =>
+    readdirSync(current).flatMap((entry) => {
+      const full = join(current, entry);
+      return statSync(full).isDirectory() ? walk(full) : full.endsWith(".md") ? [full] : [];
+    });
+  return walk(base.pathname).map((full) => full.slice(new URL(".", root).pathname.length));
+}
+
+describe("the decision record of the harness work", () => {
+  it("[A1345] holds D-100 to D-107 in order after D-099, each with a status, and D-100 records the five decisions and the tasks built and open", () => {
+    const found = decisionHeadings(decisions());
+    const numbers = found.map((entry) => entry.number);
+    expect(numbers.slice(numbers.indexOf(99))).toEqual([99, 100, 101, 102, 103, 104, 105, 106, 107]);
+    expect(found.find((entry) => entry.number === 100)?.status).toMatch(/Decided by the captain/);
+
+    const text = section(decisions(), "### D-100:");
+    for (const decision of ["D1 A", "D2 A", "D3 A", "D4 B", "D5 A"]) expect(text, decision).toContain(decision);
+    for (const task of ["H1", "H2", "H3", "H5", "H10", "H11"]) expect(text, `built: ${task}`).toContain(task);
+    for (const task of ["H4", "H6", "H9", "H12", "H13", "H14"]) expect(text, `open: ${task}`).toContain(task);
+    expect(text).toMatch(/builds|built/i);
+    expect(text).toMatch(/stay[s]? open|not built|open/i);
+  });
+
+  it("[A1346] keeps the text of D-063 and adds an Amended by D-104 line", () => {
+    const text = section(decisions(), "### D-063:");
+    expect(text).toContain('The design lists "the plugin\'s built-in default" as the last rung and does not name one.');
+    expect(text).toContain("If the built-in provider is unavailable, dispatch blocks (FR-708).");
+    expect(text).toContain("It never falls back to another provider.");
+    expect(text).toMatch(/Amended by D-104/);
+  });
+
+  it("[A1347] adds an Amended by D-105 line to D-064 that records the per-provider ladder", () => {
+    const text = section(decisions(), "### D-064:");
+    expect(text).toContain("Reasoning level IDs are provider-specific (spike item 29), so the ladder lives in the config");
+    expect(text).toMatch(/Amended by D-105/);
+    const amendment = section(decisions(), "### D-105:");
+    expect(amendment).toMatch(/record/i);
+    expect(amendment).toMatch(/provider ID/i);
+    expect(amendment).toMatch(/cannot be ranked/);
+  });
+
+  it("[A1348] names no built-in default profile in the docs outside the decision log, nor in the skills", () => {
+    const files = [...markdownIn("docs"), ...markdownIn("skills")].filter((path) => path !== "docs/DECISIONS.md");
+    expect(files.length).toBeGreaterThan(3);
+    for (const path of files) expect(read(path), path).not.toMatch(/built-in default/i);
+  });
+
+  it("[A1348] states the new last rung in the design: dispatch blocks and names the init command", () => {
+    const design = read("docs/DESIGN.md");
+    expect(design).toContain("bb factoryman dispatch init");
+    expect(design).toMatch(/4\. No profile: dispatch blocks/);
+  });
+
+  it("[A1348] tells the runbook reader to stop when dispatch blocks with no_default_profile though dispatch.json exists", () => {
+    expect(read("docs/LIVE-CHECK.md")).toContain("no_default_profile");
+  });
+});

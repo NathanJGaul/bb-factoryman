@@ -165,11 +165,12 @@ describe("dispatch profile resolution through the plugin factory", () => {
     expect(spawned(world)).toMatchObject({ model: "stub-model" });
   });
 
-  it("[A713] gives the built-in default when dispatch.json is absent", async () => {
-    const world = await loadWorld({ checkout: makeCheckout() });
+  it("[A713] blocks with the init hint when dispatch.json is absent, because the plugin has no built-in default", async () => {
+    const world = await loadWorld({ checkout: makeCheckout(), bareConfig: true });
     const result = await world.call("factoryman_dispatch", TASK);
-    expect(result.isError).toBe(false);
-    expect(spawned(world)).toMatchObject({ providerId: "claude-code", model: "claude-sonnet-5-5" });
+    expect(result.isError).toBe(true);
+    expect(result.text).toContain("bb factoryman dispatch init --provider <id>");
+    expect(world.sdkCalls("threads.spawn")).toEqual([]);
   });
   it("[A715] fails closed when bb's provider list cannot be read", async () => {
     const world = await loadWorld({ checkout: makeCheckout({ dispatch: config() }), providersError: new Error("bb is down") });

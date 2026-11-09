@@ -70,10 +70,10 @@ A1301 to A1309 live in `test/acceptance/harness-readiness.test.ts`, A1310 to A13
 | A1342 | A sign-in cause and a no-model cause each add a remedy line, and the cause stays in the evidence unchanged | AC-6.4, FR-1354 | example | DONE | `test/acceptance/harness-failure.test.ts` |
 | A1343 | With no error event, or a failed read, the evidence is today's text, the task still fails, and the plugin logs the read failure | AC-6.5, FR-1356 | example | DONE | `test/acceptance/harness-failure.test.ts` |
 | A1344 | A long cause with line breaks and control characters is flattened and bounded, and shown as text the provider reported | AC-6.6, FR-1355 | example | DONE | `test/acceptance/harness-failure.test.ts` |
-| A1345 | `docs/DECISIONS.md` holds D-100 to D-107, and D-100 records the captain's five decisions with the tasks built and open | AC-7.1, FR-1361 | example | PENDING | |
-| A1346 | D-063 keeps its text and carries an "Amended by" line | AC-7.2, FR-1361 | example | PENDING | |
-| A1347 | D-064 carries an "Amended by" line that records the per-provider ladder | AC-7.3, FR-1361 | example | PENDING | |
-| A1348 | No file under `docs/` or `skills/` says that the plugin has a built-in default profile, and `CLAUDE.md` is unchanged | AC-7.4, FR-1362 | example | PENDING | |
+| A1345 | `docs/DECISIONS.md` holds D-100 to D-107, and D-100 records the captain's five decisions with the tasks built and open | AC-7.1, FR-1361 | example | DONE | `test/acceptance/harness-docs.test.ts` |
+| A1346 | D-063 keeps its text and carries an "Amended by" line | AC-7.2, FR-1361 | example | DONE | `test/acceptance/harness-docs.test.ts` |
+| A1347 | D-064 carries an "Amended by" line that records the per-provider ladder | AC-7.3, FR-1361 | example | DONE | `test/acceptance/harness-docs.test.ts` |
+| A1348 | No file under `docs/` (outside the decision log, which records the history) or under `skills/` says that the plugin has a built-in default profile; `CLAUDE.md` stays unchanged, which the final gate checks against the base commit (T1397) | AC-7.4, FR-1362 | example | DONE | `test/acceptance/harness-docs.test.ts` |
 | A1349 | `pnpm run build` (`bb plugin build`) passes, and `pnpm run check` passes. This is a manual run at the final gate, logged in the cycle log | SC-1308 | example | PENDING | manual: task T1395 |
 | A1350 | A queued task whose model bb no longer lists for a provider that refuses unlisted models stays queued and spawns no worker | FR-1347 | example | DONE | `test/acceptance/harness-models.test.ts` |
 

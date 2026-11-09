@@ -173,7 +173,7 @@ MACHINE=$(bblab x bb machine list --json | jq -r '.[0].name')
 | The skills | section 4 | both plugin skills listed |
 
 Check the path assumption of D-062: `.bb/factoryman/` must be readable from the server for a project whose default source is on the server's own machine.
-If dispatch names "the built-in default" although `dispatch.json` exists, stop and record it.
+If dispatch blocks with `no_default_profile` although `dispatch.json` exists, stop and record it. The plugin picks no profile itself (D-104), so that block means the server could not read the file.
 
 ### Tier 1 (no model, a stub agent)
 
