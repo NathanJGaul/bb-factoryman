@@ -41,7 +41,7 @@ describe("dispatch init: the arguments", () => {
     ["no --project and no project in the context", ["--provider", "codex"]],
     ["a flag with no value", ["--provider", "codex", "--project"]],
     ["a flag with a blank value", ["--provider", "codex", "--project", "  "]],
-    ["a flag whose value is another flag", ["--provider", "--project", "proj-1"]],
+    ["a flag whose value is another flag", ["--provider", "--model", "--project", "proj-1"]],
     ["a repeated flag", ["--provider", "codex", "--provider", "pi", "--project", "proj-1"]],
     ["an unknown flag", ["--provider", "codex", "--project", "proj-1", "--force", "yes"]],
     ["a stray word", ["codex", "--project", "proj-1"]],
