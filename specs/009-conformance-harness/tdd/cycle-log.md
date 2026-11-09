@@ -289,3 +289,13 @@ The second Claude Code run passed S2, S3, S4, S6, S8, and S11 and failed S5, S9,
 - green: the server writes the raw bodies when it gets `--bodies <file>` (the real lab passes it), and `messages.parse` reads a `system` message as system text. `pnpm vitest run tools/fake-model` -> 33 passed.
 - U1422 (the recorded request): `test/fixtures/recorded/claude-code-supervisor-after-stamp.json` holds the real request body (Claude Code 2.1.316) with the tool schemas and the main system prompt cut. The test was written after the fix, so a revert-red was run: the old `messages.ts` restored from `HEAD` -> `AssertionError: expected [] to deeply equal [ 'factoryman_dispatch', …(3) ]`, then the fix restored -> `pnpm vitest run tools/fake-model` -> 33 passed. U1422 is `TEST_AFTER` with a recorded revert-red, as in D-099.
 - lint and type check pass.
+
+## Live run 4: Claude Code tier 1.5 after the system-role fix, and one more fix (U1423)
+
+`pnpm run conformance -- --tier 1.5 --harness claude-code` (10 min 14 s): S2, S3, S4, S5, S6, S8, S11 `pass`; S1, S7, S9 `known-gap` (the same checks as the other harnesses); S10 `skipped`; S12 `fail`. The isolation was clean.
+
+S12 failed because the busy supervisor's `CALL factoryman_dispatch` never ran. After the `ToolSearch` hop, Claude Code adds the user text `Tool loaded.` and a `<total_tokens>` reminder after tool results. The brain took the latest user text as the prompt, found no directive in it, and answered with plain text.
+
+- red: `pnpm vitest run tools/fake-model/brain.test.ts -t U1423` -> `Error: expected a tool call, got {"kind":"text","text":"OK (conformance)"}`
+- green: the reminder pattern in `brain.ts` also strips `<total_tokens>` blocks and the line `Tool loaded.`. `pnpm vitest run tools/fake-model tools/conformance/scenarios` -> 59 passed.
+- S12 also changed in one respect: the supervisor's busy time is 45 s and no longer the lab's whole patience (5 minutes), because the scenario needs only the time for a worker to report. A worker that is slower than 45 s makes the wake arrive after the turn, and S12.mid-turn then fails, which is the signal the check exists to give.

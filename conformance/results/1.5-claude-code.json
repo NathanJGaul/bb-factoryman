@@ -10,11 +10,11 @@
     "version": "0.49.0"
   },
   "plugin": {
-    "commit": "1e93a7d",
+    "commit": "bdacac4",
     "dirty": false
   },
-  "startedAt": "2026-11-09T04:50:37.233Z",
-  "finishedAt": "2026-11-09T05:01:16.522Z",
+  "startedAt": "2026-11-09T05:09:28.028Z",
+  "finishedAt": "2026-11-09T05:19:41.474Z",
   "offline": true,
   "isolation": {
     "clean": true,
@@ -35,7 +35,7 @@
           "id": "S1.unready-blocks",
           "title": "A dispatch to codex (not_installed) is blocked and creates no task",
           "ok": false,
-          "evidence": "task created: t-941b749c; tasks 0 to 1; text: Dispatched scout task t-941b749c in local-only mode. Worker thread thr_da48ea6r3d, branch fm/t-941b749c.",
+          "evidence": "task created: t-4e7a15c7; tasks 0 to 1; text: Dispatched scout task t-4e7a15c7 in local-only mode. Worker thread thr_q9sthwcz93, branch fm/t-4e7a15c7.",
           "gap": {
             "task": "H1",
             "reason": "dispatch trusts the `available` flag of bb's provider list, which means installed and not signed in, and does not read providerStates"
@@ -45,7 +45,7 @@
           "id": "S1.remedy",
           "title": "The refusal names bb's status \"not_installed\" or its login command",
           "ok": false,
-          "evidence": "Dispatched scout task t-941b749c in local-only mode. Worker thread thr_da48ea6r3d, branch fm/t-941b749c.",
+          "evidence": "Dispatched scout task t-4e7a15c7 in local-only mode. Worker thread thr_q9sthwcz93, branch fm/t-4e7a15c7.",
           "gap": {
             "task": "H1",
             "reason": "the refusal cannot name bb's status or login command, because dispatch does not read providerStates"
@@ -103,7 +103,7 @@
           "id": "S4.branch-commit",
           "title": "The task branch holds the one commit the worker made",
           "ok": true,
-          "evidence": "git rev-list --count main..fm/t-4eec759e: 1"
+          "evidence": "git rev-list --count main..fm/t-55486b8c: 1"
         },
         {
           "id": "S4.review-ready",
@@ -121,7 +121,7 @@
     },
     {
       "id": "S5",
-      "verdict": "fail",
+      "verdict": "pass",
       "checks": [
         {
           "id": "S5.worker-tools",
@@ -132,20 +132,20 @@
         {
           "id": "S5.worker-skills",
           "title": "The worker is offered its own skill and not the supervisor's",
-          "ok": false,
-          "evidence": "skills: none"
+          "ok": true,
+          "evidence": "skills: factoryman-worker"
         },
         {
           "id": "S5.supervisor-tools",
           "title": "The supervisor is offered its four tools and not the report tool",
-          "ok": false,
-          "evidence": "tools: none (thread thr_mq9wk2pn42)"
+          "ok": true,
+          "evidence": "tools: factoryman_dispatch, factoryman_merge, factoryman_status, factoryman_teardown (thread thr_xup9qqddqc)"
         },
         {
           "id": "S5.supervisor-skills",
           "title": "The supervisor is offered its own skill and not the worker's",
-          "ok": false,
-          "evidence": "skills: none"
+          "ok": true,
+          "evidence": "skills: factoryman-supervisor"
         }
       ]
     },
@@ -221,7 +221,7 @@
     },
     {
       "id": "S9",
-      "verdict": "fail",
+      "verdict": "known-gap",
       "checks": [
         {
           "id": "S9.start-command",
@@ -243,13 +243,13 @@
           "id": "S9.stamp-advice",
           "title": "The stamp needs no advice on this harness",
           "ok": true,
-          "evidence": "Thread thr_yyfzysh5s9 is now a factoryman supervisor. It sees the four supervisor tools from its next session."
+          "evidence": "Thread thr_mv9f86wi3p is now a factoryman supervisor. It sees the four supervisor tools from its next session."
         },
         {
           "id": "S9.tools-after-step",
           "title": "After the documented step (next-turn) the supervisor has its four tools and its skill",
-          "ok": false,
-          "evidence": "tools: none; skills: none"
+          "ok": true,
+          "evidence": "tools: factoryman_dispatch, factoryman_merge, factoryman_status, factoryman_teardown; skills: factoryman-supervisor"
         }
       ]
     },
@@ -272,7 +272,7 @@
           "id": "S11.dirty-kept",
           "title": "The dirty worktree is still there",
           "ok": true,
-          "evidence": "worktree: /var/tmp/bblab-conformance/data/plugins/environment-git-worktree/host-data/worktrees/thr_qhm79k7eaq-1/work"
+          "evidence": "worktree: /var/tmp/bblab-conformance/data/plugins/environment-git-worktree/host-data/worktrees/thr_czmy48s3mq-1/work"
         },
         {
           "id": "S11.clean-removed",

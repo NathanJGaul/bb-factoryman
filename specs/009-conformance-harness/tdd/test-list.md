@@ -157,6 +157,7 @@ Tests carry their behavior id in the title, for example `[U1301]`.
 | U1356 | The flag `fail=<code>` returns an error action with that HTTP status and a cause text | AC-4.2 | example | PENDING | |
 | U1357 | Calls `ToolSearch` before the deferred report tool when the report tool is not offered, and calls the report tool after the search result | AC-3.3 | example | PENDING | |
 | U1358 | Writes the report JSON to the `xd://` device with the `write` tool when the report tool is only a device | AC-3.3 | example | PENDING | |
+| U1423 | Keeps running a directive script when the harness adds its own user text after a tool result (Claude Code adds `Tool loaded.` after a ToolSearch call and a `<total_tokens>` reminder after every call) | AC-3.3 | example | PENDING | |
 | U1359 | Takes a prompt with no directive and no worker text as a plain turn and answers with text | FR-1305 | example | PENDING | |
 
 ### `tools/fake-model/wire`

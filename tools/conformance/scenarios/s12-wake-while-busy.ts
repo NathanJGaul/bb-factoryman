@@ -1,6 +1,9 @@
 import { check, type Lab, type Scenario } from "../port.ts";
 import { matching, sleep, supervisorWithRole, until } from "./helpers.ts";
 
+/** How long the supervisor keeps its turn open. A harness worker needs to report inside this time. */
+const BUSY_MS = 45_000;
+
 /** S12: a wake that reaches a busy supervisor arrives exactly once. */
 export const s12: Scenario = {
   id: "S12",
@@ -12,7 +15,7 @@ export const s12: Scenario = {
     const known = new Set((await lab.tasks()).map((t) => t.taskId));
     const dispatch = JSON.stringify({ kind: "scout", description: "S12 busy probe", profile: lab.driver.profile });
     // The supervisor dispatches, then keeps its turn open, so the worker's report arrives while it is busy.
-    await lab.tell(threadId, label, [`CALL factoryman_dispatch ${dispatch}`, `SLEEP ${Math.max(20_000, lab.patienceMs)}`], { wait: false });
+    await lab.tell(threadId, label, [`CALL factoryman_dispatch ${dispatch}`, `SLEEP ${BUSY_MS}`], { wait: false });
     const task = await until(lab, async () => (await lab.tasks()).find((t) => !known.has(t.taskId)) ?? null);
     if (task !== null) await lab.waitForState(task.taskId, ["report_ready", "failed"], lab.patienceMs);
     await lab.waitIdle(threadId, lab.patienceMs + 30_000);

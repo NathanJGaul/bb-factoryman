@@ -4,7 +4,7 @@ import type { Action, Conversation, ToolCall, Turn } from "./types.ts";
 /** The cause text that a `fail=<code>` flag puts in the error body. The suite looks for it in the task's evidence. */
 export const causeText = (code: string): string => `CONFORMANCE-CAUSE-${code}`;
 
-const REMINDER = /<system-reminder>[\s\S]*?<\/system-reminder>/g;
+const REMINDER = /<system-reminder>[\s\S]*?<\/system-reminder>|<total_tokens>[\s\S]*?<\/total_tokens>|^Tool loaded\.$/gm;
 const WORKER = /You are the worker for (scout|ship) task (\S+)\. The delivery mode is ([\w-]+)\./;
 const DIRECTIVE = /^(?:CALL |SHELL |SLEEP |LIST_TOOLS)/m;
 const HOLD_MS = 120_000;

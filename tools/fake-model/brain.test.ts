@@ -133,6 +133,19 @@ describe("the worker script", () => {
   });
 });
 
+describe("text that a harness adds after a tool result", () => {
+  it("[U1423] keeps running a directive script after Tool loaded. and a total_tokens reminder", () => {
+    const prompt = ['CALL factoryman_dispatch {"kind":"scout","description":"x"}', "SLEEP 40"].join("\n");
+    const deferredTools = [tool("ToolSearch", { type: "object", properties: { query: { type: "string" }, max_results: { type: "number" } }, required: ["query"] }), tool("mcp__bb-bridge__factoryman_dispatch")];
+    const system = "<system-reminder>deferred: mcp__bb-bridge__factoryman_dispatch</system-reminder>";
+    const afterSearch: Turn[] = [user(prompt), ...called("ToolSearch", { query: "select:mcp__bb-bridge__factoryman_dispatch" }), user("Tool loaded."), user("<total_tokens>14999985 tokens left</total_tokens>")];
+    const next = nextAction(convo(afterSearch, deferredTools, system));
+    expect(call(next)).toEqual({ name: "mcp__bb-bridge__factoryman_dispatch", args: { kind: "scout", description: "x" } });
+    const afterCall: Turn[] = [...afterSearch, ...called("mcp__bb-bridge__factoryman_dispatch"), user("<total_tokens>14999000 tokens left</total_tokens>")];
+    expect(nextAction(convo(afterCall, deferredTools, system))).toMatchObject({ kind: "delay", ms: 40 });
+  });
+});
+
 describe("a turn with no script", () => {
   it("[U1359] answers a plain prompt, a wake message after a finished script, and a system reminder with text", () => {
     expect(nextAction(convo([user("hello there")]))).toMatchObject({ kind: "text" });
