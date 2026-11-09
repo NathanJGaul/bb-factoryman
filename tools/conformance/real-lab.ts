@@ -3,6 +3,7 @@ import { createServer } from "node:net";
 import { dirname, join } from "node:path";
 import type { RunArgs } from "./args.ts";
 import type { Driver } from "./drivers/types.ts";
+import { judgeIsolation } from "./isolation.ts";
 import { labEnv, labPaths, offlineProof, pluginBuildCommand, pluginCopyArgs, resetLab, type LabSettings } from "./lab-env.ts";
 import type { DispatchOptions, EventRow, Lab, Offers, ProviderState, TaskRow, ThreadFacts, ToolResult, Wake, Who } from "./port.ts";
 import { fakeOffers, readWakes, stubOffers, type LogLine, type ThreadEvent } from "./readers.ts";
@@ -373,13 +374,10 @@ export async function openRealLab(init: RealLabInit): Promise<LabSession> {
     async close(): Promise<Isolation> {
       const stopped = await down();
       await evidence("snap", "after");
-      const diff = ansi((await evidence("diff", "before", "after")).stdout);
-      const leaks = diff.split("\n").filter((line) => /^LEAK/.test(line));
-      const sections = diff.split(/^== /m).filter((section) => /^(credential \+ git config stat|real-home file NAMES)/.test(section));
-      const changed = sections.filter((section) => /^[<>]/m.test(section)).map((section) => section.split("\n")[0]);
+      const verdict = judgeIsolation(ansi((await evidence("diff", "before", "after")).stdout));
       const tripwire = ansi(stopped.stdout).split("\n").find((line) => line.startsWith("tripwire:")) ?? "tripwire: no report";
-      const clean = leaks.length === 0 && changed.length === 0;
-      return { clean, report: [clean ? "no change to the real home, the credentials, or the lab process list" : `changed: ${[...leaks, ...changed].join("; ")}`, tripwire].join(". ") };
+      const note = verdict.ignored > 0 ? ` (${verdict.ignored} unrelated file name change(s) from other tools were ignored)` : "";
+      return { clean: verdict.clean, report: [verdict.clean ? `no change to the real home, the credentials, or the lab process list${note}` : `changed: ${verdict.changes.join("; ")}`, tripwire].join(". ") };
     },
   };
 }

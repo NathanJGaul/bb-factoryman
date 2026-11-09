@@ -209,6 +209,12 @@ Tests carry their behavior id in the title, for example `[U1301]`.
 | --- | --- | --- | --- | --- | --- |
 | U1413 | Starts every run from a clean lab directory: removes the previous run's data, repositories, and logs, and keeps the pinned bb and bb's build toolchain, which needs the network to install | AC-1.1, AC-5.3 | example | PENDING | |
 
+### `tools/conformance/isolation.ts` (added)
+
+| id | behavior | traces | kind | state | test |
+| --- | --- | --- | --- | --- | --- |
+| U1417 | Reads the `bblab-evidence diff` and calls the run unclean only for a leak line, a change to a credential or git config file, or a changed file name in a place a harness or bb would write (the harness homes, the bb homes, ssh, gh, git, systemd, or a path with `bblab`), and ignores churn from other tools | AC-1.5, FR-1310 | example | PENDING | |
+
 ### `tools/conformance/shell.ts` (added)
 
 | id | behavior | traces | kind | state | test |

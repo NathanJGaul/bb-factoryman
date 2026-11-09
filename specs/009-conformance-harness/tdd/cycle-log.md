@@ -248,3 +248,13 @@ The first Pi run stalled for 19 minutes after the lab started. The runner had st
   - U1416 `AssertionError: expected '' to match /timed out after 300 ms/`
 - green: `exec` resolves when the command exits (after a 300 ms grace for output), stops a command at its time limit with a note in `stderr`, and ignores a write error on a closed input pipe (that `EPIPE` showed as an unhandled error in the first green run and was fixed in the same cycle). The fake model start command no longer uses `cd &&`, and every command that runs in the lab gets a 300 s limit by default. `pnpm vitest run tools/conformance/shell.test.ts` -> 3 passed.
 - refactor: none needed.
+
+## Live run 2: tier 1.5 on Pi (A1312 to A1315, T1354)
+
+`pnpm run conformance -- --tier 1.5 --harness pi --lab-dir /var/tmp/bblab-conformance` (8 min 39 s), real Pi 1.4.0 behind the fake model, lab offline (a public connection failed with `ENETUNREACH`, the loopback answered with HTTP 200).
+
+- Verdicts: S2, S3, S4, S5, S6, S8, S11, S12 `pass`; S1, S7, S9 `known-gap` (the same four checks as tier 1: S1.unready-blocks, S1.remedy, S7.cause, S9.start-command); S10 `skipped`.
+- Pi evidence worth keeping: the S7 failure evidence was `worker thread failed: provider error (category unauthorized, HTTP 401)`, with the 401 text dropped (H3). The supervisor half of S5 and S9 and S12 ran on a Pi supervisor thread with the fake model playing `CALL` and `SLEEP`.
+- The isolation check said `CHANGED: real-home file NAMES`. The diff showed two new files, `~/.local/share/opencode/opencode.db-shm` and `-wal`, which another lane's opencode wrote, and growth of the captain's bb host daemon log. That is churn from other tools, not a leak: the credential section was identical, no lab process was visible on the host, and the tripwire had no events. A check that fails on a busy machine is a flaky check, so the verdict is now a pure function (`tools/conformance/isolation.ts`, behavior U1417).
+- red: `pnpm vitest run tools/conformance/isolation.test.ts` -> 2 failed: `AssertionError: expected { clean: true, changes: [], …(1) } to match object …` and `expected true to be false`
+- green: `judgeIsolation` calls a run unclean for a `LEAK` line, a change to the credential and git config section, or a changed file name under the harness homes (`.pi`, `.omp`, `.codex`, `.claude`, `.ssh`, `.bb`), the bb machine homes (not their logs), `.config/{gh,git,systemd,bb,omp,pi}`, or any path with `bblab`. Other file names are counted and ignored. `pnpm vitest run tools/conformance/isolation.test.ts` -> 2 passed; the real lab uses it. `pnpm run typecheck` and `pnpm run lint` pass.
