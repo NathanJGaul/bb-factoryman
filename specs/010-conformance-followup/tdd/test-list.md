@@ -4,7 +4,7 @@ loop: outside-in
 profile: .specify/memory/tdd-profile.md
 spec_criteria: 18
 planned_at: 3b827b8
-updated_at: c089d6a
+updated_at: 5555706
 suite_baseline: green
 ---
 
@@ -37,7 +37,7 @@ Tests carry their behavior id in the title, for example `[U1501]`.
 | A1512 | Live: a full `pnpm run test` adds no `bb-fake-plugin-host-*` directory to the temporary directory | US5.4, SC-006 | example | DONE | measured: 394 directories left before the setup file, 0 after (`cycle-log.md`, group 5) |
 | A1513 | Live: tier 1 exits 0 with S9 as the only known gap, and tier 1.5 for Claude Code, Codex, Pi, and omp each exit 0 with S9 as the only known gap and S10 skipped | US6.1, US6.2, FR-014, SC-001 to SC-004 | example | DONE | live runs: `conformance/results/*.json`, five exits of 0 (`cycle-log.md`, live runs) |
 | A1514 | Live: each of the five runs reports isolation clean and a tripwire with no event | US6.3 | example | DONE | live runs: `isolation.clean` is true in all five result files |
-| A1515 | The decision log holds headings that the checker can read, and the last one is not older than D-117 | US4.1, FR-010 | example | PENDING | |
+| A1515 | The decision log holds headings that the checker can read, and the last one is not older than D-117 | US4.1, FR-010 | example | DONE | `test/acceptance/decision-log.test.ts::[A1515]` (passed first run, killed a mutant) |
 
 ## Inner loop: unit behaviors
 
@@ -79,14 +79,14 @@ Tests carry their behavior id in the title, for example `[U1501]`.
 | U1517 | A fake `local-only` ship task reaches `review_ready` with a commit, as before | FR-004 | example | DONE | `tools/conformance/scenarios/scenarios.test.ts::[U1387]` (existing) |
 | U1518 | The fake lab blocks a profile whose reasoning level the model does not list, and names the levels it lists | FR-008 | example | DONE | `test/fixtures/conformance-lab.test.ts::[U1518]` |
 | U1529 | Every harness driver's delivery mode is admitted by its provider's contract, checked against the real table | FR-002 | example | DONE | `test/fixtures/conformance-lab.test.ts::[U1529]` |
-| U1530 | The fake lab refuses a `local-only` ship report that carries a pull request and no landed commits, and the task stays `working` | FR-004, FR-005 | example | PENDING | |
-| U1533 | The fake lab words the block of an unsupported profile by what differs: the permission mode, or the reasoning level | FR-008 | example | PENDING | |
+| U1530 | The fake lab refuses a `local-only` ship report that carries a pull request and no landed commits, and the task stays `working` | FR-004, FR-005 | example | DONE | `test/fixtures/conformance-lab.test.ts::[U1530]` (passed first run, killed a mutant) |
+| U1533 | The fake lab words the block of an unsupported profile by what differs: the permission mode, or the reasoning level | FR-008 | example | DONE | `test/fixtures/conformance-lab.test.ts::[U1533]` (passed first run, killed a mutant) |
 
 ### `tools/conformance/lab-env.ts` against the real store
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| U1531 | The script of `projectRowScript`, run against a database made by the plugin's store, writes a row that `getProjectConfig` reads back with the given mode, project ID, base branch `main`, and `yolo` false | FR-003 | example | PENDING | |
+| U1531 | The script of `projectRowScript`, run against a database made by the plugin's store, writes a row that `getProjectConfig` reads back with the given mode, project ID, base branch `main`, and `yolo` false | FR-003 | example | DONE | `test/acceptance/conformance-project-row.test.ts::[U1531]` (passed first run, killed a mutant) |
 
 ### `conformance/known-gaps.json`
 
@@ -112,9 +112,9 @@ Tests carry their behavior id in the title, for example `[U1501]`.
 | U1526 | When `TMPDIR` was unset, `restore` unsets it again | FR-011 | example | DONE | `test/setup/private-tmpdir.test.ts::[U1526]` |
 | U1527 | `restore` removes only the directory it made: a sibling directory in the same parent stays | FR-013 | example | DONE | `test/setup/private-tmpdir.test.ts::[U1527]` |
 | U1528 | `restore` called twice does not throw | FR-011 | example | DONE | `test/setup/private-tmpdir.test.ts::[U1528]` |
-| U1532 | A test file of the main run starts with `TMPDIR` pointing at a directory named `bb-factoryman-test-*` that exists, so the root config wires the setup file | FR-011, FR-012 | example | PENDING | |
-| U1534 | `createPrivateTmpdir` with `TMPDIR` set to the empty string makes its directory inside the platform's temporary directory, and not in the working directory | FR-011 | example | PENDING | |
-| U1535 | `restore` called twice leaves a `TMPDIR` that was changed between the two calls alone | FR-011 | example | PENDING | |
+| U1532 | A test file of the main run starts with `TMPDIR` pointing at a directory named `bb-factoryman-test-*` that exists, so the root config wires the setup file | FR-011, FR-012 | example | DONE | `test/acceptance/private-tmpdir-wired.test.ts::[U1532]` (passed first run, killed a mutant) |
+| U1534 | `createPrivateTmpdir` with `TMPDIR` set to the empty string makes its directory inside the platform's temporary directory, and not in the working directory | FR-011 | example | DONE | `test/setup/private-tmpdir.test.ts::[U1534]` (passed first run, killed a mutant) |
+| U1535 | `restore` called twice leaves a `TMPDIR` that was changed between the two calls alone | FR-011 | example | DONE | `test/setup/private-tmpdir.test.ts::[U1535]` (passed first run, killed a mutant) |
 
 ## Invariants and edge cases still to place
 

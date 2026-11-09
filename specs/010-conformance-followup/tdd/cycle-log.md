@@ -166,3 +166,26 @@ The logs, the result files, and the verdict file sit in that data directory.
 - After the last run, no process mentioned the lab directory and nothing listened on the lab ports. `bblab down` ran after each run.
 - No change under `src/`: the live runs needed none.
 - The result files and `docs/HARNESS-SUPPORT.md` were committed in `c089d6a`, and `pnpm run check` was green on them (141 files, 1835 passed).
+
+## Remediation of the TDD audit (U1530 to U1535, A1515), commit `5555706`
+
+The audit (`tdd/verification.md`, verified at `5055faa`) found four surviving mutants.
+Each behavior below describes code that already worked, so its test passed on the first run, and a mutant of that code stands in for the red.
+Each mutant was applied alone, run against its test, and restored with `git checkout`.
+
+| Behavior | Test | Mutant | Result |
+| --- | --- | --- | --- |
+| U1530 | `test/fixtures/conformance-lab.test.ts` | the fake lab's `local-only` and `pr=` rule replaced by `if (false)` (audit mutant M9) | `AssertionError: expected 'review_ready' to be 'working'` |
+| U1531 | `test/acceptance/conformance-project-row.test.ts` (new) | the first two column names of the `INSERT` swapped (M11) | the row script failed against the plugin's schema (`AssertionError: [eval]:1`) |
+| U1532 | `test/acceptance/private-tmpdir-wired.test.ts` (new) | `setupFiles` dropped from `vitest.config.ts` (M12) | `AssertionError: expected 'tmp' to match /^bb-factoryman-test-/` |
+| U1533 | `test/fixtures/conformance-lab.test.ts` | the two branches of the fake lab's `what` swapped | `AssertionError: expected 'Dispatch blocked (provider_unavailabl…' to match /reasoning level `no-such-level`/` |
+| U1534 | `test/setup/private-tmpdir.test.ts` | `earlier === ""` dropped | `AssertionError: expected '.' to be '/home/nathanjgaul/.cache/tmp/bb-facto…'` |
+| U1535 | `test/setup/private-tmpdir.test.ts` | the `restored` guard removed | `AssertionError: expected '/home/nathanjgaul/.cache/tmp/bb-facto…' to be '/changed/by/another/hook'` |
+| A1515 | `test/acceptance/decision-log.test.ts` | the heading pattern changed to `^## ` | A1515 and A1510 failed (A1509 alone would have passed with no headings) |
+
+Other changes in this commit:
+
+- Finding 5: the `process.once("exit", ...)` line is gone from `test/setup/private-tmpdir.setup.ts`, and D-121 no longer mentions it. The mutant that removed it had survived, and the one that removed `afterAll` had been caught, so `afterAll` is the working hook.
+- Finding 9 and 11: the dead `mkdirSync` of `tmpdir-leak.test.ts` and the `.ts` extension of one fixture import are gone.
+- A type error in the first draft of U1531 (`DeliveryMode` came from `src/store/types`, which does not export it) was fixed before the commit. The suite had not run on that draft.
+- Suite: 143 files, 1842 passed, 0 failed. `pnpm run check` clean.

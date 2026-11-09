@@ -133,3 +133,26 @@ Tests that trace to nothing: none (U1529 traces FR-002).
 - Performance beyond the wall time of the suite and of the child-process test was not assessed.
 - Coverage: the profile has no coverage command, so none was run.
 - Tier 2 and any real model: out of scope for this feature.
+
+## Status after remediation (added at `5555706`, the audit above is unchanged)
+
+The audit above was verified at `5055faa`. The remediation tasks T051 to T059 ran afterwards, and `tdd/cycle-log.md` holds their evidence.
+
+| Finding | Status |
+| --- | --- |
+| 1 (`TEST_AFTER`: U1506, U1509, U1529, A1509) | Open by nature. A test cannot fail first against behavior that was already true. D-122 records it and waits for the captain's acceptance |
+| 2 (M9, fake lab rule) | Closed by U1530. The mutant now fails the suite |
+| 3 (M11, project row columns) | Closed by U1531, which runs the script against the plugin's own schema. The mutant now fails the suite |
+| 4 (M12, root config) | Closed by U1532. The mutant now fails the suite |
+| 5 (exit hook) | Closed: the line is removed, and D-121 matches |
+| 6 (A1506 asserts the fake lab's text) | Closed by U1533, which pins the branch in the fake lab |
+| 7 (U1528, empty `TMPDIR`) | Closed by U1535 and U1534 |
+| 8 (A1509 vacuous without headings) | Closed by A1515. The mutant that removes the headings now fails A1515 and A1510 |
+| 9, 11 (dead line, import style) | Closed for the dead line and the import in `decision-log.test.ts`. The hard-coded host count of the control run, the copied `committed` helper, and the other `.ts` imports stay, as a style note |
+| 10 (redundant tests at one level) | Accepted: each test names the behavior of its own user story |
+| 12 (`real-lab.ts` has no unit test) | Open by design, as in D-107. The five live runs are its test |
+| 13 (`spec_criteria`) | Closed: the list reads 18 |
+
+Survivors after remediation: none of the four that the audit listed.
+Re-running the rubric's verdict rule gives `FAIL` while finding 1 is open, and `PASS_WITH_GAPS` if the captain accepts D-122.
+The suite is 143 files and 1842 tests, all passing.
