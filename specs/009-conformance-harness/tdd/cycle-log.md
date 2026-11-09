@@ -79,3 +79,17 @@ The tests start the agent as a child process and speak ACP over stdio.
 - green: `tools/stub-agent/stub-agent.ts` is the t01 agent (report appendix A, with the `prlong=` flag of the approval-form copy) in TypeScript, with `SLEEP`, `silent`, `double-report`, `fail=<code>`, the `dirty` flag for scouts, and the `[brain:...]` marker. `pnpm vitest run tools/stub-agent` -> 10 passed.
 - lint: `no-useless-assignment` flagged `let args: Json = {}`; fixed to `let args: Json;` (no behavior change). `pnpm run typecheck` and `pnpm run lint` pass.
 - refactor: none needed.
+
+## Group 5: the lab scripts and the offline mode (U1345 to U1349)
+
+`bblab` and `bblab-evidence` were copied from `~/.local/bin` into `tools/bblab/` unchanged, then the tests ran against the copy.
+
+- red: `pnpm vitest run tools/bblab` -> 5 failed
+  - U1345 `AssertionError: expected 2 to be +0` (`bblab plan` did not exist, so the script printed its usage and exited 2)
+  - U1346 `AssertionError: expected '# bblab - isolated live-test lab for …' to contain '--unshare-net'`
+  - U1347 `AssertionError: expected '# bblab - isolated live-test lab for …' to match /nsenter:.* --net /`
+  - U1348 `AssertionError: expected '' to match /refusing lab dir/`
+  - U1349 `AssertionError: tripwire: 0 file-level events on canary credentials (directory listings ignored)` then `expected 1 to be +0`: with only directory events in the tripwire log, `bblab down` aborted before it printed "done" (t01 finding 5.13).
+- green: `tools/bblab/bblab` now has `plan`, `--offline` and `BBLAB_OFFLINE=1` (`--unshare-net` in the sandbox, `--net` in `nsenter`, a `run/offline` marker so `bblab x` and `down` agree), a readiness probe that runs inside an offline lab, a wait for the daemon port (t01 finding 5.4), and `|| true` after the tripwire pipeline (t01 finding 5.13). The config refusals moved into `check_config`, which `plan` also runs. `pnpm vitest run tools/bblab` -> 5 passed.
+- refactor: `preflight` split into `check_config` and the runtime checks; no behavior change.
+- not proven by these tests: that a real offline sandbox starts bb (task T1363, a live check).

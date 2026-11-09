@@ -1,0 +1,227 @@
+#!/usr/bin/env bash
+# bblab - isolated live-test lab for bb + bb-factoryman.
+#
+#   bblab up [--offline]    create the lab and start bb (server + host daemon) inside one sandbox
+#   bblab x <cmd...>        run a command inside the running lab (same sandbox, clean env)
+#   bblab status            show lab processes, ports and tripwire counters
+#   bblab down              stop bb and the lab no-mistakes daemon, kill the sandbox, print the tripwire report
+#   bblab plan [--offline]  print the sandbox arguments, the ports, and the network mode. Starts nothing.
+#
+# --offline (or BBLAB_OFFLINE=1) gives the sandbox its own network namespace with a loopback only.
+# The host cannot reach the lab's ports then, so every call goes through `bblab x`, which joins the namespace.
+#
+# Isolation layers (outermost first):
+#   1. bubblewrap sandbox: read-only system, EMPTY tmpfs $HOME, no /run (no systemd bus, ssh-agent,
+#      docker.sock), private /tmp, new PID/IPC/UTS namespaces. Network is shared unless --offline.
+#   2. clean environment (env -i) with HOME, XDG_*, TMPDIR, BB_DATA_DIR, NM_HOME and ports redirected.
+#   3. canary credentials at the real credential paths plus a host-side inotify tripwire.
+set -euo pipefail
+
+LAB="${BBLAB_DIR:-$HOME/.local/state/bblab}"
+SERVER_PORT="${BBLAB_SERVER_PORT:-48886}"
+DAEMON_PORT="${BBLAB_DAEMON_PORT:-48887}"
+REAL_HOME="$HOME"
+OFFLINE="${BBLAB_OFFLINE:-0}"
+NODE_ROOT="$(dirname "$(dirname "$(readlink -f "$(command -v node)")")")"
+BB_APP_DIR="${BBLAB_BB_APP_DIR:-$NODE_ROOT/lib/node_modules/bb-app}"      # pin another bb build here
+NM_BIN="${BBLAB_NM_BIN:-$(readlink -f "$(command -v no-mistakes 2>/dev/null || echo /nonexistent)")}"
+RESERVED_PORTS="38886 38887 38888 4387 9808"                              # bb defaults, captain's daemon, lavish, herdr-connect
+
+die() { echo "bblab: $*" >&2; exit 1; }
+
+check_config() {   # refusals that need no runtime: the lab path and the ports
+  case "$LAB" in "$REAL_HOME"/.bb*|*/firstmate*|/) die "refusing lab dir $LAB";; esac
+  for p in $RESERVED_PORTS; do
+    if [ "$SERVER_PORT" = "$p" ] || [ "$DAEMON_PORT" = "$p" ]; then die "port $p is reserved"; fi
+  done
+}
+
+preflight() {
+  command -v bwrap >/dev/null || die "bwrap not found"
+  check_config
+  for p in "$SERVER_PORT" "$DAEMON_PORT"; do
+    ss -ltnH | awk '{print $4}' | grep -q ":$p\$" && die "port $p already in use"
+  done
+  if [ -s "$LAB/run/sandbox.pid" ] && kill -0 "$(cat "$LAB/run/sandbox.pid")" 2>/dev/null; then die "lab already up (pid $(cat "$LAB/run/sandbox.pid"))"; fi
+}
+
+# True when this lab runs with no network. `up --offline` records it in run/offline so later commands agree.
+is_offline() { [ "$OFFLINE" = 1 ] || [ -f "$LAB/run/offline" ]; }
+
+make_tree() {
+  mkdir -p "$LAB"/{home/.config,home/.local/share,home/.local/state,home/.cache,data,nm,tmp,repos,logs,bin} "$LAB/run"
+  chmod 700 "$LAB/run"
+  write_labenv
+  [ -f "$LAB/home/.gitconfig" ] || printf '[user]\n\tname = bb lab\n\temail = bb-lab@invalid.example\n[init]\n\tdefaultBranch = main\n' > "$LAB/home/.gitconfig"
+  # canary credentials: fake files that live at the REAL credential paths inside the sandbox only
+  local C="$LAB/canary-home" M=CANARY-DO-NOT-USE
+  mkdir -p "$C"/.ssh "$C"/.config/gh "$C"/.config/git "$C"/.claude "$C"/.codex "$C"/.bb
+  echo "github.com ssh-ed25519 AAAA$M" > "$C/.ssh/known_hosts"
+  printf -- '-----BEGIN FAKE KEY-----\n%s\n-----END FAKE KEY-----\n' "$M" > "$C/.ssh/id_ed25519"; chmod 600 "$C/.ssh/id_ed25519"
+  echo "ssh-ed25519 AAAA$M canary" > "$C/.ssh/id_ed25519.pub"; echo "Host *" > "$C/.ssh/config"
+  printf 'github.com:\n    user: canary\n    oauth_token: gho_%s\n' "$M" > "$C/.config/gh/hosts.yml"
+  echo "git_protocol: ssh" > "$C/.config/gh/config.yml"
+  printf '[user]\n\tname = canary\n\temail = canary@invalid.example\n' > "$C/.gitconfig"; cp "$C/.gitconfig" "$C/.config/git/config"
+  echo "{\"claudeAiOauth\":{\"accessToken\":\"sk-ant-$M\"}}" > "$C/.claude/.credentials.json"
+  echo '{"canary":true}' > "$C/.claude.json"
+  echo "{\"OPENAI_API_KEY\":\"sk-$M\"}" > "$C/.codex/auth.json"
+  echo "{\"OPENAI_API_KEY\":\"$M\"}" > "$C/.bb/env.json"
+  [ -n "$NM_BIN" ] && [ -x "$NM_BIN" ] && ln -sf "$NM_BIN" "$LAB/bin/no-mistakes" || true
+  # `bb` inside the lab is always the CLI that matches the pinned server build, never ~/.local/bin/bb
+  printf '#!/usr/bin/env bash\nexec node "%s/dist/bb.js" "$@"\n' "$BB_APP_DIR" > "$LAB/bin/bb"; chmod +x "$LAB/bin/bb"
+}
+
+sandbox_args() {   # prints bwrap arguments, one per line
+  local a=(--unshare-pid --unshare-ipc --unshare-uts
+    --ro-bind /usr /usr --ro-bind /etc /etc --symlink usr/bin /bin --symlink usr/lib /lib --symlink usr/lib /lib64 --symlink usr/bin /sbin
+    --proc /proc --dev /dev --tmpfs /tmp --tmpfs /run
+    --ro-bind /run/systemd/resolve/stub-resolv.conf /run/systemd/resolve/stub-resolv.conf   # DNS only; not the bus
+    --tmpfs "$REAL_HOME"
+    --ro-bind "$NODE_ROOT" "$NODE_ROOT" --ro-bind "$(dirname "$BB_APP_DIR")" "$(dirname "$BB_APP_DIR")"
+    --bind "$LAB" "$LAB")
+  [ -n "$NM_BIN" ] && [ -x "$NM_BIN" ] && a+=(--ro-bind "$NM_BIN" "$NM_BIN")
+  if is_offline; then a+=(--unshare-net); fi     # loopback only; bwrap brings the loopback up itself
+  local f; while IFS= read -r f; do a+=(--bind "$f" "$REAL_HOME/${f#"$LAB/canary-home/"}"); done < <(find "$LAB/canary-home" -type f)
+  local x; for x in ${BBLAB_RO:-}; do a+=(--ro-bind "$x" "$x"); done     # extra read-only paths (e.g. agent CLIs)
+  local x; for x in ${BBLAB_RW:-}; do a+=(--bind "$x" "$x"); done
+  printf '%s\n' "${a[@]}"
+}
+
+write_labenv() {   # $LAB/bin/labenv: the only environment the lab ever sees (clean env, nothing inherited)
+  cat > "$LAB/bin/labenv" <<EOF
+#!/usr/bin/env bash
+cd "\${BBLAB_WD:-$LAB}" || exit 1
+pass=(); for v in \${BBLAB_PASS_ENV:-}; do [ -n "\${!v:-}" ] && pass+=("\$v=\${!v}"); done
+exec env -i "PATH=$LAB/bin:$NODE_ROOT/bin:/usr/local/bin:/usr/bin:/bin" "HOME=$LAB/home" "USER=$(id -un)" "LOGNAME=$(id -un)" \\
+  SHELL=/bin/bash LANG=C.UTF-8 TERM=dumb \\
+  "XDG_CONFIG_HOME=$LAB/home/.config" "XDG_DATA_HOME=$LAB/home/.local/share" "XDG_STATE_HOME=$LAB/home/.local/state" \\
+  "XDG_CACHE_HOME=$LAB/home/.cache" "XDG_RUNTIME_DIR=$LAB/run" "TMPDIR=$LAB/tmp" \\
+  "BB_DATA_DIR=$LAB/data" "BB_SERVER_URL=http://127.0.0.1:$SERVER_PORT" "BB_SERVER_PORT=$SERVER_PORT" \\
+  "BB_HOST_DAEMON_PORT=$DAEMON_PORT" BB_TELEMETRY=false BB_SKIP_ONBOARDING=1 BB_CLI_ERROR_LOG=0 \\
+  "NM_HOME=$LAB/nm" NO_MISTAKES_NO_UPDATE_CHECK=1 NO_MISTAKES_TELEMETRY=0 \\
+  GIT_CONFIG_NOSYSTEM=1 GIT_TERMINAL_PROMPT=0 "\${pass[@]}" "\$@"
+EOF
+  chmod +x "$LAB/bin/labenv"
+}
+
+ns_pid() { jq -r '."child-pid"' "$LAB/run/bwrap-info.json" 2>/dev/null; }
+
+nsenter_args() {   # the namespaces to join; an offline lab also has its own network namespace
+  local a=(--user --mount --pid --ipc --uts)
+  if is_offline; then a+=(--net); fi
+  printf '%s\n' "${a[@]}" --preserve-credentials --root
+}
+
+lab_x() {          # run a command inside the running sandbox, in the clean lab environment
+  local pid; pid="$(ns_pid)"; { [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null; } || die "lab is not up"
+  mapfile -t NA < <(nsenter_args)
+  # Start from / on the host so no host-only cwd leaks in; --root switches to the sandbox root; labenv then cd's to BBLAB_WD.
+  ( cd / && exec nsenter --target "$pid" "${NA[@]}" -- "$LAB/bin/labenv" "$@" )
+}
+
+# Ask the lab's bb for its front page. An offline lab is invisible from the host, so the probe runs inside it.
+probe_http() {
+  if is_offline; then lab_x curl -s -m 2 -o /dev/null -w '%{http_code}' "http://127.0.0.1:$1/" 2>/dev/null
+  else curl -s -m 2 -o /dev/null -w '%{http_code}' "http://127.0.0.1:$1/" 2>/dev/null; fi
+}
+
+port_listening() {   # $1 = port; true when something listens on it, inside the lab when it is offline
+  if is_offline; then lab_x ss -ltnH 2>/dev/null | awk '{print $4}' | grep -q ":$1\$"
+  else ss -ltnH | awk '{print $4}' | grep -q ":$1\$"; fi
+}
+
+cmd_up() {
+  preflight; make_tree
+  rm -f "$LAB/run/offline"
+  if [ "$OFFLINE" = 1 ]; then : > "$LAB/run/offline"; fi
+  mapfile -t SA < <(sandbox_args)
+  : > "$LAB/logs/tripwire.txt"
+  if command -v inotifywait >/dev/null; then
+    setsid nohup inotifywait -m -r -q --timefmt '%T' --format '%T %e %w%f' -e open,access,modify,attrib,create,delete \
+      "$LAB/canary-home" > "$LAB/logs/tripwire.txt" 2>&1 < /dev/null & echo $! > "$LAB/run/tripwire.pid"
+  fi
+  # keeper process: pid 2 of the new PID namespace; everything in the lab lives under it
+  setsid nohup bwrap "${SA[@]}" --info-fd 3 sleep infinity 3> "$LAB/run/bwrap-info.json" > "$LAB/logs/sandbox.log" 2>&1 < /dev/null &
+  echo $! > "$LAB/run/sandbox.pid"
+  for _ in $(seq 1 50); do [ -s "$LAB/run/bwrap-info.json" ] && break; sleep 0.1; done
+  [ -s "$LAB/run/bwrap-info.json" ] || die "sandbox did not start; see $LAB/logs/sandbox.log"
+  # start bb inside the sandbox; --no-in-app-updates and --bundled pin the running code to the installed package
+  lab_x bash -c "setsid nohup node '$BB_APP_DIR/dist/bb-app.js' --data-dir '$LAB/data' --server-port '$SERVER_PORT' --host-daemon-port '$DAEMON_PORT' --no-in-app-updates --bundled > '$LAB/logs/launcher.log' 2>&1 < /dev/null &"
+  for _ in $(seq 1 60); do
+    probe_http "$SERVER_PORT" | grep -q '^[23]' && break; sleep 1
+  done
+  probe_http "$SERVER_PORT" | grep -q '^[23]' || die "bb server did not answer; see $LAB/logs/launcher.log"
+  # The host daemon starts a little after the server (t01 finding 5.4): wait for its port too.
+  for _ in $(seq 1 60); do port_listening "$DAEMON_PORT" && break; sleep 1; done
+  port_listening "$DAEMON_PORT" || die "bb host daemon did not listen on $DAEMON_PORT; see $LAB/logs/launcher.log"
+  echo "bblab up: bb http://127.0.0.1:$SERVER_PORT (daemon $DAEMON_PORT), sandbox pid $(ns_pid), lab dir $LAB, network $(is_offline && echo offline || echo shared)"
+}
+
+tripwire_report() {
+  [ -s "$LAB/logs/tripwire.txt" ] || { echo "tripwire: no events"; return; }
+  local n; n="$(grep -v ISDIR "$LAB/logs/tripwire.txt" | grep -cE ' (OPEN|ACCESS|MODIFY|CREATE|DELETE|ATTRIB)' || true)"
+  echo "tripwire: $n file-level events on canary credentials (directory listings ignored)"
+  { grep -v ISDIR "$LAB/logs/tripwire.txt" | sed "s#$LAB/canary-home/##" | awk '{print $2, $3}' | sort | uniq -c | sort -rn | head; } || true
+}
+
+cmd_status() {
+  local pid; pid="$(ns_pid || true)"
+  if [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null; then echo "sandbox: up (ns pid $pid)"; else echo "sandbox: down"; fi
+  if is_offline; then
+    for p in "$SERVER_PORT" "$DAEMON_PORT"; do port_listening "$p" && echo "port $p: listening (inside the offline lab)" || echo "port $p: free"; done
+  else
+    for p in "$SERVER_PORT" "$DAEMON_PORT"; do ss -ltnH | awk '{print $4}' | grep -q ":$p\$" && echo "port $p: listening" || echo "port $p: free"; done
+  fi
+  tripwire_report
+}
+
+cmd_down() {
+  if [ -n "$(ns_pid || true)" ] && kill -0 "$(ns_pid)" 2>/dev/null; then
+    lab_x node "$BB_APP_DIR/dist/bb-app.js" stop --data-dir "$LAB/data" 2>&1 | sed 's/\x1b\[[0-9;]*m//g' || true
+    # graceful stop of the LAB daemon only: refuse unless NM_HOME inside the sandbox is the lab's (never the shared daemon)
+    [ -x "$LAB/bin/no-mistakes" ] && lab_x bash -c '[ "$NM_HOME" = "'"$LAB"'/nm" ] && no-mistakes daemon stop' 2>&1 | sed 's/\x1b\[[0-9;]*m//g' | tail -1 || true
+    sleep 1
+  fi
+  # Killing the namespace init ends the PID namespace: the kernel kills every process inside, so nothing can survive.
+  local nspid; nspid="$(ns_pid || true)"
+  [ -n "$nspid" ] && kill -KILL "$nspid" 2>/dev/null || true   # SIGKILL: init of a PID namespace ignores SIGTERM
+  [ -s "$LAB/run/sandbox.pid" ] && kill "$(cat "$LAB/run/sandbox.pid")" 2>/dev/null || true
+  [ -s "$LAB/run/tripwire.pid" ] && kill "$(cat "$LAB/run/tripwire.pid")" 2>/dev/null || true
+  sleep 1; rm -f "$LAB/run/sandbox.pid" "$LAB/run/bwrap-info.json" "$LAB/run/tripwire.pid" "$LAB/run/offline"
+  tripwire_report
+  for p in "$SERVER_PORT" "$DAEMON_PORT"; do ss -ltnH | awk '{print $4}' | grep -q ":$p\$" && echo "WARNING: port $p still listening" || true; done
+  echo "bblab down: done (lab dir $LAB kept; delete it to reset)"
+}
+
+cmd_plan() {   # print what `up` would do, and start nothing
+  check_config
+  mapfile -t SA < <(sandbox_args)
+  mapfile -t NA < <(nsenter_args)
+  echo "lab: $LAB"
+  echo "server-port: $SERVER_PORT"
+  echo "daemon-port: $DAEMON_PORT"
+  echo "network: $(is_offline && echo offline || echo shared)"
+  echo "nsenter: --target <pid> ${NA[*]}"
+  echo "ready-probe: $(is_offline && echo 'inside the lab' || echo host)"
+  local i=0
+  while [ $i -lt ${#SA[@]} ]; do
+    case "${SA[$i]}" in
+      --ro-bind|--bind|--symlink|--ro-bind-try) echo "arg: ${SA[$i]} ${SA[$((i+1))]} ${SA[$((i+2))]}"; i=$((i+3));;
+      --proc|--dev|--tmpfs) echo "arg: ${SA[$i]} ${SA[$((i+1))]}"; i=$((i+2));;
+      *) echo "arg: ${SA[$i]}"; i=$((i+1));;
+    esac
+  done
+}
+
+CMD="${1:-}"; shift || true
+for flag in "$@"; do
+  case "$CMD:$flag" in
+    up:--offline|plan:--offline) OFFLINE=1;;
+    x:*) break;;
+    *) if [ "$CMD" != x ]; then echo "bblab: unknown argument $flag" >&2; exit 2; fi;;
+  esac
+done
+case "$CMD" in
+  up) cmd_up;; x) lab_x "$@";; status) cmd_status;; down) cmd_down;; plan) cmd_plan;;
+  *) sed -n '2,12p' "$0"; exit 2;;
+esac
