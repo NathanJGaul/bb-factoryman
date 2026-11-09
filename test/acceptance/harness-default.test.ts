@@ -41,6 +41,7 @@ describe("a project with no default profile", () => {
     expect(world.store.listTasks()).toEqual([]);
   });
 
+  // The models "opus", "sonnet", and "haiku" come from the fixtures' default model list (test/fixtures/models.ts, pinned by test/fixtures/defaults.test.ts), and the providers are ready by default.
   it("[A1323] resolves an explicit profile, a matching rule, and a configured default as before, in that order", async () => {
     const profiles = {
       explicit: { provider: "claude", model: "opus", reasoningLevel: "high", permissionMode: "auto" },

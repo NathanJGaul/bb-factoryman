@@ -1,3 +1,4 @@
+import { DEFAULT_MODEL_IDS } from "./models";
 import type { BbPort, InputRequest, InputResult, MachineInfo, ProjectSource, ModelEntry, ModelList, ProviderAvailability, ProviderState, SpawnWorkerRequest, TerminalRead, ThreadInfo } from "../../src/bb/port";
 
 export interface RecordedCall {
@@ -9,9 +10,6 @@ export interface RecordedCall {
 export function modelEntry(id: string, overrides: Partial<ModelEntry> = {}): ModelEntry {
   return { id, model: id, isDefault: false, defaultReasoningLevel: "", reasoningLevels: ["low", "medium", "high", "xhigh", "max"], reasoningKnown: true, ...overrides };
 }
-
-/** The model IDs that the existing tests dispatch with. A fake provider lists them by default, so a test that names no model list keeps its meaning. */
-export const DEFAULT_MODEL_IDS = ["opus", "sonnet", "haiku", "claude-sonnet-5-5", "stub-model", "m", "b", "other", "opus-strict"];
 
 /** A provider state for a test. The default is a ready provider with no versions and no login command. */
 export function providerState(providerId: string, overrides: Partial<ProviderState> = {}): ProviderState {

@@ -7,6 +7,7 @@ import { defaultProjectConfig } from "../../src/store/store";
 import { openSqliteStore } from "../../src/store/sqlite";
 import type { ProjectConfig } from "../../src/store/types";
 import { frame } from "./frame";
+import { DEFAULT_MODEL_IDS } from "./models";
 import { skillNamesOnDisk } from "./skills";
 import type { DispatchResolver } from "../../src/dispatch/types";
 
@@ -54,9 +55,6 @@ export function modelFixture(id: string, overrides: Record<string, unknown> = {}
     ...overrides,
   };
 }
-
-/** The model IDs that the existing tests dispatch with. A fake provider lists them by default. */
-const DEFAULT_MODELS = ["opus", "sonnet", "haiku", "claude-sonnet-5-5", "stub-model", "m", "b", "other", "opus-strict"];
 
 /** A host as `bb.sdk.hosts.list` returns it, cut to the fields the plugin reads. */
 export function hostFixture(id: string, name: string, overrides: { status?: string; phase?: string } = {}) {
@@ -317,7 +315,7 @@ export async function loadWorld(options: WorldOptions = {}): Promise<World> {
           if (options.modelsError) throw options.modelsError;
           const key = `${args?.hostId ?? ""}/${args?.providerId ?? ""}`;
           const scripted = options.modelsByHost?.[key] ?? options.models?.[args?.providerId ?? ""];
-          const list = scripted ?? { models: DEFAULT_MODELS.map((id) => modelFixture(id)) };
+          const list = scripted ?? { models: DEFAULT_MODEL_IDS.map((id) => modelFixture(id)) };
           return { modelLoadError: null, selectedOnlyModels: [], providers: [], ...list };
         },
       },

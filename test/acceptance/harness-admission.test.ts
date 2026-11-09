@@ -59,6 +59,7 @@ describe("the Pi admission rule through the plugin factory", () => {
     expect(world.sdkCalls("threads.spawn")).toEqual([]);
   });
 
+  // The model "m" is in the fixtures' default model list (test/fixtures/models.ts, pinned by test/fixtures/defaults.test.ts). These providers refuse a model that bb does not list, so the test relies on that list.
   it.each(MODES)("[A1319] never refuses claude-code, codex, acp-omp, or an unknown provider in a %s project", async (mode) => {
     const others = ["claude-code", "codex", "acp-omp", "acp-mystery"];
     const world = await worldIn(mode, {
