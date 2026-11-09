@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from "vitest";
 import type { DispatchResolver } from "../../src/dispatch/types";
 import { makeCheckout, removeCheckouts } from "../fixtures/checkout";
-import { loadWorld, modelFixture, providerFixture } from "../fixtures/plugin-host";
+import { loadWorld, modelFixture, providerFixture, stateFixture } from "../fixtures/plugin-host";
 
 afterEach(removeCheckouts);
 
@@ -134,6 +134,17 @@ describe("dispatch profile resolution through the plugin factory", () => {
     ["a reasoning level it does not list", [providerFixture("claude", { reasoningLevels: [{ id: "low", label: "low" }] })], "reasoning level", { models: UNKNOWN_LEVELS }],
   ])("[A710] blocks a provider that bb reports as %s", async (_label, providers, text, extra) => {
     const { world, result } = await dispatchWith(config(), { ...TASK, profile: EXPLICIT }, { providers, ...extra });
+    expect(result.isError).toBe(true);
+    expect(result.text).toContain(text);
+    expect(world.sdkCalls("threads.spawn")).toEqual([]);
+  });
+
+  // bb says the provider is ready, and its own listing says otherwise: the listing still blocks (the check after readiness).
+  it.each<[string, unknown[], string]>([
+    ["is listed but not available", [providerFixture("claude", { available: false })], "The provider `claude` is not available in bb. Available providers: none."],
+    ["is not listed", [providerFixture("codex")], "The provider `claude` is not available in bb. Available providers: codex."],
+  ])("[A710] blocks a provider that bb reports as ready when the provider %s", async (_label, providers, text) => {
+    const { world, result } = await dispatchWith(config(), { ...TASK, profile: EXPLICIT }, { providers, providerStates: [stateFixture("claude")] });
     expect(result.isError).toBe(true);
     expect(result.text).toContain(text);
     expect(world.sdkCalls("threads.spawn")).toEqual([]);
