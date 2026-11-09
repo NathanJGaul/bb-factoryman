@@ -104,6 +104,8 @@ export interface World {
   costs: Map<string, { amount: number; currency: string }>;
   /** The webhook receiver. */
   webhook: WebhookFake;
+  /** Change what `system.providerStates` returns from now on. Without an argument, the default derived from `providers.list` applies again. */
+  setProviderStates(states?: unknown[]): void;
   /** Move the plugin's clock forward by `ms`. */
   skewClock(ms: number): void;
   metadata: Map<string, Record<string, unknown>>;
@@ -303,6 +305,9 @@ export async function loadWorld(options: WorldOptions = {}): Promise<World> {
     holdProviders: null,
     costs,
     webhook,
+    setProviderStates(states) {
+      options.providerStates = states;
+    },
     skewClock(ms) {
       skew += ms;
     },

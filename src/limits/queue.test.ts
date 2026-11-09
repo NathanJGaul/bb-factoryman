@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { providerState } from "../../test/fixtures/bb-port";
 import { PROFILE_OK_FOR_QUEUE } from "../../test/fixtures/queue";
 import { testRuntime, type TestRuntime } from "../../test/fixtures/runtime";
 import type { TaskRow } from "../store/types";
@@ -30,6 +31,7 @@ const queue = (t: TestRuntime, request: QueuedRequest = REQUEST, projectId = "pr
   return queued.taskId;
 };
 const state = (t: TestRuntime, id: string) => t.runtime.deps.store.getTask(id)?.state;
+const warnings = (t: TestRuntime) => t.lines.filter((line) => line.level === "warn").map((line) => line.message);
 
 describe("running workers and caps", () => {
   it("[U1005] counts working, blocked, validating, and needs_decision workers and nothing else", () => {
@@ -108,6 +110,31 @@ describe("drain", () => {
     await drain(t.runtime);
     expect(state(t, id)).toBe("queued");
     expect(t.bb.callsTo("spawnWorker")).toEqual([]);
+  });
+
+  it("[U1351] leaves a task queued, spawns nothing, and logs the message when its provider is not signed in", async () => {
+    const t = setup();
+    const id = queue(t);
+    t.bb.states = [providerState(PROFILE_OK_FOR_QUEUE.provider, { status: "unauthenticated", localLoginCommand: "claude login" })];
+    await drain(t.runtime);
+    expect(state(t, id)).toBe("queued");
+    expect(t.bb.callsTo("spawnWorker")).toEqual([]);
+    expect(warnings(t).join("\n")).toContain("stays queued");
+    expect(warnings(t).join("\n")).toContain("Run `claude login` on that machine.");
+    // The same task starts once the provider is ready.
+    t.bb.states = null;
+    await drain(t.runtime);
+    expect(state(t, id)).toBe("working");
+  });
+
+  it("[U1352] leaves a task queued when the provider states cannot be read", async () => {
+    const t = setup();
+    const id = queue(t);
+    t.bb.statesError = new Error("bb is down");
+    await drain(t.runtime);
+    expect(state(t, id)).toBe("queued");
+    expect(t.bb.callsTo("spawnWorker")).toEqual([]);
+    expect(warnings(t).join("\n")).toContain("could not read bb's provider states (bb is down)");
   });
 
   it("[U1009] drains when a task leaves the running states, and not otherwise", async () => {

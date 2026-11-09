@@ -26,15 +26,15 @@ A1301 to A1309 live in `test/acceptance/harness-readiness.test.ts`, A1310 to A13
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| A1301 | A dispatch whose provider is `unauthenticated` on the target host is blocked with `provider_unavailable`, names the provider, the host, and bb's login command, and leaves no task and no spawn | AC-1.1, FR-1312, FR-1313, FR-1314, SC-1301 | example | PENDING | |
-| A1302 | A dispatch whose provider is `not_installed` or `expired` is blocked the same way, and the message carries bb's status | AC-1.2, FR-1313, SC-1301 | example | PENDING | |
-| A1303 | A dispatch whose provider is `unsupported_version` is blocked and the message shows the installed and the minimum version | AC-1.3, FR-1313, SC-1301 | example | PENDING | |
-| A1304 | A provider with status `unknown`, a provider with no state, and a failed read of the states each block the dispatch and leave no task | AC-1.4, FR-1312, SC-1301 | example | PENDING | |
-| A1305 | A task pinned to a remote machine is judged by that machine's own states: ready on the server and not ready there blocks, and the reverse passes | AC-1.5, FR-1311, SC-1302 | example | PENDING | |
-| A1306 | `bb factoryman preflight` for a remote machine reports the same remedy text as dispatch does for the same provider state | AC-1.6, FR-1315 | example | PENDING | |
-| A1307 | A queued task whose provider is no longer ready stays queued and starts no worker, and starts once the provider is ready | AC-1.7, FR-1316 | example | PENDING | |
-| A1308 | With every state `ready`, dispatch proceeds as before and spawns the worker | AC-1.8 | example | PENDING | |
-| A1309 | A blocked dispatch uses no slot of the day cap: with `maxTasksPerDay` 1, a blocked dispatch followed by a ready one still dispatches | FR-1314, t01 finding 5.9 | example | PENDING | |
+| A1301 | A dispatch whose provider is `unauthenticated` on the target host is blocked with `provider_unavailable`, names the provider, the host, and bb's login command, and leaves no task and no spawn | AC-1.1, FR-1312, FR-1313, FR-1314, SC-1301 | example | DONE | `test/acceptance/harness-readiness.test.ts` |
+| A1302 | A dispatch whose provider is `not_installed` or `expired` is blocked the same way, and the message carries bb's status | AC-1.2, FR-1313, SC-1301 | example | DONE | `test/acceptance/harness-readiness.test.ts` |
+| A1303 | A dispatch whose provider is `unsupported_version` is blocked and the message shows the installed and the minimum version | AC-1.3, FR-1313, SC-1301 | example | DONE | `test/acceptance/harness-readiness.test.ts` |
+| A1304 | A provider with status `unknown`, a provider with no state, and a failed read of the states each block the dispatch and leave no task | AC-1.4, FR-1312, SC-1301 | example | DONE | `test/acceptance/harness-readiness.test.ts` |
+| A1305 | A task pinned to a remote machine is judged by that machine's own states: ready on the server and not ready there blocks, and the reverse passes | AC-1.5, FR-1311, SC-1302 | example | DONE | `test/acceptance/harness-readiness.test.ts` |
+| A1306 | `bb factoryman preflight` for a remote machine reports the same remedy text as dispatch does for the same provider state | AC-1.6, FR-1315 | example | DONE | `test/acceptance/harness-readiness.test.ts` |
+| A1307 | A queued task whose provider is no longer ready stays queued and starts no worker, and starts once the provider is ready | AC-1.7, FR-1316 | example | DONE | `test/acceptance/harness-readiness.test.ts` |
+| A1308 | With every state `ready`, dispatch proceeds as before and spawns the worker | AC-1.8 | example | DONE | `test/acceptance/harness-readiness.test.ts` |
+| A1309 | A blocked dispatch uses no slot of the day cap: with `maxTasksPerDay` 1, a blocked dispatch followed by a ready one still dispatches | FR-1314, t01 finding 5.9 | example | DONE | `test/acceptance/harness-readiness.test.ts` |
 | A1310 | The contract lookup returns the rows of `claude-code`, `codex`, `pi`, and `acp-omp` with the values in the data model | AC-2.1, FR-1301, FR-1302 | example | DONE | `test/acceptance/harness-configure.test.ts` |
 | A1311 | The contract lookup returns the generic row for `acp-opencode`, for an ID the plugin has never heard of, and for the empty string | AC-2.2, FR-1303 | example | DONE | `test/acceptance/harness-configure.test.ts` |
 | A1312 | Lint rejects any import in a non-test file under `src/harness/`, and accepts the same imports elsewhere | AC-2.3, FR-1301 | example | DONE | `test/acceptance/lint-isolation.test.ts::[A1312]` |
@@ -120,20 +120,20 @@ A1301 to A1309 live in `test/acceptance/harness-readiness.test.ts`, A1310 to A13
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
 | U1322 | A `ready` provider that lists the permission mode and the level passes (moves to the new signature) | AC-1.8 | example | BASELINE | `src/dispatch/availability.test.ts::[U730]` |
-| U1323 | `not_installed` blocks with "is not installed on <host> (bb status: not_installed). Install its CLI there." | AC-1.2, FR-1313 | example | PENDING | |
-| U1324 | `unauthenticated` with a login command blocks and says "Run `<command>` on that machine." | AC-1.1, FR-1313 | example | PENDING | |
-| U1325 | `unauthenticated` with no login command blocks and says "Sign in to it on that machine." | AC-1.1, FR-1313 | example | PENDING | |
-| U1326 | `expired` blocks with the login command, and with the same fallback when bb gives none | AC-1.2, FR-1313 | example | PENDING | |
-| U1327 | `unsupported_version` blocks and shows the installed and the minimum version | AC-1.3, FR-1313 | example | PENDING | |
-| U1328 | `unsupported_version` with no version data says "unknown" for each missing version | AC-1.3, FR-1313 | example | PENDING | |
-| U1329 | Status `unknown` blocks, appends bb's status message when it has one, and appends nothing when it has none | AC-1.4, FR-1312 | example | PENDING | |
-| U1330 | A provider with no state blocks, and the message lists the provider IDs that bb reports, or "none" | AC-1.4, FR-1312 | example | PENDING | |
-| U1331 | The state of the profile's provider decides, not the first state in the list: a not-ready state of another provider does not block | AC-1.5, FR-1312 | example | PENDING | |
-| U1332 | Readiness is checked before the listing: a provider that is both unlisted and not ready gets the readiness message | FR-1312 (order) | example | PENDING | |
+| U1323 | `not_installed` blocks with "is not installed on <host> (bb status: not_installed). Install its CLI there." | AC-1.2, FR-1313 | example | DONE | `src/dispatch/availability.test.ts` |
+| U1324 | `unauthenticated` with a login command blocks and says "Run `<command>` on that machine." | AC-1.1, FR-1313 | example | DONE | `src/dispatch/availability.test.ts` |
+| U1325 | `unauthenticated` with no login command blocks and says "Sign in to it on that machine." | AC-1.1, FR-1313 | example | DONE | `src/dispatch/availability.test.ts` |
+| U1326 | `expired` blocks with the login command, and with the same fallback when bb gives none | AC-1.2, FR-1313 | example | DONE | `src/dispatch/availability.test.ts` |
+| U1327 | `unsupported_version` blocks and shows the installed and the minimum version | AC-1.3, FR-1313 | example | DONE | `src/dispatch/availability.test.ts` |
+| U1328 | `unsupported_version` with no version data says "unknown" for each missing version | AC-1.3, FR-1313 | example | DONE | `src/dispatch/availability.test.ts` |
+| U1329 | Status `unknown` blocks, appends bb's status message when it has one, and appends nothing when it has none | AC-1.4, FR-1312 | example | DONE | `src/dispatch/availability.test.ts` |
+| U1330 | A provider with no state blocks, and the message lists the provider IDs that bb reports, or "none" | AC-1.4, FR-1312 | example | DONE | `src/dispatch/availability.test.ts` |
+| U1331 | The state of the profile's provider decides, not the first state in the list: a not-ready state of another provider does not block | AC-1.5, FR-1312 | example | DONE | `src/dispatch/availability.test.ts` |
+| U1332 | Readiness is checked before the listing: a provider that is both unlisted and not ready gets the readiness message | FR-1312 (order) | example | DONE | `src/dispatch/availability.test.ts` |
 | U1333 | A provider that bb does not list blocks and names the providers it knows (moves to the new signature) | FR-1317 | example | BASELINE | `src/dispatch/availability.test.ts::[U731]` |
 | U1334 | A listed provider with `available` false blocks (moves to the new signature) | FR-1317 | example | BASELINE | `src/dispatch/availability.test.ts::[U732]` |
 | U1335 | A permission mode that the provider does not list blocks with today's message (moves to the new signature) | FR-1317 | example | BASELINE | `src/dispatch/availability.test.ts::[U733]` |
-| U1336 | The permission mode is checked before the level: a profile with both wrong gets the mode message | FR-1312 (order) | example | PENDING | |
+| U1336 | The permission mode is checked before the level: a profile with both wrong gets the mode message | FR-1312 (order) | example | DONE | `src/dispatch/availability.test.ts` |
 | U1337 | With no model data, a level that the provider does not list blocks with today's message (moves to the new signature) | FR-1317 | example | BASELINE | `src/dispatch/availability.test.ts::[U734]` |
 | U1338 | The level check is skipped when the provider lists no levels (moves to the new signature) | FR-1317 | example | BASELINE | `src/dispatch/availability.test.ts::[U735]` |
 
@@ -141,30 +141,30 @@ A1301 to A1309 live in `test/acceptance/harness-readiness.test.ts`, A1310 to A13
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| U1339 | A ready profile returns `{ ok: true }` | AC-1.8 | example | PENDING | |
-| U1340 | The gate reads the providers, the states, and the models with the placed machine's ID | AC-1.5, FR-1311 | example | PENDING | |
-| U1341 | With no machine, the gate reads with no host ID | AC-1.8 | example | PENDING | |
-| U1342 | A throw from the providers read returns `read_failed` with "could not read bb's providers (<error>)" | AC-1.4, FR-1312 | example | PENDING | |
-| U1343 | A throw from the states read returns `read_failed` with "could not read bb's provider states (<error>)" | AC-1.4, FR-1312 | example | PENDING | |
+| U1339 | A ready profile returns `{ ok: true }` | AC-1.8 | example | DONE | `src/dispatch/gate.test.ts` |
+| U1340 | The gate reads the providers, the states, and the models with the placed machine's ID | AC-1.5, FR-1311 | example | DONE | `src/dispatch/gate.test.ts` |
+| U1341 | With no machine, the gate reads with no host ID | AC-1.8 | example | DONE | `src/dispatch/gate.test.ts` |
+| U1342 | A throw from the providers read returns `read_failed` with "could not read bb's providers (<error>)" | AC-1.4, FR-1312 | example | DONE | `src/dispatch/gate.test.ts` |
+| U1343 | A throw from the states read returns `read_failed` with "could not read bb's provider states (<error>)" | AC-1.4, FR-1312 | example | DONE | `src/dispatch/gate.test.ts` |
 | U1344 | A throw from the models read returns `read_failed` with "could not read bb's models (<error>)" | AC-5.9, FR-1346 | example | PENDING | |
-| U1345 | A not-ready provider returns code `provider_unavailable` with `permanent` false | FR-1312, FR-1316 | example | PENDING | |
+| U1345 | A not-ready provider returns code `provider_unavailable` with `permanent` false | FR-1312, FR-1316 | example | DONE | `src/dispatch/gate.test.ts` |
 
 ### `src/machines/preflight.ts` (H1)
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| U1346 | A named provider that is ready on the host gives no `agent_cli` problem | AC-1.6, FR-1315 | example | PENDING | |
-| U1347 | A named provider that is `unauthenticated` on the host gives an `agent_cli` problem with the readiness text and the login command | AC-1.6, FR-1315 | example | PENDING | |
-| U1348 | With no named provider, one ready listed provider gives no problem | FR-1315 | example | PENDING | |
+| U1346 | A named provider that is ready on the host gives no `agent_cli` problem | AC-1.6, FR-1315 | example | DONE | `src/machines/preflight.test.ts` |
+| U1347 | A named provider that is `unauthenticated` on the host gives an `agent_cli` problem with the readiness text and the login command | AC-1.6, FR-1315 | example | DONE | `src/machines/preflight.test.ts` |
+| U1348 | With no named provider, one ready listed provider gives no problem | FR-1315 | example | DONE | `src/machines/preflight.test.ts` |
 | U1349 | With no named provider and no ready listed provider, the problem says "No agent CLI is available on <host>" (today's text) | FR-1315 | example | BASELINE | `src/machines/preflight.test.ts::[U839]` |
-| U1350 | The preflight reads the states with the host's own ID | AC-1.5, AC-1.6 | example | PENDING | |
+| U1350 | The preflight reads the states with the host's own ID | AC-1.5, AC-1.6 | example | DONE | `src/machines/preflight.test.ts` |
 
 ### `src/limits/queue.ts`: readiness at queue start (H1)
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| U1351 | A queued task whose provider is `unauthenticated` stays queued, spawns nothing, and the log names the message | AC-1.7, FR-1316 | example | PENDING | |
-| U1352 | A failed states read keeps the task queued | AC-1.7, FR-1316 | example | PENDING | |
+| U1351 | A queued task whose provider is `unauthenticated` stays queued, spawns nothing, and the log names the message | AC-1.7, FR-1316 | example | DONE | `src/limits/queue.test.ts` |
+| U1352 | A failed states read keeps the task queued | AC-1.7, FR-1316 | example | DONE | `src/limits/queue.test.ts` |
 | U1353 | A queued task starts once the provider is ready (cap and order unchanged) | AC-1.7 | example | BASELINE | `src/limits/queue.test.ts::[U1007]` |
 | U1354 | A queued task whose provider is unavailable stays queued and spawns nothing | FR-1316 | example | BASELINE | `src/limits/queue.test.ts::leaves a task queued, and does not spawn, when the provider is no longer available` |
 
@@ -172,9 +172,9 @@ A1301 to A1309 live in `test/acceptance/harness-readiness.test.ts`, A1310 to A13
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| U1355 | A gate block prints "Dispatch blocked (<code>): <message> No task was created." | FR-1312 | example | PENDING | |
-| U1356 | A read failure prints "Dispatch failed: <message>. No task was created." | AC-1.4 | example | PENDING | |
-| U1357 | A task pinned to an offline machine blocks before any provider state is read (hard rule 5 first) | FR-1371, plan: machine placement comes first | example | PENDING | |
+| U1355 | A gate block prints "Dispatch blocked (<code>): <message> No task was created." | FR-1312 | example | DONE | `src/tools/dispatch.test.ts` |
+| U1356 | A read failure prints "Dispatch failed: <message>. No task was created." | AC-1.4 | example | DONE | `src/tools/dispatch.test.ts` |
+| U1357 | A task pinned to an offline machine blocks before any provider state is read (hard rule 5 first) | FR-1371, plan: machine placement comes first | example | DONE | `src/tools/dispatch.test.ts` |
 
 ### `src/dispatch/gate.ts`: admission (H11)
 

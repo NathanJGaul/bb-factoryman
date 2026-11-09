@@ -61,3 +61,37 @@ Commit subject: "feat: read bb's provider states through the port (H1)".
 - fixtures (tasks T1322, T1323, no behavior id): `FakeBbPort` gained `states`, `statesByHost`, `statesError`, and a default that derives one state per listed provider (`ready` when available, `not_installed` otherwise); `loadWorld` gained `providerStates`, `providerStatesByHost`, `providerStatesError`, a `system.providerStates` fake with the same default, and the exported `stateFixture` and `providerState` builders.
   The fixtures change no test. `pnpm run check` -> 97 files, 1366 passed, 0 failed.
 - refactor: none needed.
+
+## Group 3: the readiness gate (tasks T1324 to T1335, H1 part 2)
+
+Behaviors: U1323 to U1332, U1336, U1339 to U1343, U1345 to U1348, U1350 to U1352, U1355 to U1357, A1301 to A1309.
+BASELINE behaviors carried by this group: U1322, U1333 to U1335, U1337, U1338 (the old `checkProfile` tests, now on the new signature), U1349, U1353, U1354.
+Commit subject: "feat: pass a provider only when bb reports it ready (H1)".
+
+- structural step first, on green: `checkProfile(profile, providers)` became `checkProfile(profile, facts)` with `facts = { host, providers, states }`, and `src/dispatch/availability.test.ts` moved to the new call shape with its assertion lines unchanged (U730 to U735).
+  The suite stayed green at that point.
+- test: `src/dispatch/availability.test.ts` gained 12 cases (U1323 to U1332, U1336, and a `readinessProblem` case).
+- red: `pnpm vitest run src/dispatch/availability.test.ts` -> `11 failed | 8 passed`; U1323 to U1332 and the `readinessProblem` case fail with `- Expected / + Received` on the readiness text (the stub returns null and `checkProfile` reads no state).
+  U1336 and U1322 passed against the stub by design.
+- green: `readinessProblem` returns the message for each status and null only for `ready`; `checkProfile` puts it first and appends "No other provider was tried."
+  `pnpm vitest run src/dispatch/availability.test.ts` -> 19 passed.
+- test: `src/dispatch/gate.test.ts` (new, 6 tests) against a stub `gateProfile` that throws "not implemented".
+- red: `pnpm vitest run src/dispatch/gate.test.ts` -> `6 failed`; `Error: not implemented`.
+- green: `gateProfile` reads the providers and the states together with the placed machine's ID (none for the default host) and maps a throw to `read_failed` with the text of the contract.
+  `pnpm vitest run src/dispatch/gate.test.ts src/dispatch/availability.test.ts` -> 25 passed.
+- test: `src/machines/preflight.test.ts` (5 new cases), `src/limits/queue.test.ts` (2 new cases), `src/tools/dispatch.test.ts` (3 new cases) were written while the call sites still used the old two-argument `checkProfile`.
+- red: `pnpm vitest run src/machines/preflight.test.ts src/limits/queue.test.ts src/tools/dispatch.test.ts` -> `28 failed`.
+  Twenty-three of those are existing tests that failed because the old call sites passed an array where `checkProfile` now wants a facts object, and the suite was red until the call sites moved.
+  The five that name new behavior fail on the assertion: U1347 and U1348 (the preflight message), U1350 (`getProviderStates` was never called), U1351 and U1352 (the queue started the task), U1355 and U1356 (no readiness text).
+  I did not commit on this red.
+- green: `src/tools/dispatch.ts` and `src/limits/queue.ts` call `gateProfile`, and `runPreflight` reads the host's states and reuses `readinessProblem`.
+  `pnpm vitest run src/machines/preflight.test.ts src/limits/queue.test.ts src/tools/dispatch.test.ts src/dispatch` -> 137 passed.
+- test: `test/acceptance/harness-readiness.test.ts` (new, 13 cases) and `setProviderStates` in the `loadWorld` fixture.
+  The file was written after the call sites were wired, so it passed on its first run.
+  The deliberate-mutant check, one mutant at a time on the code, with the file restored each time: an `unauthenticated` state that passes -> 12 tests fail, among them A1301, A1305, A1306, A1307 (M1 killed); a failed states read that passes -> U1343, U1352, U1356, A1304 fail (M17 killed); states read without the placed machine's ID -> A1305 and U1340 fail; a queue start that ignores the gate -> A1307, U1351, U1352 fail; a preflight that ignores readiness -> U1347 and A1306 fail; the first state instead of the profile's state -> U1330, U1331, A1304 fail (M16 killed); readiness skipped for an unlisted provider -> U1332 fails (M2 killed).
+- existing tests that changed, forced by the requirement (D-107): `test/acceptance/dispatch-resolver.test.ts` [A710], two cases.
+  "unavailable" now expects "is not installed" and "not listed" expects "bb reports no state for the provider `claude`", because readiness comes before the listing.
+  The behavior is the same (the dispatch blocks and spawns nothing), and only the message that explains it changed.
+  No assertion was loosened: both still require an error and zero spawns.
+- suite: `pnpm run check` -> 99 files, 1408 passed, 0 failed.
+- refactor: none needed after the green. The three call sites each shrank by a few lines.

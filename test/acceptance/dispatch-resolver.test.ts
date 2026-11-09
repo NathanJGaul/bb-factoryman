@@ -124,8 +124,9 @@ describe("dispatch profile resolution through the plugin factory", () => {
   });
 
   it.each<[string, unknown[], string]>([
-    ["unavailable", [providerFixture("claude", { available: false })], "not available"],
-    ["not listed", [providerFixture("codex")], "not available"],
+    // Readiness comes first (feature 009): bb's state for the provider explains these two now.
+    ["unavailable", [providerFixture("claude", { available: false })], "is not installed"],
+    ["not listed", [providerFixture("codex")], "bb reports no state for the provider `claude`"],
     ["a permission mode it does not list", [providerFixture("claude", { capabilities: { permissionModes: ["accept-edits"] } })], "permission mode"],
     ["a reasoning level it does not list", [providerFixture("claude", { reasoningLevels: [{ id: "low", label: "low" }] })], "reasoning level"],
   ])("[A710] blocks a provider that bb reports as %s", async (_label, providers, text) => {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { FakeBbPort } from "../../test/fixtures/bb-port";
+import { FakeBbPort, providerState } from "../../test/fixtures/bb-port";
 import type { Exec, ExecResult } from "../exec";
 import type { DeliveryMode } from "../machine/types";
 import { preflightOnce, reportText, runPreflight, type PreflightInput } from "./preflight";
@@ -47,6 +47,48 @@ describe("runPreflight", () => {
     ]);
     expect(await runPreflight({ bb, exec }, input("local-only", "claude"))).toEqual([expect.objectContaining({ check: "agent_cli" })]);
     expect(await runPreflight({ bb, exec }, input("local-only", null))).toEqual([]);
+  });
+
+  describe("the agent CLI check reads the provider states of the host", () => {
+    it("[U1346] gives no agent_cli problem for a named provider that is ready on the host", async () => {
+      const { bb, exec, input } = setup();
+      bb.statesByHost.set("host_gpu", [providerState("claude")]);
+      expect(await runPreflight({ bb, exec }, input("local-only", "claude"))).toEqual([]);
+    });
+
+    it("[U1347] reports a named provider that is not signed in on the host, with the readiness text and bb's login command", async () => {
+      const { bb, exec, input } = setup();
+      bb.statesByHost.set("host_gpu", [providerState("claude", { status: "unauthenticated", localLoginCommand: "claude login" })]);
+      expect(await runPreflight({ bb, exec }, input("local-only", "claude"))).toEqual([
+        {
+          check: "agent_cli",
+          message: "The provider `claude` is not signed in on gpu-box (bb status: unauthenticated). Run `claude login` on that machine.",
+        },
+      ]);
+    });
+
+    it("[U1348] gives no problem with no named provider when one listed provider is ready", async () => {
+      const { bb, exec, input } = setup();
+      bb.providersByHost.set("host_gpu", [
+        { id: "claude", available: true, permissionModes: ["auto"], reasoningLevels: [] },
+        { id: "codex", available: true, permissionModes: ["auto"], reasoningLevels: [] },
+      ]);
+      bb.statesByHost.set("host_gpu", [providerState("claude", { status: "unauthenticated" }), providerState("codex")]);
+      expect(await runPreflight({ bb, exec }, input("local-only", null))).toEqual([]);
+    });
+
+    it("[U1348] reports no agent CLI with no named provider when every listed provider is installed but not ready", async () => {
+      const { bb, exec, input } = setup();
+      bb.statesByHost.set("host_gpu", [providerState("claude", { status: "unauthenticated" }), providerState("claude-code", { status: "expired" })]);
+      const problems = await runPreflight({ bb, exec }, input("local-only", null));
+      expect(problems).toEqual([{ check: "agent_cli", message: "No agent CLI is available on gpu-box. Install one and sign in on that machine." }]);
+    });
+
+    it("[U1350] reads the states with the host's own ID", async () => {
+      const { bb, exec, input } = setup();
+      await runPreflight({ bb, exec }, input("local-only", "claude"));
+      expect(bb.callsTo("getProviderStates")).toEqual([["host_gpu"]]);
+    });
   });
 
   it("[U840] reports a missing no-mistakes for no-mistakes mode only", async () => {

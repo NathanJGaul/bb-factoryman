@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { providerState } from "../../test/fixtures/bb-port";
 import { PROFILE } from "../../test/fixtures/machine";
 import { testRuntime } from "../../test/fixtures/runtime";
 import { defaultProjectConfig } from "../store/store";
@@ -177,5 +178,42 @@ describe("factoryman_dispatch placement failures", () => {
     expect(second.ok).toBe(false);
     expect(second.text).toContain("provider_unavailable");
     expect(t.bb.callsTo("spawnWorker")).toHaveLength(1);
+  });
+});
+
+describe("factoryman_dispatch provider gate", () => {
+  it("[U1355] prints a gate block as `Dispatch blocked (<code>): <message> No task was created.`", async () => {
+    const t = setup();
+    t.bb.states = [providerState("claude", { status: "unauthenticated", localLoginCommand: "claude login" })];
+    const outcome = await dispatch(t.runtime, supervisor, valid);
+    expect(outcome).toEqual({
+      ok: false,
+      text:
+        "Dispatch blocked (provider_unavailable): The provider `claude` is not signed in on the default host (bb status: unauthenticated). " +
+        "Run `claude login` on that machine. No other provider was tried. No task was created.",
+    });
+    expect(t.runtime.deps.store.listTasks()).toEqual([]);
+    expect(t.bb.callsTo("spawnWorker")).toEqual([]);
+  });
+
+  it("[U1356] prints a read failure as `Dispatch failed: <message>. No task was created.`", async () => {
+    const t = setup();
+    t.bb.statesError = new Error("bb is down");
+    const outcome = await dispatch(t.runtime, supervisor, valid);
+    expect(outcome).toEqual({ ok: false, text: "Dispatch failed: could not read bb's provider states (bb is down). No task was created." });
+    expect(t.runtime.deps.store.listTasks()).toEqual([]);
+    expect(t.bb.callsTo("spawnWorker")).toEqual([]);
+  });
+
+  it("[U1357] blocks a task pinned to an offline machine before it reads any provider state", async () => {
+    const t = setup();
+    t.bb.machines.push({ id: "host_gpu", name: "gpu-box", status: "disconnected", phase: "active", online: false });
+    t.bb.sources.push({ hostId: "host_gpu", path: "/work/gpu", isDefault: false });
+    const outcome = await dispatch(t.runtime, supervisor, { ...valid, machine: "gpu-box" });
+    expect(outcome.ok).toBe(false);
+    expect(outcome.text).toContain("offline");
+    expect(t.bb.callsTo("getProviderStates")).toEqual([]);
+    expect(t.bb.callsTo("listProviders")).toEqual([]);
+    expect(t.bb.callsTo("spawnWorker")).toEqual([]);
   });
 });
