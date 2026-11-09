@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { providerState } from "../../test/fixtures/bb-port";
 import { PROFILE } from "../../test/fixtures/machine";
+import { answerRead } from "../../test/fixtures/validator-read";
 import { testRuntime } from "../../test/fixtures/runtime";
 import { defaultProjectConfig } from "../store/store";
-import { READ_SCRIPT } from "../validator/agent";
 import type { Caller } from "./dispatch";
 import { dispatch } from "./dispatch";
 
@@ -151,7 +151,7 @@ describe("factoryman_dispatch placement failures", () => {
   it("[U1697] refuses a dispatch to a remote machine whose validator agent is not ready, with preflight_failed, and creates no task", async () => {
     const t = remote();
     t.bb.statesByHost.set("host_gpu", [providerState("claude"), providerState("codex", { status: "unauthenticated" })]);
-    t.execHandler = (command, args) => (command === "sh" && args[1] === READ_SCRIPT ? { code: 0, stdout: "agent: codex\n", stderr: "" } : { code: 0, stdout: "", stderr: "" });
+    t.execHandler = answerRead("agent: codex\n");
     const outcome = await dispatch(t.runtime, supervisor, { ...valid, machine: "gpu-box" });
     expect(outcome.ok).toBe(false);
     expect(outcome.text).toContain("Dispatch blocked (preflight_failed)");

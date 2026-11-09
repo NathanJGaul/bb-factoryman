@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { withDispatchedTask } from "../../test/fixtures/runtime";
 import { testRuntime } from "../../test/fixtures/runtime";
 import { modelEntry, providerState } from "../../test/fixtures/bb-port";
-import { READ_SCRIPT } from "../validator/agent";
+import { answerRead, isRead } from "../../test/fixtures/validator-read";
 import { runFactorymanCommand } from "./supervisor-command";
 
 describe("bb factoryman supervisor", () => {
@@ -138,8 +138,8 @@ describe("bb factoryman supervisor", () => {
       expect(ok.stdout).toContain("gpu-box");
       expect(ok.stdout).toMatch(/ready/);
       // The validator read (feature 011) opens a file under the home directory and needs no working directory.
-      expect(t.execCalls.filter((call) => call.args[1] !== READ_SCRIPT).every((call) => call.cwd === "/work/gpu")).toBe(true);
-      expect(t.execCalls.filter((call) => call.args[1] === READ_SCRIPT)).toHaveLength(1);
+      expect(t.execCalls.filter((call) => !isRead(call.command, call.args)).every((call) => call.cwd === "/work/gpu")).toBe(true);
+      expect(t.execCalls.filter((call) => isRead(call.command, call.args)).map((call) => call.cwd)).toEqual([undefined]);
     });
 
     it("[U856] exits 1 and prints the failed check when the machine is missing something", async () => {
@@ -176,13 +176,12 @@ describe("bb factoryman supervisor", () => {
 
     it("[U1696] exits 1 with a validator_agent problem when the validator agent is not ready, and exits 0 and names the agent when it is ready", async () => {
       const t = remoteRuntime();
-      const answer = (config: string) => (command: string, args: readonly string[]) => (command === "sh" && args[1] === READ_SCRIPT ? { code: 0, stdout: config, stderr: "" } : { code: 0, stdout: "", stderr: "" });
       t.bb.states = [providerState("claude"), providerState("claude-code"), providerState("codex", { status: "unauthenticated", localLoginCommand: "codex login" })];
-      t.execHandler = answer("agent: codex\n");
+      t.execHandler = answerRead("agent: codex\n");
       const failed = await runFactorymanCommand(t.runtime, ["preflight", "gpu-box", "--project", "proj-1"]);
       expect(failed.exitCode).toBe(1);
       expect(failed.stdout).toContain("validator_agent: codex (bb provider codex) is not ready on gpu-box");
-      t.execHandler = answer("agent: claude\n");
+      t.execHandler = answerRead("agent: claude\n");
       const ready = await runFactorymanCommand(t.runtime, ["preflight", "gpu-box", "--project", "proj-1"]);
       expect(ready.exitCode).toBe(0);
       expect(ready.stdout).toContain("is ready for no-mistakes mode work.");

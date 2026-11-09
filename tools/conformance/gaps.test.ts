@@ -45,11 +45,6 @@ describe("loadGaps", () => {
 describe("the committed known-gap file", () => {
   const committed = () => loadGaps(new URL("../../conformance/known-gaps.json", import.meta.url).pathname);
 
-  it("[U1519] lists no entry for the checks that the harness contracts closed: S1.unready-blocks, S1.remedy, and S7.cause", async () => {
-    const checks = (await committed()).map((gap) => gap.check);
-    for (const closed of ["S1.unready-blocks", "S1.remedy", "S7.cause"]) expect(checks, closed).not.toContain(closed);
-  });
-
   it("[U1717] lists no entry at all, because the supervisor start command closed the last gaps, and loadGaps returns an empty list", async () => {
     expect(await committed()).toEqual([]);
   });

@@ -198,11 +198,14 @@ describe("observeValidatorAgent", () => {
     expect(observation).toMatchObject({ status: "unobserved", reason: expect.stringContaining("exited 1: cat: config.yaml: Permission denied") });
   });
 
-  it("[U1678] reports a read that did not run, or was killed or timed out, as unobserved", async () => {
-    const didNotRun = await observeValidatorAgent({ bb: bbWith(READY("claude-code")), exec: scripted({ code: null, stdout: "", stderr: "", error: "spawn sh ENOENT" }).exec }, HERE);
-    expect(didNotRun).toMatchObject({ status: "unobserved", reason: expect.stringContaining("spawn sh ENOENT") });
-    const killed = await observeValidatorAgent({ bb: bbWith(READY("claude-code")), exec: scripted({ code: null, stdout: "", stderr: "" }).exec }, HERE);
-    expect(killed).toMatchObject({ status: "unobserved", reason: expect.stringContaining("killed") });
+  it("[U1678] reports a read that did not run as unobserved, with the reason", async () => {
+    const observation = await observeValidatorAgent({ bb: bbWith(READY("claude-code")), exec: scripted({ code: null, stdout: "", stderr: "", error: "spawn sh ENOENT" }).exec }, HERE);
+    expect(observation).toMatchObject({ status: "unobserved", reason: expect.stringContaining("spawn sh ENOENT") });
+  });
+
+  it("[U1678] reports a read that was killed or timed out as unobserved", async () => {
+    const observation = await observeValidatorAgent({ bb: bbWith(READY("claude-code")), exec: scripted({ code: null, stdout: "", stderr: "" }).exec }, HERE);
+    expect(observation).toMatchObject({ status: "unobserved", reason: expect.stringContaining("killed") });
   });
 
   it("[U1679] reports a setting that cannot be read as unobserved, with the parser's reason", async () => {
@@ -211,13 +214,16 @@ describe("observeValidatorAgent", () => {
     expect(observation).toMatchObject({ status: "unobserved", reason: expect.stringContaining("not closed") });
   });
 
-  it("[U1680] reports a throwing states call, and a throwing exec, as unobserved, and never throws", async () => {
+  it("[U1680] reports a throwing states call as unobserved, and does not throw", async () => {
     const bb = bbWith(READY("claude-code"));
     bb.statesError = new Error("HTTP 503");
-    const states = await observeValidatorAgent({ bb, exec: scripted(file("agent: claude\n")).exec }, HERE);
-    expect(states).toMatchObject({ status: "unobserved", reason: expect.stringContaining("could not read bb's provider states (HTTP 503)") });
-    const thrown = await observeValidatorAgent({ bb: bbWith(READY("claude-code")), exec: async () => Promise.reject(new Error("terminal exploded")) }, HERE);
-    expect(thrown).toMatchObject({ status: "unobserved", reason: expect.stringContaining("terminal exploded") });
+    const observation = await observeValidatorAgent({ bb, exec: scripted(file("agent: claude\n")).exec }, HERE);
+    expect(observation).toMatchObject({ status: "unobserved", reason: expect.stringContaining("could not read bb's provider states (HTTP 503)") });
+  });
+
+  it("[U1680] reports a throwing exec as unobserved, and does not throw", async () => {
+    const observation = await observeValidatorAgent({ bb: bbWith(READY("claude-code")), exec: async () => Promise.reject(new Error("terminal exploded")) }, HERE);
+    expect(observation).toMatchObject({ status: "unobserved", reason: expect.stringContaining("terminal exploded") });
   });
 
   it("[U1681] runs one sh -c read with the contract's script, a 30 second bound, and the host of the call, and asks for the same host's states", async () => {
@@ -225,14 +231,20 @@ describe("observeValidatorAgent", () => {
     const bb = bbWith(READY("claude-code"));
     await observeValidatorAgent({ bb, exec }, GPU);
     expect(calls).toEqual([{ command: "sh", args: ["-c", READ_SCRIPT], options: { host: "host_gpu", timeoutMs: 30_000 } }]);
-    expect(READ_SCRIPT).toContain('${NM_HOME:-$HOME/.no-mistakes}/config.yaml');
-    expect(READ_SCRIPT).toContain("exit 3");
     expect(bb.callsTo("getProviderStates")).toEqual([["host_gpu"]]);
-    const local = scripted(file(""));
-    const bbLocal = bbWith(READY("claude-code"));
-    await observeValidatorAgent({ bb: bbLocal, exec: local.exec }, HERE);
-    expect(local.calls[0]?.options).toEqual({ host: null, timeoutMs: 30_000 });
-    expect(bbLocal.callsTo("getProviderStates")).toEqual([[undefined]]);
+  });
+
+  it("[U1681] runs the read on the server, with no host, when the call names none", async () => {
+    const { exec, calls } = scripted(file(""));
+    const bb = bbWith(READY("claude-code"));
+    await observeValidatorAgent({ bb, exec }, HERE);
+    expect(calls[0]?.options).toEqual({ host: null, timeoutMs: 30_000 });
+    expect(bb.callsTo("getProviderStates")).toEqual([[undefined]]);
+  });
+
+  it("[U1681] keeps the contract's script text: the NM_HOME default and the exit code for no file", () => {
+    expect(READ_SCRIPT).toContain("${NM_HOME:-$HOME/.no-mistakes}/config.yaml");
+    expect(READ_SCRIPT).toContain("exit 3");
   });
 });
 

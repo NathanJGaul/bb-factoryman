@@ -23,6 +23,8 @@ describe("gateReadiness: the checks without the worker admission rule", () => {
     expect(bb.callsTo("listProviders")).toEqual([[undefined]]);
     expect(bb.callsTo("getProviderStates")).toEqual([[undefined]]);
     expect(bb.callsTo("listModels")).toEqual([["pi", undefined]]);
+    // The same profile is refused by the full gate, which is why the supervisor command calls gateReadiness.
+    expect(await gateProfile(piBb(), piProfile, "local-only", null)).toMatchObject({ ok: false, code: "provider_not_admitted" });
   });
 
   it("[U1607] returns provider_unavailable with bb's remedy for a provider that is not ready", async () => {

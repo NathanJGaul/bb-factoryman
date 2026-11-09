@@ -50,36 +50,50 @@ describe("bb factoryman supervisor start through the plugin factory", () => {
     expect(spawnArgs(world).map(([args]) => args["prompt"])).toEqual(["Watch the repo and wait.", DEFAULT_PROMPT]);
   });
 
-  it("[A1604] refuses a provider that is not ready, a mode the provider lacks, and a level the model does not list, with dispatch's reason and no event or row, and spawns Pi in a local-only project", async () => {
-    const notReady = await bare(dispatch(), { providerStates: [stateFixture("claude", { status: "unauthenticated", localLoginCommand: "claude login" }), stateFixture("pi")] });
-    const refusedState = await start(notReady, "--profile", "deep");
-    expect(refusedState.exitCode).toBe(1);
-    expect(refusedState.stderr).toContain("not signed in");
-    expect(refusedState.stderr).toContain("Nothing was spawned.");
-
-    const noMode = await bare(dispatch({ profiles: { deep: { ...CLAUDE, permissionMode: "full" } } }), { providers: [{ id: "claude", available: true, capabilities: { permissionModes: ["accept-edits"] }, reasoningLevels: [] }] });
-    expect((await start(noMode, "--profile", "deep")).stderr).toContain("does not offer the permission mode `full`");
-
-    const noLevel = await bare(dispatch({ profiles: { deep: { ...CLAUDE, reasoningLevel: "ultra" } } }));
-    expect((await start(noLevel, "--profile", "deep")).stderr).toContain("does not list the reasoning level `ultra`");
-
-    for (const world of [notReady, noMode, noLevel]) {
-      expect(world.sdkCalls("threads.spawn")).toEqual([]);
-      expect(world.store.listTasks()).toEqual([]);
-    }
-
-    const pi = await bare(dispatch(), { providers: [{ id: "pi", available: true, capabilities: { permissionModes: ["full"] }, reasoningLevels: [{ id: "medium", label: "medium" }] }] });
-    pi.setProject({ deliveryMode: "local-only" });
-    pi.setModels("pi", { models: [{ id: "openai/gpt-6-luna", model: "openai/gpt-6-luna", displayName: "x", description: "", isDefault: true, defaultReasoningEffort: "medium", reasoningDiscovery: "known", supportedReasoningEfforts: [{ reasoningEffort: "medium", description: "" }] }] });
-    expect((await start(pi, "--profile", "pi")).exitCode).toBe(0);
-    expect(pi.sdkCalls("threads.spawn")).toHaveLength(1);
-  });
-
-  it("[A1621] spawns the profile that roles.supervisor.profile names when there is no --profile", async () => {
-    const world = await bare(dispatch({ roles: { supervisor: { profile: "pi" } } }), {
+  /** A world whose file has a Claude profile `deep` and a Pi profile `pi`, and whose bb lists the Pi model that the Pi profile names. */
+  const piWorld = (extra: Record<string, unknown> = {}) =>
+    bare(dispatch(extra), {
       providers: [providerFixture("claude"), providerFixture("pi", { capabilities: { permissionModes: ["full"] }, reasoningLevels: [{ id: "medium", label: "medium" }] })],
       models: { pi: { models: [modelFixture("openai/gpt-6-luna", { isDefault: true, defaultReasoningEffort: "medium", supportedReasoningEfforts: [{ reasoningEffort: "medium", description: "" }] })] } },
     });
+
+  /** The command refused: exit 1, the reason, and nothing spawned, no task, and no event recorded. */
+  async function expectRefused(world: World, flags: string[], reason: string, label: string) {
+    const result = await start(world, ...flags);
+    expect(result.exitCode, label).toBe(1);
+    expect(result.stderr, label).toContain(reason);
+    expect(world.sdkCalls("threads.spawn"), label).toEqual([]);
+    expect(world.store.listTasks(), label).toEqual([]);
+    expect(world.store.listEvents(), label).toEqual([]);
+    return result;
+  }
+
+  it("[A1604] refuses a provider that is not ready with dispatch's reason, and says that nothing was spawned", async () => {
+    const world = await bare(dispatch(), { providerStates: [stateFixture("claude", { status: "unauthenticated", localLoginCommand: "claude login" }), stateFixture("pi")] });
+    const result = await expectRefused(world, ["--profile", "deep"], "not signed in", "not ready");
+    expect(result.stderr).toContain("Nothing was spawned.");
+  });
+
+  it("[A1604] refuses a permission mode that the provider lacks", async () => {
+    const world = await bare(dispatch({ profiles: { deep: { ...CLAUDE, permissionMode: "full" } } }), { providers: [providerFixture("claude", { capabilities: { permissionModes: ["accept-edits"] } })] });
+    await expectRefused(world, ["--profile", "deep"], "does not offer the permission mode `full`", "mode");
+  });
+
+  it("[A1604] refuses a reasoning level that the model does not list", async () => {
+    const world = await bare(dispatch({ profiles: { deep: { ...CLAUDE, reasoningLevel: "ultra" } } }));
+    await expectRefused(world, ["--profile", "deep"], "does not list the reasoning level `ultra`", "level");
+  });
+
+  it("[A1604] spawns a Pi profile in a local-only project, because the worker admission rule is not applied", async () => {
+    const world = await piWorld();
+    world.setProject({ deliveryMode: "local-only" });
+    const result = await start(world, "--profile", "pi");
+    expect(result.exitCode).toBe(0);
+    expect(world.sdkCalls("threads.spawn")).toHaveLength(1);
+  });
+
+  it("[A1621] spawns the profile that roles.supervisor.profile names when there is no --profile", async () => {
+    const world = await piWorld({ roles: { supervisor: { profile: "pi" } } });
     const result = await start(world);
     expect(result.exitCode).toBe(0);
     expect(result.stdout.split("\n")[0]).toBe("Started factoryman supervisor thread thr-w1 with the profile pi (pi, openai/gpt-6-luna).");
@@ -98,23 +112,27 @@ describe("bb factoryman supervisor start through the plugin factory", () => {
     expect(startedThreadId(`${refused.stdout}${refused.stderr}`)).toBeNull();
   });
 
-  it("[A1605] takes the profile from the flag, then from roles.supervisor.profile, and refuses every missing, undefined, or broken case", async () => {
-    const world = await bare(dispatch({ roles: { supervisor: { profile: "pi" } } }), { providers: [{ id: "claude", available: true, capabilities: { permissionModes: ["accept-edits", "auto", "full"] }, reasoningLevels: [] }, { id: "pi", available: true, capabilities: { permissionModes: ["full"] }, reasoningLevels: [] }] });
+  it("[A1605] lets --profile win over roles.supervisor.profile", async () => {
+    const world = await piWorld({ roles: { supervisor: { profile: "pi" } } });
     expect((await start(world, "--profile", "deep")).exitCode).toBe(0);
+    expect(spawnArgs(world)).toHaveLength(1);
     expect(spawnArgs(world)[0]?.[0]).toMatchObject({ providerId: "claude" });
+  });
 
-    const noRole = await bare(dispatch());
-    const none = await start(noRole);
-    expect(none.exitCode).toBe(1);
-    expect(none.stderr).toContain("No supervisor profile is set for project proj-1.");
-    expect(none.stderr).toContain("roles.supervisor.profile");
-    const ghost = await start(noRole, "--profile", "ghost");
-    expect(ghost.stderr).toContain('The supervisor profile "ghost" is not defined in dispatch.json. Defined profiles: deep, pi.');
+  it("[A1605] refuses when neither the flag nor the file names a profile, and names both remedies", async () => {
+    const world = await bare(dispatch());
+    const result = await expectRefused(world, [], "No supervisor profile is set for project proj-1.", "no profile");
+    expect(result.stderr).toContain("roles.supervisor.profile");
+    expect(result.stderr).toContain("--profile <name>");
+  });
 
-    const invalid = await bare("{ nope");
-    expect((await start(invalid, "--profile", "deep")).stderr).toContain("Cannot start a supervisor: dispatch.json is not valid JSON");
-    const bareProject = await loadWorld({ bareConfig: true, checkout: makeCheckout() });
-    expect((await start(bareProject, "--profile", "deep")).stderr).toContain("Defined profiles: none.");
-    for (const refused of [noRole, invalid, bareProject]) expect(refused.sdkCalls("threads.spawn")).toEqual([]);
+  it("[A1605] refuses an undefined profile and lists the defined ones", async () => {
+    const world = await bare(dispatch());
+    await expectRefused(world, ["--profile", "ghost"], 'The supervisor profile "ghost" is not defined in dispatch.json. Defined profiles: deep, pi.', "undefined");
+  });
+
+  it("[A1605] refuses an invalid dispatch.json, and a project with no file", async () => {
+    await expectRefused(await bare("{ nope"), ["--profile", "deep"], "Cannot start a supervisor: dispatch.json is not valid JSON", "invalid");
+    await expectRefused(await loadWorld({ bareConfig: true, checkout: makeCheckout() }), ["--profile", "deep"], "Defined profiles: none.", "no file");
   });
 });

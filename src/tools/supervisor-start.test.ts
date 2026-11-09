@@ -7,11 +7,12 @@ import { runSupervisorStart, START_USAGE } from "./supervisor-start";
 const CHECKOUT = "/work/repo";
 const FILE = `${CHECKOUT}/.bb/factoryman/dispatch.json`;
 const CLAUDE = { provider: "claude", model: "opus", reasoningLevel: "high", permissionMode: "auto" };
-const CODEX = { provider: "claude-code", model: "sonnet", reasoningLevel: "medium", permissionMode: "accept-edits" };
+/** A second profile on a different provider, so a test can tell which of the two was spawned. */
+const SECOND = { provider: "claude-code", model: "sonnet", reasoningLevel: "medium", permissionMode: "accept-edits" };
 const DEFAULT_PROMPT = "You are the factoryman supervisor. Wait for instructions.";
 
 type Config = Record<string, unknown>;
-const file = (extra: Config = {}): Config => ({ version: 1, profiles: { claude: CLAUDE, codex: CODEX }, default: "claude", rules: [], ...extra });
+const file = (extra: Config = {}): Config => ({ version: 1, profiles: { claude: CLAUDE, second: SECOND }, default: "claude", rules: [], ...extra });
 
 /** A runtime whose project `proj-1` has a checkout with the given `dispatch.json` text (or none). */
 function runtimeWith(config: Config | string | null = file()): TestRuntime {
@@ -47,15 +48,15 @@ describe("bb factoryman supervisor start", () => {
   });
 
   it("[U1626] uses roles.supervisor.profile when --profile is absent", async () => {
-    const t = runtimeWith(file({ roles: { supervisor: { profile: "codex" } } }));
+    const t = runtimeWith(file({ roles: { supervisor: { profile: "second" } } }));
     const result = await start(t, "--project", "proj-1");
     expect(result.exitCode).toBe(0);
-    expect(spawns(t)[0]?.[0]).toMatchObject({ profile: CODEX });
-    expect(result.stdout).toContain("with the profile codex (claude-code, sonnet)");
+    expect(spawns(t)[0]?.[0]).toMatchObject({ profile: SECOND });
+    expect(result.stdout).toContain("with the profile second (claude-code, sonnet)");
   });
 
   it("[U1627] lets --profile win over roles.supervisor.profile", async () => {
-    const t = runtimeWith(file({ roles: { supervisor: { profile: "codex" } } }));
+    const t = runtimeWith(file({ roles: { supervisor: { profile: "second" } } }));
     await start(t, "--project", "proj-1", "--profile", "claude");
     expect(spawns(t)[0]?.[0]).toMatchObject({ profile: CLAUDE });
   });
@@ -68,7 +69,7 @@ describe("bb factoryman supervisor start", () => {
     expect(result.stderr).toContain("--profile <name>");
     expect(result.stderr).toContain("roles.supervisor.profile");
     expect(result.stderr).toContain('The profile "default" is the worker\'s and is not used.');
-    expect(result.stderr).toContain("Defined profiles: claude, codex.");
+    expect(result.stderr).toContain("Defined profiles: claude, second.");
     expect(result.stderr).toContain("Nothing was spawned.");
     expect(spawns(t)).toEqual([]);
   });
@@ -77,23 +78,39 @@ describe("bb factoryman supervisor start", () => {
     const t = runtimeWith();
     const result = await start(t, "--project", "proj-1", "--profile", "ghost");
     expect(result.exitCode).toBe(1);
-    expect(result.stderr).toContain('The supervisor profile "ghost" is not defined in dispatch.json. Defined profiles: claude, codex.');
+    expect(result.stderr).toContain('The supervisor profile "ghost" is not defined in dispatch.json. Defined profiles: claude, second.');
     expect(result.stderr).toContain("Nothing was spawned.");
     expect(spawns(t)).toEqual([]);
+  });
+
+  it("[U1629] does not take a property of Object.prototype for a profile", async () => {
+    const t = runtimeWith();
     const inherited = await start(t, "--project", "proj-1", "--profile", "constructor");
     expect(inherited.stderr).toContain('"constructor" is not defined');
     expect(spawns(t)).toEqual([]);
   });
 
-  it("[U1630] takes the project from --project, falls back to the command context, and lets --project win", async () => {
+  it("[U1630] takes the project from --project", async () => {
+    const t = runtimeWith();
+    await runSupervisorStart(t.runtime, ["--project", "proj-1", "--profile", "claude"]);
+    expect(t.bb.callsTo("getProjectCheckout")).toEqual([["proj-1"]]);
+    expect(spawns(t)[0]?.[0]).toMatchObject({ projectId: "proj-1" });
+  });
+
+  it("[U1630] falls back to the project of the command context when there is no --project", async () => {
     const t = runtimeWith();
     t.bb.checkouts.set("proj-ctx", CHECKOUT);
     await runSupervisorStart(t.runtime, ["--profile", "claude"], { projectId: "proj-ctx" });
     expect(t.bb.callsTo("getProjectCheckout")).toEqual([["proj-ctx"]]);
     expect(spawns(t)[0]?.[0]).toMatchObject({ projectId: "proj-ctx" });
+  });
+
+  it("[U1630] lets --project win over the project of the command context", async () => {
+    const t = runtimeWith();
+    t.bb.checkouts.set("proj-ctx", CHECKOUT);
     await runSupervisorStart(t.runtime, ["--project", "proj-1", "--profile", "claude"], { projectId: "proj-ctx" });
-    expect(t.bb.callsTo("getProjectCheckout").at(-1)).toEqual(["proj-1"]);
-    expect(spawns(t)[1]?.[0]).toMatchObject({ projectId: "proj-1" });
+    expect(t.bb.callsTo("getProjectCheckout")).toEqual([["proj-1"]]);
+    expect(spawns(t)[0]?.[0]).toMatchObject({ projectId: "proj-1" });
   });
 
   it("[U1631] refuses an invalid dispatch.json with the loader's message and spawns nothing", async () => {
@@ -114,17 +131,21 @@ describe("bb factoryman supervisor start", () => {
     expect(spawns(t)).toEqual([]);
   });
 
-  it("[U1633] refuses a missing dispatch.json and a project with no checkout as having no defined profile, and spawns nothing", async () => {
-    const missing = runtimeWith(null);
-    const noFile = await start(missing, "--project", "proj-1", "--profile", "claude");
-    expect(noFile.exitCode).toBe(1);
-    expect(noFile.stderr).toContain('The supervisor profile "claude" is not defined in dispatch.json. Defined profiles: none.');
-    const noCheckout = testRuntime();
-    const result = await start(noCheckout, "--project", "proj-1");
+  it("[U1633] refuses a missing dispatch.json as having no defined profile, and spawns nothing", async () => {
+    const t = runtimeWith(null);
+    const result = await start(t, "--project", "proj-1", "--profile", "claude");
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toContain('The supervisor profile "claude" is not defined in dispatch.json. Defined profiles: none.');
+    expect(spawns(t)).toEqual([]);
+  });
+
+  it("[U1633] refuses a project with no checkout as having no defined profile, and spawns nothing", async () => {
+    const t = testRuntime();
+    const result = await start(t, "--project", "proj-1");
     expect(result.exitCode).toBe(1);
     expect(result.stderr).toContain("No supervisor profile is set for project proj-1.");
     expect(result.stderr).toContain("Defined profiles: none.");
-    expect([...spawns(missing), ...spawns(noCheckout)]).toEqual([]);
+    expect(spawns(t)).toEqual([]);
   });
 
   it("[U1634] refuses with the reason when the checkout read throws, and spawns nothing", async () => {
@@ -148,14 +169,22 @@ describe("bb factoryman supervisor start", () => {
     expect(spawns(t)).toEqual([]);
   });
 
-  it("[U1636] refuses a permission mode the provider lacks, and a model or level the provider does not list, with the gate's message", async () => {
-    const mode = runtimeWith();
-    mode.bb.providers = [{ id: "claude", available: true, permissionModes: ["accept-edits"], reasoningLevels: ["low", "high"] }];
-    expect((await start(mode, "--project", "proj-1", "--profile", "claude")).stderr).toContain("does not offer the permission mode `auto`");
-    const level = runtimeWith();
-    level.bb.models.set("claude", { models: [modelEntry("opus", { reasoningLevels: ["low"] })], loadError: null });
-    expect((await start(level, "--project", "proj-1", "--profile", "claude")).stderr).toContain("does not list the reasoning level `high`");
-    expect([...spawns(mode), ...spawns(level)]).toEqual([]);
+  it("[U1636] refuses a permission mode that the provider lacks, with the gate's message, and spawns nothing", async () => {
+    const t = runtimeWith();
+    t.bb.providers = [{ id: "claude", available: true, permissionModes: ["accept-edits"], reasoningLevels: ["low", "high"] }];
+    const result = await start(t, "--project", "proj-1", "--profile", "claude");
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toContain("does not offer the permission mode `auto`");
+    expect(spawns(t)).toEqual([]);
+  });
+
+  it("[U1636] refuses a reasoning level that the model does not list, with the gate's message, and spawns nothing", async () => {
+    const t = runtimeWith();
+    t.bb.models.set("claude", { models: [modelEntry("opus", { reasoningLevels: ["low"] })], loadError: null });
+    const result = await start(t, "--project", "proj-1", "--profile", "claude");
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toContain("does not list the reasoning level `high`");
+    expect(spawns(t)).toEqual([]);
   });
 
   it("[U1637] refuses and spawns nothing when a gate read throws", async () => {
@@ -200,7 +229,7 @@ describe("bb factoryman supervisor start", () => {
 
   it.each([
     ["no project", ["--profile", "claude"]],
-    ["a repeated flag", ["--project", "proj-1", "--profile", "claude", "--profile", "codex"]],
+    ["a repeated flag", ["--project", "proj-1", "--profile", "claude", "--profile", "second"]],
     ["a flag without a value", ["--project", "proj-1", "--profile"]],
     ["a blank value", ["--project", "proj-1", "--profile", "  "]],
     ["an unknown flag", ["--project", "proj-1", "--profile", "claude", "--bogus", "x"]],

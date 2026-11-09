@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { providerState } from "../../test/fixtures/bb-port";
 import { DISPATCH_ARGS, SUPERVISOR, WORKER, testRuntime, withDispatchedTask, type TestRuntime } from "../../test/fixtures/runtime";
 import { defaultProjectConfig } from "../store/store";
-import { READ_SCRIPT } from "../validator/agent";
+import { answerRead, isRead, type ReadAnswer } from "../../test/fixtures/validator-read";
 import { dispatch } from "./dispatch";
 import { report } from "./report";
 
@@ -153,18 +153,12 @@ describe("factoryman_report custom checks", () => {
 });
 
 describe("factoryman_report: the validator line of a hand-off", () => {
-  const isRead = (call: { command: string; args: readonly string[] }) => call.command === "sh" && call.args[1] === READ_SCRIPT;
-  const reads = (t: TestRuntime) => t.execCalls.filter(isRead);
+  const reads = (t: TestRuntime) => t.execCalls.filter((call) => isRead(call.command, call.args));
   const handoff = (t: TestRuntime) => t.runtime.deps.store.listEvents({ taskId: "t1" }).find((row) => row.event === "handoff" && row.outcome === "applied");
   const WORK = "Committed abc123.";
 
   /** Script the answer of the configuration read, and let every other command succeed. */
-  function config(t: TestRuntime, text: string | { code: number | null; stderr: string }): void {
-    t.execHandler = (command, args) => {
-      if (command === "sh" && args[1] === READ_SCRIPT) return typeof text === "string" ? { code: 0, stdout: text, stderr: "" } : { code: text.code, stdout: "", stderr: text.stderr };
-      return { code: 0, stdout: "", stderr: "" };
-    };
-  }
+  const config = (t: TestRuntime, answer: ReadAnswer): void => void (t.execHandler = answerRead(answer));
 
   /** A `no-mistakes` project with one task on the remote machine gpu-box. */
   async function remoteTask(): Promise<TestRuntime> {
@@ -259,10 +253,8 @@ describe("factoryman_report: the validator line of a hand-off", () => {
       t.bb.checkouts.set("proj-1", "/work/repo");
       t.files.files.set("/work/repo/.bb/factoryman/workflow.json", JSON.stringify({ version: 1, checks: { "no-mistakes": [{ name: "lint", argv: ["pnpm", "run", "lint"] }] } }));
       t.bb.envPaths.set("env-thr-w1", "/work/tree");
-      t.execHandler = (command, args) => {
-        if (command === "sh" && args[1] === READ_SCRIPT) return { code: 0, stdout: "agent: claude\n", stderr: "" };
-        return { code: command === "pnpm" ? exitCode : 0, stdout: "", stderr: "" };
-      };
+      const read = answerRead("agent: claude\n");
+      t.execHandler = (command, args) => (command === "pnpm" ? { code: exitCode, stdout: "", stderr: "" } : read(command, args));
       return t;
     }
 
@@ -279,7 +271,8 @@ describe("factoryman_report: the validator line of a hand-off", () => {
       const t = await withChecks(0);
       await report(t.runtime, WORKER, { outcome: "done", evidence: WORK });
       expect(t.execCalls.map((call) => call.command)).toEqual(["pnpm", "sh"]);
-      expect(isRead(t.execCalls[1] as { command: string; args: readonly string[] })).toBe(true);
+      const second = t.execCalls[1];
+      expect(isRead(second?.command ?? "", second?.args ?? [])).toBe(true);
       expect(t.runtime.deps.store.getTask("t1")?.state).toBe("validating");
     });
   });

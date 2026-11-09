@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 import { modelEntry, providerState } from "../../test/fixtures/bb-port";
 import { PROFILE_OK_FOR_QUEUE } from "../../test/fixtures/queue";
 import { testRuntime, type TestRuntime } from "../../test/fixtures/runtime";
+import { answerRead } from "../../test/fixtures/validator-read";
 import type { TaskRow } from "../store/types";
-import { READ_SCRIPT } from "../validator/agent";
 import { RUNNING_STATES, capReached, drain, enqueue, registerQueue, runningCount } from "./queue";
 import type { QueuedRequest } from "./request";
 
@@ -228,12 +228,12 @@ describe("drain re-checks and bookkeeping", () => {
     t.bb.machines.push({ id: "host_gpu", name: "gpu-box", status: "connected", phase: "active", online: true });
     t.bb.sources.push({ hostId: "host_gpu", path: "/work/gpu", isDefault: false });
     t.bb.statesByHost.set("host_gpu", [providerState("claude"), providerState("codex", { status: "unauthenticated" })]);
-    t.execHandler = (command, args) => (command === "sh" && args[1] === READ_SCRIPT ? { code: 0, stdout: "agent: codex\n", stderr: "" } : { code: 0, stdout: "", stderr: "" });
+    t.execHandler = answerRead("agent: codex\n");
     const id = queue(t, { ...REQUEST, machine: "host_gpu" });
     await drain(t.runtime);
     expect(state(t, id)).toBe("queued");
     expect(t.bb.callsTo("spawnWorker")).toEqual([]);
-    expect(t.lines.some((line) => line.level === "warn" && line.message.includes(id) && line.message.includes("validator_agent"))).toBe(true);
+    expect(t.lines.some((line) => line.level === "warn" && line.message.includes(id) && /preflight/.test(line.message))).toBe(true);
     t.bb.statesByHost.set("host_gpu", [providerState("claude"), providerState("codex")]);
     await drain(t.runtime);
     expect(state(t, id)).toBe("working");

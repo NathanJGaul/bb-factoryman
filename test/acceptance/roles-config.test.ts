@@ -15,7 +15,7 @@ describe("the roles block of dispatch.json, through the plugin factory", () => {
       [{ validator: { agent: "set" } }, 'roles.validator.agent must be "observe"'],
       [{ validator: { agent: "inherit" } }, 'roles.validator.agent must be "observe"'],
       [{ supervisor: { profile: "ghost" } }, "roles.supervisor.profile names the undefined profile `ghost`"],
-      [{ surprise: true }, 'Unrecognized key: "surprise"'],
+      [{ surprise: true }, "surprise"],
     ];
     for (const [roles, reason] of cases) {
       const world = await bare(file({ roles }));

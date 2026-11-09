@@ -32,6 +32,7 @@ describe("runPreflight", () => {
     expect(calls.map((call) => call.line)).toEqual(["git --version", NM_INSTALLED, NM_INIT, READ, GH]);
     expect(calls.every((call) => call.host === "host_gpu")).toBe(true);
     expect(calls.filter((call) => call.line !== READ).every((call) => call.cwd === "/work/gpu")).toBe(true);
+    expect(calls.filter((call) => call.line === READ).map((call) => call.cwd)).toEqual([undefined]);
     expect(bb.callsTo("listProviders")).toEqual([["host_gpu"]]);
   });
 
