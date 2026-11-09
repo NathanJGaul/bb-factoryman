@@ -10,13 +10,13 @@ Tier 2 (a real model) has not run for any harness.
 
 ## Claude Code
 
-Status: not supported at tier 1.5. scenarios that failed: S12.
+Status: supported at tier 1.5, with known gaps in S1, S7, S9. Tier 2 has not run.
 
 | Field | Value |
 | --- | --- |
 | CLI | claude 2.1.316 |
 | bb | 0.49.0 |
-| Plugin commit | bdacac4 |
+| Plugin commit | 43eb149 |
 | Date | 2026-11-09 |
 | Network | offline |
 | Isolation | clean |
@@ -34,24 +34,24 @@ Status: not supported at tier 1.5. scenarios that failed: S12.
 | S9 | known gap (H4) | Role change | S9.start-command waits for H4: the command `bb factoryman supervisor start` does not exist yet |
 | S10 | skipped | Restart |  |
 | S11 | pass | Teardown |  |
-| S12 | fail | Wake while busy | failed: S12.delivered, S12.once, S12.mid-turn |
+| S12 | pass | Wake while busy |  |
 
 ## Codex
 
-Status: not supported at tier 1.5. scenarios that failed: S1, S9.
+Status: supported at tier 1.5, with known gaps in S1, S7, S9. Tier 2 has not run.
 
 | Field | Value |
 | --- | --- |
 | CLI | codex 0.166.0 |
 | bb | 0.49.0 |
-| Plugin commit | 58f731f |
+| Plugin commit | 43eb149 |
 | Date | 2026-11-09 |
 | Network | offline |
 | Isolation | clean |
 
 | Scenario | Verdict | Name | Detail |
 | --- | --- | --- | --- |
-| S1 | fail | Readiness | failed: S1.ready |
+| S1 | known gap (H1) | Readiness | S1.unready-blocks waits for H1: dispatch trusts the `available` flag of bb's provider list, which means installed and not signed in, and does not read providerStates; S1.remedy waits for H1: the refusal cannot name bb's status or login command, because dispatch does not read providerStates |
 | S2 | pass | Profile honored |  |
 | S3 | pass | Scout |  |
 | S4 | pass | Ship in local-only mode |  |
@@ -59,23 +59,23 @@ Status: not supported at tier 1.5. scenarios that failed: S1, S9.
 | S6 | pass | Silence |  |
 | S7 | known gap (H3) | Failure | S7.cause waits for H3: the failure evidence reads thread.failed.error and turn.failed.errorInfo, and drops the cause text that bb keeps in provider/error.detail |
 | S8 | pass | Refusals |  |
-| S9 | fail | Role change | failed: S9.stamp-advice |
+| S9 | known gap (H4) | Role change | S9.start-command waits for H4: the command `bb factoryman supervisor start` does not exist yet; S9.stamp-advice waits for H4: the stamp command says the tools arrive "from its next session" and does not tell the person to run `bb thread clear`, which this harness needs |
 | S10 | skipped | Restart |  |
 | S11 | pass | Teardown |  |
 | S12 | pass | Wake while busy |  |
 
 ## Pi
 
-Status: not supported at tier 1.5. the isolation check found a change.
+Status: supported at tier 1.5, with known gaps in S1, S7, S9. Tier 2 has not run.
 
 | Field | Value |
 | --- | --- |
 | CLI | pi 1.4.0 |
 | bb | 0.49.0 |
-| Plugin commit | 817cdf7 |
+| Plugin commit | 43eb149 |
 | Date | 2026-11-09 |
 | Network | offline |
-| Isolation | changed |
+| Isolation | clean |
 
 | Scenario | Verdict | Name | Detail |
 | --- | --- | --- | --- |
@@ -94,13 +94,13 @@ Status: not supported at tier 1.5. the isolation check found a change.
 
 ## omp
 
-Status: not supported at tier 1.5. scenarios that failed: S7.
+Status: supported at tier 1.5, with known gaps in S1, S9. Tier 2 has not run.
 
 | Field | Value |
 | --- | --- |
 | CLI | omp 18.14.1 |
 | bb | 0.49.0 |
-| Plugin commit | 7bccdef |
+| Plugin commit | 43eb149 |
 | Date | 2026-11-09 |
 | Network | offline |
 | Isolation | clean |
@@ -113,7 +113,7 @@ Status: not supported at tier 1.5. scenarios that failed: S7.
 | S4 | pass | Ship in local-only mode |  |
 | S5 | pass | Confinement |  |
 | S6 | pass | Silence |  |
-| S7 | fail | Failure | failed: S7.failed, S7.wake |
+| S7 | pass | Failure | This harness ends a failing model turn normally and shows the error as the assistant's text, so bb records no failure and the plugin sees a silent turn. |
 | S8 | pass | Refusals |  |
 | S9 | known gap (H4) | Role change | S9.start-command waits for H4: the command `bb factoryman supervisor start` does not exist yet; S9.stamp-advice waits for H4: the stamp command says the tools arrive "from its next session" and does not tell the person to run `bb thread clear`, which this harness needs |
 | S10 | skipped | Restart |  |
@@ -126,7 +126,7 @@ Status: not supported at tier 1.5. scenarios that failed: S7.
 | --- | --- |
 | CLI | stub-agent 0.0.1 |
 | bb | 0.49.0 |
-| Plugin commit | e30c027 |
+| Plugin commit | 757c26b |
 | Date | 2026-11-09 |
 | Network | shared |
 | Isolation | clean |

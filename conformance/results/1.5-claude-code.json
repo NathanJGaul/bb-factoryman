@@ -10,11 +10,11 @@
     "version": "0.49.0"
   },
   "plugin": {
-    "commit": "bdacac4",
+    "commit": "43eb149",
     "dirty": false
   },
-  "startedAt": "2026-11-09T05:09:28.028Z",
-  "finishedAt": "2026-11-09T05:19:41.474Z",
+  "startedAt": "2026-11-09T06:16:49.353Z",
+  "finishedAt": "2026-11-09T06:22:45.516Z",
   "offline": true,
   "isolation": {
     "clean": true,
@@ -35,7 +35,7 @@
           "id": "S1.unready-blocks",
           "title": "A dispatch to codex (not_installed) is blocked and creates no task",
           "ok": false,
-          "evidence": "task created: t-4e7a15c7; tasks 0 to 1; text: Dispatched scout task t-4e7a15c7 in local-only mode. Worker thread thr_q9sthwcz93, branch fm/t-4e7a15c7.",
+          "evidence": "task created: t-52eed8f9; tasks 0 to 1; text: Dispatched scout task t-52eed8f9 in local-only mode. Worker thread thr_85g9a6cpbx, branch fm/t-52eed8f9.",
           "gap": {
             "task": "H1",
             "reason": "dispatch trusts the `available` flag of bb's provider list, which means installed and not signed in, and does not read providerStates"
@@ -45,7 +45,7 @@
           "id": "S1.remedy",
           "title": "The refusal names bb's status \"not_installed\" or its login command",
           "ok": false,
-          "evidence": "Dispatched scout task t-4e7a15c7 in local-only mode. Worker thread thr_q9sthwcz93, branch fm/t-4e7a15c7.",
+          "evidence": "Dispatched scout task t-52eed8f9 in local-only mode. Worker thread thr_85g9a6cpbx, branch fm/t-52eed8f9.",
           "gap": {
             "task": "H1",
             "reason": "the refusal cannot name bb's status or login command, because dispatch does not read providerStates"
@@ -103,7 +103,7 @@
           "id": "S4.branch-commit",
           "title": "The task branch holds the one commit the worker made",
           "ok": true,
-          "evidence": "git rev-list --count main..fm/t-55486b8c: 1"
+          "evidence": "git rev-list --count main..fm/t-7315fdf1: 1"
         },
         {
           "id": "S4.review-ready",
@@ -139,7 +139,7 @@
           "id": "S5.supervisor-tools",
           "title": "The supervisor is offered its four tools and not the report tool",
           "ok": true,
-          "evidence": "tools: factoryman_dispatch, factoryman_merge, factoryman_status, factoryman_teardown (thread thr_xup9qqddqc)"
+          "evidence": "tools: factoryman_dispatch, factoryman_merge, factoryman_status, factoryman_teardown (thread thr_2metfhgqyf)"
         },
         {
           "id": "S5.supervisor-skills",
@@ -243,7 +243,7 @@
           "id": "S9.stamp-advice",
           "title": "The stamp needs no advice on this harness",
           "ok": true,
-          "evidence": "Thread thr_mv9f86wi3p is now a factoryman supervisor. It sees the four supervisor tools from its next session."
+          "evidence": "Thread thr_wjhr8px29f is now a factoryman supervisor. It sees the four supervisor tools from its next session."
         },
         {
           "id": "S9.tools-after-step",
@@ -272,7 +272,7 @@
           "id": "S11.dirty-kept",
           "title": "The dirty worktree is still there",
           "ok": true,
-          "evidence": "worktree: /var/tmp/bblab-conformance/data/plugins/environment-git-worktree/host-data/worktrees/thr_czmy48s3mq-1/work"
+          "evidence": "worktree: /var/tmp/bblab-conformance/data/plugins/environment-git-worktree/host-data/worktrees/thr_pneccd4um4-1/work"
         },
         {
           "id": "S11.clean-removed",
@@ -290,25 +290,25 @@
     },
     {
       "id": "S12",
-      "verdict": "fail",
+      "verdict": "pass",
       "checks": [
         {
           "id": "S12.delivered",
           "title": "The wake arrives",
-          "ok": false,
-          "evidence": "0 wake(s) for no task"
+          "ok": true,
+          "evidence": "1 wake(s) for t-145cc211"
         },
         {
           "id": "S12.once",
           "title": "The wake arrives exactly once",
-          "ok": false,
-          "evidence": "0 wake(s)"
+          "ok": true,
+          "evidence": "1 wake(s)"
         },
         {
           "id": "S12.mid-turn",
           "title": "The wake was sent while the supervisor was busy",
-          "ok": false,
-          "evidence": "no wake"
+          "ok": true,
+          "evidence": "busy at arrival: true"
         }
       ]
     }
