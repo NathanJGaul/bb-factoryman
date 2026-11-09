@@ -1,3 +1,4 @@
+import { existsSync, readdirSync, rmSync } from "node:fs";
 import { join } from "node:path";
 
 export interface LabPaths {
@@ -75,4 +76,29 @@ export function offlineProof(probe: { publicConnect: string; loopbackStatus: num
   if (probe.loopbackStatus === null) return { ok: false, message: "The lab's bb did not answer on the loopback." };
   if (probe.loopbackStatus < 200 || probe.loopbackStatus >= 400) return { ok: false, message: `The lab's bb answered on the loopback with HTTP ${probe.loopbackStatus}.` };
   return { ok: true, message: `A public connection failed (${probe.publicConnect}) and the loopback answered with HTTP ${probe.loopbackStatus}.` };
+}
+
+/** Entries that survive a reset: the pinned bb, its npm home, and the evidence snapshots. */
+const KEEP = new Set(["pin", "pinhome", "evidence"]);
+
+/**
+ * Start from a clean lab directory. The previous run's data, repositories, and logs go.
+ * The pinned bb stays, and so does bb's build toolchain inside `data/plugins`, because it needs the network to install.
+ */
+export function resetLab(labDir: string): void {
+  if (!existsSync(labDir)) return;
+  for (const entry of readdirSync(labDir)) {
+    if (KEEP.has(entry)) continue;
+    if (entry !== "data") {
+      rmSync(join(labDir, entry), { recursive: true, force: true });
+      continue;
+    }
+    // bb's data directory: keep only the finished toolchain directories.
+    for (const item of readdirSync(join(labDir, "data"))) {
+      if (item !== "plugins") rmSync(join(labDir, "data", item), { recursive: true, force: true });
+    }
+    for (const plugin of readdirSync(join(labDir, "data/plugins"))) {
+      if (!/^toolchain-[\d.-]+$/.test(plugin)) rmSync(join(labDir, "data/plugins", plugin), { recursive: true, force: true });
+    }
+  }
 }

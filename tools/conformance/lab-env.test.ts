@@ -1,5 +1,8 @@
+import { existsSync, mkdirSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { labEnv, labPaths, offlineProof, pluginBuildCommand, pluginCopyArgs, type LabSettings } from "./lab-env.ts";
+import { tmpDir } from "../../test/fixtures/git-repo.ts";
+import { labEnv, labPaths, offlineProof, pluginBuildCommand, pluginCopyArgs, resetLab, type LabSettings } from "./lab-env.ts";
 
 const settings: LabSettings = {
   labDir: "/var/tmp/bblab-conformance",
@@ -45,5 +48,21 @@ describe("the lab commands", () => {
     expect(dead.ok).toBe(false);
     expect(dead.message).toMatch(/loopback/i);
     expect(offlineProof({ publicConnect: "ENETUNREACH", loopbackStatus: 502 }).ok).toBe(false);
+  });
+});
+
+describe("resetLab", () => {
+  it("[U1413] removes the previous run's data, repositories, and logs, and keeps the pinned bb and bb's build toolchain", () => {
+    const lab = tmpDir("reset-lab-");
+    const touch = (path: string) => {
+      mkdirSync(join(lab, path, ".."), { recursive: true });
+      writeFileSync(join(lab, path), "x");
+    };
+    for (const kept of ["pin/node_modules/bb-app/dist/bb.js", "pinhome/.npm/cache", "data/plugins/toolchain-0.28.2-4.3.0/node_modules/esbuild/package.json", "evidence/before/time.txt"]) touch(kept);
+    for (const gone of ["data/bb.db", "data/plugins/bb-factoryman/data.db", "data/plugins/provider-acp/x", "data/plugins/toolchain-0.28.2-4.3.0.staging-abc/x", "repos/work/README.md", "home/.gitconfig", "stub/log.jsonl", "model/requests.jsonl", "plugin-src/package.json", "logs/launcher.log", "run/sandbox.pid"]) touch(gone);
+    resetLab(lab);
+    for (const kept of ["pin/node_modules/bb-app/dist/bb.js", "pinhome/.npm/cache", "data/plugins/toolchain-0.28.2-4.3.0/node_modules/esbuild/package.json", "evidence/before/time.txt"]) expect(existsSync(join(lab, kept)), kept).toBe(true);
+    for (const gone of ["data/bb.db", "data/plugins/bb-factoryman", "data/plugins/provider-acp", "data/plugins/toolchain-0.28.2-4.3.0.staging-abc", "repos", "home", "stub", "model", "plugin-src", "logs", "run"]) expect(existsSync(join(lab, gone)), gone).toBe(false);
+    expect(() => resetLab(join(lab, "does-not-exist"))).not.toThrow();
   });
 });

@@ -202,6 +202,12 @@ Tests carry their behavior id in the title, for example `[U1301]`.
 | U1374 | Counts the wake messages of a task from a thread's event log: only events that the plugin sent, naming the task and the state, with a flag for a turn that was running at the time | FR-1307 | example | PENDING | |
 | U1375 | Reads the tools and skills a thread was offered from the stub's log or the fake model's log, by the task id or the supervisor label in the prompt | AC-1.3 | example | PENDING | |
 
+### `tools/conformance/lab-env.ts` (added)
+
+| id | behavior | traces | kind | state | test |
+| --- | --- | --- | --- | --- | --- |
+| U1413 | Starts every run from a clean lab directory: removes the previous run's data, repositories, and logs, and keeps the pinned bb and bb's build toolchain, which needs the network to install | AC-1.1, AC-5.3 | example | PENDING | |
+
 ### `tools/conformance/docs.ts`
 
 | id | behavior | traces | kind | state | test |
