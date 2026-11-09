@@ -169,3 +169,17 @@ A fix that changes a test is a step of its own, with its reason in `tdd/cycle-lo
 - [X] T063 Findings 13 and 14 (LOW): one shared helper for the `READ_SCRIPT` router in `test/fixtures/`; give the second `[U1692]` test its own behavior ID (`U1722`) on the list; rename `CODEX` in `src/tools/supervisor-start.test.ts:10`; replace the bounds `>= 1` and `>= 3` with exact counts; make the titles say what they assert. Prove it done: `pnpm run check`.
 - [X] T064 Finding 2: write the entry in `docs/DECISIONS.md` for the seven `TEST_AFTER` behaviors (`U1649`, `U1650`, `U1702`, `U1714`, `U1716`, `U1719`, `A1612`) and the five `LIKELY` ones, as D-099, D-116, and D-122 did, each with its killing mutant, so that the captain can accept the deviation or ask for rework. Prove it done: `pnpm vitest run test/acceptance/decision-log.test.ts`.
 
+
+## Phase 11: Convergence
+
+The code satisfies every functional requirement, success criterion, and acceptance scenario.
+The tasks below close the gaps that remain between the artifacts, the decision log, and the constitution.
+`T065` needs the captain and an edit cannot close it.
+
+- [ ] T065 CRITICAL: get the captain's decision on D-133 (accept the thirteen behaviors that passed on their first run as a recorded deviation, or ask for rework), and record it in `docs/DECISIONS.md` with its date. Do not tick this task without the decision. per Constitution V (contradicts)
+- [ ] T066 Name the tests that were retired or replaced (`U1519`, `A1508`, `U1397` and `U1398`, `U1520` and `A1507`) in `docs/DECISIONS.md` D-133, each with its reason and the test that replaced it; prove it with `pnpm vitest run test/acceptance/decision-log.test.ts`. per Constitution V and Governance (partial)
+- [ ] T067 Update the `Observation` section of `specs/011-supervisor-start-roles/data-model.md` to the built shape (`auto` as an agent entry of kind `auto`, no top-level `auto` or `readyProviders`). per plan: data model (partial)
+- [ ] T068 Update the "Default (no file)" row of `specs/011-supervisor-start-roles/contracts/validator-observation.md` to the text that `src/validator/agent.ts` writes. per plan: validator observation contract (partial)
+- [ ] T069 Add an "Amendments after implementation" section to the end of `specs/011-supervisor-start-roles/plan.md` that lists, without rewording the approved text: the structural type of the advice module (lint forbids imports in `src/harness/`), the files that the layout omits, the lab wait of D-132 and why it was added, that "first session" in the spec means the session built for the first turn, and that the live-run tasks are `T040` to `T043`. per plan: project structure and Q6 (unrequested)
+- [ ] T070 Split the lines that carry two sentences into one sentence per line in `docs/DECISIONS.md` (the entries from D-123), `specs/011-supervisor-start-roles/plan.md`, and `specs/011-supervisor-start-roles/research.md`, changing no wording. per Constitution: engineering constraints (partial)
+- [ ] T071 Add `SC-006` to the `traces` of `U1726` in `specs/011-supervisor-start-roles/tdd/test-list.md`. per SC-006 (partial)
