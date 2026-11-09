@@ -21,7 +21,7 @@ None of them blocks the pull request, and the two that need a decision belong to
 | ID | Category | Severity | Location | Summary | Recommendation |
 | --- | --- | --- | --- | --- | --- |
 | C1 | Constitution | CRITICAL (known, recorded) | `.specify/memory/constitution.md` principle V; `docs/DECISIONS.md` D-108; `tdd/verification.md` finding 1 | 71 of 227 behaviors have no recorded red (42 acceptance tests written after their code, 29 unit tests that passed on the first run). Each has a killing mutant in the ledger. The repository commits only on green, so the order cannot be rewritten | The captain accepts D-108, as D-099 was accepted for feature 008, or orders the 71 redone test-first. Not a worker decision |
-| C2 | Constitution | MEDIUM | `.specify/memory/constitution.md` "VI. Scope discipline" and "Governance"; `docs/DECISIONS.md` D-100 | Principle VI lists milestones 1 to 11 as the scope. This feature extends it by the captain's task. D-100 gives the reason and leaves the text as it is (precedent D-068), but Governance says an amendment needs a reason and a version bump | Ask the captain whether to bump the constitution to 1.3.0 with a scope line for harness independence. No change was made here |
+| C2 | Constitution | RESOLVED (was MEDIUM) | `.specify/memory/constitution.md` "VI. Scope discipline" and "Governance"; `docs/DECISIONS.md` D-100 | Principle VI lists milestones 1 to 11 as the scope. This feature extends it by the captain's task. D-100 gives the reason and leaves the text as it is (precedent D-068), but Governance says an amendment needs a reason and a version bump | Resolved on 2026-11-09: the captain ordered the amendment, and constitution 1.3.0 adds the scope line to Principle VI (D-117) |
 | U1 | Underspecification | MEDIUM | `src/dispatch/gate.ts:17-23`; `src/harness/contracts.ts` (generic row); `spec.md` FR-1326 | The Pi refusal keys on the bb provider ID `pi`. The same harness behind another provider ID (an ACP registry entry such as `pi-acp`) gets the generic row, which has `sandbox: "unknown"` and no refused mode, so it is admitted in `local-only` mode. FR-1326 says that a provider with no row is never refused by this rule, and the captain's decision D3 names Pi only | The captain decides whether a harness with an unknown sandbox is also refused in `local-only`, or whether each such provider gets its own row when it is admitted. Record the choice in D-103 |
 | U2 | Underspecification | MEDIUM | `src/wiring/handlers.ts:40,47`; `spec.md:223` | The edge case says that the grace wait applies when the thread's events are not yet written. The wait runs only when the error text is empty (`:40`). With an error text, the cause is read at once, so if bb writes the error event after it sends `thread.failed`, the evidence silently lacks the cause (the fail-closed fallback of FR-1356 keeps today's text) | Add a live-check step that fails a worker with an error text and reads the evidence, and wait briefly before the read if the cause is missing. Not covered by a fake |
 | U3 | Underspecification | LOW | `src/dispatch/gate.ts:48-52`; `src/limits/queue.ts` (drain) | Every dispatch, and every queued task on every drain, now makes three bb reads (providers, states, models). The model read may start a CLI in a real bb. The latency was not measured | Time the three reads in the live check. Cache nothing before there is a number |
@@ -107,7 +107,7 @@ All 47 acceptance criteria map to at least one `A` behavior (`tdd/verification.m
 | III. The event log is the source of truth | Met. The cause enters the `fail` event as evidence. No cache path changed |
 | IV. Storage behind an interface | Met. `Files` gained `writeNew`, and the store is untouched |
 | V. Test first | **Not met for 71 behaviors** (C1). Met for 137 behaviors. Mutation evidence exists for all 71. Tests were not weakened: one loosening was found by the second audit and restored (T1418) |
-| VI. Scope discipline | Met in substance (the captain's task, D-100, no non-goal added, no live install). The text question is C2 |
+| VI. Scope discipline | Met (the captain's task, D-100, no non-goal added, no live install). The text question C2 is resolved by constitution 1.3.0 (D-117) |
 
 Engineering constraints and workflow: the stack is unchanged and no dependency was added; the docs follow the sentence-per-line and plain-language rules; commits are small and carry no co-author line; `CHANGELOG.md` was not touched.
 
@@ -130,10 +130,17 @@ None is an orphan.
 | Ambiguity count | 1 (U2) |
 | Duplication count | 0 |
 | Critical issues | 1 (C1, known and recorded) |
-| Open findings of MEDIUM severity | 4 (C2, U1, U2, I1) |
+| Open findings of MEDIUM severity | 3 (U1, U2, I1); C2 is resolved (D-117) |
 
 ## Next actions
 
 - The captain's items come first: accept D-108 or order the rework (C1), decide U1 and C2. They are listed in `checklist.md` as CHK1338 and CHK1339, and the worker's final status line will name them.
 - Safe edits to documents, if wanted before the pull request: I1, I2, I3, I4, I5, I7, and I8. None changes behavior, and none is done here because this command writes only its own report.
 - The live check (`quickstart.md`, part 2) should also settle U2 and U3.
+
+## Update: C2 is resolved
+
+On 2026-11-09 the captain ordered the constitution amended.
+Constitution 1.3.0 adds a scope line for harness independence to Principle VI, with the reason and date in `docs/DECISIONS.md` D-117.
+Finding C2 is resolved.
+The text above stays as written at `d7977aa`, apart from the C2 row, the principle VI row, and the metric that C2 changes.
