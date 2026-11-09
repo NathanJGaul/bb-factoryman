@@ -109,6 +109,9 @@ describe("the harness drivers", () => {
   it("[U1334] binds the CLI's install directory read-only and links its name, and says when the CLI is missing", () => {
     const found = driver("claude-code").bindCli(() => "/home/u/.local/share/mise/installs/claude/2.1.316/claude");
     expect(found).toEqual({ ok: true, binds: ["/home/u/.local/share/mise/installs/claude/2.1.316"], links: [{ name: "claude", target: "/home/u/.local/share/mise/installs/claude/2.1.316/claude" }] });
+    // Codex and pi keep their binary one or two levels below the version directory, and the whole version directory must be bound.
+    const deeper = driver("codex").bindCli(() => "/home/u/.local/share/mise/installs/codex/0.166.0/bin/codex");
+    expect(deeper).toEqual({ ok: true, binds: ["/home/u/.local/share/mise/installs/codex/0.166.0"], links: [{ name: "codex", target: "/home/u/.local/share/mise/installs/codex/0.166.0/bin/codex" }] });
     const elsewhere = driver("pi").bindCli(() => "/opt/pi/bin/pi");
     expect(elsewhere).toEqual({ ok: true, binds: ["/opt/pi/bin"], links: [{ name: "pi", target: "/opt/pi/bin/pi" }] });
     const missing = driver("codex").bindCli(() => null);

@@ -146,6 +146,14 @@ describe("text that a harness adds after a tool result", () => {
   });
 });
 
+describe("a prompt after plain turns", () => {
+  it("[U1428] runs the directives of the latest prompt when plain turns came before it", () => {
+    const earlier: Turn[] = [user("[conformance:sup=late]\nhello"), { role: "assistant", text: "OK (conformance)", toolCalls: [] }];
+    const next = nextAction(convo([...earlier, user("[conformance:sup=late]\nCALL factoryman_dispatch {}")]));
+    expect(call(next)).toEqual({ name: "factoryman_dispatch", args: {} });
+  });
+});
+
 describe("a turn with no script", () => {
   it("[U1359] answers a plain prompt, a wake message after a finished script, and a system reminder with text", () => {
     expect(nextAction(convo([user("hello there")]))).toMatchObject({ kind: "text" });

@@ -158,6 +158,7 @@ Tests carry their behavior id in the title, for example `[U1301]`.
 | U1357 | Calls `ToolSearch` before the deferred report tool when the report tool is not offered, and calls the report tool after the search result | AC-3.3 | example | PENDING | |
 | U1358 | Writes the report JSON to the `xd://` device with the `write` tool when the report tool is only a device | AC-3.3 | example | PENDING | |
 | U1423 | Keeps running a directive script when the harness adds its own user text after a tool result (Claude Code adds `Tool loaded.` after a ToolSearch call and a `<total_tokens>` reminder after every call) | AC-3.3 | example | PENDING | |
+| U1428 | Runs the directives of the latest prompt when plain turns came before it (a supervisor that said hello first) | FR-1305 | example | PENDING | |
 | U1359 | Takes a prompt with no directive and no worker text as a plain turn and answers with text | FR-1305 | example | PENDING | |
 
 ### `tools/fake-model/wire`
@@ -293,6 +294,7 @@ Tests carry their behavior id in the title, for example `[U1301]`.
 | U1406 | Runs the scenarios in order against the lab, rolls the checks up with the gaps, and returns the verdict table and the exit code | FR-1302, FR-1303 | example | PENDING | |
 | U1407 | Stops the lab and runs the isolation check on a thrown error, and a changed isolation snapshot fails the run | AC-1.5, FR-1310 | example | PENDING | |
 | U1408 | Records the CLI and bb versions that the lab reports in the result | FR-1309 | example | PENDING | |
+| U1427 | A run limited with `--scenario` runs only those scenarios and writes no result file, and says so | AC-1.4 | example | PENDING | |
 | U1409 | Reports a missing CLI as `cannot run` before any scenario and writes no passing result | AC-3.6 | example | PENDING | |
 
 ## Invariants and edge cases still to place

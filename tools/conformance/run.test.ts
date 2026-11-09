@@ -34,6 +34,14 @@ describe("main", () => {
     expect(result).toMatchObject({ tier: "1.5", harness: "codex", cli: { name: "codex", version: "9.9.9" }, bb: { version: "0.49.0" }, plugin: { commit: "abc1234" }, offline: true });
   });
 
+  it("[U1427] runs only the scenarios of --scenario and writes no result file for such a run, and says so", async () => {
+    const { deps, rec } = fakeDeps();
+    expect(await main(["--tier", "1", "--scenario", "S3,S4"], deps)).toBe(0);
+    expect(rows(rec.out).map((line) => line.split(/\s+/)[0])).toEqual(["S3", "S4"]);
+    expect(rec.files.size).toBe(0);
+    expect(rec.out.join("\n")).toMatch(/partial run.*no result file/i);
+  });
+
   it("[U1409] reports a missing CLI as cannot run before any scenario and writes no result", async () => {
     const { deps, rec } = fakeDeps({ missing: ["omp"] });
     expect(await main(["--tier", "1.5", "--harness", "omp"], deps)).toBe(1);
