@@ -215,3 +215,13 @@ The first lab run changed two plans, so the list changed before these tests were
   - With the real `main`: `pnpm vitest run test/acceptance/conformance` -> 18 passed. These 12 are `TEST_AFTER` with a recorded revert-red, as in D-099.
 - `pnpm run typecheck` and `pnpm run lint` pass.
 - refactor: none needed.
+
+## Group 13: the support document (U1376 to U1380, A1311, A1326 to A1329)
+
+- red: `pnpm vitest run tools/conformance/docs.test.ts` (against a `renderSupport` that returned `""`) -> 5 failed
+- green: `tools/conformance/docs.ts` (`renderSupport`: one section per harness in a fixed order, a status line, a facts table, a scenario table with known gaps shown as gaps, a tier 1 section, no clock and no machine path) and `tools/conformance/docs-cli.ts` (`pnpm run conformance:docs [--root <dir>]`, reading `conformance/results/*.json` only). `pnpm vitest run tools/conformance/docs.test.ts` -> 5 passed.
+- acceptance (`test/acceptance/conformance-docs.test.ts`, which runs the CLI as a process against a temporary root): the CLI and its tests were written in one step, so the first run passed for A1326, A1327, A1311, and A1328. That is a process error, recorded here. A valid red was made afterwards by replacing the CLI with a one-line stub:
+  - `pnpm vitest run test/acceptance/conformance-docs.test.ts` -> 5 failed: `Error: ENOENT: no such file or directory, open '.../docs/HARNESS-SUPPORT.md'` (A1326, A1327, A1311, A1328), and A1329 failed because no committed document existed yet.
+  - The CLI was restored from a saved copy, the document was generated (`Wrote docs/HARNESS-SUPPORT.md from 0 result file(s)`), and `pnpm vitest run test/acceptance/conformance-docs.test.ts tools/conformance/docs.test.ts` -> 10 passed.
+  - A1326, A1327, A1311, A1328 are `TEST_AFTER` with a recorded revert-red, as in D-099. A1329 was red first.
+- the document text had two sentences on one line; they were split (the style rule), and the document was regenerated.
