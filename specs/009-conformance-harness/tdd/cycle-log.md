@@ -201,3 +201,17 @@ The first lab run changed two plans, so the list changed before these tests were
 - test fix before green: U1372 used an awkward template for the exclusion strings; it now checks `--exclude=<path>` plainly. No assertion became weaker.
 - green: the stub's `session/new` handler now calls `mcpFor(session)` after replying; `tools/conformance/readers.ts` and `tools/conformance/lab-env.ts` are implemented. `pnpm vitest run tools/stub-agent tools/conformance/readers.test.ts tools/conformance/lab-env.test.ts` -> 17 passed. `pnpm run typecheck` and `pnpm run lint` pass.
 - refactor: none needed.
+
+## Group 12: the runner and its acceptance tests (U1406 to U1409, A1301 to A1306, A1308 to A1310, A1312, A1313, A1316, A1317, A1324)
+
+`tools/conformance/run.ts` (the deps interface and a `main` that returned 99), the run fixture (`test/fixtures/conformance-run.ts`, deps with a fake lab behind them), and the tests first.
+
+- red: `pnpm vitest run tools/conformance/run.test.ts` -> 4 failed: U1406 `AssertionError: expected 99 to be +0 // Object.is equality`; U1407 and U1408 `expected 99 to be 1`; U1409 the same.
+- green: `main` parses the command line, resolves the driver, checks the CLI, opens the lab, runs the scenarios in order (S10 `skipped` at tier 1.5, a thrown scenario recorded as an error), closes the lab in a `finally` block, judges the checks with the gaps, prints the table, and writes the result file (not for a `--scenario` run). `pnpm vitest run tools/conformance/run.test.ts` -> 4 passed.
+- acceptance (`test/acceptance/conformance-tier1.test.ts`, `-gaps.test.ts`, `-tier15.test.ts`): the unit cycle had already built `main`, so a first run would have passed. To get a valid red, `main` was replaced by the 99 stub for one run and the real file restored from a saved copy.
+  - `pnpm vitest run test/acceptance/conformance-tier1.test.ts test/acceptance/conformance-gaps.test.ts test/acceptance/conformance-tier15.test.ts` against the stub -> 12 failed, 2 passed
+  - A1301, A1302, A1304, A1305, A1308, A1309, A1310, A1312, A1313, A1316, A1317, A1324 failed (for example `expected 99 to be 0`)
+  - A1303 and A1306 passed against the stub. They check structure (the port has no method that returns model text; the lab tools are named by repository path) and do not run `main`. They need mutants in the audit.
+  - With the real `main`: `pnpm vitest run test/acceptance/conformance` -> 18 passed. These 12 are `TEST_AFTER` with a recorded revert-red, as in D-099.
+- `pnpm run typecheck` and `pnpm run lint` pass.
+- refactor: none needed.
