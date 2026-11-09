@@ -148,3 +148,9 @@ Findings 17 to 24 were open at `verified_at: 2c4ee15`.
 The worker repaired them afterwards in tasks T1415 to T1422 (tests, fixtures, records, and the ledger runner only; no production code), and `tdd/cycle-log.md` ("Remediation 3") has the evidence for each.
 The audit did not re-read those changes.
 The verdict and finding 1 do not change: 71 behaviors stay `TEST_AFTER` until the captain accepts D-108.
+
+## Owner decision on the verdict
+
+The captain accepted the 71 `TEST_AFTER` behaviors as a recorded deviation (D-108, 2026-11-08), as for the earlier factoryman milestones (D-099).
+They are guards that fail when their property is removed, and the revert-red ledger in `tdd/cycle-log.md` holds a killing mutant for each.
+The verdict above stays `FAIL` as the rubric computes it, because an auditor does not accept an exception.

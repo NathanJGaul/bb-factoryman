@@ -135,3 +135,18 @@ U1478 has a recorded red in `tdd/cycle-log.md` ("Convergence: the frozen contrac
 
 A second converge run would find no gap that a worker can close.
 What stays open is the captain's (D-108, U1, C2), the owner's live check (`CHK1360` to `CHK1367`), and the optional drifts that I left as they are on purpose (I3, I6, I7, I8).
+
+## Update: the captain's decisions
+
+The captain decided the three open items (2026-11-08).
+
+| Item | Decision | Record |
+| --- | --- | --- |
+| D-108 | Accepted as a recorded deviation, as for the earlier milestones. The ledger of killing mutants stays and goes into the pull request description. The TDD verdict stays `FAIL` as the rubric computes it. | `docs/DECISIONS.md` D-108, `tdd/verification.md` ("Owner decision on the verdict") |
+| U1 | Keep the rule as built. D3 names Pi only, and a harness behind another provider ID gets its own contract row when it is admitted. | `docs/DECISIONS.md` D-103 |
+| C2 | The constitution and its version stay untouched. The captain owns that wording and is asked separately. It is an open item in the pull request description. | None in the repository |
+
+The only code-side change is the status check of `[A1345]` in `test/acceptance/harness-docs.test.ts`.
+It matched "for the captain to accept" and now matches "accepted by the captain", which is the same strictness.
+
+What is open now: C2 (the captain), the owner's live check (`CHK1360` to `CHK1367`), U2 and U3 (the live check), and the optional drifts I3, I6, I7, and I8 that were left on purpose.

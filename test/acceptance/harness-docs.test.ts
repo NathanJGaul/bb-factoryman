@@ -32,7 +32,7 @@ describe("the decision record of the harness work", () => {
     const numbers = found.map((entry) => entry.number);
     expect(numbers.slice(numbers.indexOf(99), numbers.indexOf(99) + 10)).toEqual([99, 100, 101, 102, 103, 104, 105, 106, 107, 108]);
     expect(found.find((entry) => entry.number === 100)?.status).toMatch(/Decided by the captain/);
-    expect(found.find((entry) => entry.number === 108)?.status).toMatch(/for the captain to accept/);
+    expect(found.find((entry) => entry.number === 108)?.status).toMatch(/accepted by the captain/);
   });
 
   it("[A1345] records the five decisions in D-100, and the tasks built in one sentence and the tasks left open in another", () => {

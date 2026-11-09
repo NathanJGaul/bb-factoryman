@@ -1037,6 +1037,12 @@ The captain can relax that later.
 Nothing falls back to another provider.
 D-030 and D-095 stay open, and Pi returns to `local-only` mode when the approval-form work closes the agent-answer route.
 
+The rule keys on the bb provider ID `pi`, because the captain's decision D3 names Pi only.
+A harness that runs Pi behind another provider ID, such as an ACP registry entry, gets the generic row.
+The generic row has `sandbox: "unknown"` and no refused mode, so that provider is admitted in `local-only` mode.
+The captain kept the rule as built (2026-11-08): a harness behind another provider ID gets its own contract row, with its sandbox and refused modes, when someone admits it.
+The readiness and model checks still judge such a provider until then.
+
 ### D-104: The built-in default profile is removed, and `dispatch init` writes a starter file (Decided by the captain, D5 A)
 
 This amends D-063.
@@ -1101,7 +1107,7 @@ The suite relied on the built-in profile in many acceptance tests.
 `loadWorld` now supplies that profile as a default `dispatch.json` (with `standingPermission.lowerReasoning` on, because the built-in set no floor) wherever a checkout has none.
 A test that wants the real block passes `bareConfig: true`.
 
-### D-108: 71 behaviors came after their code (Deviation, for the captain to accept)
+### D-108: 71 behaviors came after their code (Deviation, accepted by the captain)
 
 Constitution principle V says that every behavior change is driven by a test that failed first.
 The TDD audit of this feature (`specs/009-harness-independence/tdd/verification.md`) classes 71 of its 223 behaviors `TEST_AFTER`, because no red is recorded for them.
@@ -1115,9 +1121,9 @@ The repository commits only on green (D-099), so the history cannot show a test 
 In place of a red, `tdd/cycle-log.md` holds a revert-red ledger: 58 deliberate mutants of the production code, each applied alone and restored byte for byte, and for every one of the 71 behaviors at least one mutant that makes its test fail.
 No mutant survived, and no mutant sits inside a behavior that the audit marks `DONE`.
 The audit's other blocking findings were repaired in tasks T1399 to T1401: a vacuous assertion in the docs test, two expectations computed by the code under test, and fifteen `BASELINE` behaviors that tasks had ticked.
-The count here is about ten times the seven of D-099, and the captain has not accepted it.
-The captain can choose between two paths.
-The first is to accept the 71 as a recorded deviation, as D-099 did: each is a guard that fails when its property is removed.
-The second is to order the 71 redone test-first, which means new history for tests that already fail when their property is removed.
-The audit does not recommend the rework, and it leaves the choice to the captain.
-Until the captain chooses, the verdict of the audit stays `FAIL` for this item.
+The count here is about ten times the seven of D-099.
+The captain accepted the 71 as a recorded deviation, as for the earlier factoryman milestones (D-099), on 2026-11-08.
+Each is a guard that fails when its property is removed, and the ledger holds the killing mutant of each.
+The audit did not recommend the rework, and the captain did not order it.
+The pull request description names the ledger.
+The audit's verdict stays `FAIL` as the rubric computes it, because an auditor does not accept an exception, and the note stays in `tdd/verification.md`.

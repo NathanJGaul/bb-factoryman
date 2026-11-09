@@ -408,3 +408,10 @@ The repository commits only on green (D-099), so this entry holds the red eviden
   `pnpm vitest run src/harness/contracts.test.ts` -> 22 passed. `pnpm run check` -> 107 files, 1628 passed, 0 failed.
 - mutants, each applied alone and restored byte for byte: a shallow freeze (no recursion) fails all 4 U1478 tests; the generic row left unfrozen fails 2; the table left unfrozen fails 3.
 - refactor: none needed. No existing assertion changed.
+
+## The captain's decisions (D-108, U1, C2)
+
+The captain accepted D-108 and kept the Pi rule as built (U1), and left the constitution untouched (C2).
+`[A1345]` in `test/acceptance/harness-docs.test.ts` checked that D-108's status matched "for the captain to accept".
+The status now reads "accepted by the captain", so the check changed to match it. A status of "Open" or "for the captain to accept" fails it, so the strictness is the same.
+`pnpm run check` is green (107 files, 1628 passed, 0 failed).

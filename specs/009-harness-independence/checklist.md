@@ -77,11 +77,10 @@ An unchecked item names what is missing and who owns it.
       Evidence: `tdd/verification.md` (second run): `high_smells: 0`; findings 2 and 3 of the first run are fixed.
 - [x] CHK1337 The second audit's open findings of `MED` and `LOW` severity (17 to 24) were repaired.
       Evidence: `tdd/cycle-log.md`, "Remediation 3", tasks T1415 to T1422.
-- [ ] CHK1338 The captain accepts D-108, or orders the 71 behaviors redone test-first.
-      Owner: the captain.
-      Until then the TDD verdict stays `FAIL` for the 71 `TEST_AFTER` behaviors, as feature 008's did until the captain accepted D-099.
+- [x] CHK1338 The captain accepts D-108, or orders the 71 behaviors redone test-first.
+      Evidence: the captain accepted D-108 on 2026-11-08 through firstmate's steering message; `docs/DECISIONS.md` D-108 reads "Deviation, accepted by the captain", and `tdd/verification.md` ends with the owner's decision, as feature 008's does for D-099.
 - [ ] CHK1339 The TDD verdict reads `PASS` or `PASS_WITH_GAPS`.
-      Owner: follows CHK1338; the rubric has no class for an accepted deviation, so a later audit has to say how it counts D-108.
+      Owner: no one. The captain accepted D-108, but the rubric has no class for an accepted deviation, so the verdict stays `FAIL` for the 71 `TEST_AFTER` behaviors, as feature 008's does for D-099. A later audit has to say how it counts D-108.
 - [ ] CHK1340 A third audit re-reads the follow-up changes of T1415 to T1422, which the second audit did not see.
       Owner: optional; the follow-up changed tests and records only.
 
@@ -130,3 +129,10 @@ The items above keep their evidence from `85af53e`, and these facts replace the 
 - `pnpm run check` at `ce6b382` exits 0 with 107 files and 1628 tests, and `pnpm run build` writes the bundles.
 - `src/harness/contracts.ts` now freezes its rows (U1478). The layers that `CHK1301` lists did not change.
 - No item changed state. `CHK1338`, `CHK1339`, `CHK1340`, and `CHK1360` to `CHK1367` stay unchecked, with the same owners.
+
+## Update after the captain's decisions
+
+- `CHK1338` is checked: the captain accepted D-108 (2026-11-08).
+  The pull request description names the revert-red ledger (`tdd/cycle-log.md`, 58 mutants, no survivor).
+- Analyze U1 is settled: the captain kept the Pi rule as built, and D-103 records that a harness behind another provider ID gets its own contract row when it is admitted.
+- Analyze C2 stays open: the constitution and its version are untouched, the captain owns that wording, and the pull request description lists it as an open item.
