@@ -177,6 +177,36 @@ describe("dispatch init: what stops it", () => {
     expect(t.files.writes).toEqual([]);
   });
 
+  it("[U1474] exits 1 and writes nothing when the read of the project's checkout throws", async () => {
+    const t = setup();
+    t.bb.checkoutError = new Error("bb is down");
+    expect(await run(t, ARGS)).toEqual({ exitCode: 1, stderr: "Could not read the project proj-1: bb is down.\n" });
+    expect(t.files.writes).toEqual([]);
+  });
+
+  it("[U1475] exits 1 and writes nothing when the read of the providers throws", async () => {
+    const t = setup();
+    t.bb.providersError = new Error("HTTP 500");
+    expect(await run(t, ARGS)).toEqual({ exitCode: 1, stderr: "Could not read bb's providers: HTTP 500.\n" });
+    expect(t.files.writes).toEqual([]);
+  });
+
+  it("[U1476] takes the default level from the provider-wide list, medium first, when bb does not know the model's levels", async () => {
+    const unknown = { models: [modelEntry("m", { isDefault: true, defaultReasoningLevel: "", reasoningKnown: false, reasoningLevels: ["max"] })], loadError: null };
+    const withMedium = setup({ models: unknown });
+    await run(withMedium, ARGS);
+    expect(profileOf(withMedium)).toMatchObject({ model: "m", reasoningLevel: "medium" });
+    const withoutMedium = setup({ models: unknown, providers: [{ id: "codex", available: true, permissionModes: ["auto"], reasoningLevels: ["low", "high"] }] });
+    await run(withoutMedium, ARGS);
+    expect(profileOf(withoutMedium)).toMatchObject({ model: "m", reasoningLevel: "low" });
+  });
+
+  it("[U1476] takes the default level from the provider-wide list when --model names a model that bb does not list", async () => {
+    const t = setup();
+    expect((await run(t, [...ARGS, "--model", "gpt-9-unlisted"])).exitCode).toBe(0);
+    expect(profileOf(t)).toMatchObject({ model: "gpt-9-unlisted", reasoningLevel: "medium" });
+  });
+
   it("[U1434] exits 1 when the models read throws", async () => {
     const t = setup();
     t.bb.modelsError = new Error("HTTP 503");

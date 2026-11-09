@@ -304,6 +304,9 @@ A1301 to A1309 live in `test/acceptance/harness-readiness.test.ts`, A1310 to A13
 | U1438 | The success output is "Wrote <path>.", the profile line, and the note that readiness is checked at dispatch | AC-4.3 | example | DONE | `src/dispatch/init.test.ts` |
 | U1439 | The command does not check readiness: a provider that is not ready still gets a file | plan: init skips readiness | example | DONE | `src/dispatch/init.test.ts` |
 | U1440 | The command makes only read calls to bb | AC-4.8, FR-1337 | example | DONE | `src/dispatch/init.test.ts` |
+| U1474 | A throw from the project's checkout read makes the command exit 1 with "Could not read the project <id>: <error>." and write nothing | AC-4.6, FR-1333 | characterization | BASELINE | `src/dispatch/init.test.ts` |
+| U1475 | A throw from the providers read makes the command exit 1 with "Could not read bb's providers: <error>." and write nothing | AC-4.6, FR-1333 | characterization | BASELINE | `src/dispatch/init.test.ts` |
+| U1476 | When bb does not know the model's levels (an unknown level list, or a model it does not list), the default level comes from the provider-wide level list: `medium` when listed, else the first | FR-1336 | characterization | BASELINE | `src/dispatch/init.test.ts` |
 
 ### `src/tools/supervisor-command.ts` and `src/server.ts` (H10)
 

@@ -356,3 +356,28 @@ The mutant list and the runner are in the scratch directory of the worktree sess
 
 This ledger does not turn the 71 into test-first behaviors.
 D-108 records the deviation for the captain to accept, or to order the 71 redone.
+
+## Remediation 2: the other findings of the audit (tasks T1399 to T1404 and T1406 to T1414)
+
+Commit subjects: one per task, each beginning "test:" or "docs:" and ending with the task id.
+No production code changed in this group, and every task ran `pnpm run check` (the suite ended at 107 files, 1622 passed, 0 failed).
+Each tightened assertion was shown to fail on a mutant, one mutant at a time, with the file restored.
+
+- T1399 (finding 2): A1345 now checks the built tasks and the open tasks in their own sentences with word boundaries, and allows D-108 after D-107. Dropping H1 from the built list, and swapping the two lists, each make it fail.
+- T1400 (finding 3): U1312 asserts the literal tool and skill lists of each role, and U1363 asserts a literal fragment of the admission message. Dropping a supervisor tool, and rewording the message, make them fail.
+- T1401 (finding 4): the 15 `BASELINE` behaviors are `DONE`, each with its existing test named and run.
+- T1402 (finding 5): the "configured default" cases of A1318 and A1321 use a config with no rule. A resolver that ignores `default` makes both fail.
+- T1403 (finding 6): A1335 uses the full Codex ladder as an array, so a plugin that ignores arrays blocks ultra. Mutant S8 now fails A1335.
+- T1404 (finding 7): the value-is-another-flag row has an even number of arguments. The first replacement (`--provider --project --model x`) still let the mutant live, because both versions end in the same usage error. I changed it to `--provider --model --project proj-1`, which the mutant would read as a valid call, and the mutant then fails U1412.
+- T1405 (finding 1): the revert-red ledger above.
+- T1406 (finding 1): D-108 records the deviation. It does not claim the captain's acceptance.
+- T1407 (finding 8): `test/fixtures/models.ts` holds the default model list once, and `test/fixtures/defaults.test.ts` (8 cases) pins the defaults of `FakeBbPort` and `loadWorld`. Five fixture mutants each fail it. A1319 and A1323 say that they rely on the list.
+- T1408 (finding 10): U1440 and A1329 assert read allowlists. A mutant that sends a message fails both, and one that reads the machines fails A1329.
+- T1409 (finding 11): the harness lint cases assert the exact number of messages and their wording (a bare Node built-in reports twice, because two rules match it), the runbook case asserts the sentence, and A1313 asserts the literal tools and skills of every role on every provider.
+- T1410 (finding 12): two A710 cases script a ready state beside an unavailable and an unlisted provider, so the listing check is covered at acceptance level again. Two mutants fail them.
+- T1411 and T1412 (findings 13 and 14): `providerState()` replaces the inline literal, each usage row of `dispatch init` is its own test with its own id, the test at `src/machines/preflight.test.ts` is U1349, and the test at `src/tools/dispatch.test.ts` is the new behavior U1477 (its red is the one recorded in group 6 under the old tag).
+- T1413 (finding 15): the LOW smells are settled: U1446 is five tests, U1451 is two, U1452 and U1454 assert one thing each, U1467 asserts an exact length, U1468 counts the reads, the magic numbers have names, U1410 has no conditional, U1340 and U1418 are split, and the config tests pin where a rejection points.
+  Two of my own first drafts failed (a bare Node built-in reports twice, and `mkdir` under a file reports `EEXIST` and not `ENOTDIR`); I fixed the expectations, not the code.
+- T1414 (finding 16): U1474, U1475, and U1476 are on the list as characterization behaviors (`BASELINE`), because the branches they cover exist and had no test.
+  They passed on their first run, so there is no red to record, and the task's proof ("three red entries") is not met as written.
+  The deliberate-mutant check replaces it: a checkout read failure that escapes fails U1474, a providers failure that loses its text fails U1475, unknown levels of a listed model that are used fail U1476, and a missing provider-wide fallback fails U1476 and U1431.
