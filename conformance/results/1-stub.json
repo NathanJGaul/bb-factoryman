@@ -10,11 +10,11 @@
     "version": "0.49.0"
   },
   "plugin": {
-    "commit": "757c26b",
+    "commit": "eae7b62",
     "dirty": false
   },
-  "startedAt": "2026-11-09T06:07:51.568Z",
-  "finishedAt": "2026-11-09T06:10:27.918Z",
+  "startedAt": "2026-11-09T06:29:40.131Z",
+  "finishedAt": "2026-11-09T06:32:16.226Z",
   "offline": false,
   "isolation": {
     "clean": true,
@@ -35,7 +35,7 @@
           "id": "S1.unready-blocks",
           "title": "A dispatch to codex (not_installed) is blocked and creates no task",
           "ok": false,
-          "evidence": "task created: t-a5987c64; tasks 0 to 1; text: Dispatched scout task t-a5987c64 in local-only mode. Worker thread thr_9muey9u5gn, branch fm/t-a5987c64.",
+          "evidence": "task created: t-a0abeb18; tasks 0 to 1; text: Dispatched scout task t-a0abeb18 in local-only mode. Worker thread thr_erzc7miy6p, branch fm/t-a0abeb18.",
           "gap": {
             "task": "H1",
             "reason": "dispatch trusts the `available` flag of bb's provider list, which means installed and not signed in, and does not read providerStates"
@@ -45,7 +45,7 @@
           "id": "S1.remedy",
           "title": "The refusal names bb's status \"not_installed\" or its login command",
           "ok": false,
-          "evidence": "Dispatched scout task t-a5987c64 in local-only mode. Worker thread thr_9muey9u5gn, branch fm/t-a5987c64.",
+          "evidence": "Dispatched scout task t-a0abeb18 in local-only mode. Worker thread thr_erzc7miy6p, branch fm/t-a0abeb18.",
           "gap": {
             "task": "H1",
             "reason": "the refusal cannot name bb's status or login command, because dispatch does not read providerStates"
@@ -103,7 +103,7 @@
           "id": "S4.branch-commit",
           "title": "The task branch holds the one commit the worker made",
           "ok": true,
-          "evidence": "git rev-list --count main..fm/t-19cad092: 1"
+          "evidence": "git rev-list --count main..fm/t-979f85df: 1"
         },
         {
           "id": "S4.review-ready",
@@ -139,7 +139,7 @@
           "id": "S5.supervisor-tools",
           "title": "The supervisor is offered its four tools and not the report tool",
           "ok": true,
-          "evidence": "tools: factoryman_dispatch, factoryman_merge, factoryman_status, factoryman_teardown (thread thr_uugrdqq678)"
+          "evidence": "tools: factoryman_dispatch, factoryman_merge, factoryman_status, factoryman_teardown (thread thr_bvdyzb86dg)"
         },
         {
           "id": "S5.supervisor-skills",
@@ -243,7 +243,7 @@
           "id": "S9.stamp-advice",
           "title": "The stamp needs no advice on this harness",
           "ok": true,
-          "evidence": "Thread thr_buknyy3ysd is now a factoryman supervisor. It sees the four supervisor tools from its next session."
+          "evidence": "Thread thr_ezgxjge329 is now a factoryman supervisor. It sees the four supervisor tools from its next session."
         },
         {
           "id": "S9.tools-after-step",
@@ -261,7 +261,7 @@
           "id": "S10.state-kept",
           "title": "Every task keeps its state across a reload",
           "ok": true,
-          "evidence": "before: t-19cad092:review_ready, t-3d94e648:report_ready, t-3fe06b50:report_ready, t-731bac07:report_ready, t-7a4c128e:report_ready, t-7e77301f:working, t-8bd77528:working, t-93369579:failed, t-a5987c64:failed, t-ea56b215:report_ready, t-ff4586ca:working; after: t-19cad092:review_ready, t-3d94e648:report_ready, t-3fe06b50:report_ready, t-731bac07:report_ready, t-7a4c128e:report_ready, t-7e77301f:working, t-8bd77528:working, t-93369579:failed, t-a5987c64:failed, t-ea56b215:report_ready, t-ff4586ca:working"
+          "evidence": "before: t-002be35c:report_ready, t-14804e6a:report_ready, t-3070d552:report_ready, t-50dba2cf:working, t-7789cc6d:report_ready, t-979f85df:review_ready, t-9f24173b:report_ready, t-a0abeb18:failed, t-ba616175:working, t-bc84d0bc:failed, t-fb4ede42:working; after: t-002be35c:report_ready, t-14804e6a:report_ready, t-3070d552:report_ready, t-50dba2cf:working, t-7789cc6d:report_ready, t-979f85df:review_ready, t-9f24173b:report_ready, t-a0abeb18:failed, t-ba616175:working, t-bc84d0bc:failed, t-fb4ede42:working"
         },
         {
           "id": "S10.no-new-events",
@@ -285,7 +285,7 @@
           "id": "S11.dirty-kept",
           "title": "The dirty worktree is still there",
           "ok": true,
-          "evidence": "worktree: /var/tmp/bblab-conformance/data/plugins/environment-git-worktree/host-data/worktrees/thr_p637eww3wh-1/work"
+          "evidence": "worktree: /var/tmp/bblab-conformance/data/plugins/environment-git-worktree/host-data/worktrees/thr_b4ac5ajajz-1/work"
         },
         {
           "id": "S11.clean-removed",
@@ -309,7 +309,7 @@
           "id": "S12.delivered",
           "title": "The wake arrives",
           "ok": true,
-          "evidence": "1 wake(s) for t-7f335c94"
+          "evidence": "1 wake(s) for t-71bbf83d"
         },
         {
           "id": "S12.once",

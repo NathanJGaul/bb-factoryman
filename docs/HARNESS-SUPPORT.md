@@ -126,7 +126,7 @@ Status: supported at tier 1.5, with known gaps in S1, S9. Tier 2 has not run.
 | --- | --- |
 | CLI | stub-agent 0.0.1 |
 | bb | 0.49.0 |
-| Plugin commit | 757c26b |
+| Plugin commit | eae7b62 |
 | Date | 2026-11-09 |
 | Network | shared |
 | Isolation | clean |
