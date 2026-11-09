@@ -240,8 +240,10 @@ describe("dispatch init: the file and the output", () => {
   it("[U1440] makes only read calls to bb", async () => {
     const t = setup();
     await run(t, ARGS);
-    const writes = ["spawnWorker", "sendMessage", "retireWorker", "requestInput", "setThreadMetadata", "startTerminal", "closeTerminal"];
-    expect(t.bb.calls.map((call) => call.method).filter((method) => writes.includes(method))).toEqual([]);
-    expect(new Set(t.bb.calls.map((call) => call.method))).toEqual(new Set(["getProjectCheckout", "listProviders", "listModels"]));
+    // Every method of BbPort that only reads. A method that is not listed here, such as a new write, fails this test.
+    const READS = ["getThread", "getEnvironmentPath", "getProjectCheckout", "getProjectRemote", "getThreadCost", "listProjects", "readTerminal", "listProviders", "getProviderStates", "listMachines", "getProjectSources", "listModels", "getFailureCause"];
+    const called = new Set(t.bb.calls.map((call) => call.method));
+    expect([...called].filter((method) => !READS.includes(method))).toEqual([]);
+    for (const needed of ["getProjectCheckout", "listProviders", "listModels"]) expect(called.has(needed), needed).toBe(true);
   });
 });

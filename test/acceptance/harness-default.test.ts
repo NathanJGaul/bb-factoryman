@@ -155,10 +155,13 @@ describe("bb factoryman dispatch init through the plugin factory", () => {
     const checkout = makeCheckout();
     const world = await bare(checkout);
     await init(world);
-    const paths = world.host.harness.sdk.calls.map((call) => call.path);
-    expect(paths.filter((path) => /^(threads\.(spawn|send|archive|updatePluginMetadata)|environments\.|terminals\.|hosts\.)/.test(path))).toEqual([]);
-    expect(paths).toEqual(expect.arrayContaining(["projects.get", "providers.list", "providers.models"]));
-    expect(readFileSync(dispatchFile(checkout), "utf8")).not.toMatch(/token|secret|password|api[_-]?key|credential/i);
+    // The command reads the project, the providers, and the models, and nothing else: no state, no credential store.
+    const paths = [...new Set(world.host.harness.sdk.calls.map((call) => call.path))].sort();
+    expect(paths).toEqual(["projects.get", "providers.list", "providers.models"]);
+    // The file holds the starter profile and nothing more, so no other field (a token, a key) can be in it.
+    const written = JSON.parse(readFileSync(dispatchFile(checkout), "utf8")) as { profiles: Record<string, Record<string, unknown>> };
+    expect(Object.keys(written).sort()).toEqual(["default", "profiles", "rules", "version"]);
+    expect(Object.keys(written.profiles["claude-code"] ?? {}).sort()).toEqual(["model", "permissionMode", "provider", "reasoningLevel"]);
   });
 
   it("[A1324] creates the config directory when the checkout has none", async () => {
