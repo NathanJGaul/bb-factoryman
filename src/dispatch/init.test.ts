@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { modelEntry } from "../../test/fixtures/bb-port";
+import { modelEntry, providerState } from "../../test/fixtures/bb-port";
 import { testRuntime, type TestRuntime } from "../../test/fixtures/runtime";
 import type { ModelList, ProviderAvailability } from "../bb/port";
 import { parseDispatchConfig } from "./config";
@@ -36,22 +36,24 @@ const profileOf = (t: TestRuntime, provider = "codex") => {
 const ARGS = ["--provider", "codex", "--project", "proj-1"];
 
 describe("dispatch init: the arguments", () => {
-  it.each([
-    ["no --provider", ["--project", "proj-1"]],
-    ["no --project and no project in the context", ["--provider", "codex"]],
-    ["a flag with no value", ["--provider", "codex", "--project"]],
-    ["a flag with a blank value", ["--provider", "codex", "--project", "  "]],
-    ["a flag whose value is another flag", ["--provider", "--model", "--project", "proj-1"]],
-    ["a repeated flag", ["--provider", "codex", "--provider", "pi", "--project", "proj-1"]],
-    ["an unknown flag", ["--provider", "codex", "--project", "proj-1", "--force", "yes"]],
-    ["a stray word", ["codex", "--project", "proj-1"]],
-  ])("[U1412] prints the usage and exits 2 for %s, and reads and writes nothing", async (_label, args) => {
-    const t = setup();
-    const result = await run(t, args);
-    expect(result).toEqual({ exitCode: 2, stderr: INIT_USAGE });
-    expect(t.bb.calls).toEqual([]);
-    expect(t.files.writes).toEqual([]);
-  });
+  // Each call that the command must refuse as a usage error, with the id of the behavior it shows.
+  const usageCase = (id: string, label: string, args: string[]) =>
+    it(`${id} prints the usage and exits 2 for ${label}, and reads and writes nothing`, async () => {
+      const t = setup();
+      const result = await run(t, args);
+      expect(result).toEqual({ exitCode: 2, stderr: INIT_USAGE });
+      expect(t.bb.calls).toEqual([]);
+      expect(t.files.writes).toEqual([]);
+    });
+
+  usageCase("[U1412]", "no --provider", ["--project", "proj-1"]);
+  usageCase("[U1413]", "no --project and no project in the context", ["--provider", "codex"]);
+  usageCase("[U1414]", "a flag with no value", ["--provider", "codex", "--project"]);
+  usageCase("[U1414]", "a flag whose value is another flag", ["--provider", "--model", "--project", "proj-1"]);
+  usageCase("[U1415]", "a flag with a blank value", ["--provider", "codex", "--project", "  "]);
+  usageCase("[U1416]", "a repeated flag", ["--provider", "codex", "--provider", "pi", "--project", "proj-1"]);
+  usageCase("[U1417]", "an unknown flag", ["--provider", "codex", "--project", "proj-1", "--force", "yes"]);
+  usageCase("[U1417]", "a stray word", ["codex", "--project", "proj-1"]);
 
   it("[U1418] takes the project from the context when --project is absent, and --project wins when both are set", async () => {
     const t = setup();
@@ -231,7 +233,7 @@ describe("dispatch init: the file and the output", () => {
 
   it("[U1439] does not check readiness: a provider that is not signed in still gets a file", async () => {
     const t = setup();
-    t.bb.states = [{ providerId: "codex", status: "unauthenticated", installedVersion: null, minimumSupportedVersion: null, localLoginCommand: "codex login", statusMessage: null }];
+    t.bb.states = [providerState("codex", { status: "unauthenticated", localLoginCommand: "codex login" })];
     expect((await run(t, ARGS)).exitCode).toBe(0);
     expect(t.files.writes).toEqual([FILE]);
     expect(t.bb.callsTo("getProviderStates")).toEqual([]);

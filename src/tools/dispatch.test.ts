@@ -235,7 +235,7 @@ describe("factoryman_dispatch with no built-in default", () => {
     expect(outcome.text).not.toMatch(/built-in/i);
   });
 
-  it("[U1411] blocks a dispatch with no profile source and prints the init hint", async () => {
+  it("[U1477] blocks a dispatch with no profile source, prints the init hint, and creates no task", async () => {
     const t = setup();
     const outcome = await dispatch(t.runtime, supervisor, { kind: "ship", description: "Add a --json flag to the status command." });
     expect(outcome.ok).toBe(false);

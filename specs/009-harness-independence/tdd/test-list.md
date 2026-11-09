@@ -269,6 +269,7 @@ A1301 to A1309 live in `test/acceptance/harness-readiness.test.ts`, A1310 to A13
 | U1409 | An explicit profile, a rule, and a configured default still resolve, in that order | AC-4.2 | example | DONE | `src/dispatch/resolver.test.ts::[U711]`, `[U716]`, `[U744]` |
 | U1410 | The resolver module exports no `BUILTIN_PROFILE`, and no resolution has the source `builtin` | FR-1331, FR-1332 | example | DONE | `src/dispatch/resolver.test.ts` |
 | U1411 | The dispatch success text for a configured default says "the configured default", and no source text names a built-in default | FR-1332 | example | DONE | `src/tools/dispatch.test.ts` |
+| U1477 | The dispatch tool prints the `no_default_profile` block with the init hint and creates no task when no profile source applies | AC-4.1, FR-1331 | example | DONE | `src/tools/dispatch.test.ts::[U1477]` |
 
 ### `src/dispatch/init.ts` (H10)
 

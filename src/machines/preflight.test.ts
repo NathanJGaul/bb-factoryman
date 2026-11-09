@@ -77,7 +77,7 @@ describe("runPreflight", () => {
       expect(await runPreflight({ bb, exec }, input("local-only", null))).toEqual([]);
     });
 
-    it("[U1348] reports no agent CLI with no named provider when every listed provider is installed but not ready", async () => {
+    it("[U1349] reports no agent CLI with no named provider when every listed provider is installed but not ready", async () => {
       const { bb, exec, input } = setup();
       bb.statesByHost.set("host_gpu", [providerState("claude", { status: "unauthenticated" }), providerState("claude-code", { status: "expired" })]);
       const problems = await runPreflight({ bb, exec }, input("local-only", null));
