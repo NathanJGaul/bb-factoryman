@@ -138,22 +138,22 @@ describe("browser-side isolation from the server", () => {
 });
 
 describe("harness table isolation", () => {
-  const rejected: Array<[string, string]> = [
-    ["an @get-bb module", 'import type { BbPluginApi } from "@get-bb/plugin-sdk";\nexport type Api = BbPluginApi;\n'],
-    ["a node: built-in", 'import { readFileSync } from "node:fs";\nexport const read = readFileSync;\n'],
-    ["a bare node built-in", 'import { join } from "path";\nexport const j = join;\n'],
-    ["a package", 'import { z } from "zod";\nexport const s = z;\n'],
-    ["a sibling module", 'import { other } from "./other";\nexport const o = other;\n'],
-    ["another plugin layer", 'import { TaskLog } from "../store/task-log";\nexport const log = TaskLog;\n'],
-    ["a type from another layer", 'import type { Profile } from "../machine/types";\nexport type P = Profile;\n'],
-    ["a dynamic import", 'export const load = () => import("./other");\n'],
-    ["a re-export", 'export * from "./other";\n'],
+  // The third column is the number of messages ESLint reports. A bare Node built-in matches both the path rule and the pattern rule, so it reports twice.
+  const rejected: Array<[string, string, number]> = [
+    ["an @get-bb module", 'import type { BbPluginApi } from "@get-bb/plugin-sdk";\nexport type Api = BbPluginApi;\n', 1],
+    ["a node: built-in", 'import { readFileSync } from "node:fs";\nexport const read = readFileSync;\n', 1],
+    ["a bare node built-in", 'import { join } from "path";\nexport const j = join;\n', 2],
+    ["a package", 'import { z } from "zod";\nexport const s = z;\n', 1],
+    ["a sibling module", 'import { other } from "./other";\nexport const o = other;\n', 1],
+    ["another plugin layer", 'import { TaskLog } from "../store/task-log";\nexport const log = TaskLog;\n', 1],
+    ["a type from another layer", 'import type { Profile } from "../machine/types";\nexport type P = Profile;\n', 1],
+    ["a dynamic import", 'export const load = () => import("./other");\n', 1],
+    ["a re-export", 'export * from "./other";\n', 1],
   ];
 
-  it.each(rejected)("[A1312] fails lint on src/harness importing %s", async (name, code) => {
+  it.each(rejected)("[A1312] fails lint on src/harness importing %s", async (_name, code, count) => {
     const messages = await importRestrictions("src/harness/probe.ts", code);
-    // A bare Node built-in matches both the path rule and the pattern rule, so it reports twice. Everything else reports once.
-    expect(messages).toHaveLength(name === "a bare node built-in" ? 2 : 1);
+    expect(messages).toHaveLength(count);
     for (const message of messages) expect(message).toContain("data only");
   });
 

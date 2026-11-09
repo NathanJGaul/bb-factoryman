@@ -57,7 +57,7 @@ describe("remedyFor", () => {
     expect(remedy(PI_MODEL)).toBe(MODEL_REMEDY);
   });
 
-  it("[U1451] gives the model remedy, and not the sign-in remedy, for the omp text that also says /login and API key", () => {
+  it("[U1449] gives the model remedy for the omp text, which also mentions /login and an API key", () => {
     expect(remedy(OMP_NO_MODEL)).toBe(MODEL_REMEDY);
   });
 

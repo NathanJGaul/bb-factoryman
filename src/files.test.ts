@@ -58,6 +58,7 @@ describe("nodeFiles.writeNew", () => {
     // `mkdir` fails first with EEXIST (a file is in the way), and that error must not be read as "the file exists".
     await expect(nodeFiles.writeNew(join(dir, "a-file", "below.json"), "x")).rejects.toMatchObject({ code: "EEXIST" });
     // The directory is fine here and the write itself fails, so only the write's own error handling is tested.
-    await expect(nodeFiles.writeNew(join(dir, "x".repeat(300)), "x")).rejects.toMatchObject({ code: "ENAMETOOLONG" });
+    const PAST_THE_NAME_LIMIT = 300; // past the 255-byte file name limit of the common filesystems
+    await expect(nodeFiles.writeNew(join(dir, "x".repeat(PAST_THE_NAME_LIMIT)), "x")).rejects.toMatchObject({ code: "ENAMETOOLONG" });
   });
 });

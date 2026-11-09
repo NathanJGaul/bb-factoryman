@@ -10,6 +10,14 @@ const CODEX_401 = "unexpected status 401 Unauthorized: Missing bearer or basic a
 const SIGN_IN_REMEDY = "Sign in to the provider on the machine that runs the worker, then dispatch the task again.";
 const MODEL_REMEDY = "Pick a model that `bb provider models <provider>` lists for this provider, then dispatch the task again.";
 
+// Sizes for the long texts. The old wake limit for the evidence was 600 characters, and the wake message adds a first and a last line.
+const OLD_WAKE_LIMIT = 600;
+const WAKE_MESSAGE_FRAME = 200;
+const CHATTY_ERROR = "worker thread died with a long and chatty explanation ".repeat(4);
+const LONG_ERROR = "e".repeat(400);
+const LONG_DETAIL = "y".repeat(500);
+const CAUSE_LIMIT = 300;
+
 async function oneTask(): Promise<World> {
   const world = await loadWorld();
   await world.call("factoryman_dispatch", DISPATCH);
@@ -55,7 +63,7 @@ describe("the cause of a failure through the plugin factory", () => {
   it.each([CLAUDE_LOGIN, OMP_NO_MODEL, PI_MODEL, CODEX_401])("[A1341] sends the supervisor the cause %j whole", async (cause) => {
     const world = await oneTask();
     logCause(world, "provider/error", { message: "failed", detail: cause });
-    await world.emit("thread.failed", "thr-w1", { error: "worker thread died with a long and chatty explanation ".repeat(4) });
+    await world.emit("thread.failed", "thr-w1", { error: CHATTY_ERROR });
     const [message] = world.sent("thr-sup");
     expect(world.sent("thr-sup")).toHaveLength(1);
     expect(message).toContain(`Provider-reported cause: "${cause}"`);
@@ -64,14 +72,13 @@ describe("the cause of a failure through the plugin factory", () => {
 
   it("[A1341] keeps a cause of 300 characters and its remedy whole in the wake message when the evidence is already long", async () => {
     const world = await oneTask();
-    const cause = `Not logged in · ${"z".repeat(284)}`;
-    expect(cause).toHaveLength(300);
+    const cause = `Not logged in · ${"z".repeat(CAUSE_LIMIT - "Not logged in · ".length)}`;
+    expect(cause).toHaveLength(CAUSE_LIMIT);
     logCause(world, "provider/error", { message: "failed", detail: cause });
-    await world.emit("thread.failed", "thr-w1", { error: "e".repeat(400) });
+    await world.emit("thread.failed", "thr-w1", { error: LONG_ERROR });
     const [message] = world.sent("thr-sup");
-    // The old limit for the evidence in a wake message was 600 characters; the evidence here is well past it.
-    const OLD_WAKE_LIMIT = 600;
-    expect(message?.length).toBeGreaterThan(OLD_WAKE_LIMIT + 200);
+    // The evidence alone is past the old limit, so only the longer limit can keep the cause whole.
+    expect(message?.length).toBeGreaterThan(OLD_WAKE_LIMIT + WAKE_MESSAGE_FRAME);
     expect(message).toContain(`Provider-reported cause: "${cause}"`);
     expect(message).toContain(`Remedy: ${SIGN_IN_REMEDY}`);
   });
@@ -106,13 +113,13 @@ describe("the cause of a failure through the plugin factory", () => {
 
   it("[A1344] flattens and bounds a long cause with line breaks and control characters, and shows it as reported text", async () => {
     const world = await oneTask();
-    logCause(world, "provider/error", { message: "failed", detail: `line one\r\nline two\u0000\u001b[0m ${"y".repeat(500)}` });
+    logCause(world, "provider/error", { message: "failed", detail: `line one\r\nline two\u0000\u001b[0m ${LONG_DETAIL}` });
     await world.emit("thread.failed", "thr-w1", { error: "Provider crashed" });
     const evidence = fail(world)?.evidence ?? "";
     expect(evidence.split("\n")).toHaveLength(1);
     expect(evidence).not.toMatch(/\p{Cc}/u);
     expect(evidence).toContain('Provider-reported cause: "line one line two [0m yyy');
     expect(evidence.endsWith('..."')).toBe(true);
-    expect(evidence.length).toBeLessThan(500);
+    expect(evidence.length).toBeLessThan(LONG_DETAIL.length);
   });
 });

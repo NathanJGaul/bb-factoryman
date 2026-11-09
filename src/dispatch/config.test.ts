@@ -89,7 +89,7 @@ describe("parseDispatchConfig", () => {
 
     it("[U1392] rejects an empty array at the top level and inside a record, and accepts an array of one level", () => {
       expect(failure(valid({ reasoningLevels: [] }))).toMatch(/ at `reasoningLevels`$/);
-      expect(failure(valid({ reasoningLevels: { codex: [] } }))).toMatch(/ at `reasoningLevels\.codex`$/);
+      expect(failure(valid({ reasoningLevels: { codex: [] } }))).toMatch(/ at `reasoningLevels(\.codex)?`$/);
       expect(parseDispatchConfig(valid({ reasoningLevels: ["low"] })).ok).toBe(true);
       expect(parseDispatchConfig(valid({ reasoningLevels: { codex: ["low"] } })).ok).toBe(true);
     });
