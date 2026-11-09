@@ -170,3 +170,29 @@ Untested criteria: none. Tests tracing to nothing: none.
 - The shipped skills, the web UI, and the merge approval form: untouched by this feature.
 - Performance and load behavior: no criterion, no test, not assessed.
 - The subagent read the changed files in full or by diff, but did not read `FakeLab` or `real-lab.ts` end to end; I did not re-read them cold either.
+
+## Re-check after the remediation
+
+This section was written by the session that fixed the findings, so it is **not independent**, and it does not replace a fresh audit.
+It records, finding by finding, what changed and the evidence, for the next reader to confirm.
+The verdict above is the verdict of the audited commit `d961810`.
+
+| # | Status | Evidence |
+| --- | --- | --- |
+| 1 | Cleared | `src/validator/agent.shell.test.ts` runs `READ_SCRIPT` under a real `sh` (`U1723` to `U1726`). Five mutants of the script, including `M17`, each fail it. |
+| 2 | Not clearable by a fix | The seven `TEST_AFTER` behaviors stay. The remediation added six more guards that passed on first run (`U1723` to `U1726`, `A1621`, `A1622`), so thirteen behaviors have no recorded red, each with a killing mutant. D-133 records the deviation and waits for the captain. |
+| 3 | Cleared | `U1689` and `U1710` use literal text. A mutant of `validatorProblem` and a mutant of `roleAdvice` each fail them. |
+| 4 | Cleared | `A1622` feeds the real command's output to `startedThreadId`, and a reworded line fails it. `U1709` now asserts through the same reader and fails when the fake lab prints another first line. |
+| 5 | Cleared | The two `if`s are gone: `U1689` is two tables, and `A1610` uses `exactly(...)` patterns. |
+| 6 | Cleared | `A1621` runs `supervisor start` with no `--profile` against `roles.supervisor.profile`, and a mutant that ignores the field fails it. |
+| 7 | Cleared | `A1604` and `A1621` use `providerFixture` and `modelFixture` through one `piWorld` helper. |
+| 8 | Cleared | `U838` and `U856` assert that the read runs with no working directory. |
+| 9 | Cleared, with one decision | `U1519` was deleted because it could not fail, and `U1717` and `A1507` pin the empty list. The order check in `U1639` stays on purpose. |
+| 10 | Cleared | `A1606` matches the key name, and `U1698` checks the preflight in the warning, as `U1057` does. |
+| 11 | Cleared for the tests named, with one exception | `A1604`, `A1605`, `A1607`, `A1611`, `A1612`, `U1629`, `U1630`, `U1633`, `U1636`, `U1678`, `U1680`, `U1681` are one behavior per test. `A1613` stays one flow over two worlds. |
+| 12 | Cleared | The flag whitelist of `A1109` is keyed by subcommand, and a flag on the stamp form fails it. The `thread clear` entry of `bb-cli.json` was read from `bb thread clear --help`. |
+| 13 | Cleared | `test/fixtures/validator-read.ts` is the one place that routes the read. |
+| 14 | Cleared | `U1722` has its own id, `SECOND` replaces the misleading `CODEX`, the bounds are exact (2 and 4), and the two titles that promised more now assert what they say. |
+
+Suite after the remediation: 151 files, 2067 tests, 0 failed, 25 s; `pnpm run check` is clean; a full run adds no temporary directory.
+The verdict stays `FAIL` under the rubric until the captain accepts D-133 or asks for rework, and a fresh audit would be the way to confirm findings 1 and 3 to 14.

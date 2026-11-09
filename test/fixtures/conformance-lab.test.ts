@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { HARNESS_IDS, resolveDriver } from "../../tools/conformance/drivers/index.ts";
 import { deliveryModeOf } from "../../tools/conformance/drivers/types.ts";
 import { contractFor } from "../../src/harness/contracts";
+import { startedThreadId } from "../../tools/conformance/readers.ts";
 import { FakeLab } from "./conformance-lab.ts";
 
 const PR = "https://github.com/conformance/lab/pull/1";
@@ -107,7 +108,8 @@ describe("the fake lab's supervisors", () => {
       const started = await lab.startSupervisor("S9start");
       expect(started.code, id).toBe(0);
       expect(started.threadId, id).toMatch(/^thr_/);
-      expect(started.text.split("\n")[0], id).toBe(`Started factoryman supervisor thread ${started.threadId} with the profile harness (${lab.driver.profile.provider}, ${lab.driver.profile.model}).`);
+      // The reader that the real lab uses must find the thread in the text that the fake lab prints. A1622 links the same reader to the real command.
+      expect(startedThreadId(started.text), id).toBe(started.threadId);
       expect(await lab.offers({ kind: "supervisor", label: "S9start" }), id).toEqual({ tools: SUPERVISOR_TOOLS, skills: ["factoryman-supervisor"] });
     }
     const missing = new FakeLab("pi", { noStartCommand: true });

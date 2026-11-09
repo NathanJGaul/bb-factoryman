@@ -347,3 +347,12 @@ Where a test was split, every assertion of the old test is in one of the new tes
 - Suite after this entry: `pnpm test` -> 151 files, passed; `pnpm run typecheck` and `pnpm run lint` clean.
 - Not done: `A1613` and the long unit-test tables (`U1665`, `U1667`) keep several rows in one test, because each row is one input of one behavior.
 - commit: see the commit that carries this entry.
+
+## Remediation 5: U1709 reads through the lab's reader (finding 4)
+
+`T057` asked that `U1709` stop asserting the fake lab's own hard-coded string. `A1622` links the real command to the reader, but `U1709` itself still compared the fake's first line to a literal, so the finding was only mostly cleared.
+The test now asserts that `startedThreadId` finds the thread ID in the text that the fake lab prints, and the tool list it compares with is the four names of the specification.
+
+- first run: `pnpm vitest run test/fixtures/conformance-lab.test.ts` -> 13 passed (a guard on a fixture, so no red was possible)
+- mutant: the fake lab's first line reworded -> `[U1709]` failed. It was restored with `git checkout`.
+- commit: see the commit that carries this entry.
