@@ -262,3 +262,9 @@ Commit subject: "docs: record the harness-independence decisions D-100 to D-107"
 - Acceptance files written after their code (harness-readiness, harness-admission, harness-models, harness-default, harness-failure) passed on the first run, and the entries above list the mutants that show each one can fail.
   Eight times a mutant survived the first version of a test (U1407, U1442, U1451, A1341, the `\p{Cc}` regex aside); each time the test was strengthened in a step of its own and the mutant then failed.
 - Not done here, by design: the live check of `quickstart.md`, part 2, which is the owner's step.
+
+### Correction to group 9
+
+The note on surviving mutants says "Eight times".
+The count is four: U1407 (a swallowed write error), U1442 (any subcommand routed to init), U1451 (the sign-in family before the model family), and A1341 (a wake limit of 600).
+Each was strengthened in a step of its own, and the mutant then failed.
