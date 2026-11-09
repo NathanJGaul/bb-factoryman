@@ -1,7 +1,8 @@
 import { makePluginAgentConfigurationContext } from "@get-bb/plugin-sdk/testing";
 import { afterEach, describe, expect, it } from "vitest";
+import { startedThreadId } from "../../tools/conformance/readers.ts";
 import { makeCheckout, removeCheckouts } from "../fixtures/checkout";
-import { loadWorld, stateFixture, type World } from "../fixtures/plugin-host";
+import { loadWorld, modelFixture, providerFixture, stateFixture, type World } from "../fixtures/plugin-host";
 
 afterEach(removeCheckouts);
 
@@ -72,6 +73,29 @@ describe("bb factoryman supervisor start through the plugin factory", () => {
     pi.setModels("pi", { models: [{ id: "openai/gpt-6-luna", model: "openai/gpt-6-luna", displayName: "x", description: "", isDefault: true, defaultReasoningEffort: "medium", reasoningDiscovery: "known", supportedReasoningEfforts: [{ reasoningEffort: "medium", description: "" }] }] });
     expect((await start(pi, "--profile", "pi")).exitCode).toBe(0);
     expect(pi.sdkCalls("threads.spawn")).toHaveLength(1);
+  });
+
+  it("[A1621] spawns the profile that roles.supervisor.profile names when there is no --profile", async () => {
+    const world = await bare(dispatch({ roles: { supervisor: { profile: "pi" } } }), {
+      providers: [providerFixture("claude"), providerFixture("pi", { capabilities: { permissionModes: ["full"] }, reasoningLevels: [{ id: "medium", label: "medium" }] })],
+      models: { pi: { models: [modelFixture("openai/gpt-6-luna", { isDefault: true, defaultReasoningEffort: "medium", supportedReasoningEfforts: [{ reasoningEffort: "medium", description: "" }] })] } },
+    });
+    const result = await start(world);
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout.split("\n")[0]).toBe("Started factoryman supervisor thread thr-w1 with the profile pi (pi, openai/gpt-6-luna).");
+    expect(spawnArgs(world)).toHaveLength(1);
+    expect(spawnArgs(world)[0]?.[0]).toMatchObject({ providerId: "pi", model: "openai/gpt-6-luna", reasoningLevel: "medium", permissionMode: "full" });
+  });
+
+  it("[A1622] gives the real command's output to the lab's reader, which finds the thread that the command spawned", async () => {
+    const world = await bare(dispatch());
+    const started = await start(world, "--profile", "deep");
+    const supervisors = [...world.metadata].filter(([, metadata]) => (metadata as { role?: string }).role === "supervisor").map(([id]) => id);
+    expect(supervisors).toHaveLength(1);
+    expect(startedThreadId(started.stdout)).toBe(supervisors[0]);
+    const refused = await start(world, "--profile", "ghost");
+    expect(refused.exitCode).toBe(1);
+    expect(startedThreadId(`${refused.stdout}${refused.stderr}`)).toBeNull();
   });
 
   it("[A1605] takes the profile from the flag, then from roles.supervisor.profile, and refuses every missing, undefined, or broken case", async () => {

@@ -301,3 +301,21 @@ They use `spawnSync("sh", ["-c", READ_SCRIPT])` with an exact environment and te
 - green: no source change. `pnpm vitest run src/validator` -> 6 files, 108 passed after the restore.
 - refactor: none needed.
 - commit: see the commit that carries this entry.
+
+## Remediation 2: the acceptance gaps and the duplicate id (A1621, A1622, U1722)
+
+`tdd/verification.md` found two acceptance-level gaps and one reused behavior id.
+`A1621` and `A1622` guard code that already worked, so they passed on their first run, and they are `TEST_AFTER` by the rubric; each has a killing mutant instead of a red.
+They share one test file and one commit (a departure from one commit per cycle, noted here).
+`U1722` is the second test that carried the id `[U1692]`: the test is unchanged and only its id in the title moved, so no assertion changed.
+
+- `A1621`: `supervisor start` with no `--profile`, against a file whose `roles.supervisor.profile` is `pi`, spawns the Pi profile (provider, model, level, and mode checked). It uses the shared `providerFixture` and `modelFixture`.
+  - first run: `pnpm vitest run test/acceptance/supervisor-start.test.ts` -> 6 passed
+  - mutant: `parsed.profile ?? roles.supervisor.profile` made `parsed.profile ?? null` -> `[A1621]` and `[U1626]` failed
+- `A1622`: the registered command's real output goes to `startedThreadId` of the lab, which finds the one supervisor thread that the fake host created; a refused start gives `null`.
+  - first run: 7 passed
+  - mutant: the success line reworded to "Started the supervisor thread ..." -> `[A1601]`, `[A1621]`, and `[A1622]` failed, while `tools/conformance/readers.test.ts` alone stays green (its input is a copy of the line), which is the gap that the audit named.
+- `U1722`: `pnpm vitest run src/machines/preflight.test.ts` -> passed after the rename.
+- Both mutants were restored with `git checkout`, and `git status src` was clean.
+- Tooling fix: my tick script ticked task `T063` because its text mentions the existing test `[U1692]` in a code span. It was unticked by hand in the same commit, and the script now ignores ids inside code spans.
+- commit: see the commit that carries this entry.

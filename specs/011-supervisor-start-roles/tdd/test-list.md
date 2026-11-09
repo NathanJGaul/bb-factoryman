@@ -232,7 +232,7 @@ Table-driven tests cover the lines that name several inputs, and the cycle log r
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| U1722 | The provider states that the preflight reads for the validator agent are the host's own, not the server's | US4.7, FR-017 | example | PENDING | |
+| U1722 | The provider states that the preflight reads for the validator agent are the host's own, not the server's | US4.7, FR-017 | example | DONE | `src/machines/preflight.test.ts::[U1722]` |
 | U1723 | `READ_SCRIPT` run by a real `sh` prints the configuration file and exits 0 when the file exists | US4.1, FR-016 | example | DONE | `src/validator/agent.shell.test.ts::[U1723]` |
 | U1724 | `READ_SCRIPT` run by a real `sh` exits 3 and prints nothing when the file does not exist | US4.4, FR-016 | example | DONE | `src/validator/agent.shell.test.ts::[U1724]` |
 | U1725 | `READ_SCRIPT` reads `$NM_HOME/config.yaml` when `NM_HOME` is set, and `$HOME/.no-mistakes/config.yaml` when it is not | FR-016 | example | DONE | `src/validator/agent.shell.test.ts::[U1725]` |
@@ -242,8 +242,8 @@ Table-driven tests cover the lines that name several inputs, and the cycle log r
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| A1621 | The registered command `supervisor start` with no `--profile` spawns the profile that `roles.supervisor.profile` names | US2.1, FR-004 | example | PENDING | |
-| A1622 | The thread ID that `startedThreadId` reads from the real command's output is the ID of the thread that the command spawned | US1.1, FR-008, FR-024 | example | PENDING | |
+| A1621 | The registered command `supervisor start` with no `--profile` spawns the profile that `roles.supervisor.profile` names | US2.1, FR-004 | example | DONE | `test/acceptance/supervisor-start.test.ts::[A1621]` |
+| A1622 | The thread ID that `startedThreadId` reads from the real command's output is the ID of the thread that the command spawned | US1.1, FR-008, FR-024 | example | DONE | `test/acceptance/supervisor-start.test.ts::[A1622]` |
 
 ### `tools/conformance/wait.ts` (found by the first live Pi run; tests in `tools/conformance/wait.test.ts`)
 

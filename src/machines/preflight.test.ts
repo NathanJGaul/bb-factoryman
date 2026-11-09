@@ -165,7 +165,7 @@ describe("preflightReport: the validator agent", () => {
     }
   });
 
-  it("[U1692] reads the host's own provider states", async () => {
+  it("[U1722] reads the host's own provider states", async () => {
     const { bb, exec, input } = setup({ [READ]: { stdout: "agent: codex\n" } });
     bb.statesByHost.set("host_gpu", states(providerState("codex")));
     bb.states = states(providerState("codex", { status: "not_installed" }));
