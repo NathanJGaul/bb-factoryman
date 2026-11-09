@@ -8,7 +8,7 @@
 
 The implementation satisfies the specification, the plan, and the tasks, with one open decision that is not the code's to make.
 `/speckit.converge` found no unbuilt work, and it appended one task, `T1397`, under `## Phase 11: Convergence`.
-Five `MED` audit tasks (`T1392` to `T1396`) stay open on purpose, and none blocks the suite.
+Three of the five `MED` audit tasks were closed after the captain's instruction of 2026-11-09. `T1392` and `T1393` stay open on purpose (see `tasks.md`), and neither blocks the suite.
 
 ## Merge readiness
 
@@ -19,8 +19,8 @@ Five `MED` audit tasks (`T1392` to `T1396`) stay open on purpose, and none block
 | Does every scenario pass? | S2 to S6, S8, S11, and S12 pass on all four harnesses, and S10 passes at tier 1. S1, S7, and S9 hold known gaps that wait for report tasks H1, H3, and H4 (D-101). omp's S7 checks a different shape because omp ends a failing turn normally (D-105). |
 | Is the plugin unchanged? | Yes. `git diff 8148863..HEAD -- src` is empty, and the eight hard rules are untouched. |
 | Did it touch a credential or the real home? | No. The keys in the lab are the literal `mock-not-a-credential`, the environment passes no host credential variable, and every run's evidence diff was clean. |
-| Does the gate pass? | Yes. `pnpm run check` exits 0 with 125 files and 1471 tests, and `bb plugin build` builds the plugin. |
-| Does the TDD audit pass? | No. The verdict is `FAIL` for one reason: 26 behaviors have tests that came after their code (D-107). |
+| Does the gate pass? | Yes. `pnpm run check` exits 0 with 125 files and 1482 tests, and `bb plugin build` builds the plugin. |
+| Does the TDD audit pass? | No. The verdict is `FAIL` for one reason: 26 behaviors have tests that came after their code (D-107). The captain accepted the exception on 2026-11-09. |
 
 ## Evidence
 
@@ -32,7 +32,7 @@ Five `MED` audit tasks (`T1392` to `T1396`) stay open on purpose, and none block
 
 ## Risk
 
-- **D-107 (constitution V).** 26 tests came after their code. Each has a revert-red or a killing mutant. The captain accepts or rejects the exception. The pull request should say so.
+- **D-107 (constitution V).** 26 tests came after their code. Each has a revert-red or a killing mutant. The captain accepted the exception on 2026-11-09, and the pull request names the behaviors.
 - **The live runs are not in `pnpm test`.** They need `bwrap`, a pinned bb, the harness CLIs, and about 10 minutes per harness. The real lab, the entry point, and the lab scripts have no unit test. A CLI upgrade is caught only when someone runs the suite.
 - **The fake model is not a model.** Tier 1.5 shows that the plumbing works. It cannot show that a real model reads the skill, loads the deferred tool, follows the `xd://` route, or avoids `git push`. That is tier 2 and the model-behavior checks, which need a credential.
 - **The isolation check is judged by a list.** It ignores churn from other tools and flags paths a harness or bb would write (D-106). A leak into a path outside the list would not fail the run, but the tripwire and the process list would still show it.
@@ -41,7 +41,6 @@ Five `MED` audit tasks (`T1392` to `T1396`) stay open on purpose, and none block
 
 ## Remaining work
 
-- The captain decides D-107.
 - Report tasks H1 to H5 and H9 to H14 stay as the report lists them. H13 is the tier 2 run per harness, which needs the captain's credentials.
-- `T1392` to `T1396`: the `MED` audit findings.
+- `T1392` and `T1393`: two `MED` audit findings, left on purpose.
 - The no-mistakes pipeline: review, tests, docs, lint, push, and the pull request. Firstmate starts it.

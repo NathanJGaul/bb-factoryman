@@ -1,34 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { renderSupport } from "./docs.ts";
-import type { ResultFile } from "./result.ts";
 import type { ScenarioVerdict } from "./verdict.ts";
 
-const ids = ["S1", "S2", "S3", "S4", "S5", "S6", "S7", "S8", "S9", "S10", "S11", "S12"];
-const passing = (id: string): ScenarioVerdict => ({ id, verdict: id === "S10" ? "skipped" : "pass", checks: id === "S10" ? [] : [{ id: `${id}.a`, title: "a check", ok: true, evidence: "seen" }] });
-
-const result = (harness: string, overrides: Partial<ResultFile> = {}): ResultFile => ({
-  version: 1,
-  tier: "1.5",
-  harness,
-  cli: { name: harness, version: "1.4.0" },
-  bb: { version: "0.49.0" },
-  plugin: { commit: "abc1234", dirty: false },
-  startedAt: "2026-11-08T21:05:00.000Z",
-  finishedAt: "2026-11-08T21:14:00.000Z",
-  offline: true,
-  isolation: { clean: true, report: "no change" },
-  scenarios: ids.map(passing),
-  ...overrides,
-});
-
-const gapped = (): ScenarioVerdict => ({
-  id: "S7",
-  verdict: "known-gap",
-  checks: [
-    { id: "S7.failed", title: "t", ok: true, evidence: "e" },
-    { id: "S7.cause", title: "The failure evidence holds the cause", ok: false, evidence: "evidence: provider error", gap: { task: "H3", reason: "the plugin reads only the thread error, not the provider detail" } },
-  ],
-});
+import { gapped, passing, resultFile as result, SCENARIO_IDS as ids } from "../../test/fixtures/conformance-result.ts";
 
 describe("renderSupport", () => {
   it("[U1376] writes one section per harness with the CLI version, bb version, plugin commit, date, and a verdict for each scenario", () => {
@@ -45,7 +19,7 @@ describe("renderSupport", () => {
   });
 
   it("[U1377] shows a known gap with its task and reason, and never as a pass", () => {
-    const doc = renderSupport([result("pi", { scenarios: ids.map((id) => (id === "S7" ? gapped() : passing(id))) })]);
+    const doc = renderSupport([result("pi", { scenarios: ids.map((id) => (id === "S7" ? gapped("S7", "S7.cause", "H3", "the plugin reads only the thread error, not the provider detail") : passing(id))) })]);
     const row = doc.split("\n").find((line) => line.startsWith("| S7 |")) ?? "";
     expect(row).toMatch(/known gap/i);
     expect(row).not.toMatch(/\bpass\b/);

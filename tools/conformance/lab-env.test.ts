@@ -11,14 +11,14 @@ const settings: LabSettings = {
   offline: true,
   readOnlyBinds: ["/m/installs/claude/2.1.316", "/m/installs/pi/1.4.0"],
 };
-const HOST = { PATH: "/usr/bin:/bin", HOME: "/home/u", ANTHROPIC_API_KEY: "sk-real", OPENAI_API_KEY: "sk-real", CLAUDE_CODE_OAUTH_TOKEN: "tok", GH_TOKEN: "ghp", HTTPS_PROXY: "http://proxy" };
+const HOST = { PATH: "/opt/node/bin:/usr/bin:/bin", HOME: "/home/u", ANTHROPIC_API_KEY: "sk-real", OPENAI_API_KEY: "sk-real", CLAUDE_CODE_OAUTH_TOKEN: "tok", GH_TOKEN: "ghp", HTTPS_PROXY: "http://proxy" };
 
 describe("the lab commands", () => {
   it("[U1371] builds the bblab command from the repository path, and an environment with the lab variables and no other host variable", () => {
     const paths = labPaths("/repo");
     expect(paths).toEqual({ bblab: "/repo/tools/bblab/bblab", evidence: "/repo/tools/bblab/bblab-evidence", stubAgent: "/repo/tools/stub-agent/stub-agent.ts" });
     const env = labEnv(settings, HOST);
-    expect(env).toMatchObject({ BBLAB_DIR: settings.labDir, BBLAB_BB_APP_DIR: settings.bbAppDir, BBLAB_SERVER_PORT: "48931", BBLAB_DAEMON_PORT: "48932", BBLAB_OFFLINE: "1", BBLAB_RO: "/m/installs/claude/2.1.316 /m/installs/pi/1.4.0", PATH: "/usr/bin:/bin" });
+    expect(env).toMatchObject({ BBLAB_DIR: settings.labDir, BBLAB_BB_APP_DIR: settings.bbAppDir, BBLAB_SERVER_PORT: "48931", BBLAB_DAEMON_PORT: "48932", BBLAB_OFFLINE: "1", BBLAB_RO: "/m/installs/claude/2.1.316 /m/installs/pi/1.4.0", PATH: "/opt/node/bin:/usr/bin:/bin" });
     expect(Object.keys(env).filter((key) => /KEY|TOKEN|SECRET|PASS|PROXY/.test(key))).toEqual([]);
     expect(JSON.stringify(env)).not.toContain("sk-real");
     expect(env["BBLAB_PASS_ENV"]).toBeUndefined();

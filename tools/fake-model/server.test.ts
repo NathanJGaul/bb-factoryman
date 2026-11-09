@@ -45,9 +45,9 @@ describe("the fake model server", () => {
     const messages = await post(`${url}/v1/messages`, { model: "claude-haiku-5-5", stream: false, messages: [{ role: "user", content: "hello" }] });
     expect(((await messages.json()) as { type: string }).type).toBe("message");
     const models = await fetch(`${url}/v1/models`);
-    expect(((await models.json()) as { data: Array<{ id: string }> }).data.length).toBeGreaterThan(0);
+    expect(((await models.json()) as { data: Array<{ id: string }> }).data.map((m) => m.id)).toEqual(["mock-1"]);
     const count = await post(`${url}/v1/messages/count_tokens`, { model: "m", messages: [] });
-    expect(((await count.json()) as { input_tokens: number }).input_tokens).toBeGreaterThan(0);
+    expect(((await count.json()) as { input_tokens: number }).input_tokens).toBe(10);
     expect((await fetch(`${url}/nothing/here`)).status).toBe(404);
     expect((await fetch(`${url}/v1/chat/completions`, { method: "POST", body: "{not json" })).status).toBe(400);
   });

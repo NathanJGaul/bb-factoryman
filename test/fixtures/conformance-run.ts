@@ -11,6 +11,8 @@ export interface Recorded {
   opened: Array<{ args: RunArgs; driver: string; binds: string[] }>;
   closed: number;
   events: string[];
+  /** The fake labs that were opened, so a test can read what the scenarios did to them. */
+  labs: FakeLab[];
 }
 
 export interface Options {
@@ -25,7 +27,7 @@ export interface Options {
 
 /** Deps for `main` with a fake lab behind them. */
 export function fakeDeps(options: Options = {}): { deps: RunDeps; rec: Recorded } {
-  const rec: Recorded = { out: [], files: new Map(), opened: [], closed: 0, events: [] };
+  const rec: Recorded = { out: [], files: new Map(), opened: [], closed: 0, events: [], labs: [] };
   const deps: RunDeps = {
     which: (command) => (options.missing?.includes(command) === true ? null : `/m/installs/${command}/9.9.9/${command}`),
     async openLab(args, driver: Driver, binds): Promise<LabSession> {
@@ -33,6 +35,7 @@ export function fakeDeps(options: Options = {}): { deps: RunDeps; rec: Recorded 
       rec.events.push("open");
       if (options.openError !== undefined) throw options.openError;
       const fake = new FakeLab(driver.id, options.faults ?? {}, args.tier);
+      rec.labs.push(fake);
       return {
         lab: options.wrap?.(fake) ?? fake,
         cli: { name: driver.cli?.command ?? "stub-agent", version: "9.9.9" },

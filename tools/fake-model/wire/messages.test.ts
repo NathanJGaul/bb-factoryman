@@ -49,7 +49,7 @@ describe("Messages", () => {
     expect(parsed.turns).toEqual(messages.parse(request).turns);
   });
 
-  it("[U1365] renders a tool call and a text answer as the event stream with a stop reason, and as one message when not streamed", () => {
+  it("[U1365] renders a tool call as the event stream with the tool_use stop reason", () => {
     const call = messages.render({ kind: "tool_call", name: "Bash", args: { command: "git status" } }, conversation);
     expect(call.contentType).toBe("text/event-stream");
     const callEvents = events(call.body) as Array<{ type: string; content_block?: { type: string; name?: string }; delta?: { type?: string; partial_json?: string; stop_reason?: string } }>;
@@ -57,11 +57,17 @@ describe("Messages", () => {
     expect(callEvents[1]?.content_block).toMatchObject({ type: "tool_use", name: "Bash" });
     expect(JSON.parse(callEvents[2]?.delta?.partial_json ?? "")).toEqual({ command: "git status" });
     expect(callEvents[4]?.delta?.stop_reason).toBe("tool_use");
+  });
+
+  it("[U1365] renders a text answer as the event stream with the end_turn stop reason", () => {
 
     const text = messages.render({ kind: "text", text: "All done." }, conversation);
     const textEvents = events(text.body) as Array<{ type: string; delta?: { text?: string; stop_reason?: string } }>;
     expect(textEvents.find((e) => e.type === "content_block_delta")?.delta?.text).toBe("All done.");
     expect(textEvents.find((e) => e.type === "message_delta")?.delta?.stop_reason).toBe("end_turn");
+  });
+
+  it("[U1365] renders a text answer as one message when not streamed", () => {
 
     const plain = messages.render({ kind: "text", text: "All done." }, { ...conversation, stream: false });
     expect(plain.contentType).toBe("application/json");

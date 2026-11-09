@@ -4,31 +4,18 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { renderSupport } from "../../tools/conformance/docs.ts";
 import { parseResult, serializeResult, type ResultFile } from "../../tools/conformance/result.ts";
+import { gapped, passing, resultFile, SCENARIO_IDS } from "../fixtures/conformance-result";
 import { tmpDir } from "../fixtures/git-repo";
 
 const CLI = new URL("../../tools/conformance/docs-cli.ts", import.meta.url).pathname;
 const ROOT = new URL("../../", import.meta.url).pathname;
-const ids = ["S1", "S2", "S3", "S4", "S5", "S6", "S7", "S8", "S9", "S10", "S11", "S12"];
-
-const result = (harness: string, gap = false): ResultFile => ({
-  version: 1,
-  tier: "1.5",
-  harness,
-  cli: { name: harness, version: "2.0.0" },
-  bb: { version: "0.49.0" },
-  plugin: { commit: "feed123", dirty: false },
-  startedAt: "2026-11-08T21:05:00.000Z",
-  finishedAt: "2026-11-08T21:14:00.000Z",
-  offline: true,
-  isolation: { clean: true, report: "ok" },
-  scenarios: ids.map((id) =>
-    id === "S10"
-      ? { id, verdict: "skipped" as const, checks: [] }
-      : gap && id === "S1"
-        ? { id, verdict: "known-gap" as const, checks: [{ id: "S1.remedy", title: "t", ok: false, evidence: "e", gap: { task: "H1", reason: "providerStates is not read" } }] }
-        : { id, verdict: "pass" as const, checks: [{ id: `${id}.a`, title: "t", ok: true, evidence: "e" }] },
-  ),
-});
+const result = (harness: string, gap = false): ResultFile =>
+  resultFile(harness, {
+    cli: { name: harness, version: "2.0.0" },
+    plugin: { commit: "feed123", dirty: false },
+    isolation: { clean: true, report: "ok" },
+    scenarios: SCENARIO_IDS.map((id) => (gap && id === "S1" ? gapped("S1", "S1.remedy", "H1", "providerStates is not read") : passing(id))),
+  });
 
 function generate(results: ResultFile[], extra: Record<string, string> = {}): string {
   const root = tmpDir("docs-root-");

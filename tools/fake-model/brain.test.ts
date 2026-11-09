@@ -82,26 +82,37 @@ describe("the worker script", () => {
     expect(reports(ship)).toEqual([{ outcome: "done", evidence: expect.stringContaining("t-1"), landedCommits: 1 }]);
   });
 
-  it("[U1355] plays silent, empty-evidence, double-report, dirty, nocommit, blocked, and hold", () => {
+  it("[U1355] plays silent: text only, no report", () => {
     const silent = walk(worker("scout", "[brain:silent]"));
     expect(reports(silent)).toEqual([]);
     expect(silent.at(-1)).toMatchObject({ kind: "text" });
+  });
 
+  it("[U1355] plays empty-evidence: two empty reports, then the real one", () => {
     const empty = reports(walk(worker("scout", "[brain:empty-evidence]")));
     expect(empty.map((r) => String(r["evidence"]).trim() === "")).toEqual([true, true, false]);
+  });
 
-    const twice = reports(walk(worker("scout", "[brain:double-report]")));
-    expect(twice).toHaveLength(2);
+  it("[U1355] plays double-report: the report twice", () => {
+    expect(reports(walk(worker("scout", "[brain:double-report]")))).toHaveLength(2);
+  });
 
+  it("[U1355] plays dirty: leaves an untracked file after the commit", () => {
     const dirty = walk(worker("ship", "[brain:dirty]"));
     expect(shellCommands(dirty).some((c) => c.includes("UNTRACKED.txt"))).toBe(true);
+  });
 
+  it("[U1355] plays nocommit: no commit, and a report of zero commits", () => {
     const none = walk(worker("ship", "[brain:nocommit]"));
     expect(shellCommands(none).some((c) => /git .*commit/.test(c))).toBe(false);
     expect(reports(none)).toEqual([{ outcome: "done", evidence: expect.any(String), landedCommits: 0 }]);
+  });
 
+  it("[U1355] plays blocked: reports blocked", () => {
     expect(reports(walk(worker("ship", "[brain:blocked]")))[0]).toMatchObject({ outcome: "blocked" });
+  });
 
+  it("[U1355] plays hold: a long delay before the work", () => {
     const hold = walk(worker("scout", "[brain:hold]"));
     expect(hold.some((a) => a.kind === "delay" && a.ms === 120_000)).toBe(true);
   });

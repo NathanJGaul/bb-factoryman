@@ -32,7 +32,7 @@ describe("chat completions", () => {
     ]);
   });
 
-  it("[U1361] renders a tool call and a text answer as streamed chunks, and as one body when not streamed", () => {
+  it("[U1361] renders a tool call as streamed chunks that end with the tool_calls finish reason", () => {
     const streamed = chat.render({ kind: "tool_call", name: "bash", args: { command: "pwd" } }, conversation(true));
     expect(streamed.status).toBe(200);
     expect(streamed.contentType).toBe("text/event-stream");
@@ -42,11 +42,17 @@ describe("chat completions", () => {
     expect(call?.function.name).toBe("bash");
     expect(JSON.parse(call?.function.arguments ?? "")).toEqual({ command: "pwd" });
     expect(chunks.flatMap((c) => c.choices.map((choice) => choice.finish_reason)).filter(Boolean)).toEqual(["tool_calls"]);
+  });
+
+  it("[U1361] renders a text answer as streamed chunks", () => {
 
     const text = chat.render({ kind: "text", text: "All done." }, conversation(true));
     const textChunks = events(text.body) as Array<{ choices: Array<{ delta?: { content?: string }; finish_reason: string | null }> }>;
     expect(textChunks.flatMap((c) => c.choices.map((choice) => choice.delta?.content ?? "")).join("")).toBe("All done.");
     expect(textChunks.flatMap((c) => c.choices.map((choice) => choice.finish_reason)).filter(Boolean)).toEqual(["stop"]);
+  });
+
+  it("[U1361] renders a tool call as one body when not streamed", () => {
 
     const plain = chat.render({ kind: "tool_call", name: "bash", args: { command: "pwd" } }, conversation(false));
     expect(plain.contentType).toBe("application/json");
@@ -54,6 +60,6 @@ describe("chat completions", () => {
     expect(parsed.object).toBe("chat.completion");
     expect(parsed.choices[0]?.finish_reason).toBe("tool_calls");
     expect(parsed.choices[0]?.message.tool_calls[0]?.function.name).toBe("bash");
-    expect(parsed.usage.total_tokens).toBeGreaterThan(0);
+    expect(parsed.usage.total_tokens).toBe(15);
   });
 });

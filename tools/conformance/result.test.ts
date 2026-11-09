@@ -41,15 +41,15 @@ describe("result file", () => {
   });
 
   it.each([
-    ["the CLI version", (r: Record<string, unknown>) => delete (r["cli"] as Record<string, unknown>)["version"]],
-    ["the bb version", (r: Record<string, unknown>) => delete r["bb"]],
-    ["the plugin commit", (r: Record<string, unknown>) => ((r["plugin"] as Record<string, unknown>)["commit"] = 7)],
-    ["the isolation outcome", (r: Record<string, unknown>) => delete r["isolation"]],
-    ["the verdict value", (r: Record<string, unknown>) => (((r["scenarios"] as Array<Record<string, unknown>>)[0] as Record<string, unknown>)["verdict"] = "maybe")],
-  ])("[U1319] rejects a result file with %s missing or wrongly typed", (_name, damage) => {
+    ["the CLI version", "cli.version", (r: Record<string, unknown>) => delete (r["cli"] as Record<string, unknown>)["version"]],
+    ["the bb version", "bb", (r: Record<string, unknown>) => delete r["bb"]],
+    ["the plugin commit", "plugin.commit", (r: Record<string, unknown>) => ((r["plugin"] as Record<string, unknown>)["commit"] = 7)],
+    ["the isolation outcome", "isolation", (r: Record<string, unknown>) => delete r["isolation"]],
+    ["the verdict value", "scenarios.0.verdict", (r: Record<string, unknown>) => (((r["scenarios"] as Array<Record<string, unknown>>)[0] as Record<string, unknown>)["verdict"] = "maybe")],
+  ])("[U1319] rejects a result file with %s missing or wrongly typed, and names the field", (_name, path, damage) => {
     const raw = JSON.parse(serializeResult(sample())) as Record<string, unknown>;
     damage(raw);
-    expect(() => parseResult(JSON.stringify(raw))).toThrow();
+    expect(() => parseResult(JSON.stringify(raw))).toThrow(`at \`${path}\``);
   });
 
   it("[U1320] names the file <tier>-<harness>.json, with stub as the harness at tier 1", () => {

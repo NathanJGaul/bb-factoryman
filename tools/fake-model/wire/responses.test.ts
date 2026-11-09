@@ -31,7 +31,7 @@ describe("Responses", () => {
     expect(responses.parse({ ...request, input: "plain string input" }).turns).toEqual([{ role: "user", text: "plain string input" }]);
   });
 
-  it("[U1363] renders a tool call and a text answer as the event stream that ends with response.completed and usage", () => {
+  it("[U1363] renders a tool call as the event stream that ends with response.completed and usage", () => {
     const call = responses.render({ kind: "tool_call", name: "exec_command", args: { cmd: "pwd" } }, conversation);
     expect(call.contentType).toBe("text/event-stream");
     const callEvents = events(call.body) as Array<{ type: string; item?: { type: string; name: string; arguments: string; call_id: string }; response?: { status: string; usage?: { total_tokens: number } } }>;
@@ -40,6 +40,9 @@ describe("Responses", () => {
     expect(done).toMatchObject({ type: "function_call", name: "exec_command" });
     expect(JSON.parse(done?.arguments ?? "")).toEqual({ cmd: "pwd" });
     expect(callEvents.at(-1)?.response).toMatchObject({ status: "completed", usage: { total_tokens: expect.any(Number) } });
+  });
+
+  it("[U1363] renders a text answer as the event stream", () => {
 
     const text = responses.render({ kind: "text", text: "All done." }, conversation);
     const textEvents = events(text.body) as Array<{ type: string; delta?: string; item?: { type: string } }>;

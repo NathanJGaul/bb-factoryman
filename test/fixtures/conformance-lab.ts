@@ -178,8 +178,8 @@ export class FakeLab implements Lab {
   }
 
   async dispatch(kind: "scout" | "ship", description: string, options: DispatchOptions = {}): Promise<{ result: ToolResult; taskId: string | null }> {
-    this.calls.push(`dispatch ${kind}`);
     const profile = options.profile ?? (kind === "ship" ? this.driver.shipProfile : this.driver.profile);
+    this.calls.push(`dispatch ${kind} ${profile.provider}/${profile.model}/${profile.reasoningLevel}/${profile.permissionMode}`);
     const known = (await this.providerStates()).find((p) => p.id === profile.provider);
     if (known !== undefined && known.status !== "ready" && this.faults.noReadinessGate !== true) {
       const remedy = this.faults.noRemedy === true ? "" : ` Status ${known.status}${known.loginCommand === null ? "" : `; run \`${known.loginCommand}\``}.`;

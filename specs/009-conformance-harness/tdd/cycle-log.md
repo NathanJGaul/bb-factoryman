@@ -329,3 +329,13 @@ A file named `--port` appeared in the repository root and was committed by mista
 
 - red: `pnpm vitest run test/acceptance/conformance-fake-model.test.ts` -> U1426 `AssertionError: expected [ '--port' ] to deeply equal []`
 - green: `value(flag)` returns `undefined` when the flag is absent. `pnpm vitest run test/acceptance/conformance-fake-model.test.ts tools/fake-model` -> 39 passed. The real lab passes `--bodies` explicitly, so the live runs were not affected. Type check and lint pass.
+
+## Audit follow-up (after the captain's instruction of 2026-11-09)
+
+The captain accepted the 26 test-after behaviors (D-107) and asked for the small, clear `MED` audit fixes. Each change below tightens or splits an existing test. No assertion was removed or loosened, and each was run against the code.
+
+- T1394 (finding 9): A1312 asserts the dispatched profile (`dispatch scout claude-code/claude-haiku-5-5/low/accept-edits` and the ship profile), `HOST.PATH` in `lab-env.test.ts` differs from the fallback, the `toThrow` messages in `result.test.ts` name the field, and the literals `mock-1`, `10`, and `15` replace `> 0`.
+- T1395 (finding 11): the seven-flag brain test is seven tests (all tagged `[U1355]`), and the render tests of the three wire formats are one test per output.
+- T1396 (finding 13): `test/fixtures/conformance-result.ts` holds the result builder that two docs tests had copied.
+- Left open on purpose: T1392 (the only fix is to delete tests) and T1393 (the fix is a change to the `bblab` script).
+- `pnpm run check` -> 125 files, 1482 tests, exit 0.

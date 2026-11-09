@@ -14,7 +14,7 @@ An unchecked item names what is missing and who owns it.
 - [x] CHK1302 `pnpm run lint` passes.
       Evidence: `pnpm run check`. `src/machine/` and the browser-side rules are unchanged.
 - [x] CHK1303 `pnpm test` passes with no skipped test.
-      Evidence: 125 files, 1471 tests, 0 failed. The cold audit found no `skip`, `only`, or `todo`.
+      Evidence: 125 files, 1482 tests, 0 failed. The cold audit found no `skip`, `only`, or `todo`.
 - [x] CHK1304 `pnpm run build` (`bb plugin build`) still builds the plugin, and `src/` did not change.
       Evidence: the build wrote `dist/server.js` and `dist/app.js`; `git diff 8148863..HEAD -- src` is empty. `dist/` is git-ignored and I removed it.
 
@@ -44,7 +44,7 @@ An unchecked item names what is missing and who owns it.
 
 ## Not done, and who owns it
 
-- [ ] CHK1330 The captain accepts or rejects the `TEST_AFTER` exception (D-107). Owner: the captain.
+- [x] CHK1330 The captain accepted the `TEST_AFTER` exception (D-107) on 2026-11-09.
 - [ ] CHK1331 Tier 2 (a real model) for each harness, and the model-behavior checks M1 to M4. Owner: the captain, who holds the credentials (report task H13).
-- [ ] CHK1332 The open `MED` audit findings (tasks T1392 to T1396). Owner: the next maintainer; none blocks the suite.
+- [ ] CHK1332 Two open `MED` audit findings (tasks T1392 and T1393, left on purpose). Owner: the next maintainer; neither blocks the suite.
 - [ ] CHK1333 Report tasks H1, H3, and H4 close the known gaps in `conformance/known-gaps.json`. Each run fails once a gap closes, until its entry is removed.

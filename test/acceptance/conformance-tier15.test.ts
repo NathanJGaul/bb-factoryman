@@ -11,6 +11,11 @@ describe("pnpm run conformance -- --tier 1.5 --harness <id>", () => {
     expect(await main(["--tier", "1.5", "--harness", "claude-code"], deps)).toBe(0);
     expect(rec.opened).toHaveLength(1);
     expect(rec.opened[0]).toMatchObject({ driver: "claude-code", binds: ["/m/installs/claude/9.9.9"] });
+    // Every task the scenarios dispatched used the Claude Code profile: the scout profile, and the ship profile for ship tasks.
+    const dispatched = (rec.labs[0]?.calls ?? []).filter((call) => call.startsWith("dispatch "));
+    expect(dispatched.length).toBeGreaterThan(5);
+    expect(dispatched).toContain("dispatch scout claude-code/claude-haiku-5-5/low/accept-edits");
+    expect(dispatched).toContain("dispatch ship claude-code/claude-haiku-5-5/low/full");
   });
 
   it("[A1313] runs S1 to S9, S11, and S12, marks S10 skipped, and writes only into the results directory", async () => {

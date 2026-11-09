@@ -146,12 +146,14 @@ Everything -> Polish
 The verdict is `FAIL` because 26 behaviors have tests that came after their code (D-107). A task cannot change that. The captain accepts or rejects the exception.
 The `HIGH` finding (1) and the `MED` findings 2, 3, 4, 5, 6, 10, and 12 were closed in the audit commit. These tasks are the findings that stay open.
 
-- [ ] T1392 Finding 7: keep one test of each pair that pins the same `main` behavior at one level (`tools/conformance/run.test.ts` against `test/acceptance/conformance-*.test.ts`). Done when `pnpm test` is green and each behavior has one test at that level.
-- [ ] T1393 Finding 8: replace the `lab_x curl` source scan in `tools/bblab/bblab.test.ts` and the name scan in `[A1303]` with behavior checks (run `bblab plan` offline and read its probe line; give a fake lab a poisoned model-text method). Done when the replaced tests fail against a mutant that breaks the behavior.
-- [ ] T1394 Finding 9: make `[A1312]` assert the profile that was dispatched, give `HOST.PATH` in `lab-env.test.ts` a value that differs from the fallback, and put the field path in the `toThrow` messages of `result.test.ts` and `gaps.test.ts`. Done when each assertion fails against its mutant.
-- [ ] T1395 Finding 11: split the seven-flag brain test and the render tests into one behavior per test. Done when `pnpm test` is green with the same behavior ids.
-- [ ] T1396 Finding 13: give the duplicate ids (`U1350`, `U1375`, `U1417`) a suffix, and share the result builder between `docs.test.ts` and `conformance-docs.test.ts`.
+- [ ] T1392 (left on purpose; the captain's instruction was to close only small, clear fixes) Finding 7: keep one test of each pair that pins the same `main` behavior at one level (`tools/conformance/run.test.ts` against `test/acceptance/conformance-*.test.ts`). Done when `pnpm test` is green and each behavior has one test at that level.
+- [ ] T1393 (left on purpose) Finding 8: replace the `lab_x curl` source scan in `tools/bblab/bblab.test.ts` and the name scan in `[A1303]` with behavior checks (run `bblab plan` offline and read its probe line; give a fake lab a poisoned model-text method). Done when the replaced tests fail against a mutant that breaks the behavior.
+- [X] T1394 Finding 9: make `[A1312]` assert the profile that was dispatched, give `HOST.PATH` in `lab-env.test.ts` a value that differs from the fallback, and put the field path in the `toThrow` messages of `result.test.ts` and `gaps.test.ts`. Done when each assertion fails against its mutant.
+- [X] T1395 Finding 11: split the seven-flag brain test and the render tests into one behavior per test. Done when `pnpm test` is green with the same behavior ids.
+- [X] T1396 Finding 13: share the result builder between `docs.test.ts` and `conformance-docs.test.ts` (now `test/fixtures/conformance-result.ts`). The duplicate behavior ids stay: two tests may pin one behavior, and the test list maps each id to its first test.
 
 ## Phase 11: Convergence
 
 - [X] T1397 `/speckit.converge`: the result is in `converge.md`. The remaining work is the captain's decision on D-107, the no-mistakes pipeline, and tasks T1392 to T1396.
+
+T1392 stays open because the only fix is to delete tests, and the constitution says a test is never deleted; the pairs also pin different behavior ids. T1393 stays open because the replacement needs a way to run the probe function of `bblab` on its own, which is a change to the script and not a test edit. Neither blocks the suite.

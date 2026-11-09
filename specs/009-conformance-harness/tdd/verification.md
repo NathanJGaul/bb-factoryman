@@ -14,7 +14,7 @@ criteria_total: 28 # AC-1.1 to AC-6.4
 criteria_covered: 28 # every AC reaches a test or a live run; the real lab and the CLI entry are covered by live runs only
 mutation_score: 98 # 53 of 54 hand-picked deliberate mutants killed, no tool; the 54th is an equivalent mutant. Scope: tools/ (not src/). Not a representative sample
 mutants_survived: 1 # M51 (equivalent, see Mutation results). Four survived the first run; three were closed with new tests
-suite: 1471 passed, 0 failed, 125 files, about 22 s of test time; pnpm run check (typecheck, lint, tests) exit 0
+suite: 1482 passed, 0 failed, 125 files, about 22 s of test time; pnpm run check (typecheck, lint, tests) exit 0
 ---
 
 # TDD verification: Conformance harness for agent harnesses
@@ -24,8 +24,8 @@ One rule blocks: 26 behaviors have tests that came after their code, and the rub
 Everything else is clean: no `HIGH` smell is open, 53 of 54 deliberate mutants are killed (the 54th is equivalent), every acceptance criterion reaches a test or a live run, and no existing test was changed.
 I wrote the code and the tests, so this audit is not independent.
 A fresh-context subagent did the smell pass, and I opened the lines it cited before I used them.
-The decision whether to accept the `TEST_AFTER` set as a documented exception belongs to the captain (D-107), as it did for the earlier feature (D-099).
-I did not weigh it into the verdict.
+The captain accepted the `TEST_AFTER` set as a documented exception on 2026-11-09 (D-107), as for the earlier feature (D-099).
+The verdict stays `FAIL` as computed.
 
 Why so many `TEST_AFTER`: the feature is a test harness, and its real entry points (the runner, the document command, the fake model as a process) were built bottom-up from unit-tested parts.
 Each acceptance test was written after the unit cycles had already built the behavior, so the first run passed.
@@ -79,13 +79,13 @@ Ordered by severity. The cold pass was done by a fresh-context subagent that rea
 | 4 | MED | The fake lab is more forgiving than a real lab: it never waits, sets `busy` from the word `SLEEP`, and counted a commit for a ship task that never reported. If no provider is unready, S1 passed on one check. | `test/fixtures/conformance-lab.ts` | Partly closed. The commit follows the task state, and S1 fails closed. The fake still does not wait or time `busy`; the live runs cover timing |
 | 5 | MED | Loose failure-side matchers (`toContain`, `arrayContaining`). | `scenarios.test.ts` | Closed. Exact sets |
 | 6 | MED | Loops with no count guard (the scenario file loop of A1303, the layering loop of A1330 had a guard). | `conformance-tier1.test.ts` | Closed for A1303 (a count of 12). The others are type narrowing after an unconditional assertion |
-| 7 | MED | Redundant tests: `run.test.ts` and the acceptance tests pin the same `main` behaviors at one level. | `run.test.ts`, `conformance-*.test.ts` | Open. T1392 |
-| 8 | MED | Source-text scans stand in for behavior (A1303, A1330, the `lab_x curl` check). | `conformance-tier1.test.ts`, `bblab.test.ts`, `conformance-tools-layering.test.ts` | Open. T1393. The A1330 scan is the only guard for the layering and has a revert-red |
-| 9 | MED | Weak assertions: A1312 does not assert the profile; A1326's expected value is the function the CLI calls; `HOST.PATH` equals the fallback; bare `toThrow()`. | listed in the pass | Open. T1394 |
+| 7 | MED | Redundant tests: `run.test.ts` and the acceptance tests pin the same `main` behaviors at one level. | `run.test.ts`, `conformance-*.test.ts` | Open, left on purpose (T1392): the fix is to delete tests |
+| 8 | MED | Source-text scans stand in for behavior (A1303, A1330, the `lab_x curl` check). | `conformance-tier1.test.ts`, `bblab.test.ts`, `conformance-tools-layering.test.ts` | Open, left on purpose (T1393): the fix is to change the script. The A1330 scan is the only guard for the layering and has a revert-red |
+| 9 | MED | Weak assertions: A1312 does not assert the profile; A1326's expected value is the function the CLI calls; `HOST.PATH` equals the fallback; bare `toThrow()`. | listed in the pass | Closed (T1394). A1312 asserts the dispatched profile, the host `PATH` differs from the fallback, the `toThrow` messages name the field, and the literals are exact |
 | 10 | MED | Real processes and time: a missing timeout on one `spawnSync`, an orphan `sleep`. | `conformance-fake-model.test.ts`, `shell.test.ts` | Closed for both |
-| 11 | MED | Eager tests: seven flags in one brain test, several render tests. | `brain.test.ts`, wire tests | Open. T1395 |
+| 11 | MED | Eager tests: seven flags in one brain test, several render tests. | `brain.test.ts`, wire tests | Closed (T1395). One behavior per test |
 | 12 | MED | Raw `mkdtempSync` where `tmpDir` exists. | `gaps.test.ts`, `conformance-tier1.test.ts` | Closed |
-| 13 | LOW | Duplicate behavior ids in two tests (`U1350`, `U1375`, `U1417`), builders copied across files, a dead variable. | | The dead variable is closed. The rest is open (T1396) |
+| 13 | LOW | Duplicate behavior ids in two tests (`U1350`, `U1375`, `U1417`), builders copied across files, a dead variable. | | Closed (T1396): the result builder is shared. Two tests may pin one behavior id, so the ids stay |
 | 14 | INFO | `real-lab.ts`, `cli.ts`, `lab-scripts/`, and `bblab up|x|status|down` have no automated test. | | The live runs cover them (D-107). The tier 1 and tier 1.5 results are the evidence |
 
 Properties: the suite takes about 22 seconds for 1471 tests. The new tests start real child processes (the stub, the fake model, `bblab plan`), and each waits on a condition or has a lower bound only, so they should not flake. They ran green in every full run after the first fixes.
@@ -139,5 +139,5 @@ AC-1.1, AC-3.3, AC-3.4, AC-5.2 are proven end to end only by the live runs, whic
 
 ## Remediation tasks
 
-The open `MED` findings (7, 8, 9, 11, and the open part of 13) are listed as tasks T1392 to T1396 in `tasks.md`.
-They do not block the feature on their own. The blocking finding is `TEST_AFTER` (the verdict), which a task cannot change: the captain accepts or rejects it (D-107).
+Findings 9, 11, and 13 were closed after the captain's instruction of 2026-11-09 (T1394 to T1396). Findings 7 and 8 stay open (T1392, T1393) with the reasons in `tasks.md`.
+Neither blocks the feature. The blocking finding is `TEST_AFTER` (the verdict), which a task cannot change: the captain accepted it (D-107).

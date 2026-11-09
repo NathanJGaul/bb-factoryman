@@ -11,7 +11,7 @@ I wrote the spec, the plan, the tasks, and the code, so the analysis is not inde
 The artifacts agree with the code, with one open constitution finding.
 Constitution principle V says that every behavior change is driven by a test that failed first.
 26 behaviors have tests that came after their code (D-107), so the TDD audit stays at `FAIL`, and this analysis counts it as critical, as the rules require.
-It is recorded, mitigated by revert-reds and mutants, and waits for the captain's decision.
+It is recorded, mitigated by revert-reds and mutants, and the captain accepted it on 2026-11-09.
 Everything else is consistent.
 The plan's layout had drifted from the code, and I corrected it in this run.
 
@@ -21,17 +21,17 @@ The plan's layout had drifted from the code, and I corrected it in this run.
 | Success criteria traced | 7 of 7 (SC-1301 to SC-1307), each with a live run or a test |
 | Acceptance scenarios traced to a behavior | 28 of 28 (AC-1.1 to AC-6.4) |
 | Behaviors in the test list | 30 acceptance and 128 unit; all `DONE` (five of the acceptance ones by a live run) |
-| Tasks | 63, with 5 open (`T1392` to `T1396`, the `MED` audit findings) |
+| Tasks | 63, with 2 open (`T1392` and `T1393`, two `MED` audit findings left on purpose) |
 | Constitution principles with a violation | 1 (V, finding C1) |
 | Deviations recorded | D-100 to D-107 |
-| Suite | 125 files, 1471 tests, `pnpm run check` exit 0 |
+| Suite | 125 files, 1482 tests, `pnpm run check` exit 0 |
 | Live runs at the end | tier 1 and tier 1.5 for the four harnesses, all exit 0 |
 
 ## Findings
 
 | ID | Category | Severity | Location | Summary | Recommendation |
 | --- | --- | --- | --- | --- | --- |
-| C1 | Constitution | Critical | `tdd/verification.md`, D-107 | 26 behaviors came after their code. Each has a recorded revert-red or a killing mutant. | The captain accepts or rejects the exception (as for D-099). Not an implementation task |
+| C1 | Constitution | Critical | `tdd/verification.md`, D-107 | 26 behaviors came after their code. Each has a recorded revert-red or a killing mutant. | Accepted by the captain on 2026-11-09 (as for D-099). Not an implementation task |
 | D1 | Drift | Low | `plan.md` source layout | The plan named `lab.ts` and a few modules that were split during the work (`real-lab.ts`, `lab-env.ts`, `readers.ts`, `isolation.ts`, `shell.ts`). | Fixed in this run |
 | D2 | Drift | Low | `spec.md` SC-1306 | "One driver file" is two edits: the driver, and its entry in `drivers/index.ts` (and a wire module for a new request format). | `docs/CONFORMANCE.md` says so. No spec change |
 | D3 | Scope | Info | `spec.md` Assumptions | The spec expected S7 to fail the task on every harness. omp ends a failing turn normally, so S7 checks the silent-turn wake there. | Recorded in D-105 and shown as a note in the support document |

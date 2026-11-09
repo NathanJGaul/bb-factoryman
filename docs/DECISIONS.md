@@ -951,9 +951,11 @@ A check that fails on a busy machine is flaky.
 It counts other changes and reports how many it ignored.
 The tripwire report is printed and not judged: a harness opens its own credential file, which is a canary in the lab.
 
-### D-107: Some tests came after their code, with a revert-red (Deviation, to be accepted by the captain)
+### D-107: Some tests came after their code, with a revert-red (Deviation, accepted by the captain)
 
 Constitution principle V says that every behavior change is driven by a test that failed first.
 The tier 1 and tier 1.5 live runs found defects that only a real lab shows, so several behaviors were first seen in a live run and then pinned with a test.
 `specs/009-conformance-harness/tdd/cycle-log.md` lists them: the acceptance tests of the fake model server, the runner, and the document command (a revert-red was recorded for each), and U1422 (a recorded Claude Code request).
 The real lab (`tools/conformance/real-lab.ts`) has no unit test. The live runs are its test, and the result files keep their output.
+The captain accepted the 26 test-after behaviors as a recorded deviation on 2026-11-09, on the same precedent as D-099.
+They are A1301 to A1306, A1308 to A1313, A1316 to A1321, A1324, A1326 to A1328, A1330, U1422, U1427, and U1428, each with a revert-red or a killing mutant in `tdd/cycle-log.md` and `tdd/verification.md`.
