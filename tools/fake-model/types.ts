@@ -1,0 +1,40 @@
+/** A tool that the harness offers its model, in the shape every wire format shares. */
+export interface OfferedTool {
+  name: string;
+  description: string;
+  /** The JSON schema of the arguments. */
+  schema: Record<string, unknown>;
+}
+
+export interface ToolCall {
+  id: string;
+  name: string;
+  args: Record<string, unknown>;
+}
+
+/** One turn of the conversation. A tool result is its own turn. */
+export type Turn =
+  | { role: "user"; text: string }
+  | { role: "assistant"; text: string; toolCalls: ToolCall[] }
+  | { role: "tool"; callId: string; text: string };
+
+export type WireFormat = "chat" | "responses" | "messages";
+
+/** A request from a harness, read into one shape. The brain works on this and knows no wire format. */
+export interface Conversation {
+  wire: WireFormat;
+  model: string;
+  stream: boolean;
+  /** System, developer, and instruction text. */
+  system: string;
+  tools: OfferedTool[];
+  turns: Turn[];
+}
+
+/** What the brain decides to do next. */
+export type Action =
+  | { kind: "tool_call"; name: string; args: Record<string, unknown> }
+  | { kind: "text"; text: string }
+  | { kind: "error"; status: number; message: string }
+  /** Wait, then do the action. The wait keeps a turn open, so a supervisor stays busy. */
+  | { kind: "delay"; ms: number; then: Action };

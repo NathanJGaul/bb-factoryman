@@ -93,3 +93,25 @@ The tests start the agent as a child process and speak ACP over stdio.
 - green: `tools/bblab/bblab` now has `plan`, `--offline` and `BBLAB_OFFLINE=1` (`--unshare-net` in the sandbox, `--net` in `nsenter`, a `run/offline` marker so `bblab x` and `down` agree), a readiness probe that runs inside an offline lab, a wait for the daemon port (t01 finding 5.4), and `|| true` after the tripwire pipeline (t01 finding 5.13). The config refusals moved into `check_config`, which `plan` also runs. `pnpm vitest run tools/bblab` -> 5 passed.
 - refactor: `preflight` split into `check_config` and the runtime checks; no behavior change.
 - not proven by these tests: that a real offline sandbox starts bb (task T1363, a live check).
+
+## Group 6: the fake model's tool routes and brain (U1350 to U1359)
+
+Tests first, with `findRoute`, `findShell`, and `buildArgs` returning `null`, `null`, and `{}`, and the brain always answering `stub`.
+
+- red: `pnpm vitest run tools/fake-model/tools.test.ts` -> 3 failed, 1 passed
+  - U1350 `AssertionError: expected null to deeply equal { kind: 'function', …(1) }`
+  - U1351 `AssertionError: expected undefined to be 'Bash'`
+  - U1352 `AssertionError: expected {} to deeply equal { command: 'git status', …(1) }`
+  - The second U1350 test (a name that only ends in the tool's name) passed against the stub. It is a boundary test and needs the mutant check in the audit.
+- red: `pnpm vitest run tools/fake-model/brain.test.ts` -> 6 failed, 1 passed
+  - U1353 `Error: expected a tool call, got {"kind":"text","text":"stub"}`
+  - U1354 `AssertionError: expected [] to deeply equal [ 'git checkout -b fm/t-1' ]`
+  - U1355 `AssertionError: expected [] to deeply equal [ true, true, false ]`
+  - U1356 `AssertionError: expected { kind: 'text', text: 'stub' } to deeply equal { kind: 'error', status: 401, …(1) }`
+  - U1357, U1358 `Error: expected a tool call, got {"kind":"text","text":"stub"}`
+  - U1359 passed against the stub, because every answer was text. The audit must prove it with a mutant that replays the directive on a wake message.
+- green: `tools/fake-model/types.ts`, `tools.ts`, and `brain.ts`. Two corrections came from the green run, each made before the behavior was done and each with its reason:
+  1. U1350 expected `{ kind: "search", name: <deferred name> }`. The route's `name` is the tool to call, which is `ToolSearch`, so the test now expects `name: "ToolSearch"` and the query that names the deferred tool.
+  2. U1354 and U1355 looked for the text `git commit`. The commit command sets an identity (`git -c user.name=... commit`), so they now match `/git .*commit/`. A lab has no guaranteed git identity for a harness that rewrites `HOME`.
+  `pnpm vitest run tools/fake-model` -> 11 passed. `pnpm run typecheck` and `pnpm run lint` pass.
+- refactor: the delay handling in `runStep` was rewritten once, before green, so a delay applies to the real step right after it.
