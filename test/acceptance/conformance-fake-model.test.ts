@@ -79,7 +79,7 @@ describe("the fake model server as a process", () => {
     const listening = (JSON.parse(first) as { listening: string }).listening;
     await fetch(`http://${listening}/v1/messages`, { method: "POST", body: JSON.stringify({ model: "m", stream: false, messages: [{ role: "user", content: "hi" }] }) });
     expect(readdirSync(cwd)).toEqual([]);
-    const refused = spawnSync(process.execPath, [SERVER, "--port", "0"], { cwd, encoding: "utf8" });
+    const refused = spawnSync(process.execPath, [SERVER, "--port", "0"], { cwd, encoding: "utf8", timeout: 20_000 });
     expect(refused.status).toBe(2);
     expect(readdirSync(cwd)).toEqual([]);
   });

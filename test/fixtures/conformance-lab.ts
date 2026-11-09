@@ -48,6 +48,22 @@ export interface Faults {
   wakeAfterTurn?: boolean;
   /** The provider under test is not ready. */
   providerNotReady?: boolean;
+  /** The thread row shows another reasoning level or permission mode or provider. */
+  wrongLevel?: boolean;
+  wrongMode?: boolean;
+  wrongProvider?: boolean;
+  /** Every provider is ready, so there is none to probe (S1). */
+  allProvidersReady?: boolean;
+  /** The worker is offered the supervisor's skill. */
+  workerSeesSupervisorSkill?: boolean;
+  /** A silent task changes state. */
+  silentMoves?: boolean;
+  /** A supervisor with no role is offered the supervisor tools. */
+  unstampedHasTools?: boolean;
+  /** A plugin reload changes a task's state. */
+  reloadChangesState?: boolean;
+  /** The worktree stays after a teardown. */
+  worktreeStaysAfterTeardown?: boolean;
   /** The stamp text gives no advice for a harness that needs a clear (today's behavior without report task H4). */
   noClearAdvice?: boolean;
 }
@@ -137,7 +153,7 @@ export class FakeLab implements Lab {
 
   async providerStates(): Promise<ProviderState[]> {
     const own: ProviderState = { id: this.driver.provider, status: this.faults.providerNotReady === true ? "unauthenticated" : "ready", message: null, installedVersion: "1.0.0", minimumSupportedVersion: null, loginCommand: this.faults.providerNotReady === true ? "run login" : null };
-    return [own, ...this.extraProviders];
+    return [own, ...(this.faults.allProvidersReady === true ? [] : this.extraProviders)];
   }
 
   async callTool(tool: string, args: Record<string, unknown>): Promise<ToolResult> {
@@ -188,7 +204,10 @@ export class FakeLab implements Lab {
     const flag = task.flag;
     const text = (phrase: string) => `[factoryman] Task ${task.taskId} (${task.kind}, ${task.mode}) ${phrase}.`;
     if (this.faults.neverReports === true || flag === "hold") return;
-    if (flag === "silent") return void this.wake(parent, text("reports: the worker finished a turn without reporting"));
+    if (flag === "silent") {
+      if (this.faults.silentMoves === true) this.transition(task, "report", "report_ready", "moved");
+      return void this.wake(parent, text("reports: the worker finished a turn without reporting"));
+    }
     if (flag.startsWith("fail=") && this.driver.failure.mode === "ends-turn") return void this.wake(parent, text("reports: the worker finished a turn without reporting"));
     if (flag.startsWith("fail=")) {
       const code = flag.slice(5);
@@ -213,7 +232,15 @@ export class FakeLab implements Lab {
   async thread(id: string): Promise<ThreadFacts> {
     const task = [...this.rows.values()].find((t) => t.workerThreadId === id);
     if (task === undefined) return { id, providerId: this.driver.provider, status: "idle", parentThreadId: null, model: null, reasoningLevel: null, permissionMode: null };
-    return { id, providerId: task.profile.provider, status: "idle", parentThreadId: "thr_driver", model: this.faults.wrongModel === true ? "other-model" : task.profile.model, reasoningLevel: task.profile.reasoningLevel, permissionMode: task.profile.permissionMode };
+    return {
+      id,
+      providerId: this.faults.wrongProvider === true ? "other-provider" : task.profile.provider,
+      status: "idle",
+      parentThreadId: "thr_driver",
+      model: this.faults.wrongModel === true ? "other-model" : task.profile.model,
+      reasoningLevel: this.faults.wrongLevel === true ? "other-level" : task.profile.reasoningLevel,
+      permissionMode: this.faults.wrongMode === true ? "other-mode" : task.profile.permissionMode,
+    };
   }
   async wakes(threadId: string): Promise<Wake[]> {
     return this.wakeLog.get(threadId) ?? [];
@@ -224,10 +251,11 @@ export class FakeLab implements Lab {
 
   async offers(who: Who): Promise<Offers> {
     if (who.kind === "worker") {
-      return { tools: this.faults.workerSeesSupervisorTools === true ? ["factoryman_report", ...SUPERVISOR_TOOLS] : ["factoryman_report"], skills: ["factoryman-worker"] };
+      return { tools: this.faults.workerSeesSupervisorTools === true ? ["factoryman_report", ...SUPERVISOR_TOOLS] : ["factoryman_report"], skills: this.faults.workerSeesSupervisorSkill === true ? ["factoryman-worker", "factoryman-supervisor"] : ["factoryman-worker"] };
     }
     const sup = [...this.supervisors.values()].find((s) => s.label === who.label);
     const has = sup !== undefined && sup.stamped && this.faults.stampNeverArrives !== true && (this.driver.roleChangeStep === "next-turn" || sup.cleared) && sup.turns > 0;
+    if (!has && sup !== undefined && !sup.stamped && this.faults.unstampedHasTools === true) return { tools: SUPERVISOR_TOOLS, skills: [] };
     return has ? { tools: SUPERVISOR_TOOLS, skills: this.faults.supervisorSeesWorkerSkill === true ? ["factoryman-supervisor", "factoryman-worker"] : ["factoryman-supervisor"] } : { tools: [], skills: [] };
   }
 
@@ -280,12 +308,16 @@ export class FakeLab implements Lab {
   }
   async reloadPlugin(): Promise<void> {
     this.calls.push("reload");
+    if (this.faults.reloadChangesState === true) {
+      const task = [...this.rows.values()][0];
+      if (task !== undefined) task.state = "failed";
+    }
     if (this.faults.reloadAddsEvent === true) this.add({ taskId: [...this.rows.keys()][0] ?? "t-0000", fromState: null, toState: null, event: "reconcile", actor: "system", evidence: "mismatch" });
   }
 
   async worktree(taskId: string): Promise<string | null> {
     const task = this.rows.get(taskId);
-    return task === undefined || task.state === "torn_down" ? null : `/lab/worktrees/${taskId}`;
+    return task === undefined || (task.state === "torn_down" && this.faults.worktreeStaysAfterTeardown !== true) ? null : `/lab/worktrees/${taskId}`;
   }
   async sh(command: string): Promise<{ code: number; stdout: string }> {
     this.calls.push(`sh ${command}`);
@@ -297,7 +329,7 @@ export class FakeLab implements Lab {
     const count = /rev-list --count (\S+)\.\.(\S+)/.exec(command);
     if (count !== null) {
       const task = [...this.rows.values()].find((t) => t.branch === count[2]);
-      return { code: 0, stdout: task !== undefined && task.kind === "ship" && this.faults.noCommit !== true ? "1\n" : "0\n" };
+      return { code: 0, stdout: task !== undefined && task.kind === "ship" && task.state === "review_ready" && this.faults.noCommit !== true ? "1\n" : "0\n" };
     }
     return { code: 0, stdout: "" };
   }

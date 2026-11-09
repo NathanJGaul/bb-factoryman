@@ -1,7 +1,8 @@
-import { mkdtempSync, writeFileSync } from "node:fs";
+import { writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { tmpDir } from "../../test/fixtures/git-repo.ts";
 import { loadGaps, parseGaps } from "./gaps.ts";
 
 const entry = { check: "S1.remedy", harness: "*", task: "H1", reason: "dispatch does not read providerStates yet" };
@@ -34,7 +35,7 @@ describe("parseGaps", () => {
 describe("loadGaps", () => {
   it("[U1316] treats a missing file as an error and not as an empty list", async () => {
     await expect(loadGaps(join(tmpdir(), "no-such-dir-conformance", "known-gaps.json"))).rejects.toThrow(/known-gaps/);
-    const dir = mkdtempSync(join(tmpdir(), "gaps-"));
+    const dir = tmpDir("gaps-");
     const file = join(dir, "known-gaps.json");
     writeFileSync(file, text({ version: 1, gaps: [] }));
     await expect(loadGaps(file)).resolves.toEqual([]);

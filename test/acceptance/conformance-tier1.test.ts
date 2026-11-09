@@ -1,10 +1,11 @@
-import { mkdtempSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { labPaths } from "../../tools/conformance/lab-env.ts";
+import { bblabCommand, labPaths } from "../../tools/conformance/lab-env.ts";
+import { exec } from "../../tools/conformance/shell.ts";
 import { parseResult } from "../../tools/conformance/result.ts";
 import { main } from "../../tools/conformance/run.ts";
+import { tmpDir } from "../fixtures/git-repo";
 import { fakeDeps } from "../fixtures/conformance-run";
 
 const rows = (out: string[]) => out.filter((line) => /^S\d+ /.test(line));
@@ -35,7 +36,9 @@ describe("pnpm run conformance -- --tier 1", () => {
     const port = readFileSync(new URL("../../tools/conformance/port.ts", import.meta.url), "utf8");
     expect(port).not.toMatch(/transcript|modelText|threadOutput|output\(|lastMessage/i);
     const dir = new URL("../../tools/conformance/scenarios/", import.meta.url);
-    for (const name of readdirSync(dir).filter((n) => /^s\d+-.*\.ts$/.test(n) && !n.endsWith(".test.ts"))) {
+    const scenarioFiles = readdirSync(dir).filter((n) => /^s\d+-.*\.ts$/.test(n) && !n.endsWith(".test.ts"));
+    expect(scenarioFiles).toHaveLength(12);
+    for (const name of scenarioFiles) {
       expect(readFileSync(new URL(name, dir), "utf8"), name).not.toMatch(/transcript|modelText|threadOutput|\.output\(|lastMessage/i);
     }
   });
@@ -61,13 +64,15 @@ describe("pnpm run conformance -- --tier 1", () => {
     expect(leak.rec.out.join("\n")).toMatch(/isolation: CHANGED.*LEAK/);
   });
 
-  it("[A1306] names the lab tools by repository path, so a decoy bblab on the PATH is never run", () => {
-    const decoy = mkdtempSync(join(tmpdir(), "decoy-"));
-    writeFileSync(join(decoy, "bblab"), "#!/bin/sh\necho decoy\n", { mode: 0o755 });
-    const paths = labPaths("/work/repo");
-    expect(paths.bblab).toBe("/work/repo/tools/bblab/bblab");
-    expect(paths.stubAgent).toBe("/work/repo/tools/stub-agent/stub-agent.ts");
-    expect(paths.bblab.startsWith(decoy)).toBe(false);
-    expect(paths.bblab.startsWith("/")).toBe(true);
+  it("[A1306] runs the repository's bblab and not a decoy bblab on the PATH", async () => {
+    const decoy = tmpDir("decoy-");
+    writeFileSync(join(decoy, "bblab"), "#!/bin/sh\necho decoy bblab ran\n", { mode: 0o755 });
+    const root = new URL("../../", import.meta.url).pathname;
+    const command = bblabCommand(labPaths(root), ["plan"]);
+    expect(command.args[0]).toBe(join(root, "tools/bblab/bblab"));
+    const lab = join(tmpDir("lab-plan-"), "lab");
+    const ran = await exec(command.command, command.args, { env: { PATH: `${decoy}:${process.env["PATH"] ?? ""}`, HOME: process.env["HOME"] ?? "/", BBLAB_DIR: lab, BBLAB_SERVER_PORT: "48921", BBLAB_DAEMON_PORT: "48922" }, timeoutMs: 30_000 });
+    expect(ran.stdout).toContain(`lab: ${lab}`);
+    expect(ran.stdout).not.toContain("decoy");
   });
 });

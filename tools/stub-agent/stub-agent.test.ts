@@ -1,5 +1,5 @@
 import { type ChildProcessWithoutNullStreams, spawn } from "node:child_process";
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { createInterface } from "node:readline";
 import { afterEach, describe, expect, it } from "vitest";
@@ -187,8 +187,6 @@ describe("the stub agent as a worker", () => {
   });
 
   it("[U1344] reads the marker [brain:<flag>] and the old marker [stub:<flag>] the same way", async () => {
-    const dir = tmpDir("stub-markers-");
-    mkdirSync(dir, { recursive: true });
     const a = await session();
     await a.prompt(workerPrompt("scout", "[brain:silent]"));
     const b = await session();

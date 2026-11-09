@@ -16,6 +16,11 @@ export function labPaths(repoRoot: string): LabPaths {
   };
 }
 
+/** The command that runs the repository's `bblab` with these arguments. It names the script by its path and never looks it up on the `PATH`. */
+export function bblabCommand(paths: LabPaths, args: string[]): { command: string; args: string[] } {
+  return { command: "bash", args: [paths.bblab, ...args] };
+}
+
 export interface LabSettings {
   labDir: string;
   bbAppDir: string;

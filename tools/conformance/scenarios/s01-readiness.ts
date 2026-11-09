@@ -11,7 +11,11 @@ export const s1: Scenario = {
     const own = states.find((s) => s.id === provider);
     const checks = [check("S1.ready", `The provider under test (${provider}) is ready`, own?.status === "ready", own === undefined ? `bb does not list ${provider}` : `${provider} is ${own.status}${own.message === null ? "" : ` (${own.message})`}`)];
     const unready = states.find((s) => s.status !== "ready" && s.id !== provider);
-    if (unready === undefined) return checks;
+    if (unready === undefined) {
+      // Fail closed: with no provider to probe, a pass on S1.ready alone would say nothing about the refusal.
+      checks.push(check("S1.unready-blocks", "A dispatch to a provider that is not ready is blocked and creates no task", false, "bb lists no provider in a state other than ready, so the refusal could not be tested."));
+      return checks;
+    }
     const before = (await lab.tasks()).length;
     const out = await lab.dispatch("scout", "S1 readiness probe", { profile: { ...lab.driver.profile, provider: unready.id } });
     const after = (await lab.tasks()).length;

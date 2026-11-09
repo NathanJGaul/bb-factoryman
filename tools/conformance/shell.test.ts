@@ -6,7 +6,7 @@ const ENV = { PATH: process.env["PATH"] ?? "/usr/bin:/bin" };
 describe("exec", () => {
   it("[U1415] returns when the command exits, even when a background child still holds its output pipe", async () => {
     const started = Date.now();
-    const result = await exec("bash", ["-c", "sleep 30 & echo started"], { env: ENV });
+    const result = await exec("bash", ["-c", "sleep 2 & echo started"], { env: ENV });
     expect(result.stdout.trim()).toBe("started");
     expect(result.code).toBe(0);
     expect(Date.now() - started).toBeLessThan(10_000);

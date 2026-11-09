@@ -4,7 +4,7 @@ import { dirname, join } from "node:path";
 import type { RunArgs } from "./args.ts";
 import type { Driver } from "./drivers/types.ts";
 import { judgeIsolation } from "./isolation.ts";
-import { labEnv, labPaths, offlineProof, pluginBuildCommand, pluginCopyArgs, resetLab, type LabSettings } from "./lab-env.ts";
+import { bblabCommand, labEnv, labPaths, offlineProof, pluginBuildCommand, pluginCopyArgs, resetLab, type LabPaths, type LabSettings } from "./lab-env.ts";
 import type { DispatchOptions, EventRow, Lab, Offers, ProviderState, TaskRow, ThreadFacts, ToolResult, Wake, Who } from "./port.ts";
 import { fakeOffers, readWakes, stubOffers, type LogLine, type ThreadEvent } from "./readers.ts";
 import type { Isolation, LabSession } from "./run.ts";
@@ -75,7 +75,8 @@ class RealLab implements Lab {
 
   /** Run a command inside the lab sandbox. */
   async inLab(command: string[], options: { input?: string; timeoutMs?: number } = {}) {
-    const result = await exec("bash", [this.paths.bblab, "x", ...command], { env: this.env, timeoutMs: 300_000, ...options });
+    const lab = bblabCommand(this.paths as LabPaths, ["x", ...command]);
+    const result = await exec(lab.command, lab.args, { env: this.env, timeoutMs: 300_000, ...options });
     return { ...result, stdout: ansi(result.stdout), stderr: ansi(result.stderr) };
   }
 
@@ -268,7 +269,7 @@ export async function openRealLab(init: RealLabInit): Promise<LabSession> {
 
   const lab = new RealLab(env, paths, settings, driver, args.tier);
   const evidence = async (...parts: string[]) => exec("bash", [paths.evidence, ...parts], { env: { ...env, FIRSTMATE_HOME: hostEnv["FIRSTMATE_HOME"] ?? join(env["HOME"] as string, "Projects/firstmate") } });
-  const down = () => exec("bash", [paths.bblab, "down"], { env });
+  const down = () => exec(bblabCommand(paths, ["down"]).command, bblabCommand(paths, ["down"]).args, { env });
   await evidence("snap", "before");
 
   let up = false;
@@ -295,7 +296,8 @@ export async function openRealLab(init: RealLabInit): Promise<LabSession> {
 
     progress(`Starting the lab (${args.offline ? "offline" : "network shared"})`);
     cpSync(join(repoRoot, "tools"), join(labDir, "tools"), { recursive: true, filter: (source) => !source.endsWith(".test.ts") });
-    const started = await exec("bash", [paths.bblab, "up", ...(args.offline ? ["--offline"] : [])], { env, timeoutMs: 240_000 });
+    const up_ = bblabCommand(paths, ["up", ...(args.offline ? ["--offline"] : [])]);
+    const started = await exec(up_.command, up_.args, { env, timeoutMs: 240_000 });
     if (started.code !== 0) throw new Error(`bblab up failed: ${ansi(started.stderr || started.stdout).trim().slice(-600)}`);
     up = true;
     for (const link of (driver.bindCli(init.which) as { links?: Array<{ name: string; target: string }> }).links ?? []) {
