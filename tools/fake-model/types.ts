@@ -38,3 +38,16 @@ export type Action =
   | { kind: "error"; status: number; message: string }
   /** Wait, then do the action. The wait keeps a turn open, so a supervisor stays busy. */
   | { kind: "delay"; ms: number; then: Action };
+
+/** A reply, ready to write to the socket. A streamed reply is the whole event stream as one body. */
+export interface WireResponse {
+  status: number;
+  contentType: string;
+  body: string;
+}
+
+/** What each wire format module exports. */
+export interface Wire {
+  parse(body: unknown): Conversation;
+  render(action: Exclude<Action, { kind: "delay" }>, conversation: Conversation): WireResponse;
+}

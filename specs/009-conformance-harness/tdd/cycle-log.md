@@ -115,3 +115,16 @@ Tests first, with `findRoute`, `findShell`, and `buildArgs` returning `null`, `n
   2. U1354 and U1355 looked for the text `git commit`. The commit command sets an identity (`git -c user.name=... commit`), so they now match `/git .*commit/`. A lab has no guaranteed git identity for a harness that rewrites `HOME`.
   `pnpm vitest run tools/fake-model` -> 11 passed. `pnpm run typecheck` and `pnpm run lint` pass.
 - refactor: the delay handling in `runStep` was rewritten once, before green, so a delay applies to the real step right after it.
+
+## Group 7: the three wire formats (U1360 to U1366)
+
+Tests and stubs that threw "not implemented" first.
+The `responses` and `messages` test files read a request at the top of the file, so they failed to load, and the chat and error tests failed one by one.
+
+- red: `pnpm vitest run tools/fake-model/wire` -> 5 failed, 2 files failed to load
+  - U1360, U1361, U1366 (three formats) `Error: not implemented`
+  - `responses.test.ts` and `messages.test.ts`: `Error: not implemented` at `responses.parse(request)` and `messages.parse(request)` (module level, so U1362, U1363, U1364, and U1365 did not run)
+- green: `tools/fake-model/wire/shared.ts`, `chat.ts`, `responses.ts`, and `messages.ts`. The event shapes follow the harness-independence report, appendix A, which ran against Pi, Codex, Claude Code, and omp. `pnpm vitest run tools/fake-model/wire` -> 9 passed.
+- lint: an unused `Turn` import; removed. `pnpm run typecheck` and `pnpm run lint` pass.
+- note: the formats are checked against shapes written from the report, not against bytes recorded from a CLI. The live runs record real request bodies, and the next group adds them as fixtures if a CLI sends something these parsers drop.
+- refactor: none needed.
