@@ -1289,3 +1289,62 @@ Constitution version 1.4.0 adds H4 and H12 to the scope line, as 1.3.0 added the
 It is a minor bump, because it materially expands the scope guidance and adds no principle.
 The rest of Principle VI is unchanged, including the rule that features from the design's non-goals list need approval first, and so are the eight hard rules.
 D-117 keeps its text.
+
+### D-130: A supervisor that `supervisor start` makes has its role on its first turn on all four harnesses (Finding)
+
+The plan rested on one expectation (research R3): a role that is present when the session is built reaches the first turn, even on the harnesses where a role stamped after the first session does not.
+The report had seen that only for workers.
+The live runs of scenario S9 confirm it for supervisors, offline and with no credential, on bb 0.49.0.
+On Claude Code 2.1.316, Codex 0.166.0, Pi 1.4.0, omp 18.18.3, and the stub agent, the started supervisor was offered `factoryman_dispatch`, `factoryman_merge`, `factoryman_status`, `factoryman_teardown` and the skill `factoryman-supervisor` on its first request, and nothing else of the plugin.
+That includes Codex, whose tools appear only after a clear when the role is stamped late, and omp, whose skill does.
+A thread with no role was offered nothing, and a late stamp reached the model after the documented step on all five.
+The evidence is in `conformance/results/` and in `tdd/cycle-log.md` ("Live runs").
+No conflict with the design was found, so none is recorded.
+The late-stamp trap remains for a thread that a person creates and stamps, which is why `supervisor <thread>` prints the clear advice for Codex, omp, and any provider with no contract row.
+
+### D-131: S9 checks the first turn of a started supervisor, and requires the clear advice only where the step is a clear (Gap)
+
+S9 gains the check `S9.start-tools`: the started supervisor has its four tools and its skill on its first request, and no worker tool or skill.
+When the command is missing, S9 reports `S9.start-command` and `S9.start-tools` as two failures, because a check that cannot read a thread fails closed.
+The check that the stamp text tells the person to clear applies to a driver whose documented step is a clear.
+The plan also asked that a next-turn driver must not be told to clear.
+The stub (tier 1) has no contract row, so the plugin correctly gives it the generic clear advice although its tools arrive at the next turn, and a scenario that required "no clear" would contradict the plugin.
+The unit and acceptance tests against the real contract table (`[U1645]` and `[A1607]`) cover that side.
+`conformance/known-gaps.json` lists no entry, and a gap that starts to pass still fails the run.
+
+### D-132: The lab waits for bb's model catalog before the scenarios run (Finding)
+
+The first live Pi run at tier 1.5 failed S2 to S12 with "The model `mock/mock-1` is not listed for the provider `pi` on the default host. It lists: no models."
+A second run with the same lab and code passed, so the failure was transient: bb answered with an empty model list and no load error.
+The cause could not be proved afterwards, because the next run resets the lab, but the evidence points at a catalog that had not finished loading when the first dispatch came.
+The lab now waits up to 60 seconds for `bb provider models <provider> --json` to list a model, and prints a notice when it lists none.
+The wait is a tested helper (`waitUntil`), and its call in `real-lab.ts` is checked by the live runs only.
+The Pi result file comes from the rerun on the commit that has the wait. Its code differs from the commit of the other four runs only in `tools/conformance`, and `src/` is identical in both.
+
+### D-133: Thirteen behaviors passed on their first run, and the loop ran in groups (Deviation, awaiting the captain)
+
+Constitution principle V says that every behavior change is driven by a test that failed first.
+The TDD audit of this feature (`specs/011-supervisor-start-roles/tdd/verification.md`) returned `FAIL` for the rubric's rule that any `TEST_AFTER` behavior fails a feature.
+It names seven behaviors that passed on their first run because the behavior already held: `U1649` and `U1650` (the stamp command reads nothing before it refuses a worker and before it stamps), `U1702` and `U1719` (the hand-off adds no line for other modes and keeps blank evidence blank), `U1714` and `U1716` (two S9 checks that already existed), and `A1612` (the preflight refusal, written after the unit that built it).
+The remediation of the audit added six more tests for code that already worked: `U1723` to `U1726` (the shell read under a real `sh`) and `A1621` and `A1622` (the `roles.supervisor.profile` fallback and the link from the real command's output to the lab's reader).
+So thirteen behaviors have no recorded red.
+Each has a deliberate mutant that fails it, recorded in `tdd/cycle-log.md`, and the audit killed the last one again.
+Five more behaviors (`U1704`, `U1709`, `U1710`, `U1715`, `A1619`) are `LIKELY`: their red is in the log, and the history cannot corroborate it because a fixture or the data changed in the same commit or one commit earlier.
+For all other behaviors the audit reproduced the red from git by running each commit's tests against its parent's source.
+The loop also ran in groups of closely related behaviors, as the earlier features did, and not one behavior per cycle, with each behavior's red recorded in its group's entry.
+The repository commits only at green (D-099), so the history cannot show a test before its code in any case.
+The position is the one taken for D-099, D-107, D-116, and D-122: the rubric fails the feature, the evidence is complete, and the owner decides.
+The captain could accept the thirteen as a recorded deviation, or ask for rework.
+Rework would mean new history for tests that already fail when their property is removed, and this entry does not recommend it.
+This entry does not record an acceptance: the captain has not given one.
+
+The audit's other findings are fixed in the remediation phase of `tasks.md` (T055 to T063): the shell read now runs under a real `sh` (the one surviving mutant, `M17`, is caught), two expectations that rebuilt their text with the code under test are literal, the conditionals inside tests are gone, the eager tests are split, and the read-routing helper is shared.
+Two audit points were not followed: the order check in `U1639` stays, because removing an assertion adds nothing, and `A1613` stays one test, because it is one flow.
+One commit, `930e91f`, left the decision-log guard red until the next commit, because the specification documents cited D-123 to D-129 before the entries existed.
+
+### D-134: The validator observation was never run against a real no-mistakes install (Limit)
+
+The lab has no `no-mistakes` project, so the live runs never reach the observation.
+The reader of the `agent` key, the table from agent to provider, and the evidence line are covered by unit and acceptance tests against a fake host and fake files, and the shell read is covered under a real `sh` with a temporary home.
+What no test shows is that the file at `$NM_HOME/config.yaml` (or `~/.no-mistakes/config.yaml`) of an installed no-mistakes 1.84.0 has the shape that the reader expects, beyond the shipped file that was read by hand while planning (`agent: auto` with the fallback-list comment), and that the daemon uses the same `NM_HOME` as the plugin's commands (D-126).
+The first real `no-mistakes` project that the owner dispatches will show the line in its hand-off evidence, and a line that says "could not be observed" would name the cause.
