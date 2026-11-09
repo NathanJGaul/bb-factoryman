@@ -1190,7 +1190,9 @@ Most test worlds never disposed their host, so one `pnpm run check` left about 3
 Every shell command of every worker on the machine then failed.
 The options were: dispose each world in an `afterEach` (misses the tests that call `createFakePluginHost` directly, and every future one), wrap the SDK function with a module mock (covers all callers but hides the SDK behind a mock), or give each test file a private temporary directory.
 This follow-up takes the third.
-`test/setup/private-tmpdir.ts` is a `vitest` setup file that makes a directory under the current temporary directory, points `TMPDIR` at it before the test file loads, and removes it after the file, whether its tests pass, fail, or time out.
+`test/setup/private-tmpdir.setup.ts` is a `vitest` setup file that calls `createPrivateTmpdir` (in `test/setup/private-tmpdir.ts`), which makes a directory under the current temporary directory and points `TMPDIR` at it before the test file loads.
+The setup file removes the directory after the file, whether its tests pass, fail, or time out, and again when the worker exits.
 `os.tmpdir()` reads `TMPDIR` on each call, so the SDK's `mkdtempSync` lands inside it, for `loadWorld`, for a direct `createFakePluginHost`, and for any test that comes later.
-The setup file removes only the directory it made, and it does not delete directories that earlier runs leaked.
+It removes only the directory it made, and it does not delete directories that earlier runs leaked.
+One full run of the suite left 394 `bb-fake-plugin-host-*` directories before the change and none after it.
 `test/acceptance/tmpdir-leak.test.ts` proves it in a child `vitest` process with a private `TMPDIR`, because the cleanup runs after the test file and cannot be seen from inside it.
