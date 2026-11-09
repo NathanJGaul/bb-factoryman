@@ -1143,5 +1143,5 @@ Finding C2 of `specs/009-harness-independence/analyze.md` is resolved.
 
 About the number: this entry takes D-117, the next free number after D-116, on purpose.
 The default branch already holds the entries 100 to 107 of another feature (the conformance harness).
-When this branch was rebased onto it, the nine entries of the "Harness independence" section above were renumbered from 100 to 108 to 108 to 116, in order, with every reference to them in code comments, docs, and specs.
+When this branch was rebased onto it, the nine entries of the "Harness independence" section above were renumbered from the numbers 100 to 108 to the numbers 108 to 116, in order, with every reference to them in code comments, docs, and specs.
 This entry kept D-117 so that it did not collide with that renumbering.
