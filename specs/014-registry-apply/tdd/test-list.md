@@ -49,12 +49,12 @@ Table-driven tests cover the lines that name several inputs, and the cycle log r
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| U1904 | Argument table: `--apply` alone, `--project` alone, `--project` twice, `--project` with no value or a `--` value, an unknown flag, and a stray argument each print the usage with exit 2 and read nothing | US3.1, US3.2, US3.9, FR-002 | example | PENDING | |
-| U1905 | An apply writes the config, prints `Applied registry line`, lists `written:` and `unchanged:`, and reads only the registry file | US1, FR-013 | example | PENDING | |
-| U1906 | A no-op run calls `putProjectConfig` zero times | US2.1, FR-010 | example | PENDING | |
-| U1907 | Each refusal exits 1 with a message holding the reason and the project name; a list failure logs a warning; a flagged refusal prints the flags | US3, FR-004 to FR-006 | example | PENDING | |
-| U1908 | When `putProjectConfig` throws, the stored config is unchanged, the exit code is 1, and the message says the write failed | US3.10, FR-014 | example | PENDING | |
-| U1909 | The dry-run output is byte-identical to a pinned copy of today's, and the dry run never calls `putProjectConfig` | US4.1, FR-001 | characterization | PENDING | |
+| U1904 | Argument table: `--apply` alone, `--project` alone, `--project` twice, `--project` with no value or a `--` value, an unknown flag, and a stray argument each print the usage with exit 2 and read nothing | US3.1, US3.2, US3.9, FR-002 | example | DONE | `src/tools/supervisor-command.test.ts::[U1904]` |
+| U1905 | An apply writes the config, prints `Applied registry line`, lists `written:` and `unchanged:`, and reads only the registry file | US1, FR-013 | example | DONE | `src/tools/supervisor-command.test.ts::[U1905]` |
+| U1906 | A no-op run calls `putProjectConfig` zero times | US2.1, FR-010 | example | DONE | `src/tools/supervisor-command.test.ts::[U1906]` |
+| U1907 | Each refusal exits 1 with a message holding the reason and the project name; a list failure logs a warning; a flagged refusal prints the flags | US3, FR-004 to FR-006 | example | DONE | `src/tools/supervisor-command.test.ts::[U1907]` |
+| U1908 | When `putProjectConfig` throws, the stored config is unchanged, the exit code is 1, and the message says the write failed | US3.10, FR-014 | example | DONE | `src/tools/supervisor-command.test.ts::[U1908]` |
+| U1909 | The dry-run output is byte-identical to a pinned copy of today's, and the dry run never calls `putProjectConfig` | US4.1, FR-001 | characterization | BASELINE | `src/tools/supervisor-command.test.ts::[U1909]` |
 | U1910 | The server's registration of `import-registry` shows `--apply` and `--project <name>` in its usage, and the usage text matches | US4.2, FR-015 | example | PENDING | |
 
 ## Invariants and edge cases still to place
