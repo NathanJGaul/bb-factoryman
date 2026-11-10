@@ -797,12 +797,19 @@ The runbook says plainly that the Claude CLI in the lab holds the token and that
 Whether a lab process can read the keeper's environment is untested, because `bblab` is not installed here.
 Tiers 0 and 1 run first and tier 2 waits for them.
 
+Amended by D-108 (decision D2) and D-135: the funding is per harness, and the runbook is rewritten for tiers 0, 1, 1.5, and 2.
+The text above records the decision as it stood.
+
 ### D-093: Tier 1 has no stub agent yet, so the runbook says what the gate is (Gap)
 
 The report suggests a stub ACP agent so that the scout and ship flows run with no credential.
 No such agent exists, and the shape of `customAgents` is undocumented.
 This release does not build it (milestone 11 is skills and a runbook).
 Until it exists, the tier 2 gate is every tier 0 check plus the captain's recorded decision to go on without tier 1, and the runbook says what that skip costs.
+
+Amended by D-100: the stub agent exists in `tools/stub-agent`, and tier 1 runs with `pnpm run conformance -- --tier 1`.
+D-135 removed the skip from the runbook's gate.
+The text above records the decision as it stood.
 
 ## Merge approval form
 
@@ -1358,3 +1365,58 @@ The lab has no `no-mistakes` project, so the live runs never reach the observati
 The reader of the `agent` key, the table from agent to provider, and the evidence line are covered by unit and acceptance tests against a fake host and fake files, and the shell read is covered under a real `sh` with a temporary home.
 What no test shows is that the file at `$NM_HOME/config.yaml` (or `~/.no-mistakes/config.yaml`) of an installed no-mistakes 1.84.0 has the shape that the reader expects, beyond the shipped file that was read by hand while planning (`agent: auto` with the fallback-list comment), and that the daemon uses the same `NM_HOME` as the plugin's commands (D-126).
 The first real `no-mistakes` project that the owner dispatches will show the line in its hand-off evidence, and a line that says "could not be observed" would name the cause.
+
+## Harness documentation
+
+### D-135: The documents describe every harness, and the two guards that pin them changed with them (Deviation)
+
+Report task H9 asked for the documents to catch up with the merged harness-independence work, and the captain shelved the real-model runs (H13).
+This change touches `docs/LIVE-CHECK.md` (a rewrite), the "Dispatch profiles", "Supervisor thread", and "Machines and domain leads" sections of `docs/DESIGN.md`, and this log.
+It changes nothing under `src/`, `tools/`, `skills/`, or `conformance/`, and it does not edit the generated `docs/HARNESS-SUPPORT.md`, `CLAUDE.md`, or the constitution (D-117 left the `CLAUDE.md` scope text alone).
+The entries for harness independence (D-108 to D-117, D-124 to D-134), and the amendments to D-063 (by D-112) and D-064 (by D-113), were already in the log, so this change adds no second entry for them.
+It adds an "Amended by" line to D-092 and to D-093, which still read as current.
+
+The brief says "docs only, no code changes" and "docs lint must pass".
+The repository has no Markdown linter, and ESLint ignores `docs/`.
+The documents are pinned by tests: `test/acceptance/live-check.test.ts` pinned the old runbook line by line, and `test/acceptance/decision-log.test.ts` pins the log.
+This change reads the brief as follows: those guards are the documents' lint, a rewrite of the runbook has to change the guard that pins it, and the guard test is not product code.
+The guards changed first and failed against the old documents, and the documents then made them pass.
+No assertion was weakened.
+Nine tests were adapted to the new text with the same or a stricter check: A1108 (the section list, now with nine gaps), A1109 (the flags of `dispatch init`), A1111 (funding per harness), A1112 (the caps without a fixed provider), A1113 (the gate without the stub-agent skip), A1114 (two credentials on seven fixed lines, and no secret-shaped literal such as `sk-...`), A1122 (`supervisor start` and the `MODE` variable), A1123 (the usage of each account), and A1124 (the disclosure).
+A1107 stayed as it was.
+Nine tests are new: A1701 to A1705, A1708, A1709, A1710, and A1711.
+The captain can ask for the guard changes to be reverted and the runbook left as it was, at the cost of a runbook that says the stub agent does not exist.
+
+Tier 2 stays shelved.
+The runbook says in its first section and in section 7 that no harness has had a tier 2 run.
+It gives a credential table for all four harnesses: Claude Code keeps the token of D-092, and Codex, Pi, and omp use one dedicated OpenAI key with a provider-side cap (D-108, decision D2).
+How a key reaches Codex, Pi, and omp inside the lab is the report's design (section 6.4) and has not run, and the runbook marks it so.
+It adds no harness-specific login command, because none has been exercised.
+
+Defects in the old runbook that the rewrite fixes:
+
+1. Tier 2 could not dispatch.
+   D-112 removed the built-in profile, and the runbook never wrote a `dispatch.json`, so every dispatch would have blocked with `no_default_profile`.
+   Section 7 now runs `bb factoryman dispatch init`, then `supervisor start --profile`.
+2. The fresh shell lost `$PROJ`.
+   `env -i` passed only five variables, so `$PROJ` was empty in every command after it.
+   The command now carries `PROJ`, `PROVIDER`, and `HARNESS_CLI` over.
+3. Pi could not run in the lab.
+   The single lab project was `local-only`, and the plugin refuses Pi there (D-111).
+   The project's mode is now a variable, Pi uses `direct-PR`, and Pi runs the scout task only, because a ship task in `direct-PR` needs a real forge.
+4. The runbook said the stub agent does not exist, and had a gate that skipped tier 1 on that ground.
+5. The supervisor was spawned with `bb thread spawn` and stamped, which is the late-stamp path that D-130 shows is wrong on Codex and omp.
+6. `docs/DESIGN.md` said the plugin gives the supervisor five tools.
+   `factoryman_report` is the worker's tool (`src/tools/register.ts`), so the supervisor has four.
+
+The research file `specs/012-harness-docs-catch-up/research.md` lists each claim of the new text with the file that proves it.
+
+The TDD audit of this change (`specs/012-harness-docs-catch-up/tdd/verification.md`) returned `FAIL` for one `TEST_AFTER` behavior.
+The behavior is A1707, through the adapted test `[A1109]`: its new flag table (the flags of `dispatch init`) passed on its first run against the old runbook, because the old runbook names no such command.
+The test does fail when the property is removed: the mutants `--lvl` for `--level` (M17) and `supervisor begin` for `supervisor start` (M18) each fail it, and the other 16 sampled mutants of the three documents are caught except one that the remediation then closed.
+The repository commits only at green (D-099), so the history cannot show a test before its document.
+The position is the one taken for D-099, D-107, D-116, D-122, and D-133: the rubric fails the feature, the evidence is complete, and the owner decides.
+The captain accepted the one behavior on 2026-11-09, through firstmate, as a waiver on the same footing as D-099, D-122, and D-133.
+The audit's other four findings (a brittle read of `config.ts`, a surviving mutant, a magic ratio, and a weak status check) are fixed in tasks T015 to T018.
+The audit was run by the session that wrote the tests, so it was not independent.
+

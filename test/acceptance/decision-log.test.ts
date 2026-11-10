@@ -46,4 +46,17 @@ describe("docs/DECISIONS.md", () => {
     expect(principle).toMatch(/\bH12\b/);
     expect(principle).toMatch(/D-129/);
   });
+
+  it("[A1711] has D-135, and D-063, D-064, D-092, and D-093 each carry an Amended by line that names a decision with a heading", () => {
+    const text = log();
+    const numbers = headingNumbers(text);
+    expect(numbers).toContain("D-135");
+    for (const number of ["D-063", "D-064", "D-092", "D-093"]) {
+      const body = text.split(new RegExp(`^### ${number}:`, "m"))[1]?.split(/^### /m)[0] ?? "";
+      const named = body.match(/^Amended by (D-\d{3})/m)?.[1];
+      expect(named, `${number} has an Amended by line`).toBeDefined();
+      expect(numbers, `${number} names a decision that has a heading`).toContain(named);
+      expect(named).not.toBe(number);
+    }
+  });
 });
