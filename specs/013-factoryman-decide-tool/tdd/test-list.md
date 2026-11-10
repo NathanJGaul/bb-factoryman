@@ -107,11 +107,11 @@ The headings were written (commit `docs(decisions)`), and the suite was green ag
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| U1828 | The form shows the task, the key, the step and status, each finding's five fields, and the answer sentence for `approve`, `skip`, and `fix` with IDs and instructions | FR-009, US2.1 | example | PENDING | `src/app/decision-approval-form.test.tsx::[U1828]` |
-| U1829 | A finished-run payload shows the outcome and no findings list, and the sentence says that approval starts a new run | FR-009, US4.1 | example | PENDING | `src/app/decision-approval-form.test.tsx::[U1829]` |
-| U1830 | An unreadable payload shows an alert and no Approve, and Deny and Cancel work | FR-018, US2.2 | example | PENDING | `src/app/decision-approval-form.test.tsx::[U1830]` |
-| U1831 | Approve submits `{decision:"approved"}` with the trimmed comment, Deny submits `denied` with the comment, Cancel cancels, a second click while one is in flight does nothing, and a failed submit shows the reason and enables the buttons again | FR-018, US2.3 | example | PENDING | `src/app/decision-approval-form.test.tsx::[U1831]` |
-| U1832 | A finding description with markup renders as text and creates no element | FR-018, US2.4 | example | PENDING | `src/app/decision-approval-form.test.tsx::[U1832]` |
+| U1828 | The form shows the task, the key, the step and status, each finding's five fields, and the answer sentence for `approve`, `skip`, and `fix` with IDs and instructions | FR-009, US2.1 | example | DONE | `src/app/decision-approval-form.test.tsx::[U1828]` |
+| U1829 | A finished-run payload shows the outcome and no findings list, and the sentence says that approval starts a new run | FR-009, US4.1 | example | DONE | `src/app/decision-approval-form.test.tsx::[U1829]` |
+| U1830 | An unreadable payload shows an alert and no Approve, and Deny and Cancel work | FR-018, US2.2 | example | DONE | `src/app/decision-approval-form.test.tsx::[U1830]` |
+| U1831 | Approve submits `{decision:"approved"}` with the trimmed comment, Deny submits `denied` with the comment, Cancel cancels, a second click while one is in flight does nothing, and a failed submit shows the reason and enables the buttons again | FR-018, US2.3 | example | DONE | `src/app/decision-approval-form.test.tsx::[U1831]` |
+| U1832 | A finding description with markup renders as text and creates no element | FR-018, US2.4 | example | DONE | `src/app/decision-approval-form.test.tsx::[U1832]` |
 | U1833 | The app registers the merge renderer and the decision renderer under their two IDs | FR-019 | example | PENDING | `src/app.test.tsx::[U1833]` |
 
 ### Wording that counts the tools

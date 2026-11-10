@@ -89,3 +89,12 @@ Correction to cycle 5: the full run on that cycle's code had one red, `test/acce
 - green: no production change in this cycle. `pnpm run typecheck`, `pnpm run lint`, and `pnpm test` (the gate script) -> 155 files, 2212 tests passed. D-144 was written in this cycle, because the cycle log cites it and the decision-log guard `[A1510]` failed until its heading existed.
 - refactor: none needed
 - commit: `test: cover the rerun decision and the plan refusals`
+
+## Cycle 9: U1828, U1829, U1830, U1831, U1832 the decision form (one group)
+
+- structural commit first: `test: share the parked world of the decide tests in a fixture` moved the builders and the parked world out of `test/acceptance/tools-decide.test.ts` into `test/fixtures/decision-world.ts` (38 tests passed before and after, no assertion changed), because the form's acceptance tests need the same world.
+- test: `src/app/decision-approval-form.test.tsx` (26 tests under jsdom): `[U1828]` (the request, the findings with their five fields, a 40-finding list that scrolls, the answer sentence for four answers, the fix rows, the gate with no findings), `[U1829]` (a finished run), `[U1830]` (six unreadable payloads, each with Deny and Cancel working), `[U1831]` (Approve, Deny, Cancel, the in-flight guard, a failed submit, the labels, the expiry), `[U1832]` (markup shown as text).
+- red: `pnpm vitest run src/app/decision-approval-form.test.tsx` against a component that rendered `null` -> `TestingLibraryElementError: Unable to find an element with the text: Task, which matches selector 'dt'` and `Unable to find an accessible element with the role "list" and name "Findings"` (25 failed, 1 passed). The one pass is "shows no fix rows for approve and skip", true of an empty component; the verify step lists the mutant that always shows the fix rows.
+- green: `src/app/decision-approval-form.tsx` (`DecisionApprovalForm`) mirrors the merge form: the same classes, the same in-flight guard, and `answerFor`; it reads the payload with `readDecisionPayload`, shows the findings and the answer sentence from the structured answer, and offers no Approve for an unreadable payload. `pnpm vitest run src/app/decision-approval-form.test.tsx` -> 26 passed. Gate script (type check, lint, `pnpm test`) -> OK.
+- refactor: none needed
+- commit: `feat(app): add the decision approval form`
