@@ -187,7 +187,7 @@ The first audit above stays as it was, and its verdict is the one of record unti
 - Finding 9 is closed: the leak measurement was made (3159 before and 3159 after, twice), T001 and T029 are ticked on that evidence.
 - US5.6 is covered: the five offline conformance runs exited 0 on commit `1a890a9` with a clean tree and a clean isolation check (cycle log, "Live check A1818"). They also found a defect that no offline test could see (D-145): S8 probed with a scout task. It is fixed.
 - A mistake made while fixing finding 5 removed `[U195]` to `[U199]` for a few minutes; the suite count caught it, and the file was restored from git before any commit. No existing test is missing at `689ab24`: the removed-lines diff against `9f87647` lists only the tests that changed to a new truth.
-- Finding 1 is open. Eleven behaviors are test-after (D-144). Each was proved able to fail by a deliberate mutant, and the audit ran 17 more. The rubric fails the feature for this, and the repository has accepted the same position as a waiver before (D-099, D-122, D-133, D-135). Task T047 stays open until Firstmate relays the owner's answer.
+- Finding 1 is waived. Eleven behaviors are test-after (D-144), and the captain accepted the waiver on 2026-11-10 through Firstmate, on the same footing as D-099, D-108, D-122, D-133, and D-135. Each was proved able to fail by a deliberate mutant, and the audit ran 17 more. The rubric fails the feature for this, and the repository has accepted the same position as a waiver before (D-099, D-122, D-133, D-135). Task T047 is closed by that answer.
 - Not audited again: the form's look in a real bb (D-146), and mutation beyond the 41 deliberate mutants.
 
-**Verdict of record: FAIL, with one blocking finding (the test-after waiver), and every other finding cleared.**
+**Verdict of record: FAIL under the rubric, with one finding (the test-after behaviors), which the captain has waived. Every other finding is cleared.**

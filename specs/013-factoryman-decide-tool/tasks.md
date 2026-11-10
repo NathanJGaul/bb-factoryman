@@ -158,7 +158,7 @@ These tasks change tests and one fixture text builder, and they change no behavi
 - [X] T044 [US6] Finding 7 (MED), `test/acceptance/decide-docs.test.ts:55`, `:57`, `:83`: match `Version: 1.5.0` and the presence of D-136 and not the whole version line, and keep the stays-out check in `[A1819]` only. Proof: `pnpm vitest run test/acceptance/decide-docs.test.ts` passes.
 - [X] T045 Findings 8, 10, and 11 (LOW): give the S9 test its own ID (`[U1847]`) and the unit `[A1812]` its own (`[U1848]`) in the test list and the tests, assert `toBe(2)` in `[U1812]`, and change the trace of the live-check row. Proof: `pnpm vitest run tools/conformance/scenarios/scenarios.test.ts src/tools/decide.test.ts src/validator/driver.test.ts` passes, and the IDs in `tdd/test-list.md` are unique.
 - [X] T046 Finding 9: reopen T029 until `pnpm run check` has run on the final code with the leak count of T001 unchanged (the baseline was measured in the verification: 3159 before and 3159 after).
-- [ ] T047 Finding 1: the owner decides whether to waive the eleven test-after behaviors, as in D-099, D-122, and D-133. Do not mark the feature done in the report until Firstmate relays the answer. If the owner declines, re-derive each red by hand on the final code (remove the check, see the test fail, restore) and record it.
+- [X] T047 Finding 1 (accepted by the captain on 2026-11-10 through Firstmate, D-144): the owner decides whether to waive the eleven test-after behaviors, as in D-099, D-122, and D-133. Do not mark the feature done in the report until Firstmate relays the answer. If the owner declines, re-derive each red by hand on the final code (remove the check, see the test fail, restore) and record it.
 
 ## Phase 13: Convergence
 

@@ -84,13 +84,13 @@ The requirements-quality checklist of the specification is a separate file, `che
       Evidence: `tdd/test-list.md` (66 rows: 63 `DONE`, 1 `BASELINE`, 1 `DROPPED`, and the live check `A1818` now `DONE`); `tdd/cycle-log.md` (13 cycles, a correction, and the remediation).
 - [x] CHK1851 The verification found its HIGH smells and they were fixed.
       Evidence: `tdd/verification.md`, findings 2 to 5 and the addendum; T039 to T045.
-- [ ] CHK1852 Eleven behaviors are test-after, and the owner has not yet answered whether to waive them.
-      Owner: the captain, through Firstmate (task T047, D-144). Each was proved able to fail by deliberate mutants (41 in all, none survived).
+- [x] CHK1852 Eleven behaviors are test-after, and the captain accepted the waiver on 2026-11-10 through Firstmate (task T047, D-144).
+      Evidence: the instruction in the task's steering inbox (message 001). Each behavior was proved able to fail by deliberate mutants (41 in all, none survived).
 
 ## Not checked, with the reason
 
-- [ ] CHK1860 The decision form has not been opened in a real bb, so its look (both themes, a narrow width, a long list of findings) is unseen.
-      Owner: the owner, in the isolated lab, before the first real decision (D-146, task T032).
+- [ ] CHK1860 The decision form has not been opened in a real bb, so its look (both themes, a narrow width, a long list of findings) is unseen. Not blocking (the captain, 2026-11-10).
+      Owner: the captain, in the isolated lab, after the merge or before (D-146, task T032).
 - [ ] CHK1861 What `no-mistakes axi run` does after a finished run, and a real decision against a real pipeline, are unverified.
       Owner: the owner, at the live check (D-141, D-134).
 - [ ] CHK1862 A tier 2 run with a real model.

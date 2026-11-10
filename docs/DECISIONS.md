@@ -1546,6 +1546,9 @@ The one test of this group that failed first is `[A1809]`.
 
 The position is the one taken for D-099, D-107, D-116, D-122, D-133, and D-135: the rubric fails the feature, the evidence is complete, and the owner decides.
 
+The captain accepted the waiver on 2026-11-10, through firstmate, on the same footing as D-099, D-108, D-122, D-133, and D-135, because every mutant was killed.
+The decision stays in this log, and the pull request description states it.
+
 ### D-145: The first live run found that the fake lab did not model task kinds, so S8 probed with a scout (Finding, fixed)
 
 The first tier 1 run in `bblab` failed `S8.decide-wrong-state`.
@@ -1568,6 +1571,7 @@ The tier 1 and tier 1.5 runs cannot show the form either, because their project 
 
 What stands in for the look: the form uses the same classes, the same in-flight guard, and the same reply contract as the merge form that the lab did check (`data/bb-factoryman-approval-form/lab-check.md`), and 26 jsdom tests and 4 acceptance tests cover its content.
 jsdom has no layout and no styles, so the list of findings, the scroll box, and the "Answer that will be sent" block have not been seen in a real bb, in either theme or at a narrow width.
+The captain said on 2026-11-10 that this does not block the merge: the pull request says plainly that the form has not been seen in an interactive real bb session, and the captain will look after the merge or before, as he chooses.
 The owner should run that check before the first real decision: queue a task into `needs_decision` in the lab and open the form.
 A defect in the look would change `src/app/decision-approval-form.tsx` only.
 
