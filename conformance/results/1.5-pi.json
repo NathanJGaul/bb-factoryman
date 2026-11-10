@@ -10,11 +10,11 @@
     "version": "0.49.0"
   },
   "plugin": {
-    "commit": "53eeae8",
+    "commit": "1a890a9",
     "dirty": false
   },
-  "startedAt": "2026-11-09T20:34:35.038Z",
-  "finishedAt": "2026-11-09T20:38:44.154Z",
+  "startedAt": "2026-11-10T03:38:52.205Z",
+  "finishedAt": "2026-11-10T03:42:37.224Z",
   "offline": true,
   "isolation": {
     "clean": true,
@@ -95,7 +95,7 @@
           "id": "S4.branch-commit",
           "title": "The task branch holds the one commit the worker made",
           "ok": true,
-          "evidence": "git rev-list --count main..fm/t-4a5af253: 1"
+          "evidence": "git rev-list --count main..fm/t-10e26337: 1"
         },
         {
           "id": "S4.review-ready",
@@ -130,9 +130,9 @@
         },
         {
           "id": "S5.supervisor-tools",
-          "title": "The supervisor is offered its four tools and not the report tool",
+          "title": "The supervisor is offered its five tools and not the report tool",
           "ok": true,
-          "evidence": "tools: factoryman_dispatch, factoryman_merge, factoryman_status, factoryman_teardown (thread thr_s7tncqxymf)"
+          "evidence": "tools: factoryman_decide, factoryman_dispatch, factoryman_merge, factoryman_status, factoryman_teardown (thread thr_cv6cen3xfz)"
         },
         {
           "id": "S5.supervisor-skills",
@@ -205,6 +205,12 @@
           "title": "A teardown of a working task is refused, logged, and changes nothing",
           "ok": true,
           "evidence": "tool error true; 1 logged refusal(s); state working"
+        },
+        {
+          "id": "S8.decide-wrong-state",
+          "title": "A decision on a working ship task is refused, names needs_decision, records no resolve, and changes nothing",
+          "ok": true,
+          "evidence": "tool error true; 0 resolve row(s); state working; text: Refused (illegal_transition): Task t-ace54c14 is working. A decision needs needs_decision."
         }
       ]
     },
@@ -216,13 +222,13 @@
           "id": "S9.start-command",
           "title": "`bb factoryman supervisor start` spawns a supervisor and names its thread",
           "ok": true,
-          "evidence": "exit 0: Started factoryman supervisor thread thr_k2cjsvfnju with the profile harness (pi, mock/mock-1).\nThe role is set at spawn, so the thread has the four supervisor tools and the factoryman-supervisor skil"
+          "evidence": "exit 0: Started factoryman supervisor thread thr_jev5ybkk6u with the profile harness (pi, mock/mock-1).\nThe role is set at spawn, so the thread has the five supervisor tools and the factoryman-supervisor skil"
         },
         {
           "id": "S9.start-tools",
-          "title": "A supervisor started with the command has its four tools and its skill on its first turn, and no worker tool or skill",
+          "title": "A supervisor started with the command has its five tools and its skill on its first turn, and no worker tool or skill",
           "ok": true,
-          "evidence": "tools: factoryman_dispatch, factoryman_merge, factoryman_status, factoryman_teardown; skills: factoryman-supervisor"
+          "evidence": "tools: factoryman_decide, factoryman_dispatch, factoryman_merge, factoryman_status, factoryman_teardown; skills: factoryman-supervisor"
         },
         {
           "id": "S9.unstamped-no-tools",
@@ -234,13 +240,13 @@
           "id": "S9.stamp-advice",
           "title": "The stamp command succeeds",
           "ok": true,
-          "evidence": "Thread thr_xwva338jwk is now a factoryman supervisor.\nIt gets the four supervisor tools and the factoryman-supervisor skill on its next turn."
+          "evidence": "Thread thr_h5ppw27cza is now a factoryman supervisor.\nIt gets the five supervisor tools and the factoryman-supervisor skill on its next turn."
         },
         {
           "id": "S9.tools-after-step",
-          "title": "After the documented step (next-turn) the supervisor has its four tools and its skill",
+          "title": "After the documented step (next-turn) the supervisor has its five tools and its skill",
           "ok": true,
-          "evidence": "tools: factoryman_dispatch, factoryman_merge, factoryman_status, factoryman_teardown; skills: factoryman-supervisor"
+          "evidence": "tools: factoryman_decide, factoryman_dispatch, factoryman_merge, factoryman_status, factoryman_teardown; skills: factoryman-supervisor"
         }
       ]
     },
@@ -263,7 +269,7 @@
           "id": "S11.dirty-kept",
           "title": "The dirty worktree is still there",
           "ok": true,
-          "evidence": "worktree: /var/tmp/bblab-supervisor-start/data/plugins/environment-git-worktree/host-data/worktrees/thr_22728n2sy9-1/work"
+          "evidence": "worktree: /var/tmp/bblab-decide-tool/data/plugins/environment-git-worktree/host-data/worktrees/thr_8jvex8h8ku-1/work"
         },
         {
           "id": "S11.clean-removed",
@@ -287,7 +293,7 @@
           "id": "S12.delivered",
           "title": "The wake arrives",
           "ok": true,
-          "evidence": "1 wake(s) for t-1f6ed7c0"
+          "evidence": "1 wake(s) for t-70dee449"
         },
         {
           "id": "S12.once",

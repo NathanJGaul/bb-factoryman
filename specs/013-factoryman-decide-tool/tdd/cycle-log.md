@@ -150,3 +150,12 @@ Correction to cycle 5: the full run on that cycle's code had one red, `test/acce
 - green: S8 dispatches its own silent ship task for the decision probe. 71 tests passed in the four files. The gate follows.
 - refactor: `src/tools/decide-text.ts` also holds `NOT_SHIP_TEXT`, which the tool and the fake lab share.
 - commit: `fix(conformance): probe the decide refusal with a ship task`
+
+## Live check A1818 (task T025): the five offline conformance runs on commit 1a890a9
+
+- command: `data/bb-factoryman-decide-tool/run-conformance.sh` in the firstmate home runs `pnpm run conformance -- --tier 1` and `--tier 1.5 --harness claude-code`, `codex`, `pi`, `omp`, each with `--lab-dir /var/tmp/bblab-decide-tool`, one after the other, with no credential. The lab is `bblab` with bb 0.49.0 pinned, tier 1.5 offline.
+- result: all five runs exited 0 on commit `1a890a9` with the tree clean (`dirty: false` in every result file). S1 to S12 are `pass` in all five, except S10, which is `skipped` at tier 1.5 as before. The isolation check was clean in all five (`isolation: clean.`, tripwire: no events).
+- the tool: `S5.supervisor-tools` lists `factoryman_decide` among the five supervisor tools in all five files, `S9.start-tools` and `S9.tools-after-step` do too, and `S8.decide-wrong-state` passes in all five, so the real plugin refuses a decision on a working ship task on all four harnesses and with the stub. CLI versions: Claude Code 2.1.316, Codex 0.166.0, Pi 1.4.0, omp 18.18.3, stub 0.0.1.
+- an earlier first run on `15de3f2` failed `S8.decide-wrong-state` (D-145, cycle 13). Its partial result was reverted, and it is not among the committed files.
+- `docs/HARNESS-SUPPORT.md` was regenerated with `pnpm run conformance:docs`; it lists no known gap.
+- limit (D-146): the lab has no no-mistakes pipeline, so no scenario reaches `needs_decision`, and the decision form was not opened in a real bb (T032).
