@@ -41,9 +41,9 @@ Table-driven tests cover the lines that name several inputs, and the cycle log r
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| U1901 | A clean entry gives a plan whose three changes hold stored and target values of `deliveryMode`, `yolo`, and `branchPrefix`, an empty prefix as null, `no-mistakes-prod-only` as `no-mistakes`, and `untouched` lists `baseBranch` and `defaultMachine` with their stored values | US1, FR-007, FR-008, FR-009 | example | PENDING | |
-| U1902 | Refusal table: no entry, two entries with one name, a flagged entry (unknown mode, unexpected token, unclosed bracket, bare `yolo`), no bb project, two bb projects with the name in any letter case; and a case-insensitive match that succeeds | US3, FR-004, FR-005, FR-006 | example | PENDING | |
-| U1903 | `next` is null when every field equals the target; a change is flagged only when its values differ (both sides: one field differs, none differs); a stored `yolo` on with an entry that has none changes to off; `next` keeps the stored `baseBranch` and `defaultMachine` | US2, FR-010 | example | PENDING | |
+| U1901 | A clean entry gives a plan whose three changes hold stored and target values of `deliveryMode`, `yolo`, and `branchPrefix`, an empty prefix as null, `no-mistakes-prod-only` as `no-mistakes`, and `untouched` lists `baseBranch` and `defaultMachine` with their stored values | US1, FR-007, FR-008, FR-009 | example | DONE | `src/limits/registry-apply.test.ts::[U1901]` |
+| U1902 | Refusal table: no entry, two entries with one name, a flagged entry (unknown mode, unexpected token, unclosed bracket, bare `yolo`), no bb project, two bb projects with the name in any letter case; and a case-insensitive match that succeeds | US3, FR-004, FR-005, FR-006 | example | DONE | `src/limits/registry-apply.test.ts::[U1902]` |
+| U1903 | `next` is null when every field equals the target; a change is flagged only when its values differ (both sides: one field differs, none differs); a stored `yolo` on with an entry that has none changes to off; `next` keeps the stored `baseBranch` and `defaultMachine` | US2, FR-010 | example | DONE | `src/limits/registry-apply.test.ts::[U1903]` |
 
 ### `src/tools/supervisor-command.ts`
 
