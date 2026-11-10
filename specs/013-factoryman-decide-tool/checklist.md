@@ -4,7 +4,7 @@
 **Created**: 2026-11-09
 **Feature**: [spec.md](spec.md)
 
-A checked item has evidence that I ran or read in this worktree, on the tree at `1601db6` plus this file.
+A checked item has evidence that I ran or read in this worktree, on the tree at `8a6e998` plus this file.
 An unchecked item names what is missing and who owns it.
 This file is the evidence record of the change, written by the session that built it, and the user asked for the items to be checked against evidence.
 The requirements-quality checklist of the specification is a separate file, `checklists/requirements.md`.
@@ -59,7 +59,7 @@ The requirements-quality checklist of the specification is a separate file, `che
 - [x] CHK1830 S5, S8, and S9 expect or probe the fifth tool, and no new scenario, tier, or known gap was needed.
       Evidence: `conformance/known-gaps.json` is unchanged and empty; `[U1837]`, `[U1838]`, `[U1847]`, `[A1817]`.
 - [x] CHK1831 The five offline runs pass on the final code.
-      Evidence: tier 1 and tier 1.5 on Claude Code 2.1.316, Codex 0.166.0, Pi 1.4.0, and omp 18.18.3 all exited 0 on `1a890a9`, `dirty: false`, isolation clean, S1 to S12 `pass` (S10 `skipped` at tier 1.5), `S8.decide-wrong-state` and the five tools in S5 and S9 in every result file. `docs/HARNESS-SUPPORT.md` lists no known gap.
+      Evidence: tier 1 and tier 1.5 on Claude Code 2.1.316, Codex 0.166.0, Pi 1.4.0, and omp 18.18.3 all exited 0 on `8a6e998` (the last code commit; D-145 and D-147 explain the earlier runs), `dirty: false`, isolation clean, S1 to S12 `pass` (S10 `skipped` at tier 1.5), `S8.decide-wrong-state` and the five tools in S5 and S9 in every result file. `docs/HARNESS-SUPPORT.md` lists no known gap.
 - [x] CHK1832 The live run found a defect that the offline tests could not, and it was fixed test first.
       Evidence: D-145 and cycle 13. The first run on `15de3f2` failed `S8.decide-wrong-state` (the probe was a scout task); the fake lab now models task kinds, and S8 probes with a ship task.
 

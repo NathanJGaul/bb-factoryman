@@ -162,4 +162,4 @@ These tasks change tests and one fixture text builder, and they change no behavi
 
 ## Phase 13: Convergence
 
-- [ ] T048 Repeat the five offline conformance runs (tier 1, and tier 1.5 on Claude Code, Codex, Pi, and omp) on the last code commit, commit the result files and the regenerated `docs/HARNESS-SUPPORT.md`, and check that every file names that commit with `dirty: false` per FR-021 (partial). The files name `1a890a9`, and `src/tools/decide.ts` changed after it (the plugin-log lines of FR-017).
+- [X] T048 Repeat the five offline conformance runs (tier 1, and tier 1.5 on Claude Code, Codex, Pi, and omp) on the last code commit, commit the result files and the regenerated `docs/HARNESS-SUPPORT.md`, and check that every file names that commit with `dirty: false` per FR-021 (partial). The files name `1a890a9`, and `src/tools/decide.ts` changed after it (the plugin-log lines of FR-017).

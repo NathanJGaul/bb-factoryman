@@ -183,3 +183,9 @@ Correction to cycle 5: the full run on that cycle's code had one red, `test/acce
 - green: `modelsReady` in `tools/conformance/readers.ts`, used by `tools/conformance/real-lab.ts`. `pnpm run typecheck` clean; the gate follows.
 - refactor: none needed
 - commit: `fix(conformance): wait for the model the driver dispatches with`
+
+## Live check A1818 repeated (task T048): the five offline runs on commit 8a6e998
+
+- command: the same `run-conformance.sh` as before, on the last code commit.
+- result: all five runs exited 0 on `8a6e998` with `dirty: false` in every result file and a clean isolation report. S1 to S12 are `pass` (S10 `skipped` at tier 1.5). `S8.decide-wrong-state` passes in all five, and S5 and S9 show the five supervisor tools. The files under `conformance/results/` and `docs/HARNESS-SUPPORT.md` are the ones from this set. `docs/HARNESS-SUPPORT.md` lists no known gap.
+- history of the runs, for the record: the run on `15de3f2` failed S8 (D-145, fixed); the repeat on `092dc9f` passed four harnesses and failed omp on the model-catalog race, then passed every scenario but failed the isolation check on a neighbor's lab (D-147, fixed in the lab's wait); this set follows both fixes.

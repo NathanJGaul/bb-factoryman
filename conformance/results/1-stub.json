@@ -10,11 +10,11 @@
     "version": "0.49.0"
   },
   "plugin": {
-    "commit": "092dc9f",
+    "commit": "8a6e998",
     "dirty": false
   },
-  "startedAt": "2026-11-10T03:51:06.351Z",
-  "finishedAt": "2026-11-10T03:53:54.873Z",
+  "startedAt": "2026-11-10T04:23:13.826Z",
+  "finishedAt": "2026-11-10T04:26:16.546Z",
   "offline": false,
   "isolation": {
     "clean": true,
@@ -95,7 +95,7 @@
           "id": "S4.branch-commit",
           "title": "The task branch holds the one commit the worker made",
           "ok": true,
-          "evidence": "git rev-list --count main..fm/t-2f2ecfa5: 1"
+          "evidence": "git rev-list --count main..fm/t-28942670: 1"
         },
         {
           "id": "S4.review-ready",
@@ -131,7 +131,7 @@
           "id": "S5.supervisor-tools",
           "title": "The supervisor is offered its five tools and not the report tool",
           "ok": true,
-          "evidence": "tools: factoryman_decide, factoryman_dispatch, factoryman_merge, factoryman_status, factoryman_teardown (thread thr_z3xkjsfsq7)"
+          "evidence": "tools: factoryman_decide, factoryman_dispatch, factoryman_merge, factoryman_status, factoryman_teardown (thread thr_44bcc2gnp7)"
         },
         {
           "id": "S5.supervisor-skills",
@@ -209,7 +209,7 @@
           "id": "S8.decide-wrong-state",
           "title": "A decision on a working ship task is refused, names needs_decision, records no resolve, and changes nothing",
           "ok": true,
-          "evidence": "tool error true; 0 resolve row(s); state working; text: Refused (illegal_transition): Task t-40512178 is working. A decision needs needs_decision."
+          "evidence": "tool error true; 0 resolve row(s); state working; text: Refused (illegal_transition): Task t-35b95f9e is working. A decision needs needs_decision."
         }
       ]
     },
@@ -221,7 +221,7 @@
           "id": "S9.start-command",
           "title": "`bb factoryman supervisor start` spawns a supervisor and names its thread",
           "ok": true,
-          "evidence": "exit 0: Started factoryman supervisor thread thr_qabbwj66zb with the profile harness (acp-stub, acp-default).\nThe role is set at spawn, so the thread has the five supervisor tools and the factoryman-superviso"
+          "evidence": "exit 0: Started factoryman supervisor thread thr_x6wzgch9hf with the profile harness (acp-stub, acp-default).\nThe role is set at spawn, so the thread has the five supervisor tools and the factoryman-superviso"
         },
         {
           "id": "S9.start-tools",
@@ -239,7 +239,7 @@
           "id": "S9.stamp-advice",
           "title": "The stamp command succeeds",
           "ok": true,
-          "evidence": "Thread thr_armhhxatbq is now a factoryman supervisor.\nThe harness acp-stub has no recorded role-change behavior.\nRun `bb thread clear thr_armhhxatbq` so the thread gets the five supervisor tools and the factoryman-supervisor skill."
+          "evidence": "Thread thr_cy2egb6jjv is now a factoryman supervisor.\nThe harness acp-stub has no recorded role-change behavior.\nRun `bb thread clear thr_cy2egb6jjv` so the thread gets the five supervisor tools and the factoryman-supervisor skill."
         },
         {
           "id": "S9.tools-after-step",
@@ -257,7 +257,7 @@
           "id": "S10.state-kept",
           "title": "Every task keeps its state across a reload",
           "ok": true,
-          "evidence": "before: t-225e47d5:working, t-24f30310:report_ready, t-2a4742ec:report_ready, t-2ef4340c:working, t-2f2ecfa5:review_ready, t-34f275ed:failed, t-40512178:working, t-4718e77d:report_ready, t-7fc24410:working, t-beb70fd3:report_ready, t-e078bc9d:report_ready; after: t-225e47d5:working, t-24f30310:report_ready, t-2a4742ec:report_ready, t-2ef4340c:working, t-2f2ecfa5:review_ready, t-34f275ed:failed, t-40512178:working, t-4718e77d:report_ready, t-7fc24410:working, t-beb70fd3:report_ready, t-e078bc9d:report_ready"
+          "evidence": "before: t-28942670:review_ready, t-2d5e71c7:working, t-35b95f9e:working, t-506ed4d3:report_ready, t-5a001bd4:report_ready, t-5c7e4e06:working, t-641c6f8e:report_ready, t-6e591add:failed, t-aa548c80:report_ready, t-aec24260:report_ready, t-bbbfdbb7:working; after: t-28942670:review_ready, t-2d5e71c7:working, t-35b95f9e:working, t-506ed4d3:report_ready, t-5a001bd4:report_ready, t-5c7e4e06:working, t-641c6f8e:report_ready, t-6e591add:failed, t-aa548c80:report_ready, t-aec24260:report_ready, t-bbbfdbb7:working"
         },
         {
           "id": "S10.no-new-events",
@@ -281,7 +281,7 @@
           "id": "S11.dirty-kept",
           "title": "The dirty worktree is still there",
           "ok": true,
-          "evidence": "worktree: /var/tmp/bblab-decide-tool/data/plugins/environment-git-worktree/host-data/worktrees/thr_ii26vpuwvj-1/work"
+          "evidence": "worktree: /var/tmp/bblab-decide-tool/data/plugins/environment-git-worktree/host-data/worktrees/thr_jaz5cpi6up-1/work"
         },
         {
           "id": "S11.clean-removed",
@@ -305,7 +305,7 @@
           "id": "S12.delivered",
           "title": "The wake arrives",
           "ok": true,
-          "evidence": "1 wake(s) for t-5acc475c"
+          "evidence": "1 wake(s) for t-74ff2331"
         },
         {
           "id": "S12.once",

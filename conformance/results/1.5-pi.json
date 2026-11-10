@@ -10,11 +10,11 @@
     "version": "0.49.0"
   },
   "plugin": {
-    "commit": "092dc9f",
+    "commit": "8a6e998",
     "dirty": false
   },
-  "startedAt": "2026-11-10T04:04:20.993Z",
-  "finishedAt": "2026-11-10T04:07:53.237Z",
+  "startedAt": "2026-11-10T04:36:38.898Z",
+  "finishedAt": "2026-11-10T04:41:01.754Z",
   "offline": true,
   "isolation": {
     "clean": true,
@@ -95,7 +95,7 @@
           "id": "S4.branch-commit",
           "title": "The task branch holds the one commit the worker made",
           "ok": true,
-          "evidence": "git rev-list --count main..fm/t-b767ec54: 1"
+          "evidence": "git rev-list --count main..fm/t-7d9f3ff9: 1"
         },
         {
           "id": "S4.review-ready",
@@ -132,7 +132,7 @@
           "id": "S5.supervisor-tools",
           "title": "The supervisor is offered its five tools and not the report tool",
           "ok": true,
-          "evidence": "tools: factoryman_decide, factoryman_dispatch, factoryman_merge, factoryman_status, factoryman_teardown (thread thr_etwisv9b4j)"
+          "evidence": "tools: factoryman_decide, factoryman_dispatch, factoryman_merge, factoryman_status, factoryman_teardown (thread thr_gpp3kbicqd)"
         },
         {
           "id": "S5.supervisor-skills",
@@ -210,7 +210,7 @@
           "id": "S8.decide-wrong-state",
           "title": "A decision on a working ship task is refused, names needs_decision, records no resolve, and changes nothing",
           "ok": true,
-          "evidence": "tool error true; 0 resolve row(s); state working; text: Refused (illegal_transition): Task t-7cbc65cc is working. A decision needs needs_decision."
+          "evidence": "tool error true; 0 resolve row(s); state working; text: Refused (illegal_transition): Task t-f55accf2 is working. A decision needs needs_decision."
         }
       ]
     },
@@ -222,7 +222,7 @@
           "id": "S9.start-command",
           "title": "`bb factoryman supervisor start` spawns a supervisor and names its thread",
           "ok": true,
-          "evidence": "exit 0: Started factoryman supervisor thread thr_mbv7cngpu6 with the profile harness (pi, mock/mock-1).\nThe role is set at spawn, so the thread has the five supervisor tools and the factoryman-supervisor skil"
+          "evidence": "exit 0: Started factoryman supervisor thread thr_5mnkuze2kx with the profile harness (pi, mock/mock-1).\nThe role is set at spawn, so the thread has the five supervisor tools and the factoryman-supervisor skil"
         },
         {
           "id": "S9.start-tools",
@@ -240,7 +240,7 @@
           "id": "S9.stamp-advice",
           "title": "The stamp command succeeds",
           "ok": true,
-          "evidence": "Thread thr_629a5es3e3 is now a factoryman supervisor.\nIt gets the five supervisor tools and the factoryman-supervisor skill on its next turn."
+          "evidence": "Thread thr_8tp8im794y is now a factoryman supervisor.\nIt gets the five supervisor tools and the factoryman-supervisor skill on its next turn."
         },
         {
           "id": "S9.tools-after-step",
@@ -269,7 +269,7 @@
           "id": "S11.dirty-kept",
           "title": "The dirty worktree is still there",
           "ok": true,
-          "evidence": "worktree: /var/tmp/bblab-decide-tool/data/plugins/environment-git-worktree/host-data/worktrees/thr_j9xavwjypa-1/work"
+          "evidence": "worktree: /var/tmp/bblab-decide-tool/data/plugins/environment-git-worktree/host-data/worktrees/thr_hyv8sy5yxb-1/work"
         },
         {
           "id": "S11.clean-removed",
@@ -293,7 +293,7 @@
           "id": "S12.delivered",
           "title": "The wake arrives",
           "ok": true,
-          "evidence": "1 wake(s) for t-c31eb7aa"
+          "evidence": "1 wake(s) for t-a8c44bfc"
         },
         {
           "id": "S12.once",
