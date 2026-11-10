@@ -80,3 +80,12 @@ Correction to cycle 5: the full run on that cycle's code had one red, `test/acce
 - green: `Runtime.openDecisionForms` and the claim in `decide` (as `factoryman_merge` does for its forms). `pnpm vitest run test/acceptance/tools-decide.test.ts` -> 32 passed. `pnpm test` -> exit 0. Type check and lint clean.
 - refactor: none needed
 - commit: `feat(tools): refuse a second decision form for one task`
+
+## Cycle 8: A1811, A1812 the rerun decision (one group, test-after with mutants)
+
+- test: `test/acceptance/tools-decide.test.ts::[A1811]` (two tests), `[A1812]` (four tests); `src/tools/decide.test.ts::[A1812]` (four table rows: a running view, a failed run, a cancelled run, and `checks-passed` with a pull request, each with `rerun` and `approve`).
+- red: none. All 88 tests of the two files passed on the first run, because cycle 6 wrote both branches of the flow (`rerun` and `answer`). This is a test-after group (waiver W1, D-144).
+- mutants: R1 send a rerun through the answer path -> KILLED by `[U1821] sends a rerun through the decider's rerun path`; R2 `checks-passed` with a pull request counts as parked -> KILLED by `[U1818]`; R3 a finished run accepts any action -> KILLED by `[U1818] refuses approve for every finished view`; R4 `failed` counts as parked -> KILLED by `[U1818]`; R5 `fix` ignores the instructions -> KILLED by `[U1817] accepts fix with instructions`; R6 `fix` does not check the ID -> KILLED by `[U1817]`; R7 the evidence drops the owner's comment -> KILLED by `[U1820]`. All restored; `git status` showed only the test files changed.
+- green: no production change in this cycle. `pnpm run typecheck`, `pnpm run lint`, and `pnpm test` (the gate script) -> 155 files, 2212 tests passed. D-144 was written in this cycle, because the cycle log cites it and the decision-log guard `[A1510]` failed until its heading existed.
+- refactor: none needed
+- commit: `test: cover the rerun decision and the plan refusals`

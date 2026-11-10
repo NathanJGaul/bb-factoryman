@@ -201,6 +201,23 @@ describe("decide with a fake decider", () => {
     expect(decider.calls.at(-1)).toMatchObject({ method: "rerun", args: ["t1", "supervisor", expect.stringContaining("new no-mistakes run")] });
   });
 
+  it.each([
+    ["a running view", view()],
+    ["a failed run", finished("failed", { error: "ci failed" })],
+    ["a cancelled run", finished("cancelled")],
+    ["checks-passed with a pull request", finished("checks-passed", { prUrl: PR })],
+  ])("[A1812] refuses a call on %s, opens no form, and sends nothing", async (_name, other) => {
+    const { t, decider } = await parked();
+    decider.views = [{ ok: true, view: other }];
+    for (const action of ["rerun", "approve"] as const) {
+      const result = await decide(t.runtime, decider, SUPERVISOR, { taskId: "t1", key: decisionKey(other), action });
+      expect(result.ok, action).toBe(false);
+      expect(result.text, action).toMatch(/not waiting for a decision|No gate is pending/);
+    }
+    expect(t.bb.callsTo("requestInput")).toEqual([]);
+    expect(decider.count("answer") + decider.count("rerun")).toBe(0);
+  });
+
   it("[U1822] says that the task moved on when the send fails after the task left needs_decision", async () => {
     const { t, decider } = await parked();
     decider.answer = async () => {

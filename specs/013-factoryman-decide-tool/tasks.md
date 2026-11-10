@@ -80,7 +80,7 @@ Commands run from the repository root.
 **Independent test**: [A1811] and [A1812] pass, and [U1818] holds for the outcomes in the table.
 
 - [X] T020 [P] [US4] Write [U1818] in `src/tools/decide.test.ts` (table-driven): the answer rules for a finished view accept `rerun` for `passed`, `passed-with-override`, `passed-with-skips`, and `checks-passed` with no pull request; refuse `rerun` for `checks-passed` with a pull request, `failed`, `cancelled`, and a running view; and refuse `approve`, `skip`, and `fix` for every finished view. See it fail and add the rules to `src/tools/decide.ts`.
-- [ ] T021 [US4] Write [A1811] in `test/acceptance/tools-decide.test.ts`: a task parked on a `passed-with-override` run, `rerun` with the current key opens a form that carries the outcome, calls no validator `answer`, and after the approval records `resolve` with the owner's approval in its evidence, and the driver then calls `start`. Write [A1812] (table-driven): `rerun` on a gate, `approve`, `skip`, and `fix` on a finished run, and a view that is `running`, `failed`, or `cancelled` are each refused with the reason and send nothing. See them fail and implement the `rerun` branch in `src/tools/decide.ts`. Covers [A1811] [A1812] [U1818].
+- [X] T021 [US4] Write [A1811] in `test/acceptance/tools-decide.test.ts`: a task parked on a `passed-with-override` run, `rerun` with the current key opens a form that carries the outcome, calls no validator `answer`, and after the approval records `resolve` with the owner's approval in its evidence, and the driver then calls `start`. Write [A1812] (table-driven): `rerun` on a gate, `approve`, `skip`, and `fix` on a finished run, and a view that is `running`, `failed`, or `cancelled` are each refused with the reason and send nothing. See them fail and implement the `rerun` branch in `src/tools/decide.ts`. Covers [A1811] [A1812] [U1818].
 
 ## Phase 8: User story 5, second half - The harness suite and the wording (P1)
 
@@ -140,6 +140,6 @@ Commands run from the repository root.
 - [X] T033 [US1] Confirm [A1801] [A1802] [A1803] [A1804] [A1813] are green and that each has a red in `tdd/cycle-log.md`, or a recorded waiver.
 - [ ] T034 [US2] Confirm [A1814] [A1815] [A1821] are green and that each has a red in `tdd/cycle-log.md`, or a recorded waiver.
 - [X] T035 [US3] Confirm [A1805] [A1806] [A1807] [A1808] [A1809] [A1810] are green and that each has a red in `tdd/cycle-log.md`, or a recorded waiver.
-- [ ] T036 [US4] Confirm [A1811] [A1812] are green and that each has a red in `tdd/cycle-log.md`, or a recorded waiver.
+- [X] T036 [US4] Confirm [A1811] [A1812] are green and that each has a red in `tdd/cycle-log.md`, or a recorded waiver.
 - [ ] T037 [US5] Confirm [A1816] [A1817] are green, and that [A1818] has five result files from the final code, or that the limit is recorded.
 - [ ] T038 [US6] Confirm [A1819] [A1820] are green.

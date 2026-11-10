@@ -3,7 +3,7 @@ import { DECISION_RENDERER_ID, readDecisionPayload } from "../../src/approval/co
 import type { ExecResult } from "../../src/exec";
 import { FakeValidator } from "../../src/validator/fake";
 import { decisionKey } from "../../src/validator/key";
-import type { Finding, RunView } from "../../src/validator/types";
+import type { Finding, Outcome, RunView } from "../../src/validator/types";
 import { DISPATCH, loadWorld, nextForm, settle, type World, type WorldOptions } from "../fixtures/plugin-host";
 import { recordedNoMistakes } from "../fixtures/recorded";
 
@@ -13,6 +13,9 @@ const view = (overrides: Partial<RunView> = {}): RunView => ({ runId: "r1", bran
 const gate = (status: string, ...ids: string[]): RunView => view({ phase: "gate", gate: { step: "review", status, findings: ids.map(finding) } });
 const ok = (value: RunView) => ({ ok: true as const, value });
 const err = (message: string) => ({ ok: false as const, error: { kind: "command_failed" as const, message } });
+
+const PR = "https://github.com/acme/widgets/pull/7";
+const finished = (outcome: Outcome, overrides: Partial<RunView> = {}): RunView => view({ phase: "finished", outcome, ...overrides });
 
 const GATE = gate("awaiting_approval", "review-1", "review-2");
 const KEY = decisionKey(GATE);
@@ -363,5 +366,66 @@ describe("factoryman_decide when the gate moves or cannot be read", () => {
     expect(world.host.harness.inspection.pendingInteractions).toEqual([]);
     expect(answers(fake)).toEqual([]);
     expect(state(world)).toBe("needs_decision");
+  });
+});
+
+describe("factoryman_decide for a run that finished without a clean pass", () => {
+  const OVERRIDE = finished("passed-with-override", { prUrl: PR });
+  const OVERRIDE_KEY = decisionKey(OVERRIDE);
+
+  it("[A1811] shows the outcome in the form, calls no validator answer, records resolve after the approval, and the driver then starts the pipeline again", async () => {
+    const { world, validator } = await parked({ live: OVERRIDE });
+    const startsBefore = validator.calls.filter((call) => call.operation === "start").length;
+    const call = world.call("factoryman_decide", { taskId: "t1", key: OVERRIDE_KEY, action: "rerun" });
+    const formId = await nextForm(world);
+    const form = world.host.harness.inspection.pendingInteractions.find((pending) => pending.id === formId);
+    expect(readDecisionPayload(form?.payload)).toMatchObject({ kind: "finished", outcome: "passed-with-override", findings: [], answer: { action: "rerun", findingIds: [], instructions: "" } });
+    expect(state(world)).toBe("needs_decision");
+    world.host.harness.behavior.submitInteraction(formId, { decision: "approved", comment: "Try once more." });
+    const result = await call;
+    expect(result.isError, result.text).toBe(false);
+    expect(answers(validator)).toEqual([]);
+    const resolve = rows(world).findLast((row) => row.event === "resolve" && row.outcome === "applied");
+    expect(resolve).toMatchObject({ actor: "supervisor" });
+    expect(resolve?.evidence).toMatch(/owner approved a new no-mistakes run in the decision form/);
+    expect(resolve?.evidence).toContain("passed-with-override");
+    expect(resolve?.evidence).toContain("Comment: Try once more.");
+    await settle(() => validator.calls.filter((entry) => entry.operation === "start").length > startsBefore);
+    expect(validator.calls.filter((entry) => entry.operation === "start").length).toBeGreaterThan(startsBefore);
+    expect(state(world)).toBe("validating");
+  });
+
+  it("[A1811] works for every outcome that parks a task: passed, passed-with-skips, and checks-passed with no pull request", async () => {
+    for (const live of [finished("passed", { prUrl: PR }), finished("passed-with-skips", { prUrl: PR }), finished("checks-passed")]) {
+      const { world, validator } = await parked({ live });
+      const result = await decideWith(world, { taskId: "t1", key: decisionKey(live), action: "rerun" }, { decision: "approved" });
+      expect(result.isError, `${live.outcome}: ${result.text}`).toBe(false);
+      expect(answers(validator)).toEqual([]);
+    }
+  });
+
+  it.each([
+    ["approve", { action: "approve" }, /No gate is pending.*only decision is rerun/],
+    ["skip", { action: "skip" }, /No gate is pending/],
+    ["fix", { action: "fix", findingIds: ["review-1"] }, /No gate is pending/],
+  ])("[A1812] refuses %s on a finished run and sends nothing", async (_name, extra, expected) => {
+    const { world, validator } = await parked({ live: OVERRIDE });
+    const before = rows(world).length;
+    const result = await world.call("factoryman_decide", { taskId: "t1", key: OVERRIDE_KEY, ...extra });
+    expect(result.isError).toBe(true);
+    expect(result.text).toMatch(expected);
+    expect(world.host.harness.inspection.pendingInteractions).toEqual([]);
+    expect(answers(validator)).toEqual([]);
+    expect(state(world)).toBe("needs_decision");
+    expect(rows(world)).toHaveLength(before);
+  });
+
+  it("[A1812] refuses rerun on a gate and sends nothing", async () => {
+    const { world, validator } = await parked();
+    const result = await world.call("factoryman_decide", { taskId: "t1", key: KEY, action: "rerun" });
+    expect(result.isError).toBe(true);
+    expect(result.text).toMatch(/rerun is for a run that finished.*approve, skip, or fix/);
+    expect(world.host.harness.inspection.pendingInteractions).toEqual([]);
+    expect(answers(validator)).toEqual([]);
   });
 });

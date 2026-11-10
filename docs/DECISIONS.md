@@ -1520,3 +1520,16 @@ Tier 2 runs and credentials are out of scope.
 
 The specification has no open marker, and the brief fixes the choices that a clarification would ask about: the form path, the tool name, the limit of the second case, and the files that change.
 The lifecycle step `/speckit.clarify` was therefore skipped, and this entry is the record.
+
+### D-144: The loop ran in groups, and the refusal and rerun tests were written after the flow (Deviation, owner should know)
+
+The test list has more than 60 behaviors, and the cycle log records one red per group of related tests, as D-133 did.
+The pure parts (the key, the payload contract, the answer rules, the driver additions, the registration) each had a red before their code.
+
+The answer flow in `src/tools/decide.ts` was written in one function with its checks (cycle 6), so the tests of the checks that came after it passed on their first run: 31 tests of `[A1805]` to `[A1810]` (cycle 7), and the tests of `[A1811]` and `[A1812]` (cycle 8).
+Those tests are not test-first.
+The rubric of the TDD audit fails such a behavior, and the repository commits only at green (D-099), so history cannot show the test first.
+Each of these tests was proved able to fail with deliberate mutants of `src/tools/decide.ts`: 20 mutants (drop the key comparison, the state check, the worker refusal, the same-project check, the ship check, the post-approval key check, the post-approval machine preview, the live-read failure, the open-form claim, the plan refusal; treat a denial or a cancel as an approval; send a rerun through the answer path; accept `checks-passed` with a pull request, or `failed`, as a parked run; accept any action on a finished run; drop the finding-ID check; ignore the instructions; drop the owner's comment from the evidence), and every one was killed by a named test (the cycle log lists them).
+The one test of this group that failed first is `[A1809]`.
+
+The position is the one taken for D-099, D-107, D-116, D-122, D-133, and D-135: the rubric fails the feature, the evidence is complete, and the owner decides.
