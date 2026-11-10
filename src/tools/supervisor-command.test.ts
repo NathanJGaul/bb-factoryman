@@ -3,6 +3,7 @@ import { withDispatchedTask } from "../../test/fixtures/runtime";
 import { testRuntime } from "../../test/fixtures/runtime";
 import { modelEntry, providerState } from "../../test/fixtures/bb-port";
 import { answerRead, isRead } from "../../test/fixtures/validator-read";
+import { defaultProjectConfig } from "../store/store";
 import { runFactorymanCommand } from "./supervisor-command";
 
 describe("bb factoryman supervisor", () => {
@@ -259,13 +260,9 @@ describe("bb factoryman supervisor", () => {
       expect(t.files.reads).toEqual([]);
     });
 
-    it("[U1030] refuses --apply, prints usage without a file, and reports a file that cannot be read", async () => {
+    it("[U1030] prints usage without a file, and reports a file that cannot be read", async () => {
       const t = testRuntime();
       t.files.files.set("/reg/projects.md", registry);
-      const apply = await runFactorymanCommand(t.runtime, ["import-registry", "--file", "/reg/projects.md", "--apply"]);
-      expect(apply.exitCode).toBe(2);
-      expect(apply.stderr).toMatch(/dry run/);
-      expect(t.files.reads).toEqual([]);
       for (const argv of [["import-registry"], ["import-registry", "--file"], ["import-registry", "--bogus", "x"]]) {
         const bad = await runFactorymanCommand(t.runtime, argv);
         expect(bad.exitCode, argv.join(" ")).toBe(2);
@@ -279,6 +276,198 @@ describe("bb factoryman supervisor", () => {
       expect(denied.exitCode).toBe(1);
       expect(denied.stderr).toContain("EACCES");
     });
+  });
+});
+
+const APPLY_REGISTRY = [
+  "- gizmos [direct-PR +yolo branch=wip/] - Direct (added 2026-01-02)",
+  "- gadgets [no-mistakes-prod-only] - Conditional (added 2026-01-03)",
+  "- mystery [wibble] - Unknown (added 2026-01-04)",
+  "- dup [local-only] - One (added 2026-01-05)",
+  "- dup [direct-PR] - Two (added 2026-01-06)",
+].join("\n");
+
+function applyRuntime() {
+  const t = testRuntime();
+  t.files.files.set("/reg/projects.md", APPLY_REGISTRY);
+  t.bb.projectList = [
+    { id: "proj-gizmos", name: "Gizmos" },
+    { id: "proj-gadgets", name: "gadgets" },
+    { id: "proj-mystery", name: "mystery" },
+    { id: "proj-dup", name: "dup" },
+  ];
+  return t;
+}
+
+const apply = (t: ReturnType<typeof applyRuntime>, ...rest: string[]) => runFactorymanCommand(t.runtime, ["import-registry", "--file", "/reg/projects.md", ...rest]);
+
+describe("bb factoryman import-registry dry run (characterization)", () => {
+  it("[U1909] prints today's report byte for byte and never writes", async () => {
+    const t = testRuntime();
+    t.files.files.set("/reg/projects.md", ["- gadgets [direct-PR +yolo branch=wip/] - Direct (added 2026-01-02)", "- mystery [wibble] - Unknown (added 2026-01-03)"].join("\n"));
+    t.bb.projectList = [{ id: "proj-9", name: "Gadgets" }];
+    const before = JSON.stringify(t.runtime.deps.store.getProjectConfig("proj-9"));
+    const result = await runFactorymanCommand(t.runtime, ["import-registry", "--file", "/reg/projects.md"]);
+    expect(result).toEqual({
+      exitCode: 0,
+      stdout: [
+        "Registry /reg/projects.md: 2 projects, 0 other lines skipped.",
+        "Dry run: nothing was written. A project keeps its stored config (no-mistakes, yolo off) until a person sets it.",
+        "",
+        "name | registered mode | plugin mode | yolo | branch prefix | forge | bb project",
+        "gadgets | direct-PR | direct-PR | on | wip/ | none | proj-9",
+        "mystery | wibble | unknown | off | fm/ | none | not found in bb",
+        "",
+        "Flags (look at these before the cutover):",
+        "- mystery: unknown mode `wibble`: the plugin does not guess a mode",
+        "",
+      ].join("\n"),
+    });
+    expect(JSON.stringify(t.runtime.deps.store.getProjectConfig("proj-9"))).toBe(before);
+  });
+});
+
+describe("bb factoryman import-registry --apply", () => {
+  it.each([
+    ["--apply without --project", ["--apply"]],
+    ["--project without --apply", ["--project", "gizmos"]],
+    ["--project twice", ["--apply", "--project", "gizmos", "--project", "gadgets"]],
+    ["--project with no value", ["--apply", "--project"]],
+    ["--project with a flag as its value", ["--apply", "--project", "--apply"]],
+    ["--project with a blank value", ["--apply", "--project", " "]],
+    ["an unknown flag", ["--apply", "--project", "gizmos", "--bogus"]],
+    ["a stray argument", ["--apply", "--project", "gizmos", "extra"]],
+  ])("[U1904] prints the usage for %s, and reads and writes nothing", async (_label, flags) => {
+    const t = applyRuntime();
+    const result = await apply(t, ...flags);
+    expect(result.exitCode).toBe(2);
+    expect(result.stderr).toContain("Usage: bb factoryman import-registry --file <path> --apply --project <name>");
+    expect(t.files.reads).toEqual([]);
+    expect(t.bb.callsTo("listProjects")).toEqual([]);
+    expect(t.runtime.deps.store.getProjectConfig("proj-gizmos")).toEqual(defaultProjectConfig("proj-gizmos"));
+  });
+
+  it("[U1905] writes the config of the named project, says what it wrote and left, and reads only the registry file", async () => {
+    const t = applyRuntime();
+    const store = t.runtime.deps.store;
+    store.putProjectConfig({ ...defaultProjectConfig("proj-gizmos"), baseBranch: "trunk", defaultMachine: "m-1" });
+    const result = await apply(t, "--apply", "--project", "gizmos");
+    expect(result.exitCode).toBe(0);
+    expect(store.getProjectConfig("proj-gizmos")).toEqual({ projectId: "proj-gizmos", deliveryMode: "direct-PR", yolo: true, branchPrefix: "wip/", baseBranch: "trunk", defaultMachine: "m-1" });
+    const out = result.stdout ?? "";
+    expect(out).toContain('Applied registry line "gizmos" to bb project proj-gizmos.');
+    expect(out).toMatch(/written:\n {2}deliveryMode: no-mistakes -> direct-PR\n {2}yolo: off -> on\n {2}branchPrefix: \(none\) -> wip\//);
+    expect(out).toMatch(/unchanged:\n {2}baseBranch: trunk \(not in the registry\)\n {2}defaultMachine: m-1 \(not in the registry\)/);
+    expect(out).toContain("Forge none is not stored.");
+    expect(t.files.reads).toEqual(["/reg/projects.md"]);
+    expect(t.bb.calls.map((call) => call.method)).toEqual(["listProjects"]);
+    expect(store.getProjectConfig("proj-gadgets")).toEqual(defaultProjectConfig("proj-gadgets"));
+    expect(t.execCalls).toEqual([]);
+  });
+
+  it("[U1904] reads the last --file when it is given twice, and accepts --apply twice", async () => {
+    const t = applyRuntime();
+    t.files.files.set("/other.md", "- gizmos [local-only] - Other (added 2026-01-02)");
+    const result = await runFactorymanCommand(t.runtime, ["import-registry", "--file", "/reg/projects.md", "--apply", "--file", "/other.md", "--apply", "--project", "gizmos"]);
+    expect(result.exitCode).toBe(0);
+    expect(t.files.reads).toEqual(["/other.md"]);
+    expect(t.runtime.deps.store.getProjectConfig("proj-gizmos").deliveryMode).toBe("local-only");
+  });
+
+  it("[U1905] prints the notes of the line", async () => {
+    const t = applyRuntime();
+    const result = await apply(t, "--apply", "--project", "gadgets");
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).toContain("Notes:");
+    expect(result.stdout).toMatch(/- gadgets: a conditional policy in firstmate/);
+    expect(t.runtime.deps.store.getProjectConfig("proj-gadgets").deliveryMode).toBe("no-mistakes");
+  });
+
+  it("[U1906] writes nothing on a rerun and says so", async () => {
+    const t = applyRuntime();
+    const store = t.runtime.deps.store;
+    expect((await apply(t, "--apply", "--project", "gizmos")).exitCode).toBe(0);
+    const writes: unknown[] = [];
+    const put = store.putProjectConfig.bind(store);
+    store.putProjectConfig = (config) => {
+      writes.push(config);
+      put(config);
+    };
+    const before = JSON.stringify(store.getProjectConfig("proj-gizmos"));
+    const again = await apply(t, "--apply", "--project", "gizmos");
+    expect(again.exitCode).toBe(0);
+    expect(writes).toEqual([]);
+    expect(JSON.stringify(store.getProjectConfig("proj-gizmos"))).toBe(before);
+    expect(again.stdout).toContain("Nothing was written.");
+    expect(again.stdout).not.toContain("written:");
+    expect(again.stdout).toMatch(/unchanged:\n {2}deliveryMode: direct-PR\n {2}yolo: on\n {2}branchPrefix: wip\//);
+  });
+
+  it.each([
+    ["no registry line for the name", ["--project", "nothing"], /registry has no project named nothing/],
+    ["two registry lines", ["--project", "dup"], /2 lines named dup/],
+    ["a flagged line", ["--project", "mystery"], /flagged.*unknown mode `wibble`/],
+  ])("[U1907] refuses %s with exit 1 and the reason, and writes nothing", async (_label, flags, reason) => {
+    const t = applyRuntime();
+    const result = await apply(t, "--apply", ...flags);
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toMatch(reason);
+    expect(result.stdout ?? "").toBe("");
+    for (const id of ["proj-gizmos", "proj-gadgets", "proj-mystery", "proj-dup"]) {
+      expect(t.runtime.deps.store.getProjectConfig(id)).toEqual(defaultProjectConfig(id));
+    }
+  });
+
+  it("[U1907] refuses a project that bb does not list, and two bb projects with the name", async () => {
+    const t = applyRuntime();
+    t.bb.projectList = [{ id: "a", name: "other" }];
+    const unknown = await apply(t, "--apply", "--project", "gizmos");
+    expect(unknown.exitCode).toBe(1);
+    expect(unknown.stderr).toContain("bb has no project named gizmos");
+    t.bb.projectList = [{ id: "a", name: "gizmos" }, { id: "b", name: "Gizmos" }];
+    const twice = await apply(t, "--apply", "--project", "gizmos");
+    expect(twice.exitCode).toBe(1);
+    expect(twice.stderr).toContain("2 projects named gizmos");
+    expect(t.runtime.deps.store.getProjectConfig("a")).toEqual(defaultProjectConfig("a"));
+  });
+
+  it("[U1907] refuses when bb cannot list its projects, and logs a warning", async () => {
+    const t = applyRuntime();
+    t.bb.projectsError = new Error("bb is down");
+    const result = await apply(t, "--apply", "--project", "gizmos");
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toContain("could not be listed");
+    expect(result.stderr).toContain("bb is down");
+    expect(t.lines.some((line) => line.level === "warn" && line.message.includes("bb is down"))).toBe(true);
+    expect(t.runtime.deps.store.getProjectConfig("proj-gizmos")).toEqual(defaultProjectConfig("proj-gizmos"));
+  });
+
+  it("[U1907] reports a missing or unreadable registry file as the dry run does, and writes nothing", async () => {
+    const t = applyRuntime();
+    const missing = await runFactorymanCommand(t.runtime, ["import-registry", "--file", "/nope.md", "--apply", "--project", "gizmos"]);
+    expect(missing.exitCode).toBe(1);
+    expect(missing.stderr).toBe("Could not read /nope.md: the file does not exist.\n");
+    t.files.errors.set("/err.md", new Error("EACCES: permission denied"));
+    const denied = await runFactorymanCommand(t.runtime, ["import-registry", "--file", "/err.md", "--apply", "--project", "gizmos"]);
+    expect(denied.exitCode).toBe(1);
+    expect(denied.stderr).toContain("EACCES");
+    expect(t.runtime.deps.store.getProjectConfig("proj-gizmos")).toEqual(defaultProjectConfig("proj-gizmos"));
+  });
+
+  it("[U1908] leaves the stored config unchanged and exits 1 when the write fails", async () => {
+    const t = applyRuntime();
+    const store = t.runtime.deps.store;
+    store.putProjectConfig({ ...defaultProjectConfig("proj-gizmos"), baseBranch: "trunk" });
+    const put = store.putProjectConfig.bind(store);
+    store.putProjectConfig = (config) => {
+      put(config);
+      throw new Error("disk full");
+    };
+    const result = await apply(t, "--apply", "--project", "gizmos");
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toContain("Could not write");
+    expect(result.stderr).toContain("disk full");
+    expect(store.getProjectConfig("proj-gizmos")).toEqual({ ...defaultProjectConfig("proj-gizmos"), baseBranch: "trunk" });
   });
 });
 

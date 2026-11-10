@@ -193,8 +193,8 @@ export function createPlugin(options: PluginOptions = {}): (bb: BbPluginApi) => 
         },
         {
           name: "import-registry",
-          summary: "Preview the move from firstmate's project registry. It only reads",
-          usage: "bb factoryman import-registry --file <path>",
+          summary: "Preview the move from firstmate's project registry. With --apply --project <name> it also writes the stored config of that one project",
+          usage: "bb factoryman import-registry --file <path>\nbb factoryman import-registry --file <path> --apply --project <name>",
         },
         {
           name: "dispatch",

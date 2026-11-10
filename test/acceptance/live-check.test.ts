@@ -65,6 +65,7 @@ describe("the live-check runbook: isolation", () => {
       "The plugin's command",
       "The protection checklist",
       "The import dry run",
+      "The import apply",
       "The read RPC",
       "The dispatch config",
       "The skills",
@@ -101,7 +102,7 @@ describe("the live-check runbook: isolation", () => {
     const registered = new Set((world.host.harness.inspection.registrations.cli?.commands ?? []).map((command) => command.name));
     const allowedFlags: Record<string, string[]> = {
       preflight: ["--project", "--provider"],
-      "import-registry": ["--file", "--apply"],
+      "import-registry": ["--file", "--apply", "--project"],
       protection: [],
       supervisor: [],
       "supervisor start": ["--project", "--profile", "--prompt"],

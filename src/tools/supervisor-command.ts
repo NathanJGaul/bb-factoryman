@@ -3,6 +3,7 @@ import { pickMachine } from "../dispatch/placement";
 import { preflightReport, reportText } from "../machines/preflight";
 import { protectionSteps } from "../limits/protection";
 import { parseRegistry, type RegistryEntry } from "../limits/registry";
+import { planApply, type ApplyPlan } from "../limits/registry-apply";
 import { errorText, type Runtime } from "../runtime";
 import { roleAdvice } from "../harness/advice";
 import { GENERIC_CONTRACT, contractFor } from "../harness/contracts";
@@ -15,13 +16,15 @@ export interface CommandResult {
   stderr?: string;
 }
 
+const IMPORT_USAGE = "Usage: bb factoryman import-registry --file <path>\n" + "Usage: bb factoryman import-registry --file <path> --apply --project <name>\n";
+
 const USAGE =
   "Usage: bb factoryman supervisor <thread-id>\n" +
   START_USAGE +
   "Usage: bb factoryman preflight <machine> --project <project-id> [--provider <provider-id>]\n" +
   INIT_USAGE +
   "Usage: bb factoryman protection <owner/repo> [--branch <branch>] [--check <name>]\n" +
-  "Usage: bb factoryman import-registry --file <path>\n";
+  IMPORT_USAGE;
 
 /** What bb tells a command about where it was called. */
 export interface CommandContext {
@@ -128,25 +131,56 @@ function protection(args: string[]): CommandResult {
   return steps.ok ? { exitCode: 0, stdout: steps.text } : { exitCode: 2, stderr: `${steps.message}\n${USAGE}` };
 }
 
-const DRY_RUN_ONLY = "bb factoryman import-registry is a dry run. --apply is not implemented in this release, so nothing was read or written.\n";
-
 function reportLine(entry: RegistryEntry, projectId: string | undefined): string {
   return [entry.name, entry.registeredMode, entry.mode ?? "unknown", entry.yolo ? "on" : "off", entry.branchPrefix, entry.forge, projectId ?? "not found in bb"].join(" | ");
 }
 
-/** Read firstmate's registry and print what each project would become. It writes nothing (D-088). */
-async function importRegistry(rt: Runtime, args: string[]): Promise<CommandResult> {
+/** The arguments of `import-registry`, or null when the call is malformed. */
+function parseImportArgs(args: string[]): { file: string; apply: boolean; project: string | null } | null {
   let file: string | null = null;
   let apply = false;
+  let project: string | null = null;
+  const valueAt = (i: number): string | null => {
+    const value = args[i + 1];
+    return value === undefined || value.trim() === "" || value.startsWith("--") ? null : value;
+  };
   for (let i = 0; i < args.length; i += 1) {
     if (args[i] === "--apply") apply = true;
-    else if (args[i] === "--file" && args[i + 1] !== undefined && !(args[i + 1] as string).startsWith("--")) {
+    else if (args[i] === "--file" && valueAt(i) !== null) {
       file = args[i + 1] as string;
       i += 1;
-    } else return { exitCode: 2, stderr: USAGE };
+    } else if (args[i] === "--project" && project === null && valueAt(i) !== null) {
+      project = args[i + 1] as string;
+      i += 1;
+    } else return null;
   }
-  if (apply) return { exitCode: 2, stderr: DRY_RUN_ONLY };
-  if (file === null) return { exitCode: 2, stderr: USAGE };
+  // Apply names exactly one project. A project without --apply is a half-formed apply, not a filtered dry run (D-148).
+  if (file === null || apply !== (project !== null)) return null;
+  return { file, apply, project };
+}
+
+const show = (value: unknown): string => (value === null ? "(none)" : typeof value === "boolean" ? (value ? "on" : "off") : String(value));
+
+function applyReport(plan: ApplyPlan): string {
+  const written = plan.changes.filter((change) => change.changed);
+  const kept = plan.changes.filter((change) => !change.changed);
+  const lines = [`Applied registry line "${plan.entryName}" to bb project ${plan.projectId}.`];
+  if (written.length > 0) lines.push("written:", ...written.map((change) => `  ${change.field}: ${show(change.from)} -> ${show(change.to)}`));
+  lines.push("unchanged:", ...kept.map((change) => `  ${change.field}: ${show(change.from)}`), ...plan.untouched.map((item) => `  ${item.field}: ${show(item.value)} (not in the registry)`));
+  if (written.length === 0) lines.push("Nothing was written.");
+  if (plan.notes.length > 0) lines.push("Notes:", ...plan.notes.map((note) => `- ${plan.entryName}: ${note}`));
+  lines.push(`Forge ${plan.forge} is not stored.`);
+  return `${lines.join("\n")}\n`;
+}
+
+/**
+ * `bb factoryman import-registry --file <path>` reads firstmate's registry and prints what each project would become.
+ * With `--apply --project <name>` it also writes the stored config of that one project (D-148). Nothing else is written.
+ */
+async function importRegistry(rt: Runtime, args: string[]): Promise<CommandResult> {
+  const parsed = parseImportArgs(args);
+  if (parsed === null) return { exitCode: 2, stderr: IMPORT_USAGE };
+  const { file, project: applyTo } = parsed;
 
   let text: string | null;
   try {
@@ -157,6 +191,7 @@ async function importRegistry(rt: Runtime, args: string[]): Promise<CommandResul
   if (text === null) return { exitCode: 1, stderr: `Could not read ${file}: the file does not exist.\n` };
 
   const { entries, skipped } = parseRegistry(text);
+  if (applyTo !== null) return applyRegistry(rt, applyTo, entries);
   let projects: Array<{ id: string; name: string }> = [];
   let projectsNote: string | null = null;
   try {
@@ -179,4 +214,28 @@ async function importRegistry(rt: Runtime, args: string[]): Promise<CommandResul
   if (flagged.length > 0) lines.push("", "Flags (look at these before the cutover):", ...flagged);
   if (notes.length > 0) lines.push("", "Notes:", ...notes);
   return { exitCode: 0, stdout: `${lines.join("\n")}\n` };
+}
+
+/** Write the stored config of the one bb project named `name` from its registry line. It refuses on any doubt (D-148). */
+async function applyRegistry(rt: Runtime, name: string, entries: RegistryEntry[]): Promise<CommandResult> {
+  const { bb, store, log } = rt.deps;
+  let projects: Array<{ id: string; name: string }>;
+  try {
+    projects = await bb.listProjects();
+  } catch (error) {
+    log.warn(`Could not list the bb projects for the registry apply: ${errorText(error)}`);
+    return { exitCode: 1, stderr: `The bb projects could not be listed (${errorText(error)}), so nothing was written.\n` };
+  }
+  const plan = planApply({ name, entries, projects, stored: (id) => store.getProjectConfig(id) });
+  if (!plan.ok) return { exitCode: 1, stderr: `${plan.message}\n` };
+  const next = plan.next;
+  if (next !== null) {
+    try {
+      store.transaction(() => store.putProjectConfig(next));
+    } catch (error) {
+      return { exitCode: 1, stderr: `Could not write the config of ${plan.projectId}: ${errorText(error)}\n` };
+    }
+    log.info(`Applied the registry line for ${plan.entryName} to bb project ${plan.projectId}.`);
+  }
+  return { exitCode: 0, stdout: applyReport(plan) };
 }

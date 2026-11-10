@@ -206,7 +206,8 @@ MACHINE=$(bblab x bb machine list --json | jq -r '.[0].name')
 | --- | --- | --- |
 | The plugin's command | `bblab x bb factoryman preflight "$MACHINE" --project $PROJ` | the clone host (the lab's one machine, named in `bb machine list`): "holds the project's clone, so no remote preflight applies" |
 | The protection checklist | `bblab x bb factoryman protection acme/widgets` | prints steps, and says it ran nothing |
-| The import dry run | `bblab x bb factoryman import-registry --file <registry copy>` | a report, and `bb factoryman import-registry --apply` is refused |
+| The import dry run | `bblab x bb factoryman import-registry --file <registry copy>` | a report, and `--apply` without `--project` prints the usage and writes nothing |
+| The import apply | `bblab x bb factoryman import-registry --file <registry copy> --apply --project <lab project name>` twice | the project's stored config holds the line's mode, `yolo`, and prefix; the second run says `Nothing was written.` |
 | The read RPC | call `listTasks` and `apiVersion` over the plugin's RPC route | `{ "apiVersion": 1, ... }` |
 | The dispatch config | put `dispatch.json` and `workflow.json` in `.bb/factoryman/` of the project's clone and read the dispatch result | the profile source is named; a bad file blocks with the reason |
 | The skills | section 4 | both plugin skills listed |
