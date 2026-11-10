@@ -77,9 +77,9 @@ The headings were written (commit `docs(decisions)`), and the suite was green ag
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| U1813 | The decision renderer ID is `factoryman-decision-approval` and differs from the merge ID | FR-009 | example | PENDING | `src/approval/contract.test.ts::[U1813]` |
-| U1814 | `readDecisionPayload` returns a valid gate payload and a valid finished-run payload unchanged | FR-009 | example | PENDING | `src/approval/contract.test.ts::[U1814]` |
-| U1815 | `readDecisionPayload` returns null for a non-object, an array, null, an extra key at any level, a missing key, a wrong type, a `kind` or `answer.action` outside its set, an `answer.findingIds` entry that is not in `findings`, a `fix` with no IDs, and a finding with an extra key | FR-009, FR-018 | example | PENDING | `src/approval/contract.test.ts::[U1815]` |
+| U1813 | The decision renderer ID is `factoryman-decision-approval` and differs from the merge ID | FR-009 | example | DONE | `src/approval/contract.test.ts::[U1813]` |
+| U1814 | `readDecisionPayload` returns a valid gate payload and a valid finished-run payload unchanged | FR-009 | example | DONE | `src/approval/contract.test.ts::[U1814]` |
+| U1815 | `readDecisionPayload` returns null for a non-object, an array, null, an extra key at any level, a missing key, a wrong type, a `kind` or `answer.action` outside its set, an `answer.findingIds` entry that is not in `findings`, a `fix` with no IDs, and a finding with an extra key | FR-009, FR-018 | example | DONE | `src/approval/contract.test.ts::[U1815]` |
 
 ### `src/tools/decide.ts`
 
