@@ -54,9 +54,9 @@ The headings were written (commit `docs(decisions)`), and the suite was green ag
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| U1801 | A gate view gives the key `nm-<runId>-<step>-<8 hex>` | FR-005 | example | PENDING | `src/validator/key.test.ts::[U1801]` |
-| U1802 | A finished view gives `nm-<runId>-<outcome>-<8 hex>`, a null run ID gives `unknown`, and a running view gives `running` in the middle part | FR-005 | example | PENDING | `src/validator/key.test.ts::[U1802]` |
-| U1803 | Equal views give equal keys, and a change of status, finding ID, finding order, outcome, run ID, or phase changes the key (each field alone) | FR-005 | example | PENDING | `src/validator/key.test.ts::[U1803]` |
+| U1801 | A gate view gives the key `nm-<runId>-<step>-<8 hex>` | FR-005 | example | DONE | `src/validator/key.test.ts::[U1801]` |
+| U1802 | A finished view gives `nm-<runId>-<outcome>-<8 hex>`, a null run ID gives `unknown`, and a running view gives `running` in the middle part | FR-005 | example | DONE | `src/validator/key.test.ts::[U1802]` |
+| U1803 | Equal views give equal keys, and a change of status, finding ID, finding order, outcome, run ID, or phase changes the key (each field alone) | FR-005 | example | DONE | `src/validator/key.test.ts::[U1803]` |
 | U1804 | After `viewSignature` moves, the driver still keeps a task parked while the view equals the parking view, resolves when it changed, and takes the first view after a restart as the baseline | FR-005 | characterization | BASELINE | `src/validator/driver.test.ts::[U188]`, `[U189]`, `[U207]` |
 
 ### `src/validator/driver.ts`

@@ -2,6 +2,7 @@ import type { Actor } from "../machine/types";
 import { hostFor } from "../machines/route";
 import { errorText, type Runtime } from "../runtime";
 import type { TaskRow } from "../store/types";
+import { viewSignature } from "./key";
 import type { Answer, Finding, RunView, Validator } from "./types";
 
 export type AnswerResult = { ok: true } | { ok: false; message: string };
@@ -12,11 +13,6 @@ const DEFAULT_MAX_ERRORS = 5;
 
 /** One finding as one line, with the fields exactly as the validator wrote them. */
 export const findingLine = (finding: Finding): string => `- ${finding.id} [${finding.severity}] ${finding.file}: ${finding.action}: ${finding.description}`;
-
-/** Two views are equal when their phase, gate, finding IDs, outcome, and run ID are equal. */
-function signature(view: RunView): string {
-  return JSON.stringify([view.phase, view.gate?.step ?? null, view.gate?.status ?? null, view.gate?.findings.map((f) => f.id) ?? null, view.outcome, view.runId]);
-}
 
 function gateEvidence(view: RunView): string {
   const gate = view.gate!;
@@ -156,10 +152,10 @@ export class ValidationDriver {
     const baseline = this.baselines.get(task.taskId) ?? null;
     if (view.phase !== "running") {
       if (baseline === null) {
-        this.baselines.set(task.taskId, signature(view));
+        this.baselines.set(task.taskId, viewSignature(view));
         return "continue";
       }
-      if (signature(view) === baseline) return "continue";
+      if (viewSignature(view) === baseline) return "continue";
     }
     await this.apply(task, { type: "resolve", actor: "system", evidence: "The validator's view changed, so the pipeline is moving again." });
     this.baselines.delete(task.taskId);
@@ -168,7 +164,7 @@ export class ValidationDriver {
 
   private async park(task: TaskRow, view: RunView, evidence: string): Promise<"continue" | "stop"> {
     await this.apply(task, { type: "finding", actor: "system", evidence });
-    this.baselines.set(task.taskId, signature(view));
+    this.baselines.set(task.taskId, viewSignature(view));
     return this.next(task);
   }
 
