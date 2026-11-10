@@ -3,51 +3,12 @@ import { DECISION_RENDERER_ID, readDecisionPayload } from "../../src/approval/co
 import type { ExecResult } from "../../src/exec";
 import { FakeValidator } from "../../src/validator/fake";
 import { decisionKey } from "../../src/validator/key";
-import type { Finding, Outcome, RunView } from "../../src/validator/types";
-import { DISPATCH, loadWorld, nextForm, settle, type World, type WorldOptions } from "../fixtures/plugin-host";
+import type { RunView } from "../../src/validator/types";
+import { GATE, KEY, PR, disposeWorlds, err, finished, gate, ok, parked, parkedOn, track, view, w1 } from "../fixtures/decision-world";
+import { DISPATCH, loadWorld, nextForm, settle, type World } from "../fixtures/plugin-host";
 import { recordedNoMistakes } from "../fixtures/recorded";
 
-const w1 = { threadId: "thr-w1" };
-const finding = (id: string): Finding => ({ id, severity: "error", file: "sum.js", action: id === "review-2" ? "ask-user" : "auto-fix", description: `Problem ${id}, with "quotes" and \`ticks\`.` });
-const view = (overrides: Partial<RunView> = {}): RunView => ({ runId: "r1", branch: "fm/t1", phase: "running", gate: null, outcome: null, prUrl: null, error: null, ...overrides });
-const gate = (status: string, ...ids: string[]): RunView => view({ phase: "gate", gate: { step: "review", status, findings: ids.map(finding) } });
-const ok = (value: RunView) => ({ ok: true as const, value });
-const err = (message: string) => ({ ok: false as const, error: { kind: "command_failed" as const, message } });
-
-const PR = "https://github.com/acme/widgets/pull/7";
-const finished = (outcome: Outcome, overrides: Partial<RunView> = {}): RunView => view({ phase: "finished", outcome, ...overrides });
-
-const GATE = gate("awaiting_approval", "review-1", "review-2");
-const KEY = decisionKey(GATE);
-
-const worlds: World[] = [];
-afterEach(async () => {
-  for (const world of worlds.splice(0)) await world.host.harness.lifecycle.dispose();
-});
-
-interface Parked {
-  world: World;
-  validator: FakeValidator;
-}
-
-/** A no-mistakes ship task that the real driver parked in needs_decision on `live`. */
-async function parked(options: { live?: RunView; yolo?: boolean; worldOptions?: WorldOptions } = {}): Promise<Parked> {
-  const live = options.live ?? GATE;
-  const validator = new FakeValidator();
-  // The first `start` parks the task. Every later `start` (after a resolve) reports a running pipeline.
-  validator.script("start", [ok(live), ok(view())]);
-  validator.script("status", [ok(live)]);
-  const world = await loadWorld({ validator, ...options.worldOptions });
-  worlds.push(world);
-  world.setProject({ deliveryMode: "no-mistakes", yolo: options.yolo ?? false });
-  world.paths.set("env-thr-w1", "/work/tree");
-  await world.call("factoryman_dispatch", DISPATCH);
-  await world.call("factoryman_report", { outcome: "done", evidence: "Committed abc123." }, w1);
-  await settle(() => world.store.getTask("t1")?.state === "needs_decision");
-  expect(world.store.getTask("t1")?.state).toBe("needs_decision");
-  world.sent("thr-sup").length = 0;
-  return { world, validator };
-}
+afterEach(disposeWorlds);
 
 const state = (world: World) => world.store.getTask("t1")?.state;
 const answers = (validator: FakeValidator) => validator.calls.filter((call) => call.operation === "answer");
@@ -67,7 +28,7 @@ describe("the Decision key line", () => {
     validator.script("start", [ok(GATE)]);
     validator.script("status", [ok(GATE)]);
     const world = await loadWorld({ validator });
-    worlds.push(world);
+    track(world);
     world.setProject({ deliveryMode: "no-mistakes" });
     world.paths.set("env-thr-w1", "/work/tree");
     await world.call("factoryman_dispatch", DISPATCH);
@@ -150,7 +111,7 @@ describe("factoryman_decide over the real no-mistakes adapter", () => {
         return Promise.resolve<ExecResult>({ code: 0, stdout, stderr: "" });
       },
     });
-    worlds.push(world);
+    track(world);
     world.setProject({ deliveryMode: "no-mistakes" });
     world.paths.set("env-thr-w1", "/work/tree");
     await world.call("factoryman_dispatch", DISPATCH);
@@ -217,13 +178,13 @@ describe("factoryman_decide refuses before it opens a form", () => {
 
   it("[A1805] refuses a task that is not in needs_decision, and a scout task", async () => {
     const working = await loadWorld({ validator: new FakeValidator() });
-    worlds.push(working);
+    track(working);
     working.setProject({ deliveryMode: "no-mistakes" });
     await working.call("factoryman_dispatch", DISPATCH);
     await refused(working, new FakeValidator(), { taskId: "t1", key: KEY, action: "approve" }, undefined, /illegal_transition.*working.*needs_decision/);
 
     const scout = await loadWorld({ validator: new FakeValidator() });
-    worlds.push(scout);
+    track(scout);
     await scout.call("factoryman_dispatch", { ...DISPATCH, kind: "scout" });
     await refused(scout, new FakeValidator(), { taskId: "t1", key: KEY, action: "approve" }, undefined, /illegal_transition.*ship task/);
   });
@@ -297,17 +258,6 @@ describe("factoryman_decide when the gate moves or cannot be read", () => {
       return box.failStatus ? err("daemon is restarting") : ok(box.view);
     };
     return { fake, box };
-  }
-
-  async function parkedOn(validator: FakeValidator) {
-    const world = await loadWorld({ validator });
-    worlds.push(world);
-    world.setProject({ deliveryMode: "no-mistakes" });
-    world.paths.set("env-thr-w1", "/work/tree");
-    await world.call("factoryman_dispatch", DISPATCH);
-    await world.call("factoryman_report", { outcome: "done", evidence: "Committed abc123." }, w1);
-    await settle(() => world.store.getTask("t1")?.state === "needs_decision");
-    return world;
   }
 
   it("[A1808] sends nothing when the gate has another key after the owner approves", async () => {
