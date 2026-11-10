@@ -2,7 +2,7 @@
 feature: 013-factoryman-decide-tool
 verdict: FAIL
 standard: .specify/extensions/tdd/templates/tdd-test-quality-rubric.md
-verified_at: 5971817
+verified_at: 689ab24 # the first audit read 5971817; the addendum below re-checks 689ab24
 behaviors: 66
 proven: 48
 likely: 0
@@ -10,13 +10,13 @@ test_after: 11
 no_test: 0
 not_applicable: 5
 dropped: 1
-live_pending: 1
-high_smells: 4
+live_pending: 0
+high_smells: 0 # 4 found, cleared by T039 to T042 (see the addendum)
 criteria_total: 39
-criteria_covered: 38
+criteria_covered: 39
 mutation_score: n/a (no mutation tool in the profile)
 mutants_survived: 0 of 41 deliberate mutants
-suite: 2256 passed, 0 failed, 159 files, about 70 s
+suite: 2260 passed, 0 failed, 159 files, 46 s
 ---
 
 # TDD verification: The `factoryman_decide` tool
@@ -177,3 +177,17 @@ This is an in-process integration layer. It does not show how the form looks, th
 - Performance and load: no criterion and no test. The suite runs in about 70 s, and the new tests add under 5 s.
 - Tests of other features were not re-audited. Only their changes were read.
 - The subagent ran three of the audited files; this session ran the whole suite (2256 passed).
+
+## Addendum: re-check after remediation and the live runs (commit 689ab24)
+
+This addendum was written by the session that wrote the tests, so it is not independent.
+The first audit above stays as it was, and its verdict is the one of record until the owner answers finding 1.
+
+- Findings 2 to 8, 10, and 11 are fixed by T039 to T045 (commit `15de3f2`, and cycle 13 for the shared wording). Each fix keeps the suite green, and the suite grew from 2256 to 2260 tests. The four HIGH smells are cleared: the payload and evidence expectations are literals, the fake lab's text and the real tool's text come from one leaf module and are both pinned, the `refused` helper has a required `expected`, and the `[U1806]` loop is a table. The re-read of those lines is in the cycle log.
+- Finding 9 is closed: the leak measurement was made (3159 before and 3159 after, twice), T001 and T029 are ticked on that evidence.
+- US5.6 is covered: the five offline conformance runs exited 0 on commit `1a890a9` with a clean tree and a clean isolation check (cycle log, "Live check A1818"). They also found a defect that no offline test could see (D-145): S8 probed with a scout task. It is fixed.
+- A mistake made while fixing finding 5 removed `[U195]` to `[U199]` for a few minutes; the suite count caught it, and the file was restored from git before any commit. No existing test is missing at `689ab24`: the removed-lines diff against `9f87647` lists only the tests that changed to a new truth.
+- Finding 1 is open. Eleven behaviors are test-after (D-144). Each was proved able to fail by a deliberate mutant, and the audit ran 17 more. The rubric fails the feature for this, and the repository has accepted the same position as a waiver before (D-099, D-122, D-133, D-135). Task T047 stays open until Firstmate relays the owner's answer.
+- Not audited again: the form's look in a real bb (D-146), and mutation beyond the 41 deliberate mutants.
+
+**Verdict of record: FAIL, with one blocking finding (the test-after waiver), and every other finding cleared.**
