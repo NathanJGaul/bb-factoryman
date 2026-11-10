@@ -261,4 +261,38 @@ describe("decide with a fake decider", () => {
     expect(result.text).toMatch(/gate changed while the form was open.*Nothing was sent/);
     expect(decider.count("answer")).toBe(0);
   });
+
+  it.each([
+    ["a denial", { decision: "denied", comment: "Not yet." }, "info", /owner denied the answer for task t1.*Nothing was sent/],
+    ["an unreadable reply", { decision: "yes" }, "warn", /unreadable answer for task t1.*Nothing was sent/],
+  ])("[U1849] writes a line to the plugin log for %s, and the line names the task", async (_name, reply, level, expected) => {
+    const { t, decider } = await parked();
+    t.bb.inputHandler = async () => ({ outcome: "submitted", value: reply });
+    const result = await decide(t.runtime, decider, SUPERVISOR, FIX);
+    expect(result.ok).toBe(false);
+    const lines = t.lines.filter((line) => line.message.includes("t1"));
+    expect(lines).toEqual([{ level, message: expect.stringMatching(expected) }]);
+  });
+
+  it("[U1849] writes a line to the plugin log for a form that nobody answered, with the reason", async () => {
+    const { t, decider } = await parked();
+    t.bb.inputHandler = async () => ({ outcome: "cancelled", reason: "timeout" });
+    await decide(t.runtime, decider, SUPERVISOR, FIX);
+    expect(t.lines.filter((line) => line.message.includes("t1"))).toEqual([{ level: "info", message: expect.stringMatching(/not answered \(timeout\) for task t1.*Nothing was sent/) }]);
+  });
+
+  it("[U1849] writes a line to the plugin log when the gate changed while the form was open", async () => {
+    const { t, decider } = await parked();
+    decider.onCurrent = async (count) => {
+      if (count === 2) await t.runtime.apply("t1", { type: "resolve", actor: "system", evidence: "A person answered in no-mistakes." });
+    };
+    await decide(t.runtime, decider, SUPERVISOR, FIX);
+    expect(t.lines.filter((line) => line.message.includes("t1"))).toEqual([{ level: "warn", message: expect.stringMatching(/gate of task t1 changed while the decision form was open.*Nothing was sent/) }]);
+  });
+
+  it("[U1849] writes no line to the plugin log when the answer is sent", async () => {
+    const { t, decider } = await parked();
+    await decide(t.runtime, decider, SUPERVISOR, FIX);
+    expect(t.lines.filter((line) => line.message.includes("t1"))).toEqual([]);
+  });
 });

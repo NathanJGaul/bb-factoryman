@@ -165,3 +165,12 @@ Correction to cycle 5: the full run on that cycle's code had one red, `test/acce
 - `pnpm run check` on the final code: type check and lint clean, 159 files, 2260 tests passed, 46 s. The `bb-fake-plugin-host-*` count under `${TMPDIR}` was 3159 before and 3159 after, equal to the baseline of T001.
 - Quickstart: step 1 is the run above; step 2 `test/acceptance/tools-decide.test.ts` -> 38 passed; step 3 `src/app/decision-approval-form.test.tsx` -> 26 passed; step 4 (`-t "yes"` on the adapter and tool tests) -> 3 passed; step 5 is the five conformance runs above; step 6 the document tests -> passed inside the run.
 - T032 (the form in the isolated lab) was not done; D-146 records the limit.
+
+## Cycle 14: U1849 the plugin log keeps what the machine cannot (found by `/speckit.analyze`)
+
+- found by: the analysis of FR-017 against the code. The requirement and D-140 say that a denied, cancelled, timed-out, or unreadable form is kept in the plugin log, and `src/tools/decide.ts` made no log call.
+- test: `src/tools/decide.test.ts::[U1849]` (four tests: a denial and an unreadable reply as a table, a form nobody answered, a gate that changed, and a sent answer that writes no line).
+- red: `pnpm vitest run src/tools/decide.test.ts` -> `AssertionError: expected [] to deeply equal [ { level: 'info', … } ]` (4 failed).
+- green: `decide` calls `rt.deps.log.info` for a denial and an unanswered form, and `rt.deps.log.warn` for an unreadable reply and for a changed gate. `pnpm vitest run src/tools/decide.test.ts test/acceptance/tools-decide.test.ts` -> 93 passed. The spec's FR-005 said "sorted finding IDs" while the plan, D-138, and the code keep the validator's order (and `[U1803]` pins that a change of order changes the key); the spec now says so. D-146 also names the restart and the validator-wait timeout as things no test shows.
+- refactor: the changed-gate check is one condition with one log line.
+- commit: `fix(tools): log the outcomes that the event log cannot keep`

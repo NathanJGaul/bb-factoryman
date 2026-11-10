@@ -94,6 +94,7 @@ The headings were written (commit `docs(decisions)`), and the suite was green ag
 | U1822 | When the send fails and the task is no longer `needs_decision`, the text says that the task moved on | FR-011 | example | DONE | `src/tools/decide.test.ts::[U1822]` |
 | U1823 | When the machine would refuse `resolve`, nothing is sent | FR-014 | example | DONE | `src/tools/decide.test.ts::[U1823]` |
 | U1848 | A call on a running view, a failed run, a cancelled run, or `checks-passed` with a pull request is refused through the tool, opens no form, and sends nothing | FR-007 | example | DONE | `src/tools/decide.test.ts::[U1848]` |
+| U1849 | A denial, a cancel or timeout, an unreadable reply, and a gate that changed while the form was open each write one line to the plugin log that names the task and says nothing was sent, and a sent answer writes none (found by the analysis against FR-017) | FR-017 | example | DONE | `src/tools/decide.test.ts::[U1849]` |
 
 ### `src/tools/register.ts` and `src/server.ts`
 

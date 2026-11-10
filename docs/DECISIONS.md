@@ -1570,3 +1570,5 @@ What stands in for the look: the form uses the same classes, the same in-flight 
 jsdom has no layout and no styles, so the list of findings, the scroll box, and the "Answer that will be sent" block have not been seen in a real bb, in either theme or at a narrow width.
 The owner should run that check before the first real decision: queue a task into `needs_decision` in the lab and open the form.
 A defect in the look would change `src/app/decision-approval-form.tsx` only.
+
+Two more things no test shows: a restart while a form is open (the fake host has no restart of a pending form, so the claim that the wait ends and nothing is sent rests on how `bb.ui.requestInput` ends a wait, as the merge form's does), and the pipeline's own timeout inside the validator's `--wait` (the driver's existing behavior carries on, as `driver.answer` does today).

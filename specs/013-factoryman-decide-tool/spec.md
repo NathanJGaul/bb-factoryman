@@ -173,7 +173,7 @@ The owner reads the design, the decision log, the constitution, and the supervis
   Any other call MUST be refused before a form opens.
 - **FR-004**: The tool MUST read the live view of the pipeline run through the validator interface (the `status` operation, in the worker's worktree, on the task's host) and MUST NOT trust the supervisor's description of the gate.
   When the view cannot be read, the tool MUST fail closed.
-- **FR-005**: The decision key MUST be a deterministic value of the live view: the run ID, the gate step, the gate status, the sorted finding IDs, the outcome, and the phase.
+- **FR-005**: The decision key MUST be a deterministic value of the live view: the run ID, the gate step, the gate status, the finding IDs in the order the validator reported them, the outcome, and the phase.
   The driver MUST write the key into the evidence of the `finding` event that parks the task, so the wake message, the status read, and the log show it.
   The tool MUST refuse a call whose key differs from the live view's key, and the refusal MUST name the live key and the live finding IDs.
 - **FR-006**: For a pending gate, the tool MUST accept `approve` and `skip` with no finding IDs and no instructions, and `fix` with a non-empty list of distinct finding IDs that all appear in the live gate, with optional non-empty instructions.

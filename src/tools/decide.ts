@@ -99,20 +99,28 @@ async function decideClaimed(rt: Runtime, decider: Decider, caller: Caller, task
     ...(caller.signal === undefined ? {} : { signal: caller.signal }),
   });
   if (result.outcome === "cancelled") {
+    // The machine has no event for a form that nobody answered, so the plugin log is where it is kept (D-140).
+    rt.deps.log.info(`The decision form was not answered (${result.reason}) for task ${taskId}. Nothing was sent.`);
     return failure(`The owner did not answer the decision form (${result.reason}). Nothing was sent, and task ${taskId} stays needs_decision. Call factoryman_decide again to ask again.`);
   }
   const reply = approvalAnswerSchema.safeParse(result.value);
-  if (!reply.success) return failure(`The decision form came back with an unreadable answer, so nothing was sent. Task ${taskId} stays needs_decision.`);
+  if (!reply.success) {
+    rt.deps.log.warn(`The decision form came back with an unreadable answer for task ${taskId}. Nothing was sent.`);
+    return failure(`The decision form came back with an unreadable answer, so nothing was sent. Task ${taskId} stays needs_decision.`);
+  }
   if (reply.data.decision === "denied") {
+    rt.deps.log.info(`The owner denied the answer for task ${taskId}. Nothing was sent.`);
     return failure(`The owner denied the answer${reply.data.comment ? `: ${reply.data.comment}` : "."} Nothing was sent, and task ${taskId} stays needs_decision.`);
   }
 
   // The owner approved a particular answer for a particular key. Send it only if the gate is still that gate.
   const again = await decider.current(taskId);
-  if (!again.ok || decisionKey(again.view) !== key) return failure(CHANGED);
   const evidence = decisionEvidence(plan, key, live.view, reply.data.comment);
   const preview = wouldAccept(store, taskId, { type: "resolve", actor: "supervisor", evidence });
-  if (!preview.ok) return failure(CHANGED);
+  if (!again.ok || decisionKey(again.view) !== key || !preview.ok) {
+    rt.deps.log.warn(`The gate of task ${taskId} changed while the decision form was open. Nothing was sent.`);
+    return failure(CHANGED);
+  }
 
   const sent = plan.kind === "rerun" ? await decider.rerun(taskId, "supervisor", evidence) : await decider.answer(taskId, plan.answer, "supervisor", evidence);
   const now = store.getTask(taskId);
