@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { fakeOffers, readWakes, startedThreadId, stubOffers, type LogLine, type ThreadEvent } from "./readers.ts";
+import { fakeOffers, modelsReady, readWakes, startedThreadId, stubOffers, type LogLine, type ThreadEvent } from "./readers.ts";
 
 const requested = (seq: number, text: string, plugin: string | null = "bb-factoryman"): ThreadEvent => ({
   seq,
@@ -70,3 +70,34 @@ describe("startedThreadId", () => {
     expect(startedThreadId("Cannot start a supervisor: x.\nStarted factoryman supervisor thread thr_zzz with the profile p (a, b).")).toBeNull();
   });
 });
+
+describe("modelsReady", () => {
+  const WANTED = "mock/mock-1";
+
+  it("[U1850] is false for an empty list, a value that is not a list, and a list that holds only the placeholder acp-default", () => {
+    expect(modelsReady([], WANTED)).toBe(false);
+    expect(modelsReady(null, WANTED)).toBe(false);
+    expect(modelsReady({ models: [{ id: "acp-default" }] }, WANTED)).toBe(false);
+    expect(modelsReady([{ id: "acp-default" }], WANTED)).toBe(false);
+    expect(modelsReady(["acp-default"], WANTED)).toBe(false);
+  });
+
+  it("[U1850] is true when the list holds the model that the driver dispatches with", () => {
+    expect(modelsReady([{ id: "acp-default" }, { id: WANTED }], WANTED)).toBe(true);
+    expect(modelsReady([WANTED], WANTED)).toBe(true);
+  });
+
+  it("[U1850] is true when the list holds a real model beside or instead of the placeholder, because bb lists its own catalog for the other harnesses", () => {
+    expect(modelsReady([{ id: "claude-haiku-5-5" }], WANTED)).toBe(true);
+    expect(modelsReady([{ id: "acp-default" }, { id: "gpt-5" }], WANTED)).toBe(true);
+  });
+
+  it("[U1850] is true when the model that the driver dispatches with is the placeholder itself, as for the stub agent", () => {
+    expect(modelsReady([{ id: "acp-default" }], "acp-default")).toBe(true);
+  });
+
+  it("[U1850] is true for a non-empty list whose entries name no model ID, so a change of shape cannot stall a run", () => {
+    expect(modelsReady([{ label: "x" }], WANTED)).toBe(true);
+  });
+});
+

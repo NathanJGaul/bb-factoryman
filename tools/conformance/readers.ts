@@ -56,3 +56,26 @@ export function startedThreadId(text: string): string | null {
   const first = text.split("\n")[0] ?? "";
   return /^Started factoryman supervisor thread (\S+) /.exec(first)?.[1] ?? null;
 }
+
+/** The model IDs in the output of `bb provider models <provider> --json`: a list of strings or of objects with an `id`. */
+function modelIds(listed: unknown): string[] {
+  if (!Array.isArray(listed)) return [];
+  return listed.flatMap((entry): string[] => {
+    if (typeof entry === "string") return [entry];
+    const id = typeof entry === "object" && entry !== null ? (entry as Record<string, unknown>)["id"] : undefined;
+    return typeof id === "string" ? [id] : [];
+  });
+}
+
+/**
+ * Whether bb has loaded the model catalog of a provider. Before the load, bb lists the placeholder `acp-default`, and a
+ * dispatch that comes then is blocked as "not listed" (found by a live omp run, D-147). The catalog is ready when it holds
+ * the model that the driver dispatches with, or any model besides the placeholder. A non-empty list with no readable ID
+ * counts as ready, so a change in the output's shape cannot stall a run.
+ */
+export function modelsReady(listed: unknown, wanted: string): boolean {
+  if (!Array.isArray(listed) || listed.length === 0) return false;
+  const ids = modelIds(listed);
+  if (ids.length === 0) return true;
+  return ids.includes(wanted) || ids.some((id) => id !== "acp-default");
+}

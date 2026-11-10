@@ -174,3 +174,12 @@ Correction to cycle 5: the full run on that cycle's code had one red, `test/acce
 - green: `decide` calls `rt.deps.log.info` for a denial and an unanswered form, and `rt.deps.log.warn` for an unreadable reply and for a changed gate. `pnpm vitest run src/tools/decide.test.ts test/acceptance/tools-decide.test.ts` -> 93 passed. The spec's FR-005 said "sorted finding IDs" while the plan, D-138, and the code keep the validator's order (and `[U1803]` pins that a change of order changes the key); the spec now says so. D-146 also names the restart and the validator-wait timeout as things no test shows.
 - refactor: the changed-gate check is one condition with one log line.
 - commit: `fix(tools): log the outcomes that the event log cannot keep`
+
+## Cycle 15: U1850 the lab waits for the model catalog (found by the repeat runs, D-147)
+
+- found by: the repeat run of omp on `092dc9f`: S2 to S12 blocked with `The model mock/mock-1 is not listed for the provider acp-omp ... It lists: acp-default`. The first omp run on `1a890a9` had passed. A second repeat passed every scenario but the isolation check reported another lane's lab process; that run was discarded and repeated (clean, exit 0).
+- test: `tools/conformance/readers.test.ts::[U1850]` (five tests).
+- red: written together with the function in one command, so no red was seen first (test-after). The red was derived afterwards: the function reduced to its old body (`Array.isArray(listed) && listed.length > 0`) fails `[U1850] is false for an empty list, a value that is not a list, and a list that holds only the placeholder acp-default` with `expected true to be false`; the file was restored from a copy and `git diff` showed only the addition.
+- green: `modelsReady` in `tools/conformance/readers.ts`, used by `tools/conformance/real-lab.ts`. `pnpm run typecheck` clean; the gate follows.
+- refactor: none needed
+- commit: `fix(conformance): wait for the model the driver dispatches with`

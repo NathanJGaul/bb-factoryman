@@ -100,7 +100,7 @@ Status: supported at tier 1.5. Tier 2 has not run.
 | --- | --- |
 | CLI | omp 18.18.3 |
 | bb | 0.49.0 |
-| Plugin commit | 1a890a9 |
+| Plugin commit | 5329b77 |
 | Date | 2026-11-10 |
 | Network | offline |
 | Isolation | clean |

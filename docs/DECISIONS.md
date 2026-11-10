@@ -1572,3 +1572,22 @@ The owner should run that check before the first real decision: queue a task int
 A defect in the look would change `src/app/decision-approval-form.tsx` only.
 
 Two more things no test shows: a restart while a form is open (the fake host has no restart of a pending form, so the claim that the wait ends and nothing is sent rests on how `bb.ui.requestInput` ends a wait, as the merge form's does), and the pipeline's own timeout inside the validator's `--wait` (the driver's existing behavior carries on, as `driver.answer` does today).
+
+### D-147: Two of the repeat runs failed for reasons outside the plugin, and the lab's model wait is fixed (Finding, fixed)
+
+The five repeat runs on the last plugin code failed twice in the lab, and neither failure was the plugin's.
+
+The first failure was the omp run.
+All scenarios from S2 on were blocked with "The model `mock/mock-1` is not listed for the provider `acp-omp`. It lists: acp-default."
+The lab waited until bb listed any model for the provider (`models.length > 0`), and before bb has loaded omp's catalog it lists the placeholder `acp-default`, so the wait ended too soon.
+The earlier omp run had won the race.
+`modelsReady` in `tools/conformance/readers.ts` now ends the wait when the catalog holds the model that the driver dispatches with, or any model besides the placeholder, and it counts a non-empty list with no readable ID as ready, so a change in the output's shape cannot stall a run.
+`[U1850]` pins it, and the old behavior as a mutant fails it.
+
+The second failure was the omp rerun.
+Every scenario passed, and the isolation check reported "LEAK: lab process visible on host".
+The process belongs to another lane's lab (`bblab-fm-test`), and my lab was down with its ports free and no tripwire event.
+The run was repeated with the other lab quiet, and the isolation check was clean.
+This is the case that the earlier lane's notes warn about, and the check is left as it is: it cannot tell a neighbor's lab from a leak of its own.
+
+The result files that stay are the ones from runs that exited 0 with a clean isolation report.
