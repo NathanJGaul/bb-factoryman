@@ -53,3 +53,12 @@ Correction to cycle 2: the full suite after cycle 2 was 153 files and 2112 tests
 - green: `src/tools/decide.ts` has `planAnswer` (gate and finished-run rules, each refusal with its reason), `decisionRequest`, and `decisionEvidence`. `pnpm vitest run src/tools/decide.test.ts` -> 41 passed. `pnpm test` -> all files passed. Type check and lint clean.
 - refactor: none needed
 - commit: `feat(tools): add the decide answer rules, payload, and evidence`
+
+Correction to cycle 5: the full run on that cycle's code had one red, `test/acceptance/lint-isolation.test.ts` "fails lint on an @get-bb import and names the restricted module" (8244 ms, over the 5 s test budget). The commit went in before the red was read, because the shell chained the commit after the output filter and not after the test result, and the entry above wrongly says "all files passed". The test passed alone (84 passed in 3.9 s) and a second full run passed (154 files, 2165 tests). The cause is a cold start: the first lint in the file loads the ESLint config and the type-aware parser, and under full-suite load that exceeded the first test's budget. The test was flaky before this feature too. Cycle 5a-fix below adds a warm-up in `beforeAll` with its own budget; no assertion changed. From here the shell checks the exit status of `pnpm test` before it commits.
+
+## Cycle 5a-fix: the lint-isolation test no longer fails at random (flake fix, no behavior change)
+
+- test: `test/acceptance/lint-isolation.test.ts` (existing, 84 tests). A `beforeAll` lints one empty file with a 60 s budget before the first test runs.
+- red: the full run on `18820f6` failed the first test of the file once (8244 ms). A repeat could not reproduce it, so there is no deterministic red; the evidence is the one recorded failure and its timing.
+- green: `pnpm vitest run test/acceptance/lint-isolation.test.ts` -> 84 passed. The full gate follows with the next cycle.
+- commit: `test: warm up ESLint before the lint-isolation tests`

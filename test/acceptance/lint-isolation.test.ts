@@ -1,7 +1,7 @@
 import { fileURLToPath } from "node:url";
 import { join } from "node:path";
 import { ESLint } from "eslint";
-import { describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it } from "vitest";
 
 const rootDir = fileURLToPath(new URL("../../", import.meta.url));
 const eslint = new ESLint({ cwd: rootDir });
@@ -17,6 +17,13 @@ async function importRestrictions(filePath: string, code: string): Promise<strin
     .filter((m) => m.ruleId === "no-restricted-imports" || m.ruleId === "no-restricted-syntax")
     .map((m) => m.message);
 }
+
+// The first lint in a file loads the ESLint config and the type-aware parser. Under a full-suite run that took 8 s and
+// used up the first test's own 5 s budget, so the test failed at random. A warm-up with its own budget fixes that
+// without a longer timeout on any assertion.
+beforeAll(async () => {
+  await eslint.lintText("export {};\n", { filePath: join(rootDir, "src/store/warm-up.ts") });
+}, 60_000);
 
 const BB_IMPORT = 'import { createFakePluginHost } from "@get-bb/plugin-sdk";\nexport const host = createFakePluginHost;\n';
 
