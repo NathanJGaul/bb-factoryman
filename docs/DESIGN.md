@@ -135,6 +135,8 @@ A project's `yolo` flag skips the approval form for that project only. Every oth
 
 **Validator interface.** The plugin reaches validators through a small interface: start a run, read its status, read its findings, answer a finding, and cancel. `no-mistakes` is the first implementation. The interface lets extra checks, such as a multi-model audit or a CodeRabbit pass, run before the push as tighten-only checks: they can add a failing check but can't skip the pipeline. Whether the `no-mistakes` CLI supports each call headlessly is unconfirmed. Who starts the run is also open. firstmate has the worker push through the gate while the supervisor watches, and the plugin could start runs itself. Milestone 0 settles both.
 
+**Answering a finding.** The validation driver watches a run and never answers a gate on its own. `factoryman_decide` is the one path that does. It reads the pipeline's live gate, checks the supervisor's key against it, shows the owner the findings and the exact answer in a form, reads the gate again after the owner approves, and only then sends `approve`, `skip`, or `fix` through the validator interface. A run that finished with an override, skipped steps, or no pull request has no gate, so the only decision is `rerun`, which starts a new run. Accepting such an outcome and moving the task to review ready needs a new state machine event and is not built (D-141).
+
 **Direct pushes.** Workers on a `no-mistakes` project commit and hand off. They never push to `origin`. The plugin can't enforce that alone, so the backstop is branch protection that requires the `no-mistakes` check on the default branch.
 
 ## Authority gates
@@ -148,6 +150,7 @@ Every gate is a refusal in the state machine. A gate that depends on the agent o
 | Project writes | The supervisor never edits a project | The supervisor thread gets a read-only skill and no write tools from this plugin. | Whether bb can strip write tools from one thread is unverified. |
 | Worker silence | Workers never address you | Workers report through `factoryman_report`. The supervisor decides what reaches you. | A worker's own question form still appears on its child thread in the bb app. |
 | Faithful reporting | Report outcomes with evidence | `done` and `failed` transitions require a non-empty evidence field. | The plugin checks that evidence exists, not that it is true. |
+| Pipeline finding | An `ask-user` finding belongs to the owner | `factoryman_decide` opens a `bb.ui.requestInput` form that shows the findings and the exact answer, and sends the answer to the pipeline only after the owner approves. The tool never reads `yolo`, and the pipeline's own gates stay as they are. | A worker with shell access can answer the form through bb, as with the merge form (D-030). A denied form leaves no row in the event log (D-140). |
 | Evidence is not authorization | A report never authorizes a change | Promoting a scout to a ship task requires a recorded approval event. | None known. |
 
 ## Supervisor thread
@@ -156,9 +159,9 @@ You talk to one thread per bb project: the supervisor. It dispatches workers, re
 
 **What wakes the supervisor.** The plugin, not the agent, watches thread events. It messages the supervisor only when a task reaches a state that needs attention: a decision, a review-ready pull request, a failure, or a credential problem. While workers run normally, the supervisor uses no tokens.
 
-**What the supervisor can do.** The plugin gives the supervisor four tools.
+**What the supervisor can do.** The plugin gives the supervisor five tools.
 None of them edits project files.
-A worker gets a fifth, `factoryman_report`.
+A worker gets a sixth, `factoryman_report`.
 
 | Tool | Purpose | Who sees it |
 | --- | --- | --- |
@@ -166,6 +169,7 @@ A worker gets a fifth, `factoryman_report`.
 | `factoryman_status` | Read current task states from the state machine | Supervisor |
 | `factoryman_merge` | Ask for your approval, then merge | Supervisor |
 | `factoryman_teardown` | Remove a finished worker's environment after the landed-work check | Supervisor |
+| `factoryman_decide` | Ask your approval for an answer to a pipeline finding, then send it to the pipeline | Supervisor |
 | `factoryman_report` | Hand back an outcome with evidence | Workers |
 
 **What reaches you.** Outcomes, consequences, and decisions. Retries and internal mechanics stay out of the chat. Failures never do.
@@ -243,7 +247,7 @@ The rest feed advice and tests.
 
 A file without `roles` behaves as it did before.
 
-**Supervisor start.** `bb factoryman supervisor start` spawns the supervisor thread with `role: supervisor` in the spawn call, so the thread has its four tools and its skill from the first session on all four harnesses (D-130).
+**Supervisor start.** `bb factoryman supervisor start` spawns the supervisor thread with `role: supervisor` in the spawn call, so the thread has its five tools and its skill from the first session on all four harnesses (D-130).
 It takes `--project`, `--profile`, and `--prompt`.
 The profile is `--profile`, then `roles.supervisor.profile`.
 With neither, the command refuses and spawns nothing (D-124).
@@ -347,7 +351,7 @@ Each milestone ends with a check that passes before the next one starts.
 1. **Scaffold.** Create the `package.json` manifest with `bb.server` and `bb.skills`, pin `@get-bb/plugin-sdk`, and set up `vitest` with `createFakePluginHost`. Done when the empty plugin loads in the fake host and builds with `bb plugin build`.
 2. **State machine.** Write the ship and scout machines in `xstate` with no bb imports, including delivery modes and gates. Done when table-driven tests show that every illegal transition is refused, including merge without approval and teardown with unlanded work.
 3. **Storage.** Add the event log, the task cache, replay, and reconcile. Done when a test destroys the cache and rebuilds identical state from events.
-4. **Tools and approval.** Register the five tools and wire merge approval through `bb.ui.requestInput`. Done when tests cover submitted, cancelled, and timed-out approvals.
+4. **Tools and approval.** Register the five tools and wire merge approval through `bb.ui.requestInput`. Done when tests cover submitted, cancelled, and timed-out approvals. The sixth tool, `factoryman_decide`, came later (D-136).
 5. **Event wiring.** Map thread events to transitions and send supervisor wake messages. Done when a replayed event sequence produces the expected messages and no others.
 6. **Validator.** Define the validator interface and implement it for `no-mistakes`, including the `validating` and `needs_decision` states. Done when a fake validator and a recorded `no-mistakes` run each drive a task from handoff to review ready, and a finding pauses the task.
 7. **Dispatch resolver.** Build the rules table, precedence, and the `ambiguous` result. Done when precedence tests pass.

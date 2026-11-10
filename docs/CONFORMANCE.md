@@ -91,11 +91,11 @@ Run `pnpm run conformance:docs` to regenerate `docs/HARNESS-SUPPORT.md` from the
 | S2 | The thread row shows the requested provider, model, level, and mode. A profile the provider cannot take is refused before anything spawns. |
 | S3 | A scout goes `queued`, `working`, `report_ready`, keeps its evidence, and wakes the supervisor once. |
 | S4 | A ship task leaves its commit on the task branch and reaches `review_ready`, in the delivery mode of the driver's lab project (`local-only`, or `direct-PR` for Pi). |
-| S5 | A worker sees the report tool and its own skill only. A supervisor sees its four tools and its own skill only. |
+| S5 | A worker sees the report tool and its own skill only. A supervisor sees its five tools and its own skill only. |
 | S6 | A turn that ends with no report leaves the task `working` and wakes the supervisor once. |
 | S7 | A failing model turn fails the task, wakes the supervisor once, and keeps the cause in the evidence. |
-| S8 | An empty report, a second report, and a teardown in the wrong state are each refused and logged. |
-| S9 | A supervisor started with `bb factoryman supervisor start` has its four tools and its skill on its first turn. One stamped late gets them after the documented step, and the stamp command says to clear the thread when the harness needs it. |
+| S8 | An empty report, a second report, and a teardown in the wrong state are each refused and logged, and a decision in the wrong state is refused. |
+| S9 | A supervisor started with `bb factoryman supervisor start` has its five tools and its skill on its first turn. One stamped late gets them after the documented step, and the stamp command says to clear the thread when the harness needs it. |
 | S10 | A plugin reload keeps every task and state and adds no event. Tier 1 only. |
 | S11 | Teardown is refused for a dirty worktree, removes a clean one, and leaves no process behind. |
 | S12 | A wake that reaches a busy supervisor arrives exactly once. |

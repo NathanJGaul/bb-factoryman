@@ -374,7 +374,7 @@ bblab x bb thread wait "$SUP" --status idle
 It does not check readiness.
 `bb factoryman supervisor start` does: it refuses a provider that bb does not report `ready`, and it says why.
 The workers use the default profile, which is the same one.
-The command sets the supervisor's role in the spawn call, so the thread has the four supervisor tools and the `factoryman-supervisor` skill on its first turn, on all four harnesses (D-130).
+The command sets the supervisor's role in the spawn call, so the thread has the five supervisor tools and the `factoryman-supervisor` skill on its first turn, on all four harnesses (D-130).
 
 If a person created the supervisor thread, stamp it with `bb factoryman supervisor <thread>` instead.
 The stamp applies when the harness builds a new session for the thread.

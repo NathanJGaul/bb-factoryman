@@ -74,10 +74,11 @@ describe("docs/DESIGN.md: dispatch profiles and harness independence", () => {
     expect(report.problems.map((problem) => problem.check)).toContain("validator_agent");
   });
 
-  it("[A1710] says the supervisor has four tools, has a profile example that parses, and has no unavailable-provider wording", () => {
+  it("[A1710] says the supervisor has five tools, has a profile example that parses, and has no unavailable-provider wording", () => {
     const text = design();
-    expect(section(text, "## Supervisor thread")).toContain("The plugin gives the supervisor four tools.");
+    expect(section(text, "## Supervisor thread")).toContain("The plugin gives the supervisor five tools.");
     expect(section(text, "## Supervisor thread")).not.toContain("gives it five tools");
+    expect(section(text, "## Supervisor thread")).not.toContain("gives the supervisor four tools");
     expect(text).not.toMatch(/unavailable provider/i);
     expect(text).toContain("a provider that bb does not report `ready`");
     expect(section(text, "## Machines and domain leads")).toContain("so that bb reports its provider `ready`");

@@ -271,6 +271,9 @@ Adding a sixth tool, for example `factoryman_decide`, would give the supervisor 
 It changes a design table, so the owner decides.
 The firstmate rule that an `ask-user` finding belongs to the owner is a reason to route the answer through a form, as the merge approval does.
 
+Amended by D-136: the sixth tool, `factoryman_decide`, is built, and the answer goes through a form that the owner approves.
+The text above records the decision as it stood.
+
 ### D-032: The constitution's scope principle and the project scope text are amended (Deviation, resolved)
 
 Principle VI limited the work to milestones 1 to 3.
@@ -454,6 +457,9 @@ Cycle R1 re-derived a red for each with a deliberate mutant.
 No tool answers a pipeline finding in this PR.
 A sixth tool, `factoryman_decide`, comes in a follow-up PR.
 
+Amended by D-136: the follow-up is this change, and the constitution now names `factoryman_decide` as in scope.
+The text above records the decision as it stood.
+
 ### D-058: D-030 is a known gap until milestone 10 (Decided)
 
 An approval form is not proof of a human.
@@ -493,6 +499,9 @@ Constitution 1.1.0 and the "Current scope" text in `CLAUDE.md` kept those milest
 Constitution 1.2.0 puts milestones 1 to 11 in scope and keeps the rule that each milestone's bb-dependent code waits for the spike results it needs, which `spike/RESULTS.md` now records milestone by milestone.
 The `CLAUDE.md` scope text and the layout comments carry the same correction and nothing else.
 `factoryman_decide` stays out (D-057), and the live install stays the owner's step.
+
+Amended by D-136: `factoryman_decide` is in scope from constitution 1.5.0.
+The text above records the decision as it stood.
 
 ## Milestone 7: dispatch resolver
 
@@ -836,6 +845,9 @@ The owner-typed code (option 2 of the report), which only the renderer would sho
 The captain deferred it, so the approval design is unchanged.
 `factoryman_decide` stays out of scope (D-057).
 D-058 still stands: the captain accepts the gap until branch protection is in place.
+
+Amended by D-136: `factoryman_decide` exists, and it inherits this gap, because a form is not proof of a human.
+The text above records the decision as it stood.
 
 ### D-096: The contract module has no imports and the browser bundle ships no `zod` (Gap)
 
