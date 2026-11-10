@@ -45,3 +45,11 @@ Correction to cycle 2: the full suite after cycle 2 was 153 files and 2112 tests
 - U1826 is DROPPED: the test "the plugin passes its driver to the registration" cannot be written before the flow uses the driver, and A1801 (through `createPlugin` with the real driver) is the stronger proof.
 - refactor: none needed
 - commit: `feat(tools): register factoryman_decide for supervisors`
+
+## Cycle 5: U1816, U1817, U1818, U1819, U1820 the pure parts of the tool (one group)
+
+- test: `src/tools/decide.test.ts::[U1816]` (schema, nine cases), `[U1817]` (gate answers: seven accepted, seven refused, and the empty gate), `[U1818]` (finished views: four accepted, four refused for `rerun`, and `approve`, `skip`, and `fix` refused for every finished view), `[U1819]` (three payload tests), `[U1820]` (three evidence tests). U1818 is built here and not in task T020, because the plan puts the finished-run rules in the same function; T020 stays open for the flow through the tool (A1811, A1812).
+- red: `pnpm vitest run src/tools/decide.test.ts` -> first run: `TypeError: planAnswer is not a function`. With stubs: `AssertionError: expected { ok: false, message: '' } to deeply equal { ok: true, … }` (6), `expected {} to deeply equal { taskId: 't1', … }` (2), `expected '' to match /skip takes no finding IDs and no inst…/`, and the others (32 failed, 9 passed)
+- green: `src/tools/decide.ts` has `planAnswer` (gate and finished-run rules, each refusal with its reason), `decisionRequest`, and `decisionEvidence`. `pnpm vitest run src/tools/decide.test.ts` -> 41 passed. `pnpm test` -> all files passed. Type check and lint clean.
+- refactor: none needed
+- commit: `feat(tools): add the decide answer rules, payload, and evidence`
