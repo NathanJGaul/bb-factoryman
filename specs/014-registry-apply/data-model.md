@@ -21,8 +21,9 @@ type ApplyPlan = {
   projectId: string;
   entryName: string;
   changes: FieldChange[];          // always three, in this order
-  untouched: string[];             // baseBranch and defaultMachine, with their stored values
-  notes: string[];                 // the entry's notes, plus the forge line
+  untouched: Array<{ field: "baseBranch" | "defaultMachine"; value: string | null }>; // stored values, never written
+  notes: string[];                 // the entry's notes (the parser already notes a gerrit forge)
+  forge: string;                   // printed as "Forge <name> is not stored.", never stored
   next: ProjectConfig | null;      // the row to write, or null when nothing changes
 };
 ```
