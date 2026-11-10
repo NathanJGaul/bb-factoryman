@@ -62,3 +62,12 @@ Correction to cycle 5: the full run on that cycle's code had one red, `test/acce
 - red: the full run on `18820f6` failed the first test of the file once (8244 ms). A repeat could not reproduce it, so there is no deterministic red; the evidence is the one recorded failure and its timing.
 - green: `pnpm vitest run test/acceptance/lint-isolation.test.ts` -> 84 passed. The full gate follows with the next cycle.
 - commit: `test: warm up ESLint before the lint-isolation tests`
+
+## Cycle 6: A1801, A1802, A1803, A1804, A1813, U1821, U1822, U1823 the answer path (one group)
+
+- test: `test/acceptance/tools-decide.test.ts::[A1801]`, `[A1802]` (approve and skip), `[A1803]`, `[A1804]` (the real `NoMistakesValidator` over the recorded gate output and a recording command runner), `[A1813]`; `src/tools/decide.test.ts::[U1821]` (two tests), `[U1822]` (two), `[U1823]` with `FakeDecider`.
+- red: `pnpm vitest run src/tools/decide.test.ts test/acceptance/tools-decide.test.ts` -> the first `decide` answered every valid call with `factoryman_decide does not answer yet.`, so each test failed on its assertion (`expect(result.ok).toBe(true)`, `expected [] to deeply equal [ { operation: 'answer', … } ]`, and the others): 10 failed, 42 passed. `[A1813]` passed on the first run, because cycle 3 already put the key line in the evidence. The deliberate mutant that removes `Decision key` from `driver.ts` failed it with `expected '- review-2 [error] sum.js: ask-user: …' to be 'Decision key: nm-r1-review-5e7ee5c6'`, and the restored code passed again.
+- green: `decide` in `src/tools/decide.ts` now checks the caller, the arguments, the task and its state, reads the live view, compares the key, plans the answer, opens the form with `DECISION_RENDERER_ID`, reads the reply with the merge tool's strict `approvalAnswerSchema`, reads the view again, asks the machine to preview `resolve`, and sends through `decider.answer` or `decider.rerun`. `pnpm vitest run src/tools/decide.test.ts test/acceptance/tools-decide.test.ts` -> 52 passed. `pnpm test` -> 155 files, 2176 tests passed (exit 0). Type check and lint clean after three unused declarations in the new test file were removed (they return with the rerun tests).
+- note: the rerun branch and the `Decider.rerun` path are written here because `planAnswer` already returns the plan; their acceptance tests (A1811, A1812) are the next cycles. `[U1821]` (rerun) covers the branch through the fake decider.
+- refactor: none needed
+- commit: `feat(tools): answer a pipeline gate through factoryman_decide`

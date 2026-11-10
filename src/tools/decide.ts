@@ -1,13 +1,17 @@
 import { z } from "zod";
-import type { DecisionAnswer, DecisionRequestPayload } from "../approval/contract";
+import { DECISION_RENDERER_ID, type DecisionAnswer, type DecisionRequestPayload } from "../approval/contract";
 import { refuse } from "../machine/refusal";
 import type { Actor } from "../machine/types";
 import type { Runtime } from "../runtime";
+import type { TaskRow } from "../store/types";
 import type { AnswerResult } from "../validator/driver";
+import { decisionKey } from "../validator/key";
 import type { Answer, RunView } from "../validator/types";
-import { identify } from "./access";
+import { identify, sameProject } from "./access";
 import type { Caller } from "./dispatch";
-import { failure, refusalOutcome, type ToolOutcome } from "./results";
+import { approvalAnswerSchema } from "./merge";
+import { wouldAccept } from "./preview";
+import { failure, refusalOutcome, stateText, success, type ToolOutcome } from "./results";
 
 /** What the tool needs from the validation driver. The driver implements it, and tests pass a fake. */
 export interface Decider {
@@ -28,16 +32,90 @@ export const decideSchema = z.strictObject({
   instructions: z.string().optional(),
 });
 
-/** Answer a pending pipeline finding after the owner approves the exact answer in a form. */
-export async function decide(rt: Runtime, _decider: Decider, caller: Caller, raw: unknown): Promise<ToolOutcome> {
-  if (identify(rt.deps.store, caller.threadId).role === "worker") {
+/**
+ * Answer a pending pipeline finding after the owner approves the exact answer in a form (D-136).
+ * Every check that can refuse runs before the form, and the live view is read again after the owner approves,
+ * so an answer never reaches a gate that moved. The tool never reads the project's `yolo` flag (D-139).
+ */
+export async function decide(rt: Runtime, decider: Decider, caller: Caller, raw: unknown): Promise<ToolOutcome> {
+  const { store } = rt.deps;
+  if (identify(store, caller.threadId).role === "worker") {
     return refusalOutcome(refuse("actor_forbidden", "A worker cannot answer a pipeline finding."));
   }
   const parsed = decideSchema.safeParse(raw);
   if (!parsed.success) {
     return refusalOutcome(refuse("invalid_event", `Invalid decide arguments: ${parsed.error.issues[0]?.message ?? "unreadable"}.`));
   }
-  return failure("factoryman_decide does not answer yet.");
+  const call = parsed.data;
+  const task = store.getTask(call.taskId);
+  if (task === null || !sameProject(task, caller.projectId)) return failure(`No task ${call.taskId} exists in this project.`);
+  if (task.kind !== "ship") return refusalOutcome(refuse("illegal_transition", "Only a ship task has a pipeline to answer."));
+  if (task.state !== "needs_decision") {
+    return refusalOutcome(refuse("illegal_transition", `Task ${call.taskId} is ${task.state}. A decision needs needs_decision.`));
+  }
+  return decideClaimed(rt, decider, caller, task, call);
+}
+
+/** Say what the live view is, so a supervisor that holds an old key can read the new state. */
+function describeView(view: RunView): string {
+  if (view.gate !== null) return `The gate is ${view.gate.step} (${view.gate.status}), with findings ${view.gate.findings.map((finding) => finding.id).join(", ") || "none"}.`;
+  return view.outcome === null ? `The run is ${view.phase}.` : `The run finished as ${view.outcome}.`;
+}
+
+/** What the owner approved, in a few words, for the tool's result. */
+function describePlan(plan: AnswerPlan): string {
+  if (plan.kind === "rerun") return "a new run";
+  return plan.answer.action === "fix" ? `fix ${plan.answer.findingIds.join(", ")}` : plan.answer.action;
+}
+
+const CHANGED = "Decision refused: the gate changed while the form was open. Nothing was sent. Read the task again and ask again.";
+
+async function decideClaimed(rt: Runtime, decider: Decider, caller: Caller, task: TaskRow, call: DecideCall): Promise<ToolOutcome> {
+  const { store, bb } = rt.deps;
+  const taskId = task.taskId;
+  const live = await decider.current(taskId);
+  if (!live.ok) return failure(`Decision refused: the pipeline's live state cannot be read (${live.message}). Nothing was sent.`);
+  const key = decisionKey(live.view);
+  if (call.key !== key) {
+    return failure(`Decision refused: the key does not match the live gate. The live key is ${key}. ${describeView(live.view)} Nothing was sent.`);
+  }
+  const planned = planAnswer(call, live.view);
+  if (!planned.ok) return failure(`Decision refused: ${planned.message} Nothing was sent.`);
+  const { plan } = planned;
+
+  const result = await bb.requestInput({
+    threadId: caller.threadId,
+    rendererId: DECISION_RENDERER_ID,
+    title: `Approve the answer for task ${taskId}`,
+    payload: decisionRequest(taskId, key, live.view, plan),
+    timeoutMs: rt.deps.settings().approvalTimeoutMs,
+    ...(caller.signal === undefined ? {} : { signal: caller.signal }),
+  });
+  if (result.outcome === "cancelled") {
+    return failure(`The owner did not answer the decision form (${result.reason}). Nothing was sent, and task ${taskId} stays needs_decision. Call factoryman_decide again to ask again.`);
+  }
+  const reply = approvalAnswerSchema.safeParse(result.value);
+  if (!reply.success) return failure(`The decision form came back with an unreadable answer, so nothing was sent. Task ${taskId} stays needs_decision.`);
+  if (reply.data.decision === "denied") {
+    return failure(`The owner denied the answer${reply.data.comment ? `: ${reply.data.comment}` : "."} Nothing was sent, and task ${taskId} stays needs_decision.`);
+  }
+
+  // The owner approved a particular answer for a particular key. Send it only if the gate is still that gate.
+  const again = await decider.current(taskId);
+  if (!again.ok || decisionKey(again.view) !== key) return failure(CHANGED);
+  const evidence = decisionEvidence(plan, key, live.view, reply.data.comment);
+  const preview = wouldAccept(store, taskId, { type: "resolve", actor: "supervisor", evidence });
+  if (!preview.ok) return failure(CHANGED);
+
+  const sent = plan.kind === "rerun" ? await decider.rerun(taskId, "supervisor", evidence) : await decider.answer(taskId, plan.answer, "supervisor", evidence);
+  const now = store.getTask(taskId);
+  if (!sent.ok) {
+    if (now !== null && now.state !== "needs_decision") {
+      return failure(`The task moved on to ${now.state} while the answer was sent (${sent.message}). Read factoryman_status before doing anything else.`);
+    }
+    return failure(`The pipeline did not accept the answer: ${sent.message}. Task ${taskId} stays needs_decision.`);
+  }
+  return success(`${now === null ? `Task ${taskId}` : stateText(now)} The pipeline got the owner-approved answer (${describePlan(plan)}). The plugin wakes you at the next gate or outcome.`);
 }
 
 export type DecideCall = z.infer<typeof decideSchema>;

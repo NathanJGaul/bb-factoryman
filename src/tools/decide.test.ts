@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
+import { DECISION_RENDERER_ID, readDecisionPayload } from "../approval/contract";
+import type { InputRequest } from "../bb/port";
+import { FakeDecider } from "../../test/fixtures/decider";
+import { SUPERVISOR, withDispatchedTask, type TestRuntime } from "../../test/fixtures/runtime";
+import { decisionKey } from "../validator/key";
 import type { Finding, Outcome, RunView } from "../validator/types";
-import { decideSchema, decisionEvidence, decisionRequest, planAnswer, type DecideCall } from "./decide";
+import { decide, decideSchema, decisionEvidence, decisionRequest, planAnswer, type DecideCall } from "./decide";
 
 const finding = (id: string, action = "ask-user"): Finding => ({ id, severity: "error", file: "sum.js", action, description: `Problem ${id}, with "quotes" and \`ticks\`.` });
 const view = (overrides: Partial<RunView> = {}): RunView => ({ runId: "r1", branch: "fm/t1", phase: "running", gate: null, outcome: null, prUrl: null, error: null, ...overrides });
@@ -149,5 +154,81 @@ describe("decisionEvidence", () => {
     expect(text).toContain("passed-with-override");
     expect(text).toContain(`key ${KEY}`);
     expect(text).toContain("Comment: Try once more.");
+  });
+});
+
+describe("decide with a fake decider", () => {
+  const live = gate("review-1", "review-2");
+  const LIVE_KEY = decisionKey(live);
+  const FIX = { taskId: "t1", key: LIVE_KEY, action: "fix", findingIds: ["review-2"], instructions: "Use a parameterized query." };
+
+  /** A no-mistakes ship task parked in needs_decision, and a decider whose live view is the gate. */
+  async function parked(): Promise<{ t: TestRuntime; decider: FakeDecider }> {
+    const t = await withDispatchedTask({ mode: "no-mistakes" });
+    await t.runtime.apply("t1", { type: "handoff", actor: "worker", evidence: "Committed." });
+    await t.runtime.apply("t1", { type: "finding", actor: "system", evidence: "Gate review has 2 findings." });
+    const decider = new FakeDecider();
+    decider.views = [{ ok: true, view: live }];
+    t.bb.inputHandler = async () => ({ outcome: "submitted", value: { decision: "approved", comment: "Go ahead." } });
+    return { t, decider };
+  }
+  const state = (t: TestRuntime) => t.runtime.deps.store.getTask("t1")?.state;
+
+  it("[U1821] reads the live view twice, opens one form with the payload, and sends the answer once with the evidence", async () => {
+    const { t, decider } = await parked();
+    const result = await decide(t.runtime, decider, SUPERVISOR, FIX);
+    expect(result.ok, result.text).toBe(true);
+    expect(decider.calls.map((entry) => entry.method)).toEqual(["current", "current", "answer"]);
+    const requests = t.bb.callsTo("requestInput") as Array<[InputRequest]>;
+    expect(requests).toHaveLength(1);
+    const [request] = requests[0]!;
+    expect(request).toMatchObject({ threadId: "thr-sup", rendererId: DECISION_RENDERER_ID });
+    expect(request.title).toContain("t1");
+    expect(readDecisionPayload(request.payload)).toEqual(decisionRequest("t1", LIVE_KEY, live, { kind: "answer", answer: { action: "fix", findingIds: ["review-2"], instructions: "Use a parameterized query." } }));
+    const plan = { kind: "answer" as const, answer: { action: "fix" as const, findingIds: ["review-2"], instructions: "Use a parameterized query." } };
+    expect(decider.calls[2]?.args).toEqual(["t1", plan.answer, "supervisor", decisionEvidence(plan, LIVE_KEY, live, "Go ahead.")]);
+    expect(result.text).toMatch(/Task t1 is now/);
+    expect(result.text).toContain("fix review-2");
+  });
+
+  it("[U1821] sends a rerun through the decider's rerun path and not its answer path", async () => {
+    const { t, decider } = await parked();
+    const done = finished("passed-with-override", { prUrl: PR });
+    decider.views = [{ ok: true, view: done }];
+    const result = await decide(t.runtime, decider, SUPERVISOR, { taskId: "t1", key: decisionKey(done), action: "rerun" });
+    expect(result.ok, result.text).toBe(true);
+    expect(decider.count("answer")).toBe(0);
+    expect(decider.calls.at(-1)).toMatchObject({ method: "rerun", args: ["t1", "supervisor", expect.stringContaining("new no-mistakes run")] });
+  });
+
+  it("[U1822] says that the task moved on when the send fails after the task left needs_decision", async () => {
+    const { t, decider } = await parked();
+    decider.answer = async () => {
+      await t.runtime.apply("t1", { type: "resolve", actor: "system", evidence: "The validator's view changed." });
+      return { ok: false, message: "Task t1 is not waiting for a decision." };
+    };
+    const result = await decide(t.runtime, decider, SUPERVISOR, FIX);
+    expect(result.ok).toBe(false);
+    expect(result.text).toMatch(/moved on to validating/);
+  });
+
+  it("[U1822] gives the pipeline's reason when the send fails and the task is still waiting", async () => {
+    const { t, decider } = await parked();
+    decider.answerResult = { ok: false, message: "run is not at a gate" };
+    const result = await decide(t.runtime, decider, SUPERVISOR, FIX);
+    expect(result.ok).toBe(false);
+    expect(result.text).toContain("The pipeline did not accept the answer: run is not at a gate.");
+    expect(state(t)).toBe("needs_decision");
+  });
+
+  it("[U1823] sends nothing when the machine would refuse resolve after the owner approved, because the task left needs_decision", async () => {
+    const { t, decider } = await parked();
+    decider.onCurrent = (count) => {
+      if (count === 2) void t.runtime.apply("t1", { type: "resolve", actor: "system", evidence: "A person answered in no-mistakes." });
+    };
+    const result = await decide(t.runtime, decider, SUPERVISOR, FIX);
+    expect(result.ok).toBe(false);
+    expect(result.text).toMatch(/gate changed while the form was open.*Nothing was sent/);
+    expect(decider.count("answer")).toBe(0);
   });
 });
