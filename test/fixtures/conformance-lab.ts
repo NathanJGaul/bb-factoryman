@@ -2,7 +2,7 @@ import { deliveryModeOf, type DeliveryMode, type Driver } from "../../tools/conf
 import { resolveDriver } from "../../tools/conformance/drivers/index.ts";
 import { roleAdvice } from "../../src/harness/advice";
 import { contractFor } from "../../src/harness/contracts";
-import { notWaitingText } from "../../src/tools/decide-text";
+import { NOT_SHIP_TEXT, notWaitingText } from "../../src/tools/decide-text";
 import type { DispatchOptions, EventRow, Lab, Offers, ProviderState, TaskRow, ThreadFacts, ToolResult, Wake, Who } from "../../tools/conformance/port.ts";
 
 /** Ways to make the fake lab misbehave, so a scenario test can show that the scenario notices. */
@@ -198,6 +198,7 @@ export class FakeLab implements Lab {
   private decide(taskId: string): ToolResult {
     const task = this.rows.get(taskId);
     if (task === undefined) return { text: `No task ${taskId} exists in this project.`, isError: true };
+    if (task.kind !== "ship") return { text: `Refused (illegal_transition): ${NOT_SHIP_TEXT}`, isError: true };
     if (task.state !== "needs_decision") {
       if (this.faults.decideResolves === true) {
         this.transition(task, "resolve", "validating", "The fault accepted the decision.", "supervisor");

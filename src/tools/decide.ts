@@ -8,7 +8,7 @@ import type { AnswerResult } from "../validator/driver";
 import { decisionKey } from "../validator/key";
 import type { Answer, RunView } from "../validator/types";
 import { identify, sameProject } from "./access";
-import { notWaitingText } from "./decide-text";
+import { NOT_SHIP_TEXT, notWaitingText } from "./decide-text";
 import type { Caller } from "./dispatch";
 import { approvalAnswerSchema } from "./merge";
 import { wouldAccept } from "./preview";
@@ -50,7 +50,7 @@ export async function decide(rt: Runtime, decider: Decider, caller: Caller, raw:
   const call = parsed.data;
   const task = store.getTask(call.taskId);
   if (task === null || !sameProject(task, caller.projectId)) return failure(`No task ${call.taskId} exists in this project.`);
-  if (task.kind !== "ship") return refusalOutcome(refuse("illegal_transition", "Only a ship task has a pipeline to answer."));
+  if (task.kind !== "ship") return refusalOutcome(refuse("illegal_transition", NOT_SHIP_TEXT));
   if (task.state !== "needs_decision") {
     return refusalOutcome(refuse("illegal_transition", notWaitingText(call.taskId, task.state)));
   }

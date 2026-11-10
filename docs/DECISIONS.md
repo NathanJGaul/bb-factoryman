@@ -1545,3 +1545,16 @@ Each of these tests was proved able to fail with deliberate mutants of `src/tool
 The one test of this group that failed first is `[A1809]`.
 
 The position is the one taken for D-099, D-107, D-116, D-122, D-133, and D-135: the rubric fails the feature, the evidence is complete, and the owner decides.
+
+### D-145: The first live run found that the fake lab did not model task kinds, so S8 probed with a scout (Finding, fixed)
+
+The first tier 1 run in `bblab` failed `S8.decide-wrong-state`.
+The check called `factoryman_decide` on the silent task of the teardown probe, which is a scout task, and the real tool answered "Only a ship task has a pipeline to answer." because it checks the kind before the state.
+The fake lab answered with the wrong-state text for every task, so no offline test could see the difference.
+
+The fix has three parts, each test first.
+The fake lab now refuses a scout task with the real tool's text, and both texts come from `src/tools/decide-text.ts`, a module with no imports that the tool and the lab share.
+S8 dispatches its own silent ship task for the decision probe.
+`[U1839]` pins both refusals.
+The tool did not change.
+The runs that followed the fix are the ones in `conformance/results/`.

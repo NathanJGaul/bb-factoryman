@@ -141,3 +141,12 @@ Correction to cycle 5: the full run on that cycle's code had one red, `test/acce
 - T045 (findings 8, 10, 11): the S9 test is `[U1847]` and the unit refusal test is `[U1848]` (both are rows of the list), `[U1812]` asserts exactly two `start` calls, and the traces of the list were corrected (US5.3 now sits on `A1816`).
 - Gate script -> 159 files, 2259 tests, OK.
 - commit: `test: clear the HIGH smells that the verification found`
+
+## Cycle 13: U1839 and S8 the live run finds that the lab probed with a scout (D-145)
+
+- test: `test/fixtures/conformance-lab.test.ts::[U1839]` (now two tests: a working ship task, and a scout task refused because only a ship task has a pipeline).
+- found by: the first tier 1 run in `bblab` (`pnpm run conformance -- --tier 1 --lab-dir /var/tmp/bblab-decide-tool`, commit `15de3f2`): `FAIL S8.decide-wrong-state: ... text: Refused (illegal_transition): Only a ship task has a pipeline to answer.` Every other scenario passed. The runs were stopped, the lab was brought down (tripwire: no events), and the stray result file was reverted.
+- red: `pnpm vitest run test/fixtures/conformance-lab.test.ts` -> `AssertionError: expected { …(2) } to deeply equal { …(2) }` for the scout case (1 failed). After the fake lab learned task kinds, `pnpm vitest run test/fixtures/conformance-lab.test.ts tools/conformance/scenarios/scenarios.test.ts test/acceptance/conformance-tier15.test.ts test/acceptance/conformance-tier1.test.ts` -> `[A1301]`, `[A1302]`, `[A1312]`, `[A1313]`, `[A1501]`, `[A1502]`, `[A1505]`, `[A1614]`, and more failed, which is the live failure reproduced offline.
+- green: S8 dispatches its own silent ship task for the decision probe. 71 tests passed in the four files. The gate follows.
+- refactor: `src/tools/decide-text.ts` also holds `NOT_SHIP_TEXT`, which the tool and the fake lab share.
+- commit: `fix(conformance): probe the decide refusal with a ship task`

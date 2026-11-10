@@ -135,9 +135,9 @@ describe("the fake lab's supervisors", () => {
 });
 
 describe("the fake lab's factoryman_decide", () => {
-  it("[U1839] refuses a task that is not in needs_decision with the real tool's wording, writes no resolve row, and names an unknown task", async () => {
+  it("[U1839] refuses a working ship task with the real tool's wording, writes no resolve row, and names an unknown task", async () => {
     const lab = new FakeLab("codex");
-    const { taskId } = await lab.dispatch("scout", "decide probe", { flag: "silent" });
+    const { taskId } = await lab.dispatch("ship", "decide probe", { flag: "silent" });
     expect(taskId).not.toBeNull();
     await lab.waitForState(taskId ?? "", ["working"]);
     const refused = await lab.callTool("factoryman_decide", { taskId, key: "nm-none", action: "approve" });
@@ -147,5 +147,13 @@ describe("the fake lab's factoryman_decide", () => {
     expect((await stateOf(lab, taskId))?.state).toBe("working");
     const unknown = await lab.callTool("factoryman_decide", { taskId: "t-nope", key: "nm-none", action: "approve" });
     expect(unknown).toEqual({ text: "No task t-nope exists in this project.", isError: true });
+  });
+
+  it("[U1839] refuses a scout task as the real tool does, because only a ship task has a pipeline", async () => {
+    const lab = new FakeLab("codex");
+    const { taskId } = await lab.dispatch("scout", "decide probe", { flag: "silent" });
+    await lab.waitForState(taskId ?? "", ["working"]);
+    const refused = await lab.callTool("factoryman_decide", { taskId, key: "nm-none", action: "approve" });
+    expect(refused).toEqual({ text: "Refused (illegal_transition): Only a ship task has a pipeline to answer.", isError: true });
   });
 });

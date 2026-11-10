@@ -3,3 +3,6 @@
 
 /** The reason for a call on a task that is not in `needs_decision`. */
 export const notWaitingText = (taskId: string, state: string): string => `Task ${taskId} is ${state}. A decision needs needs_decision.`;
+
+/** The reason for a call on a task that is not a ship task: only a ship task has a pipeline to answer. */
+export const NOT_SHIP_TEXT = "Only a ship task has a pipeline to answer.";
