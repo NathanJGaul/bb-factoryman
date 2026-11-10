@@ -36,3 +36,12 @@ Correction to cycle 2: the full suite after cycle 2 was 153 files and 2112 tests
 - green: `src/validator/driver.ts` appends `Decision key: <key>` in `park`, adds `current` (the loop's `context`, then `validator.status`), adds an optional `evidence` argument to `answer`, and adds `rerun`, which shares `resolved` with `answer`. `pnpm vitest run src/validator/driver.test.ts` -> 36 passed. `pnpm test` -> 153 files, 2122 tests passed. Type check and lint clean.
 - refactor: `answer` and `rerun` share the private `resolved` (apply `resolve`, clear the baseline, map the result); no test changed.
 - commit: `feat(validator): add the key line, current, rerun, and answer evidence to the driver`
+
+## Cycle 4: A1816, U1824, U1825 the tool is registered for supervisors (one group)
+
+- test: `test/acceptance/tools-visibility.test.ts::[A1816]` (replaces `[A1]`, which said four tools), `src/tools/register.test.ts::[U1824]`, `[U1825]`. The pins `[U33]`, `[U36]`, `[A17]`, and `[U123]` are updated from the old counts to the new ones, with the same checks (the exact name lists are longer by `factoryman_decide`). `test/fixtures/decider.ts` is new (`FakeDecider`).
+- red: `pnpm vitest run src/tools/register.test.ts test/acceptance/tools-visibility.test.ts test/acceptance/plugin.test.ts src/server.test.ts` -> `AssertionError: expected [ 'factoryman_dispatch', …(3) ] to deeply equal [ 'factoryman_decide', …(4) ]` and `expected [ { …(7) }, … ] to have a length of 6 but got 5` (7 failed, 22 passed)
+- green: `src/tools/decide.ts` holds the `Decider` interface, the flat `decideSchema`, and a first `decide` that checks the worker and parses the arguments (the answer path comes in the next cycles); `src/tools/register.ts` adds the tool last in the supervisor list and takes the decider; `src/server.ts` passes the driver. The full run then showed four more old pins: `[U1312]` and `[U121]` (updated) and `[A1602]` and `[A1313]` (updated). `pnpm test` -> 153 files, 2124 tests passed. Type check and lint clean.
+- U1826 is DROPPED: the test "the plugin passes its driver to the registration" cannot be written before the flow uses the driver, and A1801 (through `createPlugin` with the real driver) is the stronger proof.
+- refactor: none needed
+- commit: `feat(tools): register factoryman_decide for supervisors`

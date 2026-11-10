@@ -2,6 +2,7 @@ import { createFakePluginHost, makePluginAgentConfigurationContext } from "@get-
 import { describe, expect, it } from "vitest";
 import { contractFor } from "../harness/contracts";
 import { skillNamesOnDisk } from "../../test/fixtures/skills";
+import { FakeDecider } from "../../test/fixtures/decider";
 import { testRuntime } from "../../test/fixtures/runtime";
 import type { MergeExecutor } from "../git/merge";
 import { registerTools, skillsForMetadata, toolsForMetadata } from "./register";
@@ -11,8 +12,9 @@ const executor: MergeExecutor = { preflight: async () => null, merge: async () =
 function setup() {
   const host = createFakePluginHost({ pluginId: "factoryman", agentSkillIds: skillNamesOnDisk() });
   const t = testRuntime();
-  registerTools(host.bb, t.runtime, executor);
-  return { host, t };
+  const decider = new FakeDecider();
+  registerTools(host.bb, t.runtime, executor, decider);
+  return { host, t, decider };
 }
 
 async function toolsFor(host: ReturnType<typeof setup>["host"], pluginMetadata: Record<string, unknown>) {
@@ -21,9 +23,9 @@ async function toolsFor(host: ReturnType<typeof setup>["host"], pluginMetadata: 
 }
 
 describe("registerTools", () => {
-  it("[U33] offers the four supervisor tools to role supervisor", async () => {
+  it("[U33] offers the five supervisor tools to role supervisor", async () => {
     const { host } = setup();
-    expect(await toolsFor(host, { role: "supervisor" })).toEqual(["factoryman_dispatch", "factoryman_merge", "factoryman_status", "factoryman_teardown"]);
+    expect(await toolsFor(host, { role: "supervisor" })).toEqual(["factoryman_decide", "factoryman_dispatch", "factoryman_merge", "factoryman_status", "factoryman_teardown"]);
   });
 
   it("[U34] offers only factoryman_report to role worker", async () => {
@@ -38,15 +40,38 @@ describe("registerTools", () => {
     }
   });
 
-  it("[U36] registers exactly the five tool names and no sixth", () => {
+  it("[U36] registers exactly the six tool names and no seventh", () => {
     const { host } = setup();
     expect(host.harness.inspection.registrations.agentTools.map((tool) => tool.name).sort()).toEqual([
+      "factoryman_decide",
       "factoryman_dispatch",
       "factoryman_merge",
       "factoryman_report",
       "factoryman_status",
       "factoryman_teardown",
     ]);
+  });
+
+  it("[U1824] lists the five supervisor tools for a supervisor with factoryman_decide last, and leaves the worker and unroled results alone", () => {
+    expect(toolsForMetadata({ role: "supervisor" })).toEqual(["factoryman_dispatch", "factoryman_status", "factoryman_merge", "factoryman_teardown", "factoryman_decide"]);
+    expect(toolsForMetadata({ role: "worker", taskId: "t1" })).toEqual(["factoryman_report"]);
+    expect(toolsForMetadata({})).toEqual([]);
+  });
+
+  it("[U1825] advertises the decide arguments as one flat object with an action enum and no union, and a call reaches the tool", async () => {
+    const { host, t } = setup();
+    const decide = host.harness.inspection.registrations.agentTools.find((tool) => tool.name === "factoryman_decide");
+    const schema = decide?.inputSchema as { type: string; additionalProperties: boolean; required: string[]; properties: { action: { enum: string[] } } };
+    expect(schema.type).toBe("object");
+    expect(schema.additionalProperties).toBe(false);
+    expect(schema.required).toEqual(["taskId", "key", "action"]);
+    expect(schema.properties.action.enum).toEqual(["approve", "skip", "fix", "rerun"]);
+    expect(Object.keys(schema.properties)).toEqual(["taskId", "key", "action", "findingIds", "instructions"]);
+    expect(JSON.stringify(schema)).not.toMatch(/"(oneOf|anyOf|allOf)"/);
+    t.bb.addThread({ id: "thr-sup" });
+    const refused = await host.harness.behavior.callAgentTool("factoryman_decide", { taskId: "t1", key: "k", action: "maybe" }, { threadId: "thr-sup", projectId: "proj-1" });
+    expect(refused).toMatchObject({ isError: true });
+    expect(JSON.stringify(refused)).toContain("invalid_event");
   });
 
   it("[U37] advertises a dispatch schema that forbids extra fields and lists the three permission modes", () => {
@@ -103,16 +128,16 @@ describe("skillsForMetadata", () => {
 
 describe("the provider-aware configuration", () => {
   const PROVIDERS = ["claude-code", "codex", "pi", "acp-omp", "acp-opencode"];
-  // The tools and skills of each role, written out. They are the ones the roles had before the hint existed.
+  // The tools and skills of each role, written out. They are the ones the roles had before the hint existed, plus factoryman_decide (D-136).
   const ROLES: Array<[string, Record<string, unknown>, { tools: string[]; skills: string[] }]> = [
-    ["supervisor", { role: "supervisor" }, { tools: ["factoryman_dispatch", "factoryman_merge", "factoryman_status", "factoryman_teardown"], skills: ["factoryman-supervisor"] }],
+    ["supervisor", { role: "supervisor" }, { tools: ["factoryman_decide", "factoryman_dispatch", "factoryman_merge", "factoryman_status", "factoryman_teardown"], skills: ["factoryman-supervisor"] }],
     ["worker", { role: "worker", taskId: "t1" }, { tools: ["factoryman_report"], skills: ["factoryman-worker"] }],
     ["none", {}, { tools: [], skills: [] }],
   ];
 
   function configure(providerId: string, pluginMetadata: Record<string, unknown>, options?: { toolHints?: boolean }) {
     const host = createFakePluginHost({ pluginId: "factoryman", agentSkillIds: skillNamesOnDisk() });
-    registerTools(host.bb, testRuntime().runtime, executor, options);
+    registerTools(host.bb, testRuntime().runtime, executor, new FakeDecider(), options);
     return host.harness.behavior.resolveAgentConfiguration(
       makePluginAgentConfigurationContext({ pluginMetadata: pluginMetadata as never, provider: { id: providerId } }),
     );

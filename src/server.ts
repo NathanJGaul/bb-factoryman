@@ -143,7 +143,7 @@ export function createPlugin(options: PluginOptions = {}): (bb: BbPluginApi) => 
     hooks.afterSettings = () => void drain(rt);
     registerReadRpc(bb, store);
     registerHandlers(bb, new EventHandlers(rt, notifier, bb.pluginId));
-    registerTools(bb, rt, createMergeExecutor(exec), { toolHints: options.toolHints === true });
+    registerTools(bb, rt, createMergeExecutor(exec), driver, { toolHints: options.toolHints === true });
 
     // bb.sdk is bound once the factory returns, so the live-state comparison runs in a service.
     bb.background.service("factoryman-startup", {

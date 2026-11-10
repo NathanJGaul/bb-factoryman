@@ -28,7 +28,7 @@ describe("bb.agents.configure through the plugin factory", () => {
   // The tools and skills of each role, written out. They are the ones the roles had before the hint existed.
   const ROLES: Array<[string, Record<string, unknown>, { tools: string[]; skills: string[] }]> = [
     ["worker", WORKER, { tools: ["factoryman_report"], skills: ["factoryman-worker"] }],
-    ["supervisor", SUPERVISOR, { tools: ["factoryman_dispatch", "factoryman_merge", "factoryman_status", "factoryman_teardown"], skills: ["factoryman-supervisor"] }],
+    ["supervisor", SUPERVISOR, { tools: ["factoryman_decide", "factoryman_dispatch", "factoryman_merge", "factoryman_status", "factoryman_teardown"], skills: ["factoryman-supervisor"] }],
     ["unroled thread", {}, { tools: [], skills: [] }],
   ];
 
