@@ -71,3 +71,14 @@ Append only. Newest last. Every entry's `red` block is the evidence that the tes
 
 - check, made by hand because a shared `/tmp` makes a fixed baseline meaningless: the count of `/tmp/bb-fake-plugin-host-*` before and after a run of the four new test files was 1672 and 1672, and no `/tmp/factoryman-registry-apply-*` directory remained.
 - full gate: `pnpm run check` -> type check and lint clean, 162 files, 2331 tests passed (about 156 s)
+
+## Cycle 8: remediation of the verification (T016 to T024)
+
+- order: the new tests pass on the real code, so their red is shown against mutants of the code, as in cycle 4.
+- tests added or changed: `[U1902]` (two table rows and a test that the exact name wins), `[A1907]` (a name inside a longer one), `[U1904]` (`--file` twice, `--apply` twice), `[U1905]` and `[A1908]` (bb saw `listProjects` and nothing else), `[A1903]` and `[A1905]` split into one test per behavior, `[A1906]` compares with its own snapshot, and `if (result.ok) return;` replaced by a helper that throws.
+- mutants run on the new tests (each applied, run, and restored):
+  - V1 substring name match -> 4 failed (`[U1902]` x3, `[A1907]`); it survived all 94 tests before
+  - V8 an extra `bb.setThreadMetadata` in the apply -> 2 failed (`[U1905]`, `[A1908]`)
+  - V9 the first `--file` wins -> 1 failed (`[U1904]`)
+- green: `pnpm vitest run src/limits/registry-apply.test.ts test/acceptance/registry-apply.test.ts src/tools/supervisor-command.test.ts` -> 103 passed
+- docs: D-149 records the test-after deviation and the write-failure limit. The test list: `spec_criteria: 30`, `A1911` dropped.

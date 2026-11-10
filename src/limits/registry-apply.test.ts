@@ -13,6 +13,11 @@ function planOf(result: ApplyPlan | ApplyRefusal): ApplyPlan {
   return result;
 }
 
+function refusalOf(result: ApplyPlan | ApplyRefusal): ApplyRefusal {
+  if (result.ok) throw new Error(`expected a refusal, got a plan for ${result.projectId}`);
+  return result;
+}
+
 describe("planApply", () => {
   it("[U1901] plans the three fields from a clean entry and leaves base branch and default machine as stored", () => {
     const plan = planOf(planApply({ name: "gizmos", entries: entries("- gizmos [direct-PR +yolo branch=wip/] - d"), projects: gizmos, stored: stored({ baseBranch: "main", defaultMachine: "box" }) }));
@@ -55,11 +60,11 @@ describe("planApply", () => {
     ["a bare yolo token", "gizmos", ["- gizmos [yolo] - d"], gizmos, "flagged"],
     ["a bare yolo token after a mode", "gizmos", ["- gizmos [direct-PR yolo] - d"], gizmos, "flagged"],
     ["no bb project", "gizmos", ["- gizmos [direct-PR] - d"], [{ id: "p", name: "other" }], "unknown_project"],
+    ["a longer registry name that contains the name", "gadgets", ["- prod gadgets [direct-PR] - d"], [{ id: "p", name: "gadgets" }], "no_entry"],
+    ["a longer bb project name that contains the name", "gadgets", ["- gadgets [direct-PR] - d"], [{ id: "p", name: "prod gadgets" }], "unknown_project"],
     ["two bb projects with the name", "gizmos", ["- gizmos [direct-PR] - d"], [{ id: "a", name: "gizmos" }, { id: "b", name: "GIZMOS" }], "ambiguous_project"],
   ])("[U1902] refuses %s", (_label, name, lines, projects, code) => {
-    const result = planApply({ name, entries: entries(...lines), projects, stored: stored() });
-    expect(result.ok).toBe(false);
-    if (result.ok) return;
+    const result = refusalOf(planApply({ name, entries: entries(...lines), projects, stored: stored() }));
     expect(result.code).toBe(code);
     expect(result.message).toContain(name);
     expect("next" in result).toBe(false);
@@ -68,6 +73,19 @@ describe("planApply", () => {
   it("[U1902] matches the registry name, the --project name, and the bb project name without regard to letter case", () => {
     const plan = planOf(planApply({ name: "GIZMOS", entries: entries("- Gizmos [direct-PR] - d"), projects: [{ id: "p-1", name: "gIzMoS" }], stored: stored() }));
     expect(plan.projectId).toBe("p-1");
+  });
+
+  it("[U1902] picks the exact name when another name contains it, in the registry and in bb", () => {
+    const plan = planOf(
+      planApply({
+        name: "gadgets",
+        entries: entries("- prod gadgets [local-only] - d", "- gadgets [direct-PR] - d"),
+        projects: [{ id: "p-prod", name: "prod gadgets" }, { id: "p-plain", name: "gadgets" }],
+        stored: stored(),
+      }),
+    );
+    expect(plan.projectId).toBe("p-plain");
+    expect(plan.next).toMatchObject({ projectId: "p-plain", deliveryMode: "direct-PR" });
   });
 
   it("[U1902] ignores a flagged line for another project", () => {

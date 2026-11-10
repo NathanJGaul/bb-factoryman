@@ -2,7 +2,7 @@
 feature: 014-registry-apply
 loop: outside-in
 profile: .specify/memory/tdd-profile.md
-spec_criteria: 38
+spec_criteria: 30
 planned_at: 04d8272
 updated_at: 04d8272
 suite_baseline: green
@@ -33,7 +33,7 @@ Table-driven tests cover the lines that name several inputs, and the cycle log r
 | A1908 | After a successful apply exactly one `project_config` row differs and `task`, `task_event`, and `approval` are identical; the registry file's bytes and modification time are unchanged; no process ran | US5.1, US5.2, FR-011, FR-012, SC-002 | example | DONE | `test/acceptance/registry-apply.test.ts::[A1908]` |
 | A1909 | A task created before the apply keeps its mode, and a task created after uses the new mode | US5.3 | example | DONE | `test/acceptance/registry-apply.test.ts::[A1909]` |
 | A1910 | `docs/CUTOVER.md` shows `--apply --project`, no longer calls the apply path a follow-up, and still says tasks, approvals, and history are not imported and that firstmate is untouched; `docs/DECISIONS.md` has `### D-148` and D-078 and D-088 mention it; `docs/LIVE-CHECK.md` no longer says `--apply` is refused; the supervisor skill names `--apply --project` | US6.1, US6.2, US6.3, US6.4, FR-016 | example | DONE | `test/acceptance/registry-apply-docs.test.ts::[A1910]` |
-| A1911 | The new tests leak no temporary directory beyond the baseline count recorded in the cycle log | plan constraint | example | DONE | `tdd/cycle-log.md cycle 7 (checked by hand)` |
+| A1911 | The new tests leak no temporary directory beyond the baseline count recorded in the cycle log | plan constraint | example | DROPPED | Dropped: a hand measurement in a shared `/tmp` (verification finding 9), recorded in `tdd/cycle-log.md` cycle 7 |
 
 ## Inner loop: unit behaviors
 
@@ -42,7 +42,7 @@ Table-driven tests cover the lines that name several inputs, and the cycle log r
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
 | U1901 | A clean entry gives a plan whose three changes hold stored and target values of `deliveryMode`, `yolo`, and `branchPrefix`, an empty prefix as null, `no-mistakes-prod-only` as `no-mistakes`, and `untouched` lists `baseBranch` and `defaultMachine` with their stored values | US1, FR-007, FR-008, FR-009 | example | DONE | `src/limits/registry-apply.test.ts::[U1901]` |
-| U1902 | Refusal table: no entry, two entries with one name, a flagged entry (unknown mode, unexpected token, unclosed bracket, bare `yolo`), no bb project, two bb projects with the name in any letter case; and a case-insensitive match that succeeds | US3, FR-004, FR-005, FR-006 | example | DONE | `src/limits/registry-apply.test.ts::[U1902]` |
+| U1902 | Refusal table: no entry, two entries with one name, a flagged entry (unknown mode, unexpected token, unclosed bracket, bare `yolo`), no bb project, two bb projects with the name in any letter case, a longer name that contains the name (registry and bb); a case-insensitive match that succeeds; the exact name wins over a longer one | US3, FR-004, FR-005, FR-006 | example | DONE | `src/limits/registry-apply.test.ts::[U1902]` |
 | U1903 | `next` is null when every field equals the target; a change is flagged only when its values differ (both sides: one field differs, none differs); a stored `yolo` on with an entry that has none changes to off; `next` keeps the stored `baseBranch` and `defaultMachine` | US2, FR-010 | example | DONE | `src/limits/registry-apply.test.ts::[U1903]` |
 
 ### `src/tools/supervisor-command.ts`

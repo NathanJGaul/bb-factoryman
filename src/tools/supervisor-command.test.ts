@@ -360,8 +360,18 @@ describe("bb factoryman import-registry --apply", () => {
     expect(out).toMatch(/unchanged:\n {2}baseBranch: trunk \(not in the registry\)\n {2}defaultMachine: m-1 \(not in the registry\)/);
     expect(out).toContain("Forge none is not stored.");
     expect(t.files.reads).toEqual(["/reg/projects.md"]);
+    expect(t.bb.calls.map((call) => call.method)).toEqual(["listProjects"]);
     expect(store.getProjectConfig("proj-gadgets")).toEqual(defaultProjectConfig("proj-gadgets"));
     expect(t.execCalls).toEqual([]);
+  });
+
+  it("[U1904] reads the last --file when it is given twice, and accepts --apply twice", async () => {
+    const t = applyRuntime();
+    t.files.files.set("/other.md", "- gizmos [local-only] - Other (added 2026-01-02)");
+    const result = await runFactorymanCommand(t.runtime, ["import-registry", "--file", "/reg/projects.md", "--apply", "--file", "/other.md", "--apply", "--project", "gizmos"]);
+    expect(result.exitCode).toBe(0);
+    expect(t.files.reads).toEqual(["/other.md"]);
+    expect(t.runtime.deps.store.getProjectConfig("proj-gizmos").deliveryMode).toBe("local-only");
   });
 
   it("[U1905] prints the notes of the line", async () => {

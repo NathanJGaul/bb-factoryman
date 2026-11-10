@@ -1635,3 +1635,22 @@ Gap: the apply leaves no record of who ran it or when beyond one info log line.
 A log row for a config change would need a new event kind in the state machine's log, which the brief did not ask for.
 Tasks, a cancel-queued-task tool, and tool hints stay out of scope.
 The command was tested offline only; the owner runs it against a real bb and registry as the live check (`docs/LIVE-CHECK.md`).
+
+### D-149: Nine acceptance tests were written after the code, and the write-failure path is tested at the command function (Deviation)
+
+The repository's test-first rule drives every behavior with a failing test first (constitution principle V).
+Feature 014 did that for the plan, the command at unit level, the registration, and the documents.
+It did not do it for the acceptance tests `[A1901]` to `[A1909]`: the pure plan and the command were built test first at unit level, so the acceptance tests through the plugin factory were written against working code, and 13 of 16 passed on their first run (`tdd/cycle-log.md`, cycle 4).
+The other three failed on errors in the tests themselves.
+`/speckit.tdd.verify` therefore classed them `TEST_AFTER` and failed the feature on that.
+
+What stands in for the missing reds: nine deliberate mutants on the plan and the argument rules, each killed by an acceptance or unit test, and seven more in the verification and the remediation.
+The verification also found one survivor, a substring name match, and the remediation added the tests that kill it (`[U1902]`, `[A1907]`).
+This is the same shape as D-099, D-122, D-133, and D-144.
+The owner decides whether to waive the deviation.
+
+The second item is a limit.
+The write-failure refusal (spec scenario 3.10) is tested through `runFactorymanCommand` with the in-memory store and a store method that throws (`[U1908]`), and not through the plugin factory with a failing SQLite store.
+`runFactorymanCommand` is the function that bb's command handler calls, so the code path is the real one.
+Making the real SQLite store fail would need a fault injection in the fake host that no test uses today, and the transaction rollback it relies on is the store's own contract (`test/store-contract.ts`).
+

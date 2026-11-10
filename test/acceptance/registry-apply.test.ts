@@ -38,6 +38,7 @@ const LINES = [
   "- mystery [wibble] - Unknown mode (added 2026-07-08)",
   "- oddity [direct-PR extra] - Unknown token (added 2026-08-09)",
   "- unclosed [direct-PR - Never closed (added 2026-08-10)",
+  "- gadgets [local-only] - Shorter name inside another (added 2026-08-10)",
   "- twin [local-only] - One (added 2026-08-11)",
   "- twin [direct-PR] - Two (added 2026-08-12)",
   "- ghost [direct-PR] - Not in bb (added 2026-08-13)",
@@ -51,6 +52,7 @@ const PROJECTS = [
   { id: "proj-bare", name: "bare" },
   { id: "proj-thing", name: "thingamajigs" },
   { id: "proj-prod", name: "prod gadgets" },
+  { id: "proj-gadgets", name: "gadgets" },
   { id: "proj-mystery", name: "mystery" },
   { id: "proj-oddity", name: "oddity" },
   { id: "proj-unclosed", name: "unclosed" },
@@ -87,18 +89,25 @@ describe("bb factoryman import-registry --apply through the plugin", () => {
     expect(dump(world)).toBe(before);
   });
 
-  it("[A1903] maps the conditional policy and a line with no bracket, stores an empty prefix as none, and says the forge is not stored", async () => {
+  it("[A1903] maps the conditional policy to no-mistakes and prints its note", async () => {
     const world = await loadWorld({ projectList: PROJECTS });
     world.store.putProjectConfig({ ...configOf(world, "proj-prod"), deliveryMode: "local-only" });
     const prod = await apply(world, "prod gadgets");
     expect(prod.exitCode).toBe(0);
     expect(configOf(world, "proj-prod")).toMatchObject({ deliveryMode: "no-mistakes", yolo: false, branchPrefix: "fm/" });
     expect(prod.stdout).toMatch(/- prod gadgets: a conditional policy in firstmate; it maps to no-mistakes, the most rigorous leg/);
+  });
 
+  it("[A1903] reads a line with no bracket as no-mistakes with yolo off", async () => {
+    const world = await loadWorld({ projectList: PROJECTS });
+    world.store.putProjectConfig({ ...configOf(world, "proj-widgets"), deliveryMode: "local-only", yolo: true });
     const plain = await apply(world, "widgets");
     expect(plain.exitCode).toBe(0);
     expect(configOf(world, "proj-widgets")).toMatchObject({ deliveryMode: "no-mistakes", yolo: false, branchPrefix: "fm/" });
+  });
 
+  it("[A1903] stores an empty prefix as none, and says the forge is not stored", async () => {
+    const world = await loadWorld({ projectList: PROJECTS });
     const gerrit = await apply(world, "thingamajigs");
     expect(gerrit.exitCode).toBe(0);
     expect(configOf(world, "proj-thing")).toMatchObject({ deliveryMode: "no-mistakes", yolo: true, branchPrefix: null });
@@ -117,7 +126,7 @@ describe("bb factoryman import-registry --apply through the plugin", () => {
     expect(result.stdout.split("unchanged:")[0]).not.toContain("baseBranch");
   });
 
-  it("[A1905] writes nothing on a rerun, changes only the field that differs, and turns a stored yolo off", async () => {
+  it("[A1905] writes nothing on a rerun, leaves every table identical, and prints every field as unchanged", async () => {
     const world = await loadWorld({ projectList: PROJECTS });
     const file = registryFile(LINES);
     await apply(world, "gizmos", file);
@@ -129,14 +138,22 @@ describe("bb factoryman import-registry --apply through the plugin", () => {
     expect(again.stdout).not.toContain("written:");
     expect(again.stdout).toContain("unchanged:\n  deliveryMode: direct-PR\n  yolo: off\n  branchPrefix: wip/");
     expect(await apply(world, "gizmos", file)).toEqual(again);
+  });
 
+  it("[A1905] changes only the field that differs", async () => {
+    const world = await loadWorld({ projectList: PROJECTS });
+    const file = registryFile(LINES);
+    await apply(world, "gizmos", file);
     world.store.putProjectConfig({ ...configOf(world, "proj-gizmos"), branchPrefix: "old/" });
     const one = await apply(world, "gizmos", file);
     expect(one.stdout).toContain("written:\n  branchPrefix: old/ -> wip/\nunchanged:\n  deliveryMode: direct-PR\n  yolo: off");
-    expect(configOf(world, "proj-gizmos").branchPrefix).toBe("wip/");
+    expect(configOf(world, "proj-gizmos")).toMatchObject({ deliveryMode: "direct-PR", yolo: false, branchPrefix: "wip/" });
+  });
 
-    world.store.putProjectConfig({ ...configOf(world, "proj-gizmos"), yolo: true });
-    const off = await apply(world, "gizmos", file);
+  it("[A1905] turns a stored yolo off when the line does not carry +yolo", async () => {
+    const world = await loadWorld({ projectList: PROJECTS });
+    world.store.putProjectConfig({ ...configOf(world, "proj-gizmos"), deliveryMode: "direct-PR", branchPrefix: "wip/", yolo: true });
+    const off = await apply(world, "gizmos");
     expect(off.stdout).toContain("yolo: on -> off");
     expect(configOf(world, "proj-gizmos").yolo).toBe(false);
   });
@@ -167,10 +184,11 @@ describe("bb factoryman import-registry --apply through the plugin", () => {
     expect(twice.stderr).toContain("2 projects named twin");
 
     const down = await loadWorld({ projectList: PROJECTS, projectListError: new Error("bb is down") });
+    const downBefore = dump(down);
     const failed = await apply(down, "gizmos");
     expect(failed.exitCode).toBe(1);
     expect(failed.stderr).toContain("could not be listed");
-    expect(dump(down)).toBe(dump(await loadWorld({ projectList: PROJECTS })));
+    expect(dump(down)).toBe(downBefore);
 
     const missing = await cli(world, ["import-registry", "--file", "/nonexistent/projects.md", "--apply", "--project", "gizmos"]);
     expect(missing.exitCode).toBe(1);
@@ -186,6 +204,21 @@ describe("bb factoryman import-registry --apply through the plugin", () => {
     await apply(world, "gizmos");
     expect(rows(others)).toEqual(before);
     expect(world.host.bb.storage.database().prepare("select count(*) as n from project_config").get()).toEqual({ n: 1 });
+  });
+
+  it("[A1907] matches the whole name: a name inside a longer one writes the exact project only, and finds nothing when only the longer one exists", async () => {
+    const world = await loadWorld({ projectList: PROJECTS });
+    const prodBefore = JSON.stringify(configOf(world, "proj-prod"));
+    expect((await apply(world, "gadgets")).exitCode).toBe(0);
+    expect(configOf(world, "proj-gadgets")).toMatchObject({ deliveryMode: "local-only" });
+    expect(JSON.stringify(configOf(world, "proj-prod"))).toBe(prodBefore);
+
+    const onlyLonger = await loadWorld({ projectList: PROJECTS.filter((project) => project.id !== "proj-gadgets") });
+    const before = dump(onlyLonger);
+    const refused = await apply(onlyLonger, "gadgets");
+    expect(refused.exitCode).toBe(1);
+    expect(refused.stderr).toContain("bb has no project named gadgets");
+    expect(dump(onlyLonger)).toBe(before);
   });
 
   it("[A1907] refuses --apply without --project and --project without --apply, before it reads anything", async () => {
@@ -206,8 +239,10 @@ describe("bb factoryman import-registry --apply through the plugin", () => {
     const stat = statSync(path);
     const beforeOthers = dump(world, ["task", "task_event", "approval"]);
     const beforeConfig = dump(world, ["project_config"]);
+    const sdkBefore = world.host.harness.sdk.calls.length;
     const result = await apply(world, "gizmos", path);
     expect(result.exitCode).toBe(0);
+    expect(world.host.harness.sdk.calls.slice(sdkBefore).map((call) => call.path)).toEqual(["projects.list"]);
     expect(dump(world, ["task", "task_event", "approval"])).toBe(beforeOthers);
     expect(dump(world, ["project_config"])).not.toBe(beforeConfig);
     expect(world.host.bb.storage.database().prepare("select count(*) as n from project_config").get()).toEqual({ n: 1 });

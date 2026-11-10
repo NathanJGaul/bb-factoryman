@@ -145,3 +145,25 @@ The edge case "a name with leading or trailing space" has no test either, becaus
 - Performance and load: no criterion, no test.
 - Real SQLite failure paths (finding 12) and a registry file with thousands of lines.
 - Independence: this audit was done by the author's session.
+
+## Addendum: after the remediation (`/speckit.implement`, tasks T016 to T024)
+
+Re-checked at the head of the remediation commit.
+
+| Finding | State | Evidence |
+| --- | --- | --- |
+| 1 (HIGH, test-after) | Open: waiver pending | D-149 records the deviation. Sixteen mutants now stand in for the missing reds. The verdict stays `FAIL` under the rubric until the owner waives it. |
+| 2 (HIGH, survivor V1) | Cleared | `[U1902]` (two rows and the exact-name test) and `[A1907]`; V1 now fails 4 tests |
+| 3 (HIGH, `if` in a test) | Cleared | `refusalOf` throws instead of returning; `src/limits/registry-apply.test.ts` |
+| 4 (MED) | Cleared | `[U1905]` and `[A1908]` assert that bb saw `listProjects` and nothing else; mutant V8 fails both |
+| 5 (MED) | Cleared | `[U1904]` for `--file` twice; mutant V9 fails it |
+| 6 (MED) | Cleared | `[A1903]` and `[A1905]` split into three tests each |
+| 7 (MED) | Cleared | `[A1906]` compares with the down-world's own snapshot |
+| 8, 9 (LOW) | Cleared | `spec_criteria: 30`; `A1911` dropped with its reason |
+| 10 (LOW) | Stays | a note in history and in the cycle log; a commit cannot be changed |
+| 11 (LOW) | Stays | the helpers are file-local copies as before; the repository has no shared one |
+| 12 (LOW) | Recorded | D-149 states the limit |
+
+Suite after the remediation: `pnpm run check` -> type check and lint clean, 162 files, 2340 tests passed (about 160 s).
+Mutants sampled across the audit and the remediation: 19. Survived now: 0.
+Only finding 1 is blocking, and it needs the owner's waiver.
