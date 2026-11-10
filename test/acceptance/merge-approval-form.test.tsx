@@ -2,7 +2,7 @@
 import { act, cleanup, fireEvent, screen, within } from "@testing-library/react";
 import { loadPluginApp, renderSlot } from "@get-bb/plugin-sdk/testing/app";
 import { afterEach, describe, expect, it } from "vitest";
-import { MERGE_RENDERER_ID } from "../../src/approval/contract";
+import { DECISION_RENDERER_ID, MERGE_RENDERER_ID } from "../../src/approval/contract";
 import { ALL_CONTROLS, deferred, disabledControls, formHarness, press, typeComment as type, valueOf } from "../fixtures/approval-form";
 import { DISPATCH, loadWorld, nextForm, type World } from "../fixtures/plugin-host";
 
@@ -81,10 +81,10 @@ async function mountRenderer(
 
 
 describe("the merge approval form through the plugin factory and the registered renderer", () => {
-  it("[A1201] registers exactly one pending-interaction renderer, under the id that factoryman_merge passes", async () => {
+  it("[A1201] registers the merge renderer first, under the id that factoryman_merge passes, and the decision renderer after it", async () => {
     const world = await readyWorld();
     const app = await loadPluginApp(() => import("../../src/app"));
-    expect(app.pendingInteractions.map((registration) => registration.id)).toEqual([MERGE_RENDERER_ID]);
+    expect(app.pendingInteractions.map((registration) => registration.id)).toEqual([MERGE_RENDERER_ID, DECISION_RENDERER_ID]);
     const form = await openForm(world);
     const request = world.host.harness.inspection.pendingInteractions.find((pending) => pending.id === form.id);
     expect(request?.rendererId).toBe(app.pendingInteractions[0]?.id);

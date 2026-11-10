@@ -98,3 +98,11 @@ Correction to cycle 5: the full run on that cycle's code had one red, `test/acce
 - green: `src/app/decision-approval-form.tsx` (`DecisionApprovalForm`) mirrors the merge form: the same classes, the same in-flight guard, and `answerFor`; it reads the payload with `readDecisionPayload`, shows the findings and the answer sentence from the structured answer, and offers no Approve for an unreadable payload. `pnpm vitest run src/app/decision-approval-form.test.tsx` -> 26 passed. Gate script (type check, lint, `pnpm test`) -> OK.
 - refactor: none needed
 - commit: `feat(app): add the decision approval form`
+
+## Cycle 10: U1833, A1814, A1815, A1821 the decision renderer is registered (one group)
+
+- test: `src/app.test.tsx::[U1833]`; `test/acceptance/decision-approval-form.test.tsx::[A1814]` (two tests: Approve through the registered renderer gives the reply that the tool's strict schema accepts and the validator gets one answer; Deny and Cancel send nothing), `[A1815]`, `[A1821]`; the existing `test/acceptance/merge-approval-form.test.tsx::[A1201]` is updated from "exactly one renderer" to "the merge renderer first, the decision renderer after it".
+- red: `pnpm vitest run src/app.test.tsx test/acceptance/decision-approval-form.test.tsx test/acceptance/merge-approval-form.test.tsx` -> `AssertionError: expected [ [ …(2) ] ] to deeply equal [ [ …(2) ], [ …(2) ] ]` and `Error: no renderer is registered for factoryman-decision-approval` (5 failed). `[A1815]` passed on the first run, because it checks that the merge renderer is unchanged; the verify step lists the mutant that drops the merge registration.
+- green: `src/app.tsx` registers `DecisionApprovalForm` under `DECISION_RENDERER_ID` after the merge renderer. 22 tests passed in the three files. Gate script -> 158 files, 2243 tests, OK.
+- refactor: none needed
+- commit: `feat(app): register the decision renderer`
