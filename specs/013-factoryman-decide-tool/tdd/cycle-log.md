@@ -125,3 +125,7 @@ Correction to cycle 5: the full run on that cycle's code had one red, `test/acce
 - covered by existing tests, no new work: `[A1820]` is `test/acceptance/tmpdir-leak.test.ts::[A1511]` (the full gate shows no new directory under the system temporary directory; T029 measures it), `[U1844]` is `driver.test.ts::[U194]`, `[U1845]` is `decision-log.test.ts::[A1509]` and `[A1510]`, `[U1846]` is `no-mistakes.test.ts::[U180]`.
 - refactor: none needed
 - commit: `docs: describe factoryman_decide in the design, the skill, and the constitution`
+
+## Verification note: the leak baseline for T001
+
+- `pnpm test` was run once on `5971817` with `TMPDIR=/home/nathanjgaul/.cache/tmp`: 3159 `bb-fake-plugin-host-*` directories before and 3159 after, and 4057 entries before and 4056 after. `/tmp` held 1672 such directories and was not touched by the run. The old directories are leftovers from before the private-`TMPDIR` fix (D-121). The feature adds none. T001 is ticked on this evidence.

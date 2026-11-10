@@ -20,7 +20,7 @@ Commands run from the repository root.
 
 ## Phase 1: Setup
 
-- [ ] T001 Run `pnpm install --frozen-lockfile` and `pnpm run check` on the clean branch, and record in `specs/013-factoryman-decide-tool/tdd/cycle-log.md` that the baseline is green (tests, lint, type check) and how long it takes. Count the `bb-fake-plugin-host-*` directories directly under `${TMPDIR:-/tmp}` before and after one `pnpm run test`, and record both numbers as the leak baseline for [A1820].
+- [X] T001 Run `pnpm install --frozen-lockfile` and `pnpm run check` on the clean branch, and record in `specs/013-factoryman-decide-tool/tdd/cycle-log.md` that the baseline is green (tests, lint, type check) and how long it takes. Count the `bb-fake-plugin-host-*` directories directly under `${TMPDIR:-/tmp}` before and after one `pnpm run test`, and record both numbers as the leak baseline for [A1820].
 
 ## Phase 2: Foundational (blocks every story)
 
