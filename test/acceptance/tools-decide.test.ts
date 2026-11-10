@@ -169,3 +169,199 @@ describe("factoryman_decide over the real no-mistakes adapter", () => {
     for (const line of lines) expect(line.split(" ")).not.toContain("-y");
   });
 });
+
+describe("factoryman_decide refuses before it opens a form", () => {
+  /** Every refusal leaves the validator without an answer, opens no form, and changes neither the state nor the log. */
+  async function refused(world: World, validator: FakeValidator, args: unknown, caller?: { threadId: string; projectId?: string }, expected?: RegExp) {
+    const before = rows(world).length;
+    const stateBefore = state(world);
+    const result = await world.call("factoryman_decide", args, caller);
+    expect(result.isError, result.text).toBe(true);
+    if (expected !== undefined) expect(result.text).toMatch(expected);
+    expect(answers(validator)).toEqual([]);
+    expect(world.host.harness.inspection.pendingInteractions).toEqual([]);
+    expect(state(world)).toBe(stateBefore);
+    expect(rows(world)).toHaveLength(before);
+    return result;
+  }
+
+  it.each([
+    ["an unknown action", { taskId: "t1", key: KEY, action: "maybe" }, /invalid_event/],
+    ["an unknown argument", { taskId: "t1", key: KEY, action: "approve", yes: true }, /invalid_event/],
+    ["a missing key", { taskId: "t1", action: "approve" }, /invalid_event/],
+    ["a key that does not match the live gate", { taskId: "t1", key: "nm-r1-review-00000000", action: "approve" }, new RegExp(`live key is ${KEY}.*review-1, review-2`)],
+    ["a fix that names a finding that is not in the gate", { taskId: "t1", key: KEY, action: "fix", findingIds: ["review-9"] }, /review-9.*not in the gate/],
+    ["a fix with no finding IDs", { taskId: "t1", key: KEY, action: "fix" }, /at least one finding ID/],
+    ["a fix with a duplicate ID", { taskId: "t1", key: KEY, action: "fix", findingIds: ["review-1", "review-1"] }, /twice/],
+    ["instructions with approve", { taskId: "t1", key: KEY, action: "approve", instructions: "text" }, /approve takes no finding IDs and no instructions/],
+    ["instructions with skip", { taskId: "t1", key: KEY, action: "skip", instructions: "text" }, /skip takes no finding IDs and no instructions/],
+    ["a rerun on a gate", { taskId: "t1", key: KEY, action: "rerun" }, /rerun is for a run that finished/],
+    ["an unknown task", { taskId: "t9", key: KEY, action: "approve" }, /No task t9 exists/],
+  ])("[A1805] refuses %s", async (_name, args, expected) => {
+    const { world, validator } = await parked();
+    await refused(world, validator, args, undefined, expected);
+  });
+
+  it("[A1805] refuses a worker caller as actor_forbidden", async () => {
+    const { world, validator } = await parked();
+    await refused(world, validator, { taskId: "t1", key: KEY, action: "approve" }, w1, /actor_forbidden/);
+  });
+
+  it("[A1805] refuses a task of another project", async () => {
+    const { world, validator } = await parked();
+    await refused(world, validator, { taskId: "t1", key: KEY, action: "approve" }, { threadId: "thr-sup", projectId: "proj-other" }, /No task t1 exists in this project/);
+  });
+
+  it("[A1805] refuses a task that is not in needs_decision, and a scout task", async () => {
+    const working = await loadWorld({ validator: new FakeValidator() });
+    worlds.push(working);
+    working.setProject({ deliveryMode: "no-mistakes" });
+    await working.call("factoryman_dispatch", DISPATCH);
+    await refused(working, new FakeValidator(), { taskId: "t1", key: KEY, action: "approve" }, undefined, /illegal_transition.*working.*needs_decision/);
+
+    const scout = await loadWorld({ validator: new FakeValidator() });
+    worlds.push(scout);
+    await scout.call("factoryman_dispatch", { ...DISPATCH, kind: "scout" });
+    await refused(scout, new FakeValidator(), { taskId: "t1", key: KEY, action: "approve" }, undefined, /illegal_transition.*ship task/);
+  });
+
+  it("[A1806] opens the form under yolo, and sends the answer only after the owner approves", async () => {
+    const { world, validator } = await parked({ yolo: true });
+    validator.script("answer", [ok(view())]);
+    const call = world.call("factoryman_decide", { taskId: "t1", key: KEY, action: "approve" });
+    const formId = await nextForm(world);
+    expect(answers(validator)).toEqual([]);
+    expect(state(world)).toBe("needs_decision");
+    world.host.harness.behavior.submitInteraction(formId, { decision: "approved" });
+    expect((await call).isError).toBe(false);
+    expect(answers(validator)).toHaveLength(1);
+  });
+
+  it("[A1806] sends nothing under yolo when the owner denies", async () => {
+    const { world, validator } = await parked({ yolo: true });
+    const result = await decideWith(world, { taskId: "t1", key: KEY, action: "skip" }, { decision: "denied" });
+    expect(result.isError).toBe(true);
+    expect(answers(validator)).toEqual([]);
+  });
+});
+
+describe("factoryman_decide when the form does not approve", () => {
+  it.each([
+    ["a denial", { decision: "denied", comment: "Not yet." }, /owner denied the answer: Not yet\./],
+    ["an approval with an extra field", { decision: "approved", extra: 1 }, /unreadable/],
+    ["the word yes", { decision: "yes" }, /unreadable/],
+    ["a bare string", "approved", /unreadable/],
+    ["null", null, /unreadable/],
+  ])("[A1807] sends nothing and changes nothing for %s", async (_name, value, expected) => {
+    const { world, validator } = await parked();
+    const before = rows(world).length;
+    const result = await decideWith(world, FIX, value);
+    expect(result.isError).toBe(true);
+    expect(result.text).toMatch(expected);
+    expect(answers(validator)).toEqual([]);
+    expect(state(world)).toBe("needs_decision");
+    expect(rows(world)).toHaveLength(before);
+  });
+
+  it("[A1807] sends nothing and changes nothing for a cancelled form and for a timed-out form", async () => {
+    const cancelled = await parked();
+    const call = cancelled.world.call("factoryman_decide", FIX);
+    cancelled.world.host.harness.behavior.cancelInteraction(await nextForm(cancelled.world));
+    const result = await call;
+    expect(result.isError).toBe(true);
+    expect(result.text).toMatch(/did not answer the decision form/);
+    expect(answers(cancelled.validator)).toEqual([]);
+
+    const timedOut = await parked({ worldOptions: { settings: { approvalTimeoutMinutes: 0.0005 } } });
+    const before = rows(timedOut.world).length;
+    const late = await timedOut.world.call("factoryman_decide", FIX);
+    expect(late.isError).toBe(true);
+    expect(late.text).toContain("timeout");
+    expect(answers(timedOut.validator)).toEqual([]);
+    expect(state(timedOut.world)).toBe("needs_decision");
+    expect(rows(timedOut.world)).toHaveLength(before);
+  });
+});
+
+describe("factoryman_decide when the gate moves or cannot be read", () => {
+  /** A validator whose status the test can change, so the polling loop and the tool both read the current view. */
+  function movable(initial: RunView) {
+    const fake = new FakeValidator();
+    const box = { view: initial, failStatus: false };
+    fake.script("start", [ok(initial), ok(view())]);
+    fake.status = async (input) => {
+      fake.calls.push({ operation: "status", input });
+      return box.failStatus ? err("daemon is restarting") : ok(box.view);
+    };
+    return { fake, box };
+  }
+
+  async function parkedOn(validator: FakeValidator) {
+    const world = await loadWorld({ validator });
+    worlds.push(world);
+    world.setProject({ deliveryMode: "no-mistakes" });
+    world.paths.set("env-thr-w1", "/work/tree");
+    await world.call("factoryman_dispatch", DISPATCH);
+    await world.call("factoryman_report", { outcome: "done", evidence: "Committed abc123." }, w1);
+    await settle(() => world.store.getTask("t1")?.state === "needs_decision");
+    return world;
+  }
+
+  it("[A1808] sends nothing when the gate has another key after the owner approves", async () => {
+    const { fake, box } = movable(GATE);
+    const world = await parkedOn(fake);
+    const call = world.call("factoryman_decide", { taskId: "t1", key: KEY, action: "approve" });
+    const formId = await nextForm(world);
+    // A fix round in no-mistakes dropped a finding: same run, same step, new status and findings.
+    box.view = gate("fix_review", "review-2");
+    world.host.harness.behavior.submitInteraction(formId, { decision: "approved" });
+    const result = await call;
+    expect(result.isError).toBe(true);
+    expect(result.text).toMatch(/gate changed while the form was open.*Nothing was sent/);
+    expect(answers(fake)).toEqual([]);
+  });
+
+  it("[A1808] sends nothing when the task has left needs_decision while the form was open", async () => {
+    const { fake, box } = movable(GATE);
+    const world = await parkedOn(fake);
+    const call = world.call("factoryman_decide", { taskId: "t1", key: KEY, action: "approve" });
+    const formId = await nextForm(world);
+    // A person answered in no-mistakes: the pipeline runs again, and the driver resolves the task by itself.
+    box.view = view();
+    await settle(() => state(world) === "validating");
+    expect(state(world)).toBe("validating");
+    world.host.harness.behavior.submitInteraction(formId, { decision: "approved" });
+    const result = await call;
+    expect(result.isError).toBe(true);
+    expect(result.text).toMatch(/gate changed while the form was open.*Nothing was sent/);
+    expect(answers(fake)).toEqual([]);
+  });
+
+  it("[A1809] refuses a second call for a task whose form is open, opens no second form, and opens a new one after the first closes", async () => {
+    const { world, validator } = await parked();
+    validator.script("answer", [ok(view())]);
+    const first = world.call("factoryman_decide", { taskId: "t1", key: KEY, action: "approve" });
+    const formId = await nextForm(world);
+    const second = await world.call("factoryman_decide", { taskId: "t1", key: KEY, action: "approve" });
+    expect(second.isError).toBe(true);
+    expect(second.text).toMatch(/already waiting for the owner/);
+    expect(world.host.harness.inspection.pendingInteractions).toHaveLength(1);
+    world.host.harness.behavior.cancelInteraction(formId);
+    expect((await first).isError).toBe(true);
+    const third = world.call("factoryman_decide", { taskId: "t1", key: KEY, action: "approve" });
+    world.host.harness.behavior.submitInteraction(await nextForm(world), { decision: "approved" });
+    expect((await third).isError).toBe(false);
+  });
+
+  it("[A1810] fails closed with no form and no answer when the validator cannot report the gate", async () => {
+    const { fake, box } = movable(GATE);
+    const world = await parkedOn(fake);
+    box.failStatus = true;
+    const result = await world.call("factoryman_decide", { taskId: "t1", key: KEY, action: "approve" });
+    expect(result.isError).toBe(true);
+    expect(result.text).toMatch(/live state cannot be read.*daemon is restarting.*Nothing was sent/);
+    expect(world.host.harness.inspection.pendingInteractions).toEqual([]);
+    expect(answers(fake)).toEqual([]);
+    expect(state(world)).toBe("needs_decision");
+  });
+});

@@ -53,7 +53,13 @@ export async function decide(rt: Runtime, decider: Decider, caller: Caller, raw:
   if (task.state !== "needs_decision") {
     return refusalOutcome(refuse("illegal_transition", `Task ${call.taskId} is ${task.state}. A decision needs needs_decision.`));
   }
-  return decideClaimed(rt, decider, caller, task, call);
+  if (rt.openDecisionForms.has(task.taskId)) return failure(`A decision form for task ${task.taskId} is already waiting for the owner.`);
+  rt.openDecisionForms.add(task.taskId);
+  try {
+    return await decideClaimed(rt, decider, caller, task, call);
+  } finally {
+    rt.openDecisionForms.delete(task.taskId);
+  }
 }
 
 /** Say what the live view is, so a supervisor that holds an old key can read the new state. */

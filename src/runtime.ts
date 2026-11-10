@@ -54,6 +54,8 @@ export class Runtime {
   readonly log: TaskLog;
   /** Task IDs whose merge approval form is open right now. */
   readonly openMergeForms = new Set<string>();
+  /** Task IDs whose decision form is open right now. */
+  readonly openDecisionForms = new Set<string>();
   /** Task IDs whose worker is starting right now. They count as running before `start` is recorded. */
   readonly launching = new Set<string>();
   /** Passed preflights, by host, project, mode, and provider. A restart clears it. */
