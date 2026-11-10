@@ -1420,3 +1420,103 @@ The captain accepted the one behavior on 2026-11-09, through firstmate, as a wai
 The audit's other four findings (a brittle read of `config.ts`, a surviving mutant, a magic ratio, and a weak status check) are fixed in tasks T015 to T018.
 The audit was run by the session that wrote the tests, so it was not independent.
 
+
+## The decide tool
+
+### D-136: The sixth tool, `factoryman_decide`, is built, and D-031 and D-057 are resolved (Decided)
+
+The captain approved the follow-up in D-057 and said "start the decide tool".
+This change adds `factoryman_decide` as the sixth tool of the plugin, and the fifth tool of the supervisor.
+A worker still has `factoryman_report` only.
+
+Principle VI of the constitution said that `factoryman_decide` stays out of scope (D-057, D-068).
+The captain's words lift that limit, so constitution 1.5.0 removes the clause and names the tool as in scope.
+The other limits of Principle VI stay: the live install into the owner's bb is the owner's step, and a feature from the non-goals list needs approval first.
+
+D-031 asked whether a sixth tool should answer a pipeline finding.
+This change answers yes, with the answer routed through a form that the owner approves (D-139).
+
+### D-137: A gate takes three answers, a parked finished run takes one, and the schema is flat (Decided)
+
+The brief says to refuse an answer that is not one of the finding's allowed actions.
+The only allowed set that the pipeline publishes is `approve`, `skip`, and `fix` (`no-mistakes axi respond --help`, and the `help` lines of the recorded gate output).
+The finding's own `action` column (`auto-fix`, `ask-user`) classifies the finding and does not restrict the answer, and no output lists allowed actions per finding.
+The plugin therefore enforces exactly the three answers for a pending gate, and it checks that a `fix` names at least one finding ID, that the IDs are distinct, and that each one is in the live gate.
+It refuses `instructions` with `approve` and `skip`, because the pipeline applies instructions to selected findings only.
+
+A parked finished run has no gate, so it takes `rerun` only (D-141).
+
+The advertised JSON schema is one flat object (`taskId`, `key`, `action`, `findingIds`, `instructions`), with no `oneOf`.
+Some harnesses reject a union at the top of a tool schema, and the tool checks the cross-field rules itself.
+
+### D-138: The finding key is a hash of the live view, and the driver writes it into the parking evidence (Decided)
+
+The supervisor passes a `key` that must equal the live view's key.
+The key is `nm-<run>-<step or outcome>-<8 hex>`.
+The hex is a SHA-256 prefix over the driver's existing view signature: the phase, the gate step, the gate status, the finding IDs in order, the outcome, and the run ID.
+The key therefore changes when a `fix` round keeps the run and the step and drops findings.
+Its prefix matches the `nm-<run>-<step>` shape that the fleet already uses to name a gate.
+
+The driver appends `Decision key: <key>` to the evidence of the `finding` event that parks the task, so the wake message (which keeps 8000 characters of it), `factoryman_status`, and the log show it.
+This changes the text of the driver's evidence and nothing about how the validator runs: the adapter's command lines, the flags, and the polling are as before.
+
+The tool reads the live view through a new `ValidationDriver.current`, which reuses the loop's own context (the worktree path and the host), so there is one answer to "where does the validator run for this task".
+The tool reads the view twice: before the form, so that the owner never sees a stale gate, and after the approval, so that an answer is never sent to a gate that moved.
+
+### D-139: The owner approves in a new form, and the tool never reads `yolo` (Decided)
+
+The merge approval path is `bb.ui.requestInput` with a renderer ID and a JSON payload from a module with no imports, and a strict schema for the reply.
+The decision form uses the same path with a new renderer, `factoryman-decision-approval`, and reuses the merge form's reply contract (`approved` or `denied`, with an optional comment).
+The merge form shows a pull request and a block of evidence, so it cannot show findings or the exact answer.
+
+The payload carries the live gate's findings verbatim and the exact answer.
+The form builds its "Answer that will be sent" sentence from the structured answer, so the payload cannot contradict itself, and it offers no Approve when the payload is unreadable or when an answer names a finding that is not shown.
+
+The tool has no code path that reads the project's `yolo` flag, so `yolo` cannot skip the form.
+An `ask-user` finding belongs to the owner (D-031), and the pipeline's own label should not decide whether the owner sees the form.
+The form reuses the `approvalTimeoutMinutes` setting, and its label changes from "Merge approval timeout" to "Approval timeout" so that it is true.
+
+D-030 and D-058 apply: a submitted form is not proof of a human, and the captain accepts that gap until milestone 10.
+
+### D-140: The gate is in the tool, and a denied form leaves no row in the log (Gap)
+
+The state machine cannot gate a call to the validator, because the call happens outside it.
+The gate is in `src/tools/decide.ts`: the validator receives an answer only after a strict `approved`, after two reads of the live view agree, and never when a read fails.
+The tool sends the answer through the driver, which records `resolve` only after the validator accepts it, and the machine still checks that `resolve` is legal.
+The `resolve` event carries the exact answer and the owner's approval in its evidence.
+
+No machine event describes a denied, cancelled, or timed-out decision form, and the machine has no scope for a decision approval.
+A new `record_approval` scope for `needs_decision` would be a machine change (a scope, a table entry, a guard), and the brief says to record such a need and not to widen scope.
+A denial therefore leaves no row in the event log.
+The plugin log and the tool result carry it.
+The owner can add the scope in a later change, and the tool would record the approval and the denial there.
+
+### D-141: Only `rerun` is built for a finished run, and accepting an override is a gap (Gap, Limit)
+
+D-031 names a second reason that a task parks: a run that finishes with `passed-with-override`, `passed-with-skips`, `passed`, or `checks-passed` with no pull request.
+There is no gate to answer, so `validator.answer` has nothing to send.
+The one transition that the machine offers there, besides `fail`, is `resolve`, which returns the task to `validating`, and the driver's loop then calls `start`.
+The tool exposes that as `rerun`, behind the same form, for those outcomes only.
+It refuses `rerun` for a running view, for `failed` and `cancelled` (the loop fails the task by itself), and for `checks-passed` with a pull request.
+
+Gap: accepting the override or the skipped steps and moving the task to `review_ready` needs a new machine event, such as `validated` from `needs_decision` with an override flag.
+It is not built.
+
+Limit: no test here shows what a real `no-mistakes axi run` does when the branch's last run has finished.
+If it returns the same finished run, the driver parks the task again with the same key, and the supervisor can ask again.
+D-134 records that no test has read a real no-mistakes install, and this limit is the same one.
+
+### D-142: S5, S8, and S9 host the tool, and no scenario reaches `needs_decision` (Limit)
+
+The conformance suite already checks the supervisor's tool list in S5 and S9, and a refusal in a wrong state in S8.
+Adding `factoryman_decide` to the supervisor list makes S5 and S9 require five tools, and S8 gains `S8.decide-wrong-state`.
+No new scenario, tier, or known gap is needed.
+
+The lab's project is `local-only` or `direct-PR`, with no `no-mistakes` pipeline, so no scenario can drive a task into `needs_decision`.
+The answer path is covered by unit and acceptance tests with the fake validator and with the real adapter over a recording command runner.
+Tier 2 runs and credentials are out of scope.
+
+### D-143: The clarify step was skipped (Deviation)
+
+The specification has no open marker, and the brief fixes the choices that a clarification would ask about: the form path, the tool name, the limit of the second case, and the files that change.
+The lifecycle step `/speckit.clarify` was therefore skipped, and this entry is the record.
