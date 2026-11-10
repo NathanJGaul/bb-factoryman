@@ -2,6 +2,7 @@ import type { Actor } from "../machine/types";
 import { hostFor } from "../machines/route";
 import { errorText, type Runtime } from "../runtime";
 import type { TaskRow } from "../store/types";
+import { decisionKey, viewSignature } from "./key";
 import type { Answer, Finding, RunView, Validator } from "./types";
 
 export type AnswerResult = { ok: true } | { ok: false; message: string };
@@ -12,11 +13,6 @@ const DEFAULT_MAX_ERRORS = 5;
 
 /** One finding as one line, with the fields exactly as the validator wrote them. */
 export const findingLine = (finding: Finding): string => `- ${finding.id} [${finding.severity}] ${finding.file}: ${finding.action}: ${finding.description}`;
-
-/** Two views are equal when their phase, gate, finding IDs, outcome, and run ID are equal. */
-function signature(view: RunView): string {
-  return JSON.stringify([view.phase, view.gate?.step ?? null, view.gate?.status ?? null, view.gate?.findings.map((f) => f.id) ?? null, view.outcome, view.runId]);
-}
 
 function gateEvidence(view: RunView): string {
   const gate = view.gate!;
@@ -74,15 +70,43 @@ export class ValidationDriver {
     this.disposed = true;
   }
 
-  /** Send an answer to the validator, and record `resolve` only after it accepts. The loop is already running, so it carries on. */
-  async answer(taskId: string, response: Answer, actor: Actor): Promise<AnswerResult> {
+  /**
+   * Read the validator's live view for a task, without writing anything. This is the one answer to "where does the validator
+   * run for this task" that a tool can ask, so a tool never rebuilds the worktree path and the host itself.
+   */
+  async current(taskId: string): Promise<{ ok: true; view: RunView } | { ok: false; message: string }> {
+    const task = this.rt.deps.store.getTask(taskId);
+    if (!task) return { ok: false, message: `No task ${taskId} exists.` };
+    const context = await this.context(task);
+    if (!context.ok) return { ok: false, message: context.message };
+    const result = await this.validator.status({ cwd: context.cwd, host: context.host });
+    return result.ok ? { ok: true, view: result.value } : { ok: false, message: result.error.message };
+  }
+
+  /**
+   * Send an answer to the validator, and record `resolve` only after it accepts. The loop is already running, so it carries on.
+   * `evidence` replaces the default text of the `resolve` event, so a caller can record who approved the answer.
+   */
+  async answer(taskId: string, response: Answer, actor: Actor, evidence?: string): Promise<AnswerResult> {
     const task = this.rt.deps.store.getTask(taskId);
     if (!task || task.state !== "needs_decision") return { ok: false, message: `Task ${taskId} is not waiting for a decision.` };
     const context = await this.context(task);
     if (!context.ok) return { ok: false, message: context.message };
     const sent = await this.validator.answer({ cwd: context.cwd, host: context.host, response });
     if (!sent.ok) return { ok: false, message: sent.error.message };
-    const applied = await this.rt.apply(taskId, { type: "resolve", actor, evidence: `answered the gate: ${response.action}` });
+    return this.resolved(taskId, actor, evidence ?? `answered the gate: ${response.action}`);
+  }
+
+  /**
+   * Move a parked task back to `validating` with no answer, so the loop asks the validator to start again.
+   * This is the one decision the machine supports for a run that finished without a gate (D-141).
+   */
+  async rerun(taskId: string, actor: Actor, evidence: string): Promise<AnswerResult> {
+    return this.resolved(taskId, actor, evidence);
+  }
+
+  private async resolved(taskId: string, actor: Actor, evidence: string): Promise<AnswerResult> {
+    const applied = await this.rt.apply(taskId, { type: "resolve", actor, evidence });
     this.baselines.delete(taskId);
     return applied.ok ? { ok: true } : { ok: false, message: applied.refusal.message };
   }
@@ -156,10 +180,10 @@ export class ValidationDriver {
     const baseline = this.baselines.get(task.taskId) ?? null;
     if (view.phase !== "running") {
       if (baseline === null) {
-        this.baselines.set(task.taskId, signature(view));
+        this.baselines.set(task.taskId, viewSignature(view));
         return "continue";
       }
-      if (signature(view) === baseline) return "continue";
+      if (viewSignature(view) === baseline) return "continue";
     }
     await this.apply(task, { type: "resolve", actor: "system", evidence: "The validator's view changed, so the pipeline is moving again." });
     this.baselines.delete(task.taskId);
@@ -167,8 +191,9 @@ export class ValidationDriver {
   }
 
   private async park(task: TaskRow, view: RunView, evidence: string): Promise<"continue" | "stop"> {
-    await this.apply(task, { type: "finding", actor: "system", evidence });
-    this.baselines.set(task.taskId, signature(view));
+    // The key names this exact view, so a supervisor can ask for a decision on it and no other (D-138).
+    await this.apply(task, { type: "finding", actor: "system", evidence: `${evidence}\nDecision key: ${decisionKey(view)}` });
+    this.baselines.set(task.taskId, viewSignature(view));
     return this.next(task);
   }
 

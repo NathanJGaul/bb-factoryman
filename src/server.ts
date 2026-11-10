@@ -70,8 +70,8 @@ export function createPlugin(options: PluginOptions = {}): (bb: BbPluginApi) => 
       },
       approvalTimeoutMinutes: {
         type: "number",
-        label: "Merge approval timeout (minutes)",
-        description: "How long the approval form waits for the owner before it counts as not answered.",
+        label: "Approval timeout (minutes)",
+        description: "How long a merge or decision form waits for the owner before it counts as not answered.",
         default: 10,
       },
       maxWorkers: {
@@ -143,7 +143,7 @@ export function createPlugin(options: PluginOptions = {}): (bb: BbPluginApi) => 
     hooks.afterSettings = () => void drain(rt);
     registerReadRpc(bb, store);
     registerHandlers(bb, new EventHandlers(rt, notifier, bb.pluginId));
-    registerTools(bb, rt, createMergeExecutor(exec), { toolHints: options.toolHints === true });
+    registerTools(bb, rt, createMergeExecutor(exec), driver, { toolHints: options.toolHints === true });
 
     // bb.sdk is bound once the factory returns, so the live-state comparison runs in a service.
     bb.background.service("factoryman-startup", {
@@ -183,7 +183,7 @@ export function createPlugin(options: PluginOptions = {}): (bb: BbPluginApi) => 
       commands: [
         {
           name: "supervisor",
-          summary: "Start a supervisor with its role from the first turn, or make an existing thread the supervisor, so bb offers it the four supervisor tools",
+          summary: "Start a supervisor with its role from the first turn, or make an existing thread the supervisor, so bb offers it the five supervisor tools",
           usage: "bb factoryman supervisor <thread-id>\nbb factoryman supervisor start [--project <id>] [--profile <name>] [--prompt <text>]",
         },
         {

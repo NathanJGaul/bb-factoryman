@@ -54,7 +54,9 @@ Both implementations MUST pass the same contract test suite.
 Milestones 1 to 11 (scaffold, state machine, storage, tools and approval, event wiring, validator, dispatch resolver, machine placement, extension surface, limits and cutover, and skills) are in scope.
 `spike/RESULTS.md` records the bb and no-mistakes assumptions that each milestone depends on.
 A milestone's bb-dependent code waits for its own spike results.
-The live install into the owner's bb stays the owner's step, and `factoryman_decide` stays out of scope (D-057).
+The live install into the owner's bb stays the owner's step.
+`factoryman_decide` is in scope (added in 1.5.0 on 2026-11-09, D-136): the captain approved it in D-057 and said "start the decide tool".
+It adds no machine event, no new gate, and no change to how the validator runs.
 Harness independence is also in scope (added in 1.3.0 on 2026-11-09, D-117, and extended in 1.4.0 on 2026-11-09, D-129): the report tasks H5 (the harness contract table), H1 (the readiness gate), H11 (the permission floor), H2 (model-aware checks), H10 (no built-in default profile, and `dispatch init`), H3 (cause-bearing failure evidence), H4 (the `supervisor start` command and the role advice), and H12 (the `roles` block and the validator observation), with the captain's decisions D1 to D5 in section 8 of the harness-independence report.
 Features from the design's non-goals list need approval first.
 Every deviation from `docs/DESIGN.md` is recorded in `docs/DECISIONS.md` with the reason.
@@ -84,4 +86,4 @@ An amendment needs a written reason in `docs/DECISIONS.md` and a version bump he
 Version bumps follow semantic versioning: major for removed or redefined principles, minor for added principles or materially expanded guidance, patch for wording fixes.
 Every plan includes a constitution check, and every review verifies compliance.
 
-**Version**: 1.4.0 | **Ratified**: 2026-11-05 | **Last amended**: 2026-11-09
+**Version**: 1.5.0 | **Ratified**: 2026-11-05 | **Last amended**: 2026-11-09

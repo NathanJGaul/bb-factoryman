@@ -132,4 +132,25 @@ describe("pnpm run conformance -- --tier 1.5 --harness <id>", () => {
       expect(s9?.checks.every((check) => check.ok), argv.join(" ")).toBe(true);
     }
   });
+
+  it("[A1817] runs S5, S8, and S9 with five supervisor tools and the S8 decide check for the stub and the four harnesses, with the committed empty gap list", async () => {
+    const gaps = await loadGaps(new URL("../../conformance/known-gaps.json", import.meta.url).pathname);
+    expect(gaps).toEqual([]);
+    const runs: string[][] = [["--tier", "1"], ["--tier", "1.5", "--harness", "claude-code"], ["--tier", "1.5", "--harness", "codex"], ["--tier", "1.5", "--harness", "pi"], ["--tier", "1.5", "--harness", "omp"]];
+    for (const argv of runs) {
+      const { deps, rec } = fakeDeps({ gaps });
+      expect(await main([...argv, "--results-dir", "out/results"], deps), argv.join(" ")).toBe(0);
+      const [file] = [...rec.files.keys()];
+      const result = parseResult(rec.files.get(file as string) as string);
+      const check = (scenario: string, id: string) => result.scenarios.find((entry) => entry.id === scenario)?.checks.find((entry) => entry.id === id);
+      const offered = ["S5.supervisor-tools", "S9.start-tools", "S9.tools-after-step"].map((id) => check(id.slice(0, 2), id));
+      for (const entry of offered) {
+        expect(entry?.ok, `${argv.join(" ")} ${entry?.id}`).toBe(true);
+        expect(entry?.evidence, `${argv.join(" ")} ${entry?.id}`).toContain("factoryman_decide");
+      }
+      const decide = check("S8", "S8.decide-wrong-state");
+      expect(decide?.ok, argv.join(" ")).toBe(true);
+      expect(decide?.evidence, argv.join(" ")).toMatch(/0 resolve row\(s\); state working/);
+    }
+  });
 });

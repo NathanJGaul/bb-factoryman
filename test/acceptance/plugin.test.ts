@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import plugin from "../../src/server";
 
 describe("plugin factory", () => {
-  it("[A17] opens the store on the host database, recovers, registers exactly five tools and the command, and disposes cleanly", async () => {
+  it("[A17] opens the store on the host database, recovers, registers exactly six tools and the command, and disposes cleanly", async () => {
     const host = createFakePluginHost({ pluginId: "factoryman" });
 
     await plugin(host.bb);
@@ -11,6 +11,7 @@ describe("plugin factory", () => {
     const { logEntries, registrations } = host.harness.inspection;
     expect(logEntries[0]).toEqual({ level: "info", message: "bb-factoryman loaded" });
     expect(registrations.agentTools.map((tool) => tool.name).sort()).toEqual([
+      "factoryman_decide",
       "factoryman_dispatch",
       "factoryman_merge",
       "factoryman_report",

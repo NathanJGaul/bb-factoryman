@@ -3,6 +3,7 @@ import { makePluginAgentConfigurationContext } from "@get-bb/plugin-sdk/testing"
 import { describe, expect, it } from "vitest";
 import { DELIVERY_MODES, TASK_KINDS, TASK_STATES } from "../../src/machine/types";
 import { TABLES } from "../../src/machine/table";
+import { decideSchema } from "../../src/tools/decide";
 import { dispatchSchema } from "../../src/tools/dispatch";
 import { MERGEABLE_STATES, mergeSchema } from "../../src/tools/merge";
 import { reportSchema } from "../../src/tools/report";
@@ -16,7 +17,7 @@ import { gateViolations } from "../fixtures/skill-lint";
 const root = new URL("../../", import.meta.url);
 const read = (path: string) => readFileSync(new URL(path, root), "utf8");
 const SKILLS = ["factoryman-supervisor", "factoryman-worker"] as const;
-const SUPERVISOR_TOOLS = ["factoryman_dispatch", "factoryman_status", "factoryman_merge", "factoryman_teardown"];
+const SUPERVISOR_TOOLS = ["factoryman_dispatch", "factoryman_status", "factoryman_merge", "factoryman_teardown", "factoryman_decide"];
 const supervisor = () => read("skills/factoryman-supervisor/SKILL.md");
 const worker = () => read("skills/factoryman-worker/SKILL.md");
 /** A skill description is one line that says what the skill does and when to use it. These bounds keep it a sentence or two. */
@@ -85,7 +86,7 @@ describe("the supervisor and worker skills", () => {
     const workerSentences = sentences(worker());
     const has = (all: string[], fragment: string) => expect(all.some((sentence) => sentence.includes(fragment)), fragment).toBe(true);
     for (const all of [supervisorSentences, workerSentences]) has(all, "The plugin enforces every gate in code, so nothing in this skill can loosen one.");
-    for (const fragment of ["You never edit project files yourself.", "Never retry with a weaker setting to get past a block.", "You cannot answer a finding.", "approval form", "A worker never contacts the owner"]) {
+    for (const fragment of ["You never edit project files yourself.", "Never retry with a weaker setting to get past a block.", "You cannot answer a finding without the owner's approval in a form.", "approval form", "A worker never contacts the owner"]) {
       has(supervisorSentences, fragment);
     }
     for (const fragment of ["Evidence is required and must not be empty.", "Never merge, and never tear down your own worktree.", "Do not contact the owner."]) has(workerSentences, fragment);
@@ -137,6 +138,8 @@ describe("the supervisor and worker skills", () => {
       ...Object.keys(dispatchSchema.shape),
       ...Object.keys(statusSchema.shape),
       ...Object.keys(mergeSchema.shape),
+      ...Object.keys(decideSchema.shape),
+      ...decideSchema.shape.action.options,
       ...reportSchema.shape.outcome.options,
       ...TASK_STATES,
       ...TASK_KINDS,
@@ -147,6 +150,8 @@ describe("the supervisor and worker skills", () => {
       "ambiguous",
       "queued",
       "[factoryman]",
+      "Decision key",
+      "Decision key: nm-...",
       "Dispatched ...",
       "Dispatch blocked (...)",
     ]);

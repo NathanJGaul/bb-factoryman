@@ -271,6 +271,9 @@ Adding a sixth tool, for example `factoryman_decide`, would give the supervisor 
 It changes a design table, so the owner decides.
 The firstmate rule that an `ask-user` finding belongs to the owner is a reason to route the answer through a form, as the merge approval does.
 
+Amended by D-136: the sixth tool, `factoryman_decide`, is built, and the answer goes through a form that the owner approves.
+The text above records the decision as it stood.
+
 ### D-032: The constitution's scope principle and the project scope text are amended (Deviation, resolved)
 
 Principle VI limited the work to milestones 1 to 3.
@@ -454,6 +457,9 @@ Cycle R1 re-derived a red for each with a deliberate mutant.
 No tool answers a pipeline finding in this PR.
 A sixth tool, `factoryman_decide`, comes in a follow-up PR.
 
+Amended by D-136: the follow-up is this change, and the constitution now names `factoryman_decide` as in scope.
+The text above records the decision as it stood.
+
 ### D-058: D-030 is a known gap until milestone 10 (Decided)
 
 An approval form is not proof of a human.
@@ -493,6 +499,9 @@ Constitution 1.1.0 and the "Current scope" text in `CLAUDE.md` kept those milest
 Constitution 1.2.0 puts milestones 1 to 11 in scope and keeps the rule that each milestone's bb-dependent code waits for the spike results it needs, which `spike/RESULTS.md` now records milestone by milestone.
 The `CLAUDE.md` scope text and the layout comments carry the same correction and nothing else.
 `factoryman_decide` stays out (D-057), and the live install stays the owner's step.
+
+Amended by D-136: `factoryman_decide` is in scope from constitution 1.5.0.
+The text above records the decision as it stood.
 
 ## Milestone 7: dispatch resolver
 
@@ -836,6 +845,9 @@ The owner-typed code (option 2 of the report), which only the renderer would sho
 The captain deferred it, so the approval design is unchanged.
 `factoryman_decide` stays out of scope (D-057).
 D-058 still stands: the captain accepts the gap until branch protection is in place.
+
+Amended by D-136: `factoryman_decide` exists, and it inherits this gap, because a form is not proof of a human.
+The text above records the decision as it stood.
 
 ### D-096: The contract module has no imports and the browser bundle ships no `zod` (Gap)
 
@@ -1420,3 +1432,166 @@ The captain accepted the one behavior on 2026-11-09, through firstmate, as a wai
 The audit's other four findings (a brittle read of `config.ts`, a surviving mutant, a magic ratio, and a weak status check) are fixed in tasks T015 to T018.
 The audit was run by the session that wrote the tests, so it was not independent.
 
+
+## The decide tool
+
+### D-136: The sixth tool, `factoryman_decide`, is built, and D-031 and D-057 are resolved (Decided)
+
+The captain approved the follow-up in D-057 and said "start the decide tool".
+This change adds `factoryman_decide` as the sixth tool of the plugin, and the fifth tool of the supervisor.
+A worker still has `factoryman_report` only.
+
+Principle VI of the constitution said that `factoryman_decide` stays out of scope (D-057, D-068).
+The captain's words lift that limit, so constitution 1.5.0 removes the clause and names the tool as in scope.
+The other limits of Principle VI stay: the live install into the owner's bb is the owner's step, and a feature from the non-goals list needs approval first.
+
+D-031 asked whether a sixth tool should answer a pipeline finding.
+This change answers yes, with the answer routed through a form that the owner approves (D-139).
+
+### D-137: A gate takes three answers, a parked finished run takes one, and the schema is flat (Decided)
+
+The brief says to refuse an answer that is not one of the finding's allowed actions.
+The only allowed set that the pipeline publishes is `approve`, `skip`, and `fix` (`no-mistakes axi respond --help`, and the `help` lines of the recorded gate output).
+The finding's own `action` column (`auto-fix`, `ask-user`) classifies the finding and does not restrict the answer, and no output lists allowed actions per finding.
+The plugin therefore enforces exactly the three answers for a pending gate, and it checks that a `fix` names at least one finding ID, that the IDs are distinct, and that each one is in the live gate.
+It refuses `instructions` with `approve` and `skip`, because the pipeline applies instructions to selected findings only.
+
+A parked finished run has no gate, so it takes `rerun` only (D-141).
+
+The advertised JSON schema is one flat object (`taskId`, `key`, `action`, `findingIds`, `instructions`), with no `oneOf`.
+Some harnesses reject a union at the top of a tool schema, and the tool checks the cross-field rules itself.
+
+### D-138: The finding key is a hash of the live view, and the driver writes it into the parking evidence (Decided)
+
+The supervisor passes a `key` that must equal the live view's key.
+The key is `nm-<run>-<step or outcome>-<8 hex>`.
+The hex is a SHA-256 prefix over the driver's existing view signature: the phase, the gate step, the gate status, the finding IDs in order, the outcome, and the run ID.
+The key therefore changes when a `fix` round keeps the run and the step and drops findings.
+Its prefix matches the `nm-<run>-<step>` shape that the fleet already uses to name a gate.
+
+The driver appends `Decision key: <key>` to the evidence of the `finding` event that parks the task, so the wake message (which keeps 8000 characters of it), `factoryman_status`, and the log show it.
+This changes the text of the driver's evidence and nothing about how the validator runs: the adapter's command lines, the flags, and the polling are as before.
+
+The tool reads the live view through a new `ValidationDriver.current`, which reuses the loop's own context (the worktree path and the host), so there is one answer to "where does the validator run for this task".
+The tool reads the view twice: before the form, so that the owner never sees a stale gate, and after the approval, so that an answer is never sent to a gate that moved.
+
+### D-139: The owner approves in a new form, and the tool never reads `yolo` (Decided)
+
+The merge approval path is `bb.ui.requestInput` with a renderer ID and a JSON payload from a module with no imports, and a strict schema for the reply.
+The decision form uses the same path with a new renderer, `factoryman-decision-approval`, and reuses the merge form's reply contract (`approved` or `denied`, with an optional comment).
+The merge form shows a pull request and a block of evidence, so it cannot show findings or the exact answer.
+
+The payload carries the live gate's findings verbatim and the exact answer.
+The form builds its "Answer that will be sent" sentence from the structured answer, so the payload cannot contradict itself, and it offers no Approve when the payload is unreadable or when an answer names a finding that is not shown.
+
+The tool has no code path that reads the project's `yolo` flag, so `yolo` cannot skip the form.
+An `ask-user` finding belongs to the owner (D-031), and the pipeline's own label should not decide whether the owner sees the form.
+The form reuses the `approvalTimeoutMinutes` setting, and its label changes from "Merge approval timeout" to "Approval timeout" so that it is true.
+
+D-030 and D-058 apply: a submitted form is not proof of a human, and the captain accepts that gap until milestone 10.
+
+### D-140: The gate is in the tool, and a denied form leaves no row in the log (Gap)
+
+The state machine cannot gate a call to the validator, because the call happens outside it.
+The gate is in `src/tools/decide.ts`: the validator receives an answer only after a strict `approved`, after two reads of the live view agree, and never when a read fails.
+The tool sends the answer through the driver, which records `resolve` only after the validator accepts it, and the machine still checks that `resolve` is legal.
+The `resolve` event carries the exact answer and the owner's approval in its evidence.
+
+No machine event describes a denied, cancelled, or timed-out decision form, and the machine has no scope for a decision approval.
+A new `record_approval` scope for `needs_decision` would be a machine change (a scope, a table entry, a guard), and the brief says to record such a need and not to widen scope.
+A denial therefore leaves no row in the event log.
+The plugin log and the tool result carry it.
+The owner can add the scope in a later change, and the tool would record the approval and the denial there.
+
+### D-141: Only `rerun` is built for a finished run, and accepting an override is a gap (Gap, Limit)
+
+D-031 names a second reason that a task parks: a run that finishes with `passed-with-override`, `passed-with-skips`, `passed`, or `checks-passed` with no pull request.
+There is no gate to answer, so `validator.answer` has nothing to send.
+The one transition that the machine offers there, besides `fail`, is `resolve`, which returns the task to `validating`, and the driver's loop then calls `start`.
+The tool exposes that as `rerun`, behind the same form, for those outcomes only.
+It refuses `rerun` for a running view, for `failed` and `cancelled` (the loop fails the task by itself), and for `checks-passed` with a pull request.
+
+Gap: accepting the override or the skipped steps and moving the task to `review_ready` needs a new machine event, such as `validated` from `needs_decision` with an override flag.
+It is not built.
+
+Limit: no test here shows what a real `no-mistakes axi run` does when the branch's last run has finished.
+If it returns the same finished run, the driver parks the task again with the same key, and the supervisor can ask again.
+D-134 records that no test has read a real no-mistakes install, and this limit is the same one.
+
+### D-142: S5, S8, and S9 host the tool, and no scenario reaches `needs_decision` (Limit)
+
+The conformance suite already checks the supervisor's tool list in S5 and S9, and a refusal in a wrong state in S8.
+Adding `factoryman_decide` to the supervisor list makes S5 and S9 require five tools, and S8 gains `S8.decide-wrong-state`.
+No new scenario, tier, or known gap is needed.
+
+The lab's project is `local-only` or `direct-PR`, with no `no-mistakes` pipeline, so no scenario can drive a task into `needs_decision`.
+The answer path is covered by unit and acceptance tests with the fake validator and with the real adapter over a recording command runner.
+Tier 2 runs and credentials are out of scope.
+
+### D-143: The clarify step was skipped (Deviation)
+
+The specification has no open marker, and the brief fixes the choices that a clarification would ask about: the form path, the tool name, the limit of the second case, and the files that change.
+The lifecycle step `/speckit.clarify` was therefore skipped, and this entry is the record.
+
+### D-144: The loop ran in groups, and the refusal and rerun tests were written after the flow (Deviation, owner should know)
+
+The test list has more than 60 behaviors, and the cycle log records one red per group of related tests, as D-133 did.
+The pure parts (the key, the payload contract, the answer rules, the driver additions, the registration) each had a red before their code.
+
+The answer flow in `src/tools/decide.ts` was written in one function with its checks (cycle 6), so the tests of the checks that came after it passed on their first run: 31 tests of `[A1805]` to `[A1810]` (cycle 7), and the tests of `[A1811]` and `[A1812]` (cycle 8).
+Those tests are not test-first.
+The rubric of the TDD audit fails such a behavior, and the repository commits only at green (D-099), so history cannot show the test first.
+Each of these tests was proved able to fail with deliberate mutants of `src/tools/decide.ts`: 20 mutants (drop the key comparison, the state check, the worker refusal, the same-project check, the ship check, the post-approval key check, the post-approval machine preview, the live-read failure, the open-form claim, the plan refusal; treat a denial or a cancel as an approval; send a rerun through the answer path; accept `checks-passed` with a pull request, or `failed`, as a parked run; accept any action on a finished run; drop the finding-ID check; ignore the instructions; drop the owner's comment from the evidence), and every one was killed by a named test (the cycle log lists them).
+The one test of this group that failed first is `[A1809]`.
+
+The position is the one taken for D-099, D-107, D-116, D-122, D-133, and D-135: the rubric fails the feature, the evidence is complete, and the owner decides.
+
+The captain accepted the waiver on 2026-11-10, through firstmate, on the same footing as D-099, D-108, D-122, D-133, and D-135, because every mutant was killed.
+The decision stays in this log, and the pull request description states it.
+
+### D-145: The first live run found that the fake lab did not model task kinds, so S8 probed with a scout (Finding, fixed)
+
+The first tier 1 run in `bblab` failed `S8.decide-wrong-state`.
+The check called `factoryman_decide` on the silent task of the teardown probe, which is a scout task, and the real tool answered "Only a ship task has a pipeline to answer." because it checks the kind before the state.
+The fake lab answered with the wrong-state text for every task, so no offline test could see the difference.
+
+The fix has three parts, each test first.
+The fake lab now refuses a scout task with the real tool's text, and both texts come from `src/tools/decide-text.ts`, a module with no imports that the tool and the lab share.
+S8 dispatches its own silent ship task for the decision probe.
+`[U1839]` pins both refusals.
+The tool did not change.
+The runs that followed the fix are the ones in `conformance/results/`.
+
+### D-146: The decision form was not opened in a real bb, and no scenario reaches `needs_decision` (Limit)
+
+Task T032 asked for one look at the decision form in the isolated lab, with screenshots, "if the lab allows it".
+It was not done.
+Opening the form needs a lab project in `no-mistakes` mode, a worker that hands off, and a stand-in for the no-mistakes command that prints a gate, and the earlier approval-form check showed that this takes a lane of its own.
+The tier 1 and tier 1.5 runs cannot show the form either, because their project is `local-only` or `direct-PR` (D-142).
+
+What stands in for the look: the form uses the same classes, the same in-flight guard, and the same reply contract as the merge form that the lab did check (`data/bb-factoryman-approval-form/lab-check.md`), and 26 jsdom tests and 4 acceptance tests cover its content.
+jsdom has no layout and no styles, so the list of findings, the scroll box, and the "Answer that will be sent" block have not been seen in a real bb, in either theme or at a narrow width.
+The captain said on 2026-11-10 that this does not block the merge: the pull request says plainly that the form has not been seen in an interactive real bb session, and the captain will look after the merge or before, as he chooses.
+The owner should run that check before the first real decision: queue a task into `needs_decision` in the lab and open the form.
+A defect in the look would change `src/app/decision-approval-form.tsx` only.
+
+Two more things no test shows: a restart while a form is open (the fake host has no restart of a pending form, so the claim that the wait ends and nothing is sent rests on how `bb.ui.requestInput` ends a wait, as the merge form's does), and the pipeline's own timeout inside the validator's `--wait` (the driver's existing behavior carries on, as `driver.answer` does today).
+
+### D-147: Two of the repeat runs failed for reasons outside the plugin, and the lab's model wait is fixed (Finding, fixed)
+
+The five repeat runs on the last plugin code failed twice in the lab, and neither failure was the plugin's.
+
+The first failure was the omp run.
+All scenarios from S2 on were blocked with "The model `mock/mock-1` is not listed for the provider `acp-omp`. It lists: acp-default."
+The lab waited until bb listed any model for the provider (`models.length > 0`), and before bb has loaded omp's catalog it lists the placeholder `acp-default`, so the wait ended too soon.
+The earlier omp run had won the race.
+`modelsReady` in `tools/conformance/readers.ts` now ends the wait when the catalog holds the model that the driver dispatches with, or any model besides the placeholder, and it counts a non-empty list with no readable ID as ready, so a change in the output's shape cannot stall a run.
+`[U1850]` pins it, and the old behavior as a mutant fails it.
+
+The second failure was the omp rerun.
+Every scenario passed, and the isolation check reported "LEAK: lab process visible on host".
+The process belongs to another lane's lab (`bblab-fm-test`), and my lab was down with its ports free and no tripwire event.
+The run was repeated with the other lab quiet, and the isolation check was clean.
+This is the case that the earlier lane's notes warn about, and the check is left as it is: it cannot tell a neighbor's lab from a leak of its own.
+
+The result files that stay are the ones from runs that exited 0 with a clean isolation report.

@@ -3,6 +3,7 @@ import { z } from "zod";
 import type { MergeExecutor } from "../git/merge";
 import { contractFor } from "../harness/contracts";
 import type { Runtime } from "../runtime";
+import { decide, decideSchema, type Decider } from "./decide";
 import { dispatch, dispatchSchema, type Caller } from "./dispatch";
 import { merge, mergeSchema } from "./merge";
 import { report, reportSchema } from "./report";
@@ -10,7 +11,7 @@ import type { ToolOutcome } from "./results";
 import { status, statusSchema } from "./status";
 import { teardown, teardownSchema } from "./teardown";
 
-const SUPERVISOR_TOOLS = ["factoryman_dispatch", "factoryman_status", "factoryman_merge", "factoryman_teardown"] as const;
+const SUPERVISOR_TOOLS = ["factoryman_dispatch", "factoryman_status", "factoryman_merge", "factoryman_teardown", "factoryman_decide"] as const;
 const WORKER_TOOLS = ["factoryman_report"] as const;
 export const TOOL_NAMES: readonly string[] = [...SUPERVISOR_TOOLS, ...WORKER_TOOLS];
 const SUPERVISOR_SKILL = "factoryman-supervisor";
@@ -55,7 +56,7 @@ export interface RegisterOptions {
   toolHints?: boolean;
 }
 
-export function registerTools(bb: BbPluginApi, rt: Runtime, executor: MergeExecutor, options: RegisterOptions = {}): void {
+export function registerTools(bb: BbPluginApi, rt: Runtime, executor: MergeExecutor, decider: Decider, options: RegisterOptions = {}): void {
   const caller = (ctx: { threadId: string; projectId: string; signal: AbortSignal }): Caller => ({ threadId: ctx.threadId, projectId: ctx.projectId, signal: ctx.signal });
   const define = (name: string, description: string, instructions: string, schema: z.ZodType, run: (caller: Caller, params: unknown) => Promise<ToolOutcome>) =>
     bb.agents.registerTool({
@@ -93,6 +94,13 @@ export function registerTools(bb: BbPluginApi, rt: Runtime, executor: MergeExecu
     "Call factoryman_teardown for a merged or failed task. It refuses while the worktree has uncommitted changes or unpushed commits.",
     teardownSchema,
     (c, params) => teardown(rt, c, params),
+  );
+  define(
+    "factoryman_decide",
+    "Answer a pending no-mistakes finding for a task in needs_decision. The owner approves the exact answer in a form first.",
+    "Call factoryman_decide with the task, the decision key from the wake message, and approve, skip, fix (with finding IDs), or rerun. Nothing is sent to the pipeline until the owner approves the form.",
+    decideSchema,
+    (c, params) => decide(rt, decider, c, params),
   );
   define(
     "factoryman_report",

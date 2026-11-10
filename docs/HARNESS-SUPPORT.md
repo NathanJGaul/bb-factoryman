@@ -16,8 +16,8 @@ Status: supported at tier 1.5. Tier 2 has not run.
 | --- | --- |
 | CLI | claude 2.1.316 |
 | bb | 0.49.0 |
-| Plugin commit | 5042e16 |
-| Date | 2026-11-09 |
+| Plugin commit | 8a6e998 |
+| Date | 2026-11-10 |
 | Network | offline |
 | Isolation | clean |
 
@@ -44,8 +44,8 @@ Status: supported at tier 1.5. Tier 2 has not run.
 | --- | --- |
 | CLI | codex 0.166.0 |
 | bb | 0.49.0 |
-| Plugin commit | 5042e16 |
-| Date | 2026-11-09 |
+| Plugin commit | 8a6e998 |
+| Date | 2026-11-10 |
 | Network | offline |
 | Isolation | clean |
 
@@ -72,8 +72,8 @@ Status: supported at tier 1.5. Tier 2 has not run.
 | --- | --- |
 | CLI | pi 1.4.0 |
 | bb | 0.49.0 |
-| Plugin commit | 53eeae8 |
-| Date | 2026-11-09 |
+| Plugin commit | 8a6e998 |
+| Date | 2026-11-10 |
 | Network | offline |
 | Isolation | clean |
 
@@ -100,8 +100,8 @@ Status: supported at tier 1.5. Tier 2 has not run.
 | --- | --- |
 | CLI | omp 18.18.3 |
 | bb | 0.49.0 |
-| Plugin commit | 5042e16 |
-| Date | 2026-11-09 |
+| Plugin commit | 8a6e998 |
+| Date | 2026-11-10 |
 | Network | offline |
 | Isolation | clean |
 
@@ -126,8 +126,8 @@ Status: supported at tier 1.5. Tier 2 has not run.
 | --- | --- |
 | CLI | stub-agent 0.0.1 |
 | bb | 0.49.0 |
-| Plugin commit | 5042e16 |
-| Date | 2026-11-09 |
+| Plugin commit | 8a6e998 |
+| Date | 2026-11-10 |
 | Network | shared |
 | Isolation | clean |
 

@@ -12,7 +12,7 @@ export const s9: Scenario = {
   async run(lab: Lab) {
     const start = await lab.startSupervisor("S9start");
     const checks = [check("S9.start-command", "`bb factoryman supervisor start` spawns a supervisor and names its thread", start.code === 0 && start.threadId !== null, `exit ${start.code}: ${start.text.slice(0, 200)}`)];
-    const firstTurn = "A supervisor started with the command has its four tools and its skill on its first turn, and no worker tool or skill";
+    const firstTurn = "A supervisor started with the command has its five tools and its skill on its first turn, and no worker tool or skill";
     if (start.threadId === null) {
       checks.push(check("S9.start-tools", firstTurn, false, "the start command made no thread to read"));
     } else {
@@ -33,7 +33,7 @@ export const s9: Scenario = {
     await lab.tell(thread, label, []);
     await lab.waitIdle(thread, lab.patienceMs);
     const after = await lab.offers({ kind: "supervisor", label });
-    checks.push(check("S9.tools-after-step", `After the documented step (${lab.driver.roleChangeStep}) the supervisor has its four tools and its skill`, hasAll(after.tools, SUPERVISOR_TOOLS) && after.skills.includes("factoryman-supervisor"), `tools: ${after.tools.join(", ") || "none"}; skills: ${after.skills.join(", ") || "none"}`));
+    checks.push(check("S9.tools-after-step", `After the documented step (${lab.driver.roleChangeStep}) the supervisor has its five tools and its skill`, hasAll(after.tools, SUPERVISOR_TOOLS) && after.skills.includes("factoryman-supervisor"), `tools: ${after.tools.join(", ") || "none"}; skills: ${after.skills.join(", ") || "none"}`));
     return checks;
   },
 };

@@ -4,6 +4,7 @@ import { defaultProjectConfig } from "../store/store";
 import { dispatch } from "../tools/dispatch";
 import { ValidationDriver } from "./driver";
 import { FakeValidator } from "./fake";
+import { decisionKey } from "./key";
 import type { Outcome, RunView } from "./types";
 
 const PR = "https://github.com/acme/widgets/pull/7";
@@ -55,8 +56,37 @@ describe("ValidationDriver.step in validating", () => {
     expect(state(t)).toBe("needs_decision");
     expect(lastEvent(t)).toMatchObject({ event: "finding", actor: "system" });
     expect(lastEvent(t).evidence).toBe(
-      ["Gate review (awaiting_approval) has 2 findings:", '- review-1 [error] sum.js: auto-fix: Problem review-1, with "quotes" and `ticks`.', '- review-2 [error] sum.js: auto-fix: Problem review-2, with "quotes" and `ticks`.'].join("\n"),
+      [
+        "Gate review (awaiting_approval) has 2 findings:",
+        '- review-1 [error] sum.js: auto-fix: Problem review-1, with "quotes" and `ticks`.',
+        '- review-2 [error] sum.js: auto-fix: Problem review-2, with "quotes" and `ticks`.',
+        `Decision key: ${decisionKey(gateView("review-1", "review-2"))}`,
+      ].join("\n"),
     );
+  });
+
+  it("[U1805] ends the evidence of a gate with the line Decision key, and the key is the parking view's key", async () => {
+    const { t, driver, validator } = await validating();
+    validator.script("start", [ok(gateView("review-1"))]);
+    await driver.step("t1");
+    const lines = (lastEvent(t).evidence ?? "").split("\n");
+    expect(lines.at(-1)).toBe(`Decision key: ${decisionKey(gateView("review-1"))}`);
+    expect(lines.filter((line) => line.startsWith("Decision key:"))).toHaveLength(1);
+  });
+
+  it.each([
+    ["passed-with-override", { prUrl: PR }, "passed-with-override"],
+    ["passed-with-skips", { prUrl: PR }, "passed-with-skips"],
+    ["passed", { prUrl: PR }, "finished as passed"],
+    ["checks-passed", {}, "no pull request"],
+  ] as const)("[U1806] ends the evidence of a %s run that parks the task with the key line, and keeps the outcome text", async (outcome, overrides, expectedText) => {
+    const { t, driver, validator } = await validating();
+    const finished = done(outcome, overrides);
+    validator.script("start", [ok(finished)]);
+    await driver.step("t1");
+    const evidence = lastEvent(t).evidence ?? "";
+    expect(evidence).toContain(expectedText);
+    expect(evidence.split("\n").at(-1)).toBe(`Decision key: ${decisionKey(finished)}`);
   });
 
   it("[U195] applies validated with the pull request for checks-passed, and the task becomes review_ready", async () => {
@@ -108,6 +138,14 @@ describe("ValidationDriver.step in validating", () => {
     expect(state(t)).toBe("needs_decision");
     expect(lastEvent(t).evidence).toContain("5 times in a row");
     expect(lastEvent(t).evidence).toContain("no-mistakes is not installed");
+  });
+
+  it("[U1807] adds no key line to the park after five validator errors, because no view exists to name", async () => {
+    const { t, driver, validator } = await validating();
+    validator.script("start", [err("no-mistakes is not installed")]);
+    for (let i = 0; i < 5; i += 1) await driver.step("t1");
+    expect(state(t)).toBe("needs_decision");
+    expect(lastEvent(t).evidence).not.toContain("Decision key");
   });
 
   it("[U200] resets the error count after a successful call", async () => {
@@ -197,6 +235,99 @@ describe("ValidationDriver.step in needs_decision", () => {
     const working = await withDispatchedTask();
     const other = driverFor(working);
     expect((await other.driver.answer("t1", { action: "approve" }, "user")).ok).toBe(false);
+  });
+});
+
+describe("ValidationDriver.current, answer evidence, and rerun", () => {
+  async function parked(finishedOutcome?: Outcome) {
+    const ctx = await validating();
+    ctx.validator.script("start", [ok(finishedOutcome === undefined ? gateView("review-1", "review-2") : done(finishedOutcome, { prUrl: PR }))]);
+    await ctx.driver.step("t1");
+    expect(state(ctx.t)).toBe("needs_decision");
+    return ctx;
+  }
+  const eventCount = (t: TestRuntime) => t.runtime.deps.store.listEvents({ taskId: "t1" }).length;
+
+  it("[U1808] reads the view with status in the worktree of the task and writes no event", async () => {
+    const { t, driver, validator } = await parked();
+    validator.script("status", [ok(gateView("review-1", "review-2"))]);
+    const before = eventCount(t);
+    const result = await driver.current("t1");
+    expect(result).toEqual({ ok: true, view: gateView("review-1", "review-2") });
+    expect(calls(validator, "status")).toEqual([{ operation: "status", input: { cwd: "/work/tree", host: null } }]);
+    expect(eventCount(t)).toBe(before);
+    expect(state(t)).toBe("needs_decision");
+  });
+
+  it("[U1808] passes the remote host of a task on another machine", async () => {
+    const t = await withDispatchedTask();
+    t.bb.machines.push({ id: "host_gpu", name: "gpu-box", status: "connected", phase: "active", online: true });
+    t.bb.sources.push({ hostId: "host_gpu", path: "/work/gpu", isDefault: false });
+    t.bb.envPaths.set("env-thr-w2", "/work/gpu/tree");
+    expect((await dispatch(t.runtime, SUPERVISOR, { ...DISPATCH_ARGS, machine: "gpu-box" })).ok).toBe(true);
+    await t.runtime.apply("t2", { type: "handoff", actor: "worker", evidence: "Committed." });
+    await t.runtime.apply("t2", { type: "finding", actor: "system", evidence: "Gate review has 1 finding." });
+    const { driver, validator } = driverFor(t);
+    validator.script("status", [ok(gateView("review-1"))]);
+    expect((await driver.current("t2")).ok).toBe(true);
+    expect(calls(validator, "status")).toEqual([{ operation: "status", input: { cwd: "/work/gpu/tree", host: "host_gpu" } }]);
+  });
+
+  it("[U1809] returns the reason when the task is unknown, the worktree path is unreadable, or the validator fails", async () => {
+    const { t, driver, validator } = await parked();
+    expect(await driver.current("nope")).toEqual({ ok: false, message: expect.stringContaining("nope") });
+    validator.script("status", [err("daemon is restarting")]);
+    expect(await driver.current("t1")).toEqual({ ok: false, message: expect.stringContaining("daemon is restarting") });
+    validator.script("status", [{ ok: false as const, error: { kind: "unreadable" as const, message: "not TOON" } }]);
+    expect(await driver.current("t1")).toEqual({ ok: false, message: expect.stringContaining("not TOON") });
+    t.bb.envPaths.clear();
+    const result = await driver.current("t1");
+    expect(result.ok).toBe(false);
+    expect(result.ok ? "" : result.message).toMatch(/worktree/i);
+  });
+
+  it("[U1810] records the evidence it was given on resolve, and the default text without one", async () => {
+    const given = await parked();
+    given.validator.script("answer", [ok(view())]);
+    expect(await given.driver.answer("t1", { action: "approve" }, "supervisor", "The owner approved this answer.")).toEqual({ ok: true });
+    expect(lastEvent(given.t)).toMatchObject({ event: "resolve", actor: "supervisor", evidence: "The owner approved this answer." });
+    const plain = await parked();
+    plain.validator.script("answer", [ok(view())]);
+    await plain.driver.answer("t1", { action: "skip" }, "supervisor");
+    expect(lastEvent(plain.t).evidence).toBe("answered the gate: skip");
+  });
+
+  it("[U1811] records resolve with the actor and the evidence, calls no validator operation, and starts the next wait fresh", async () => {
+    const { t, driver, validator } = await parked("passed-with-override");
+    const before = validator.calls.length;
+    const result = await driver.rerun("t1", "supervisor", "The owner approved a new run.");
+    expect(result).toEqual({ ok: true });
+    expect(validator.calls.length).toBe(before);
+    expect(state(t)).toBe("validating");
+    expect(lastEvent(t)).toMatchObject({ event: "resolve", actor: "supervisor", evidence: "The owner approved a new run." });
+    // A second park starts a new wait: its first view becomes the baseline again.
+    validator.script("start", [ok(done("passed-with-override", { prUrl: PR }))]);
+    await driver.step("t1");
+    expect(state(t)).toBe("needs_decision");
+  });
+
+  it("[U1811] refuses outside needs_decision, and the machine logs the refusal", async () => {
+    const { t, driver } = await validating();
+    const result = await driver.rerun("t1", "supervisor", "The owner approved a new run.");
+    expect(result.ok).toBe(false);
+    expect(state(t)).toBe("validating");
+    const refused = t.runtime.deps.store.listEvents({ taskId: "t1" }).filter((row) => row.outcome === "refused");
+    expect(refused.map((row) => [row.event, row.reasonCode])).toEqual([["resolve", "illegal_transition"]]);
+    expect((await driver.rerun("nope", "supervisor", "x")).ok).toBe(false);
+  });
+
+  it("[U1812] makes the loop call start again after rerun", async () => {
+    const { t, driver, validator } = await parked("passed-with-override");
+    await driver.rerun("t1", "supervisor", "The owner approved a new run.");
+    validator.script("start", [ok(view())]);
+    expect(await driver.step("t1")).toBe("continue");
+    expect(calls(validator, "start")).toHaveLength(2);
+    expect(state(t)).toBe("validating");
   });
 });
 

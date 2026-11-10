@@ -33,13 +33,13 @@ describe("bb factoryman supervisor start through the plugin factory", () => {
     expect(world.metadata.get("thr-w1")).toEqual({ role: "supervisor" });
   });
 
-  it("[A1602] offers the thread the four supervisor tools and the supervisor skill on its first turn, and no worker tool or skill", async () => {
+  it("[A1602] offers the thread the five supervisor tools and the supervisor skill on its first turn, and no worker tool or skill", async () => {
     const world = await bare(dispatch());
     await start(world, "--profile", "deep");
     const selected = await world.host.harness.behavior.resolveAgentConfiguration(
       makePluginAgentConfigurationContext({ pluginMetadata: world.metadata.get("thr-w1") as never, provider: { id: "claude" } }),
     );
-    expect(selected.tools.map((tool) => tool.name).sort()).toEqual(["factoryman_dispatch", "factoryman_merge", "factoryman_status", "factoryman_teardown"]);
+    expect(selected.tools.map((tool) => tool.name).sort()).toEqual(["factoryman_decide", "factoryman_dispatch", "factoryman_merge", "factoryman_status", "factoryman_teardown"]);
     expect(selected.skills).toEqual(["factoryman-supervisor"]);
   });
 

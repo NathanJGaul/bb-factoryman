@@ -35,6 +35,13 @@ describe("bb factoryman supervisor start", () => {
     expect(result.stdout).toContain("from its first turn");
   });
 
+  it("[U1835] says that the thread has the five supervisor tools, and never the old count", async () => {
+    const t = runtimeWith();
+    const result = await start(t, "--project", "proj-1", "--profile", "claude");
+    expect(result.stdout).toContain("the thread has the five supervisor tools and the factoryman-supervisor skill from its first turn");
+    expect(result.stdout).not.toMatch(/\bfour supervisor tools\b/);
+  });
+
   it("[U1624] sends the --prompt text as the first prompt", async () => {
     const t = runtimeWith();
     await start(t, "--project", "proj-1", "--profile", "claude", "--prompt", "Watch the repo and wait.");

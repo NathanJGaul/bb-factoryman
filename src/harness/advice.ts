@@ -4,7 +4,7 @@ export interface RoleChangeFacts {
   readonly roleChange: "next-turn" | "clear";
 }
 
-const WHAT_ARRIVES = "the four supervisor tools and the factoryman-supervisor skill";
+const WHAT_ARRIVES = "the five supervisor tools and the factoryman-supervisor skill";
 
 /**
  * What to tell the owner after a stamp, from the harness contract (report task H4). A row whose `roleChange` is

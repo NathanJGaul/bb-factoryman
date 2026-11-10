@@ -46,7 +46,7 @@ describe("createPlugin", () => {
     const errors = host.harness.inspection.logEntries.filter((entry) => entry.level === "error");
     expect(errors).toHaveLength(1);
     expect(errors[0]?.message).toContain("Task k2 has a corrupt log");
-    expect(host.harness.inspection.registrations.agentTools).toHaveLength(5);
+    expect(host.harness.inspection.registrations.agentTools).toHaveLength(6);
   });
 
   it("[U122] defines the merge method and approval timeout settings with their defaults", async () => {
@@ -74,12 +74,12 @@ describe("createPlugin", () => {
     expect(paths.filter((path) => path.startsWith("plugins."))).toEqual([]);
   });
 
-  it("[U123] registers the command, the five tools, the seven event handlers, and two services", async () => {
+  it("[U123] registers the command, the six tools, the seven event handlers, and two services", async () => {
     const host = createFakePluginHost({ pluginId: "factoryman" });
     await createPlugin()(host.bb);
     const { registrations } = host.harness.inspection;
     expect(registrations.cli?.name).toBe("factoryman");
-    expect(registrations.agentTools).toHaveLength(5);
+    expect(registrations.agentTools).toHaveLength(6);
     expect(registrations.services.map((service) => service.name)).toEqual(["factoryman-startup", "factoryman-machines"]);
     const handled = Object.entries(registrations.threadEventHandlers).filter(([, n]) => n > 0).map(([name]) => name).sort();
     expect(handled).toEqual(["experimental_host.deleted", "interaction.pending", "thread.archived", "thread.deleted", "thread.failed", "thread.idle", "turn.failed"]);
@@ -101,6 +101,22 @@ describe("createPlugin", () => {
     expect(usage).toContain("bb factoryman supervisor <thread-id>");
     expect(usage).toContain("bb factoryman supervisor start [--project <id>] [--profile <name>] [--prompt <text>]");
     expect(usage.indexOf("<thread-id>")).toBeLessThan(usage.indexOf("supervisor start"));
+  });
+
+  it("[U1835] says in the supervisor command summary that bb offers the five supervisor tools", async () => {
+    const host = createFakePluginHost({ pluginId: "factoryman" });
+    await createPlugin()(host.bb);
+    const command = host.harness.inspection.registrations.cli?.commands.find((entry) => entry.name === "supervisor");
+    expect(command?.summary).toContain("the five supervisor tools");
+    expect(command?.summary).not.toMatch(/\bfour\b/);
+  });
+
+  it("[U1843] labels the approval timeout setting so that it covers the decision form too", async () => {
+    const host = createFakePluginHost({ pluginId: "factoryman" });
+    await createPlugin()(host.bb);
+    const descriptor = host.harness.inspection.registrations.settingsDescriptors["approvalTimeoutMinutes"] as { label?: string; description?: string };
+    expect(descriptor.label).toBe("Approval timeout (minutes)");
+    expect(descriptor.description).toMatch(/merge or decision form/);
   });
 
   it("[U876] defines the machine check interval setting with a default of 30 seconds", async () => {

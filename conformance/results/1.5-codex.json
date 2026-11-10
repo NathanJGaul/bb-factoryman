@@ -10,11 +10,11 @@
     "version": "0.49.0"
   },
   "plugin": {
-    "commit": "5042e16",
+    "commit": "8a6e998",
     "dirty": false
   },
-  "startedAt": "2026-11-09T20:19:08.469Z",
-  "finishedAt": "2026-11-09T20:22:21.143Z",
+  "startedAt": "2026-11-10T04:32:47.734Z",
+  "finishedAt": "2026-11-10T04:36:38.284Z",
   "offline": true,
   "isolation": {
     "clean": true,
@@ -95,7 +95,7 @@
           "id": "S4.branch-commit",
           "title": "The task branch holds the one commit the worker made",
           "ok": true,
-          "evidence": "git rev-list --count main..fm/t-92bedbd4: 1"
+          "evidence": "git rev-list --count main..fm/t-9bb85b44: 1"
         },
         {
           "id": "S4.review-ready",
@@ -129,9 +129,9 @@
         },
         {
           "id": "S5.supervisor-tools",
-          "title": "The supervisor is offered its four tools and not the report tool",
+          "title": "The supervisor is offered its five tools and not the report tool",
           "ok": true,
-          "evidence": "tools: factoryman_dispatch, factoryman_merge, factoryman_status, factoryman_teardown (thread thr_4wzhxa4ezm)"
+          "evidence": "tools: factoryman_decide, factoryman_dispatch, factoryman_merge, factoryman_status, factoryman_teardown (thread thr_abdj7xpsrz)"
         },
         {
           "id": "S5.supervisor-skills",
@@ -179,7 +179,7 @@
           "id": "S7.cause",
           "title": "The failure evidence holds the harness's cause text (CONFORMANCE-CAUSE-401)",
           "ok": true,
-          "evidence": "evidence: worker thread failed: provider error (category connection-failed, HTTP 401). Provider-reported cause: \"unexpected status 401 Unauthorized: CONFORMANCE-CAUSE-401, url: http://127.0.0.1:37951/v1/responses\"\nRemedy: Sign in to the provider on the machine that runs the worker, then dispatch the task agai"
+          "evidence": "evidence: worker thread failed: provider error (category connection-failed, HTTP 401). Provider-reported cause: \"unexpected status 401 Unauthorized: CONFORMANCE-CAUSE-401, url: http://127.0.0.1:38667/v1/responses\"\nRemedy: Sign in to the provider on the machine that runs the worker, then dispatch the task agai"
         }
       ]
     },
@@ -204,6 +204,12 @@
           "title": "A teardown of a working task is refused, logged, and changes nothing",
           "ok": true,
           "evidence": "tool error true; 1 logged refusal(s); state working"
+        },
+        {
+          "id": "S8.decide-wrong-state",
+          "title": "A decision on a working ship task is refused, names needs_decision, records no resolve, and changes nothing",
+          "ok": true,
+          "evidence": "tool error true; 0 resolve row(s); state working; text: Refused (illegal_transition): Task t-15331bcc is working. A decision needs needs_decision."
         }
       ]
     },
@@ -215,13 +221,13 @@
           "id": "S9.start-command",
           "title": "`bb factoryman supervisor start` spawns a supervisor and names its thread",
           "ok": true,
-          "evidence": "exit 0: Started factoryman supervisor thread thr_b2zyq62h9x with the profile harness (codex, mock-1).\nThe role is set at spawn, so the thread has the four supervisor tools and the factoryman-supervisor skill "
+          "evidence": "exit 0: Started factoryman supervisor thread thr_k5qch289t3 with the profile harness (codex, mock-1).\nThe role is set at spawn, so the thread has the five supervisor tools and the factoryman-supervisor skill "
         },
         {
           "id": "S9.start-tools",
-          "title": "A supervisor started with the command has its four tools and its skill on its first turn, and no worker tool or skill",
+          "title": "A supervisor started with the command has its five tools and its skill on its first turn, and no worker tool or skill",
           "ok": true,
-          "evidence": "tools: factoryman_dispatch, factoryman_merge, factoryman_status, factoryman_teardown; skills: factoryman-supervisor"
+          "evidence": "tools: factoryman_decide, factoryman_dispatch, factoryman_merge, factoryman_status, factoryman_teardown; skills: factoryman-supervisor"
         },
         {
           "id": "S9.unstamped-no-tools",
@@ -233,13 +239,13 @@
           "id": "S9.stamp-advice",
           "title": "The stamp command tells the person to clear the thread, because this harness needs it",
           "ok": true,
-          "evidence": "Thread thr_epidthibss is now a factoryman supervisor.\nThis harness (codex) applies a new role only when its session is rebuilt.\nRun `bb thread clear thr_epidthibss` so the thread gets the four supervisor tools and the factoryman-supervisor skill."
+          "evidence": "Thread thr_fpavrq6t5f is now a factoryman supervisor.\nThis harness (codex) applies a new role only when its session is rebuilt.\nRun `bb thread clear thr_fpavrq6t5f` so the thread gets the five supervisor tools and the factoryman-supervisor skill."
         },
         {
           "id": "S9.tools-after-step",
-          "title": "After the documented step (clear) the supervisor has its four tools and its skill",
+          "title": "After the documented step (clear) the supervisor has its five tools and its skill",
           "ok": true,
-          "evidence": "tools: factoryman_dispatch, factoryman_merge, factoryman_status, factoryman_teardown; skills: factoryman-supervisor"
+          "evidence": "tools: factoryman_decide, factoryman_dispatch, factoryman_merge, factoryman_status, factoryman_teardown; skills: factoryman-supervisor"
         }
       ]
     },
@@ -262,7 +268,7 @@
           "id": "S11.dirty-kept",
           "title": "The dirty worktree is still there",
           "ok": true,
-          "evidence": "worktree: /var/tmp/bblab-supervisor-start/data/plugins/environment-git-worktree/host-data/worktrees/thr_p7vvh2hia2-1/work"
+          "evidence": "worktree: /var/tmp/bblab-decide-tool/data/plugins/environment-git-worktree/host-data/worktrees/thr_66tbnrw3ia-1/work"
         },
         {
           "id": "S11.clean-removed",
@@ -286,7 +292,7 @@
           "id": "S12.delivered",
           "title": "The wake arrives",
           "ok": true,
-          "evidence": "1 wake(s) for t-59006604"
+          "evidence": "1 wake(s) for t-c3fe0df6"
         },
         {
           "id": "S12.once",

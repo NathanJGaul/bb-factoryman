@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { DISPATCH, loadWorld, nextForm } from "../../test/fixtures/plugin-host";
 import { approvalAnswerSchema } from "../tools/merge";
-import { MERGE_RENDERER_ID, answerFor, readMergePayload, type MergeRequestPayload } from "./contract";
+import { DECISION_RENDERER_ID, MERGE_RENDERER_ID, answerFor, readDecisionPayload, readMergePayload, type DecisionRequestPayload, type MergeRequestPayload } from "./contract";
 
 const PAYLOAD: MergeRequestPayload = {
   taskId: "t1",
@@ -103,5 +103,93 @@ describe("the contract with factoryman_merge", () => {
     expect(MERGE_RENDERER_ID).toBe("factoryman-merge-approval");
     // Lowercase letters, digits, and "-" only: bb's renderer id pattern allows more, and an extension kind allows exactly this.
     expect(MERGE_RENDERER_ID).toMatch(/^[a-z0-9-]+$/);
+  });
+});
+
+const FINDING = (id: string) => ({ id, severity: "error", file: "sum.js", action: "ask-user", description: `Problem ${id}.` });
+const GATE: DecisionRequestPayload = {
+  taskId: "t1",
+  key: "nm-r1-review-0a1b2c3d",
+  kind: "gate",
+  step: "review",
+  status: "awaiting_approval",
+  outcome: "",
+  findings: [FINDING("review-1"), FINDING("review-2")],
+  answer: { action: "fix", findingIds: ["review-2"], instructions: "Use a parameterized query." },
+};
+const FINISHED: DecisionRequestPayload = {
+  taskId: "t1",
+  key: "nm-r1-passed-with-override-0a1b2c3d",
+  kind: "finished",
+  step: "",
+  status: "",
+  outcome: "passed-with-override",
+  findings: [],
+  answer: { action: "rerun", findingIds: [], instructions: "" },
+};
+/** A copy that a case can change without touching the constants. */
+const copy = (payload: DecisionRequestPayload): DecisionRequestPayload => structuredClone(payload);
+/** The payload with some top-level fields replaced. The result is `unknown` because a case may break the type on purpose. */
+const withFields = (base: DecisionRequestPayload, fields: Record<string, unknown>): unknown => ({ ...copy(base), ...fields });
+const withAnswer = (base: DecisionRequestPayload, answer: Record<string, unknown>): unknown => ({ ...copy(base), answer: { ...base.answer, ...answer } });
+const withFinding = (base: DecisionRequestPayload, finding: Record<string, unknown>): unknown => ({ ...copy(base), findings: [{ ...base.findings[0], ...finding }, ...base.findings.slice(1)] });
+const without = (base: DecisionRequestPayload, field: string): unknown => {
+  const { [field]: _removed, ...rest } = copy(base) as Record<string, unknown>;
+  void _removed;
+  return rest;
+};
+
+describe("DECISION_RENDERER_ID", () => {
+  it("[U1813] is factoryman-decision-approval, in bb's renderer id form, and differs from the merge renderer id", () => {
+    expect(DECISION_RENDERER_ID).toBe("factoryman-decision-approval");
+    expect(DECISION_RENDERER_ID).toMatch(/^[a-z0-9-]+$/);
+    expect(DECISION_RENDERER_ID).not.toBe(MERGE_RENDERER_ID);
+  });
+});
+
+describe("readDecisionPayload", () => {
+  it("[U1814] returns a gate payload and a finished-run payload unchanged", () => {
+    expect(readDecisionPayload(copy(GATE))).toEqual(GATE);
+    expect(readDecisionPayload(copy(FINISHED))).toEqual(FINISHED);
+  });
+
+  it.each([
+    ["approve", { action: "approve", findingIds: [], instructions: "" }],
+    ["skip", { action: "skip", findingIds: [], instructions: "" }],
+    ["fix of every finding", { action: "fix", findingIds: ["review-1", "review-2"], instructions: "" }],
+  ])("[U1814] accepts a gate payload with the answer %s", (_name, answer) => {
+    expect(readDecisionPayload(withFields(GATE, { answer }))).toEqual({ ...GATE, answer });
+  });
+
+  it.each([
+    ["null", null],
+    ["undefined", undefined],
+    ["a string", "text"],
+    ["an empty array", []],
+    ["an array that holds a payload", [GATE]],
+    ["an extra key", withFields(GATE, { extra: "x" })],
+    ["a missing key", without(GATE, "key")],
+    ["a number for taskId", withFields(GATE, { taskId: 1 })],
+    ["a null step", withFields(GATE, { step: null })],
+    ["a kind outside its set", withFields(GATE, { kind: "other" })],
+    ["findings that is not an array", withFields(GATE, { findings: {} })],
+    ["a finding with an extra key", withFinding(GATE, { extra: "x" })],
+    ["a finding with a missing field", withFinding(GATE, { file: undefined })],
+    ["a finding with a number for its ID", withFinding(GATE, { id: 1 })],
+    ["an answer that is not an object", withFields(GATE, { answer: "fix" })],
+    ["an answer with an extra key", withAnswer(GATE, { extra: 1 })],
+    ["an action outside its set", withAnswer(GATE, { action: "yes" })],
+    ["finding IDs that are not strings", withAnswer(GATE, { findingIds: [1] })],
+    ["instructions that are not a string", withAnswer(GATE, { instructions: null })],
+    ["a finding ID that no finding shows", withAnswer(GATE, { findingIds: ["review-9"] })],
+    ["a fix with no finding IDs", withAnswer(GATE, { findingIds: [] })],
+    ["a repeated finding ID", withAnswer(GATE, { findingIds: ["review-1", "review-1"] })],
+    ["finding IDs on an approve", withAnswer(GATE, { action: "approve", findingIds: ["review-1"], instructions: "" })],
+    ["instructions on a skip", withAnswer(GATE, { action: "skip", findingIds: [], instructions: "text" })],
+    ["a rerun on a gate", withAnswer(GATE, { action: "rerun", findingIds: [], instructions: "" })],
+    ["an approve on a finished run", withAnswer(FINISHED, { action: "approve" })],
+    ["findings on a finished run", withFields(FINISHED, { findings: [FINDING("review-1")] })],
+  ])("[U1815] returns null for %s", (_name, value) => {
+    expect(readDecisionPayload(value)).toBeNull();
   });
 });

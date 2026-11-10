@@ -6,7 +6,7 @@ import { deliveryModeOf, type Driver } from "./drivers/types.ts";
 import { judgeIsolation } from "./isolation.ts";
 import { bblabCommand, labDispatchJson, labEnv, labPaths, offlineProof, pluginBuildCommand, pluginCopyArgs, projectRowScript, resetLab, supervisorPrompt, supervisorStartArgs, type LabPaths, type LabSettings } from "./lab-env.ts";
 import type { DispatchOptions, EventRow, Lab, Offers, ProviderState, TaskRow, ThreadFacts, ToolResult, Wake, Who } from "./port.ts";
-import { fakeOffers, readWakes, startedThreadId, stubOffers, type LogLine, type ThreadEvent } from "./readers.ts";
+import { fakeOffers, modelsReady, readWakes, startedThreadId, stubOffers, type LogLine, type ThreadEvent } from "./readers.ts";
 import type { Isolation, LabSession } from "./run.ts";
 import { ansi, exec } from "./shell.ts";
 import { waitUntil } from "./wait.ts";
@@ -365,7 +365,7 @@ export async function openRealLab(init: RealLabInit): Promise<LabSession> {
       async () => {
         const out = await lab.bb(["provider", "models", driver.provider, "--json"]);
         const models: unknown = out.code === 0 ? JSON.parse(out.stdout) : [];
-        return Array.isArray(models) && models.length > 0;
+        return modelsReady(models, driver.profile.model);
       },
       { attempts: 30, delayMs: 2000, sleep },
     );
