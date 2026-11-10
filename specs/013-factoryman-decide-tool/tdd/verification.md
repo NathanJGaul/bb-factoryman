@@ -4,11 +4,11 @@ verdict: FAIL
 standard: .specify/extensions/tdd/templates/tdd-test-quality-rubric.md
 verified_at: 5971817
 behaviors: 66
-proven: 44
+proven: 48
 likely: 0
 test_after: 11
 no_test: 0
-not_applicable: 10
+not_applicable: 5
 dropped: 1
 live_pending: 1
 high_smells: 4
@@ -61,7 +61,7 @@ One log entry was wrong and was corrected by a later entry (cycle 5 said "all fi
 | U1826 | DROPPED | merged into A1801 (reason in the list) |
 | A1818 | PENDING | live check, T025 |
 
-Totals: 44 PROVEN, 11 TEST_AFTER, 10 NOT_APPLICABLE (1 baseline, 4 pre-existing, plus the 5 pins that were updated and are not on the list), 1 DROPPED, 1 PENDING.
+Totals: 48 PROVEN, 11 TEST_AFTER, 5 NOT_APPLICABLE (1 baseline and 4 covered by tests that existed before), 1 DROPPED, 1 PENDING (66 rows).
 
 ### Tests that existed before the feature
 
