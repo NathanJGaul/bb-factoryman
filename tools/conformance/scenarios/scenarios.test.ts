@@ -105,9 +105,13 @@ describe("S4 ship in each delivery mode", () => {
 });
 
 describe("S5 confinement", () => {
-  it("[U1389] passes when the worker is offered the report tool and its skill only, and the supervisor its four tools and skill only", async () => {
+  it("[U1389] passes when the worker is offered the report tool and its skill only, and the supervisor its five tools and skill only", async () => {
     expectAllOk(await run("S5"), ["S5.worker-tools", "S5.worker-skills", "S5.supervisor-tools", "S5.supervisor-skills"]);
     expectAllOk(await run("S5", {}, "codex"), ["S5.worker-tools", "S5.worker-skills", "S5.supervisor-tools", "S5.supervisor-skills"]);
+  });
+  it("[U1837] fails S5 when the supervisor is offered four tools and not factoryman_decide, and passes with the fifth", async () => {
+    expect(failedIds(await run("S5", { supervisorLacksDecide: true }))).toEqual(["S5.supervisor-tools"]);
+    expect(failedIds(await run("S5"))).toEqual([]);
   });
   it("[U1390] fails when a role is offered a tool or skill of the other role", async () => {
     expect(failedIds(await run("S5", { workerSeesSupervisorTools: true }))).toEqual(["S5.worker-tools"]);
@@ -151,8 +155,12 @@ describe("S7 failure on a harness that ends the turn normally", () => {
 });
 
 describe("S8 refusals", () => {
-  it("[U1395] passes when an empty report, a second report, and a wrong-state teardown are each refused and logged", async () => {
-    expectAllOk(await run("S8"), ["S8.empty-evidence-refused", "S8.wrong-state-refused", "S8.teardown-wrong-state"]);
+  it("[U1395] passes when an empty report, a second report, a wrong-state teardown, and a wrong-state decision are each refused", async () => {
+    expectAllOk(await run("S8"), ["S8.empty-evidence-refused", "S8.wrong-state-refused", "S8.teardown-wrong-state", "S8.decide-wrong-state"]);
+  });
+  it("[U1838] fails S8.decide-wrong-state when the lab accepts a decision on a working task and moves it, and passes for the stub at tier 1", async () => {
+    expect(failedIds(await run("S8", { decideResolves: true }))).toEqual(["S8.decide-wrong-state"]);
+    expectAllOk(await run("S8", {}, "stub", "1"), ["S8.empty-evidence-refused", "S8.wrong-state-refused", "S8.teardown-wrong-state", "S8.decide-wrong-state"]);
   });
   it("[U1396] fails when a refusal is not logged or an empty report is accepted", async () => {
     expect(failedIds(await run("S8", { silentRefusals: true }))).toEqual(["S8.empty-evidence-refused", "S8.teardown-wrong-state", "S8.wrong-state-refused"]);
@@ -162,6 +170,10 @@ describe("S8 refusals", () => {
 
 describe("S9 role change", () => {
   const ALL = ["S9.start-command", "S9.start-tools", "S9.unstamped-no-tools", "S9.stamp-advice", "S9.tools-after-step"];
+
+  it("[U1837] fails the S9 tool checks when the started or the stamped supervisor lacks factoryman_decide", async () => {
+    expect(failedIds(await run("S9", { supervisorLacksDecide: true }))).toEqual(["S9.start-tools", "S9.tools-after-step"]);
+  });
 
   it("[U1711] passes for the stub and the four harness drivers when a started supervisor has its tools and skill on its first turn and a late stamp reaches them by the driver's step", async () => {
     for (const harness of ["pi", "claude-code", "codex", "omp"]) expectAllOk(await run("S9", {}, harness), ALL);

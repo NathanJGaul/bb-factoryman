@@ -99,10 +99,10 @@ describe("the fake lab's block of an unsupported profile", () => {
 });
 
 describe("the fake lab's supervisors", () => {
-  const SUPERVISOR_TOOLS = ["factoryman_dispatch", "factoryman_merge", "factoryman_status", "factoryman_teardown"];
+  const SUPERVISOR_TOOLS = ["factoryman_decide", "factoryman_dispatch", "factoryman_merge", "factoryman_status", "factoryman_teardown"];
   const DRIVERS: Array<[string, "1" | "1.5"]> = [["stub", "1"], ["claude-code", "1.5"], ["codex", "1.5"], ["pi", "1.5"], ["omp", "1.5"]];
 
-  it("[U1709] starts a supervisor with a thread ID and the role seeded at spawn, so its offers are complete before any clear, on every driver", async () => {
+  it("[U1709] starts a supervisor with a thread ID and the role seeded at spawn, so its five tools and skill are offered before any clear, on every driver", async () => {
     for (const [id, tier] of DRIVERS) {
       const lab = new FakeLab(id, {}, tier);
       const started = await lab.startSupervisor("S9start");
@@ -117,8 +117,8 @@ describe("the fake lab's supervisors", () => {
   });
 
   const ONE = "Thread THREAD is now a factoryman supervisor.\n";
-  const NEXT_TURN = `${ONE}It gets the four supervisor tools and the factoryman-supervisor skill on its next turn.`;
-  const CLEAR = (why: string) => `${ONE}${why}\nRun \`bb thread clear THREAD\` so the thread gets the four supervisor tools and the factoryman-supervisor skill.`;
+  const NEXT_TURN = `${ONE}It gets the five supervisor tools and the factoryman-supervisor skill on its next turn.`;
+  const CLEAR = (why: string) => `${ONE}${why}\nRun \`bb thread clear THREAD\` so the thread gets the five supervisor tools and the factoryman-supervisor skill.`;
 
   it.each([
     ["stub", "1", CLEAR("The harness acp-stub has no recorded role-change behavior.")],
@@ -131,5 +131,21 @@ describe("the fake lab's supervisors", () => {
     const thread = await lab.spawnSupervisor("late");
     const stamp = await lab.stamp(thread);
     expect(stamp).toEqual({ code: 0, text: expected.replaceAll("THREAD", thread) });
+  });
+});
+
+describe("the fake lab's factoryman_decide", () => {
+  it("[U1839] refuses a task that is not in needs_decision with the real tool's wording, writes no resolve row, and names an unknown task", async () => {
+    const lab = new FakeLab("codex");
+    const { taskId } = await lab.dispatch("scout", "decide probe", { flag: "silent" });
+    expect(taskId).not.toBeNull();
+    await lab.waitForState(taskId ?? "", ["working"]);
+    const refused = await lab.callTool("factoryman_decide", { taskId, key: "nm-none", action: "approve" });
+    expect(refused.isError).toBe(true);
+    expect(refused.text).toBe(`Refused (illegal_transition): Task ${taskId} is working. A decision needs needs_decision.`);
+    expect((await lab.events(taskId ?? "")).filter((e) => e.event === "resolve")).toEqual([]);
+    expect((await stateOf(lab, taskId))?.state).toBe("working");
+    const unknown = await lab.callTool("factoryman_decide", { taskId: "t-nope", key: "nm-none", action: "approve" });
+    expect(unknown).toEqual({ text: "No task t-nope exists in this project.", isError: true });
   });
 });

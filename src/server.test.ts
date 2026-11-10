@@ -103,6 +103,22 @@ describe("createPlugin", () => {
     expect(usage.indexOf("<thread-id>")).toBeLessThan(usage.indexOf("supervisor start"));
   });
 
+  it("[U1835] says in the supervisor command summary that bb offers the five supervisor tools", async () => {
+    const host = createFakePluginHost({ pluginId: "factoryman" });
+    await createPlugin()(host.bb);
+    const command = host.harness.inspection.registrations.cli?.commands.find((entry) => entry.name === "supervisor");
+    expect(command?.summary).toContain("the five supervisor tools");
+    expect(command?.summary).not.toMatch(/\bfour\b/);
+  });
+
+  it("[U1843] labels the approval timeout setting so that it covers the decision form too", async () => {
+    const host = createFakePluginHost({ pluginId: "factoryman" });
+    await createPlugin()(host.bb);
+    const descriptor = host.harness.inspection.registrations.settingsDescriptors["approvalTimeoutMinutes"] as { label?: string; description?: string };
+    expect(descriptor.label).toBe("Approval timeout (minutes)");
+    expect(descriptor.description).toMatch(/merge or decision form/);
+  });
+
   it("[U876] defines the machine check interval setting with a default of 30 seconds", async () => {
     const host = createFakePluginHost({ pluginId: "factoryman" });
     await createPlugin()(host.bb);

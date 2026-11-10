@@ -70,8 +70,8 @@ export function createPlugin(options: PluginOptions = {}): (bb: BbPluginApi) => 
       },
       approvalTimeoutMinutes: {
         type: "number",
-        label: "Merge approval timeout (minutes)",
-        description: "How long the approval form waits for the owner before it counts as not answered.",
+        label: "Approval timeout (minutes)",
+        description: "How long a merge or decision form waits for the owner before it counts as not answered.",
         default: 10,
       },
       maxWorkers: {
@@ -183,7 +183,7 @@ export function createPlugin(options: PluginOptions = {}): (bb: BbPluginApi) => 
       commands: [
         {
           name: "supervisor",
-          summary: "Start a supervisor with its role from the first turn, or make an existing thread the supervisor, so bb offers it the four supervisor tools",
+          summary: "Start a supervisor with its role from the first turn, or make an existing thread the supervisor, so bb offers it the five supervisor tools",
           usage: "bb factoryman supervisor <thread-id>\nbb factoryman supervisor start [--project <id>] [--profile <name>] [--prompt <text>]",
         },
         {

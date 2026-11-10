@@ -61,7 +61,7 @@ describe("offers", () => {
 
 describe("startedThreadId", () => {
   it("[U1707] takes the ID from the first line of the start command's output, and returns null when the line has none", () => {
-    const ok = "Started factoryman supervisor thread thr_abc123 with the profile harness (claude-code, claude-haiku-5-5).\nThe role is set at spawn, so the thread has the four supervisor tools and the factoryman-supervisor skill from its first turn.";
+    const ok = "Started factoryman supervisor thread thr_abc123 with the profile harness (claude-code, claude-haiku-5-5).\nThe role is set at spawn, so the thread has the five supervisor tools and the factoryman-supervisor skill from its first turn.";
     expect(startedThreadId(ok)).toBe("thr_abc123");
     expect(startedThreadId("No supervisor profile is set for project proj_x. Pass --profile <name>.\nNothing was spawned.")).toBeNull();
     expect(startedThreadId("Usage: bb factoryman supervisor <thread-id>")).toBeNull();

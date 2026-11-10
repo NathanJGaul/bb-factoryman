@@ -70,7 +70,11 @@ export interface Faults {
   noClearAdvice?: boolean;
   /** The stamp command fails. */
   stampFails?: boolean;
-  /** A supervisor that `supervisor start` made lacks one of the four tools. */
+  /** Every supervisor is offered four tools: `factoryman_decide` is missing. */
+  supervisorLacksDecide?: boolean;
+  /** A decision on a task that is not in needs_decision is accepted, and the task moves. */
+  decideResolves?: boolean;
+  /** A supervisor that `supervisor start` made lacks one of the supervisor tools. */
   startedLacksTool?: boolean;
   /** A supervisor that `supervisor start` made lacks its skill. */
   startedLacksSkill?: boolean;
@@ -95,7 +99,7 @@ interface Task extends TaskRow {
   profile: { provider: string; model: string; reasoningLevel: string; permissionMode: string };
 }
 
-const SUPERVISOR_TOOLS = ["factoryman_dispatch", "factoryman_merge", "factoryman_status", "factoryman_teardown"];
+const SUPERVISOR_TOOLS = ["factoryman_decide", "factoryman_dispatch", "factoryman_merge", "factoryman_status", "factoryman_teardown"];
 
 /** An in-memory lab that behaves like a correct plugin on a correct harness, unless a fault says otherwise. */
 export class FakeLab implements Lab {
@@ -185,7 +189,22 @@ export class FakeLab implements Lab {
   async callTool(tool: string, args: Record<string, unknown>): Promise<ToolResult> {
     this.calls.push(`callTool ${tool}`);
     if (tool === "factoryman_teardown") return this.teardown(String(args["taskId"]));
+    if (tool === "factoryman_decide") return this.decide(String(args["taskId"]));
     return { text: `unknown tool ${tool}`, isError: true };
+  }
+
+  /** The wrong-state refusal of the real tool. The lab has no no-mistakes pipeline, so no task is ever in needs_decision here. */
+  private decide(taskId: string): ToolResult {
+    const task = this.rows.get(taskId);
+    if (task === undefined) return { text: `No task ${taskId} exists in this project.`, isError: true };
+    if (task.state !== "needs_decision") {
+      if (this.faults.decideResolves === true) {
+        this.transition(task, "resolve", "validating", "The fault accepted the decision.", "supervisor");
+        return { text: `Task ${taskId} is now validating.`, isError: false };
+      }
+      return { text: `Refused (illegal_transition): Task ${taskId} is ${task.state}. A decision needs needs_decision.`, isError: true };
+    }
+    return { text: "The fake lab has no pipeline to answer.", isError: true };
   }
 
   private teardown(taskId: string): ToolResult {
@@ -298,6 +317,11 @@ export class FakeLab implements Lab {
     return this.rows.has(taskId) ? "thr_driver" : null;
   }
 
+  /** The tools a supervisor with its role is offered. A fault takes `factoryman_decide` away. */
+  private supervisorTools(): string[] {
+    return SUPERVISOR_TOOLS.filter((tool) => !(this.faults.supervisorLacksDecide === true && tool === "factoryman_decide"));
+  }
+
   async offers(who: Who): Promise<Offers> {
     if (who.kind === "worker") {
       return { tools: this.faults.workerSeesSupervisorTools === true ? ["factoryman_report", ...SUPERVISOR_TOOLS] : ["factoryman_report"], skills: this.faults.workerSeesSupervisorSkill === true ? ["factoryman-worker", "factoryman-supervisor"] : ["factoryman-worker"] };
@@ -306,13 +330,13 @@ export class FakeLab implements Lab {
     if (sup?.seeded === true) {
       // The role was set in the spawn call, so a stamp fault does not reach it.
       if (this.faults.startedNeedsClear === true && !sup.cleared) return { tools: [], skills: [] };
-      const tools = SUPERVISOR_TOOLS.filter((tool) => !(this.faults.startedLacksTool === true && tool === "factoryman_merge"));
+      const tools = this.supervisorTools().filter((tool) => !(this.faults.startedLacksTool === true && tool === "factoryman_merge"));
       if (this.faults.startedSeesWorkerTool === true) tools.push("factoryman_report");
       return { tools: tools.sort(), skills: this.faults.startedLacksSkill === true ? [] : ["factoryman-supervisor"] };
     }
     const has = sup !== undefined && sup.stamped && this.faults.stampNeverArrives !== true && (this.driver.roleChangeStep === "next-turn" || sup.cleared) && sup.turns > 0;
-    if (!has && sup !== undefined && !sup.stamped && this.faults.unstampedHasTools === true) return { tools: SUPERVISOR_TOOLS, skills: [] };
-    return has ? { tools: SUPERVISOR_TOOLS, skills: this.faults.supervisorSeesWorkerSkill === true ? ["factoryman-supervisor", "factoryman-worker"] : ["factoryman-supervisor"] } : { tools: [], skills: [] };
+    if (!has && sup !== undefined && !sup.stamped && this.faults.unstampedHasTools === true) return { tools: this.supervisorTools(), skills: [] };
+    return has ? { tools: this.supervisorTools(), skills: this.faults.supervisorSeesWorkerSkill === true ? ["factoryman-supervisor", "factoryman-worker"] : ["factoryman-supervisor"] } : { tools: [], skills: [] };
   }
 
   async spawnSupervisor(label: string): Promise<string> {
@@ -360,7 +384,7 @@ export class FakeLab implements Lab {
     const { provider, model } = this.driver.profile;
     return {
       code: 0,
-      text: `Started factoryman supervisor thread ${id} with the profile harness (${provider}, ${model}).\nThe role is set at spawn, so the thread has the four supervisor tools and the factoryman-supervisor skill from its first turn.`,
+      text: `Started factoryman supervisor thread ${id} with the profile harness (${provider}, ${model}).\nThe role is set at spawn, so the thread has the five supervisor tools and the factoryman-supervisor skill from its first turn.`,
       threadId: id,
     };
   }

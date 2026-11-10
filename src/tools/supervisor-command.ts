@@ -30,7 +30,7 @@ export interface CommandContext {
 
 /**
  * `bb factoryman supervisor <thread-id>` stamps the supervisor role on a
- * thread, so bb offers it the four supervisor tools. The stamp only chooses
+ * thread, so bb offers it the five supervisor tools. The stamp only chooses
  * which tools bb offers. Each tool still decides the caller from the store.
  *
  * `bb factoryman supervisor start` spawns a supervisor with the role set in the

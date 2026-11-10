@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { roleAdvice } from "./advice";
 import { CONTRACTS, GENERIC_CONTRACT, contractFor } from "./contracts";
 
-const CLEAR_LINE = (thread: string) => `Run \`bb thread clear ${thread}\` so the thread gets the four supervisor tools and the factoryman-supervisor skill.`;
+const CLEAR_LINE = (thread: string) => `Run \`bb thread clear ${thread}\` so the thread gets the five supervisor tools and the factoryman-supervisor skill.`;
 
 describe("roleAdvice", () => {
   it("[U1651] names the thread and the provider and gives the clear instruction for a row that needs a clear", () => {
@@ -13,7 +13,7 @@ describe("roleAdvice", () => {
 
   it("[U1652] says the tools and the skill arrive at the next turn, and gives no clear instruction, for a row that needs none", () => {
     const text = roleAdvice("thr-9", "claude-code", contractFor("claude-code"));
-    expect(text).toContain("It gets the four supervisor tools and the factoryman-supervisor skill on its next turn.");
+    expect(text).toContain("It gets the five supervisor tools and the factoryman-supervisor skill on its next turn.");
     expect(text).not.toMatch(/clear/i);
   });
 

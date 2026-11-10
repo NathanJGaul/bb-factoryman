@@ -42,7 +42,7 @@ The headings were written (commit `docs(decisions)`), and the suite was green ag
 | A1814 | The registered decision renderer, mounted with `renderSlot` and a payload that the tool built, shows the findings and the exact answer, and its Approve click gives a reply that the tool's strict schema accepts | US2.1, US2.3, FR-009, FR-019 | example | DONE | `test/acceptance/decision-approval-form.test.tsx::[A1814]` |
 | A1815 | The registered merge renderer still renders the merge payload and nothing else changed in `src/app.tsx` | FR-019 | example | DONE | `test/acceptance/decision-approval-form.test.tsx::[A1815]` |
 | A1816 | `agents.configure` offers a supervisor thread the five supervisor tools with `factoryman_decide` last, a worker only `factoryman_report`, and a thread with no role none | US5.1, US5.2, FR-001 | example | DONE | `test/acceptance/tools-visibility.test.ts::[A1816]` |
-| A1817 | The conformance runner with the fake lab passes S5, S8, and S9 for the stub and the four drivers with five supervisor tools and the S8 decide check, and `conformance/known-gaps.json` lists no entry | US5.4, US5.5, FR-020 | example | PENDING | `test/acceptance/conformance-tier1.test.ts::[A1817]`, `test/acceptance/conformance-tier15.test.ts::[A1817]` |
+| A1817 | The conformance runner with the fake lab passes S5, S8, and S9 for the stub and the four drivers with five supervisor tools and the S8 decide check, and `conformance/known-gaps.json` lists no entry | US5.4, US5.5, FR-020 | example | DONE | `test/acceptance/conformance-tier1.test.ts::[A1817]`, `test/acceptance/conformance-tier15.test.ts::[A1817]` |
 | A1818 | LIVE CHECK: the five offline runs (tier 1, and tier 1.5 for Claude Code, Codex, Pi, and omp) exit 0 with a clean isolation check, show five supervisor tools in S5 and S9 and the S8 decide check passing, and the support document lists no known gap | US5.3, US5.6, FR-021, SC-005, SC-006 | live | PENDING | `conformance/results/*.json` and `docs/HARNESS-SUPPORT.md` |
 | A1819 | The tracked documents agree with the code: the design lists the tool and the counts, the log has D-136 on with amended-by lines, the constitution is 1.5.0 without the "stays out" clause, the supervisor skill tells the supervisor to use the tool, and no document says the supervisor has four tools | US4.6, US6.1, US6.2, US6.3, US6.4, FR-022, FR-023, FR-024, SC-008 | example | PENDING | `test/acceptance/design-profiles.test.ts::[A1710]`, `test/acceptance/decision-log.test.ts::[A1819]`, `test/acceptance/skills.test.ts::[A1819]` |
 | A1820 | A full run leaves no `bb-fake-plugin-host-*` directory behind, and the new tests make none outside their private `TMPDIR` | US6.5, FR-026, SC-007 | example | DONE | `test/acceptance/tmpdir-leak.test.ts::[A1511]` |
@@ -101,7 +101,7 @@ The headings were written (commit `docs(decisions)`), and the suite was green ag
 | U1824 | `toolsForMetadata` returns five names for a supervisor, the last one `factoryman_decide`; the worker and no-role results are unchanged (`[U33]` is updated to five) | FR-001 | example | DONE | `src/tools/register.test.ts::[U1824]`, `[U33]` |
 | U1825 | `registerTools` registers six names and no seventh (`[U36]` is updated), the `factoryman_decide` parameters are one flat object whose `action` is an enum with no `oneOf` or `anyOf`, and a call reaches `decide` | FR-001, FR-002 | example | DONE | `src/tools/register.test.ts::[U1825]`, `[U36]` |
 | U1826 | DROPPED: the plugin-level proof that the driver reaches the tool is A1801, which runs through `createPlugin` with the real driver (`[U123]` is updated to six tools in cycle 4) | FR-001, FR-004 | example | DROPPED | `src/server.test.ts::[U1826]`, `[U123]` |
-| U1843 | The approval-timeout setting is labelled "Approval timeout (minutes)" | D-139 | example | PENDING | `src/server.test.ts::[U1843]` |
+| U1843 | The approval-timeout setting is labelled "Approval timeout (minutes)" | D-139 | example | DONE | `src/server.test.ts::[U1843]` |
 
 ### `src/app/decision-approval-form.tsx` and `src/app.tsx`
 
@@ -118,16 +118,16 @@ The headings were written (commit `docs(decisions)`), and the suite was green ag
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| U1834 | Both advice lines say "five supervisor tools" | SC-008 | example | PENDING | `src/harness/advice.test.ts::[U1834]` |
-| U1835 | The start output, the stamp output, and the CLI summary say "five" | SC-008 | example | PENDING | `src/tools/supervisor-start.test.ts::[U1835]`, `src/tools/supervisor-command.test.ts::[U1835]`, `tools/conformance/readers.test.ts::[U1835]`, `test/fixtures/conformance-lab.test.ts::[U1835]` |
+| U1834 | Both advice lines say "five supervisor tools" | SC-008 | example | DONE | `src/harness/advice.test.ts::[U1834]` |
+| U1835 | The start output, the stamp output, and the CLI summary say "five" | SC-008 | example | DONE | `src/tools/supervisor-start.test.ts::[U1835]`, `src/tools/supervisor-command.test.ts::[U1835]`, `tools/conformance/readers.test.ts::[U1835]`, `test/fixtures/conformance-lab.test.ts::[U1835]` |
 
 ### `tools/conformance` and the fake lab
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| U1837 | S5 and S9 pass when a supervisor is offered five tools and fail when `factoryman_decide` is missing | FR-020, US5.4 | example | PENDING | `tools/conformance/scenarios/scenarios.test.ts::[U1837]` |
-| U1838 | S8's `S8.decide-wrong-state` passes when the lab refuses the call with an error that names `needs_decision` and leaves the state `working`, and fails when the lab resolves the task or changes its state | FR-020, US5.5 | example | PENDING | `tools/conformance/scenarios/scenarios.test.ts::[U1838]` |
-| U1839 | The fake lab's `factoryman_decide` refuses a task that is not in `needs_decision` with the real tool's wording and writes no `resolve` row | FR-020 | example | PENDING | `test/fixtures/conformance-lab.test.ts::[U1839]` |
+| U1837 | S5 and S9 pass when a supervisor is offered five tools and fail when `factoryman_decide` is missing | FR-020, US5.4 | example | DONE | `tools/conformance/scenarios/scenarios.test.ts::[U1837]` |
+| U1838 | S8's `S8.decide-wrong-state` passes when the lab refuses the call with an error that names `needs_decision` and leaves the state `working`, and fails when the lab resolves the task or changes its state | FR-020, US5.5 | example | DONE | `tools/conformance/scenarios/scenarios.test.ts::[U1838]` |
+| U1839 | The fake lab's `factoryman_decide` refuses a task that is not in `needs_decision` with the real tool's wording and writes no `resolve` row | FR-020 | example | DONE | `test/fixtures/conformance-lab.test.ts::[U1839]` |
 
 ### Documents and the skill
 

@@ -82,7 +82,7 @@ export async function runSupervisorStart(rt: Runtime, args: string[], ctx: Comma
       exitCode: 0,
       stdout:
         `Started factoryman supervisor thread ${threadId} with the profile ${name} (${profile.provider}, ${profile.model}).\n` +
-        "The role is set at spawn, so the thread has the four supervisor tools and the factoryman-supervisor skill from its first turn.\n",
+        "The role is set at spawn, so the thread has the five supervisor tools and the factoryman-supervisor skill from its first turn.\n",
     };
   } catch (error) {
     return { exitCode: 1, stderr: `Could not start the supervisor: ${errorText(error)}\n` };

@@ -39,7 +39,7 @@ export function inOrder(seen: string[], wanted: string[]): boolean {
   return at === wanted.length;
 }
 
-export const SUPERVISOR_TOOLS = ["factoryman_dispatch", "factoryman_merge", "factoryman_status", "factoryman_teardown"];
+export const SUPERVISOR_TOOLS = ["factoryman_decide", "factoryman_dispatch", "factoryman_merge", "factoryman_status", "factoryman_teardown"];
 
 export const hasAll = (have: string[], want: string[]) => want.every((item) => have.includes(item));
 export const hasAny = (have: string[], other: string[]) => other.some((item) => have.includes(item));
