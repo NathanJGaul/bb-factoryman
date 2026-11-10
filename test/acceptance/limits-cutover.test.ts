@@ -106,12 +106,18 @@ describe("bb factoryman import-registry", () => {
     expect(world.execCalls).toEqual([]);
   });
 
-  it("[A1023] refuses --apply and says that only the dry run exists", async () => {
-    const world = await loadWorld();
-    const result = await cli(world, ["import-registry", "--file", registryFile(), "--apply"]);
-    expect(result.exitCode).toBe(2);
-    expect(result.stderr).toMatch(/dry run/);
-    expect(result.stdout).not.toContain("gadgets |");
+  it("[A1023] keeps the dry run as the default: a call without --apply writes nothing, and --apply needs --project", async () => {
+    const world = await loadWorld({ projectList: projects });
+    const tables = () => JSON.stringify(["project_config", "task", "task_event", "approval"].map((name) => world.host.bb.storage.database().prepare(`select * from ${name}`).all()));
+    const before = tables();
+    const dry = await cli(world, ["import-registry", "--file", registryFile()]);
+    expect(dry.exitCode).toBe(0);
+    expect(dry.stdout).toContain("Dry run: nothing was written.");
+    const noProject = await cli(world, ["import-registry", "--file", registryFile(), "--apply"]);
+    expect(noProject.exitCode).toBe(2);
+    expect(noProject.stderr).toContain("--apply --project <name>");
+    expect(noProject.stdout).not.toContain("gadgets |");
+    expect(tables()).toBe(before);
   });
 
   it("prints usage without a file, and an error for a file that cannot be read", async () => {

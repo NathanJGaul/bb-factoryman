@@ -93,6 +93,18 @@ describe("createPlugin", () => {
     expect(command?.summary).toMatch(/starter/i);
   });
 
+  it("[U1910] registers import-registry with the dry-run line and the apply line, and a summary that says apply writes one project", async () => {
+    const host = createFakePluginHost({ pluginId: "factoryman" });
+    await createPlugin()(host.bb);
+    const command = host.harness.inspection.registrations.cli?.commands.find((entry) => entry.name === "import-registry");
+    const usage = command?.usage ?? "";
+    expect(usage).toContain("bb factoryman import-registry --file <path>\n");
+    expect(usage).toContain("bb factoryman import-registry --file <path> --apply --project <name>");
+    expect(command?.summary).toMatch(/--apply/);
+    expect(command?.summary).toMatch(/one project/);
+    expect(command?.summary).not.toMatch(/only reads/);
+  });
+
   it("[U1643] registers the supervisor command with the stamp line and the start line", async () => {
     const host = createFakePluginHost({ pluginId: "factoryman" });
     await createPlugin()(host.bb);

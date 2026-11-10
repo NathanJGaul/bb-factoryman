@@ -200,6 +200,8 @@ export interface WorldOptions {
   hostsError?: Error;
   /** What `projects.list` returns. */
   projectList?: Array<{ id: string; name: string }>;
+  /** Make `projects.list` fail. */
+  projectListError?: Error;
   /** Replace the rules-table resolver. */
   resolver?: DispatchResolver;
   /** Switch the worker tool hint on. The plugin's default is off. */
@@ -298,7 +300,10 @@ export async function loadWorld(options: WorldOptions = {}): Promise<World> {
         delete: async () => ({ ok: true }),
       },
       projects: {
-        list: async () => options.projectList ?? [],
+        list: async () => {
+          if (options.projectListError) throw options.projectListError;
+          return options.projectList ?? [];
+        },
         get: async ({ projectId }: { projectId: string }) => {
           if (options.projectError) throw options.projectError;
           return { id: projectId, gitRemoteUrl: "git@github.com:acme/widgets.git", sources: sources() };

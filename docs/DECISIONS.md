@@ -655,7 +655,7 @@ It can set:
 A scan rejects the keys `yolo`, `gates`, `gate`, `skip`, `skipGates`, `skipChecks`, `approval`, `approvals`, `requireApproval`, `disable`, `disabled`, `teardown`, `evidence`, `merge`, `bypass`, and `override` at any depth, with a message that names hard rule 7.
 It rejects `baseBranch` too, because the base branch decides the landed-work check at teardown: a file that an agent wrote could set it to the task's own branch and make unlanded work look landed.
 Every other unknown key fails the strict schema.
-So `yolo` and `baseBranch` come from the stored project config only, and nothing writes them yet (D-037; the registry import in milestone 10 is a dry run).
+So `yolo` and `baseBranch` come from the stored project config only. Since D-148 the registry apply can write `yolo` from a `+yolo` token and never writes `baseBranch` (D-037).
 Config cannot define new task kinds or delivery modes, because a new mode would add transitions and could loosen a gate.
 It selects among the three modes only.
 
@@ -761,9 +761,8 @@ A bare `yolo` token, without the `+`, is an unknown mode or an unexpected token 
 A line with an unclosed bracket is reported as an entry with `unreadable` as its registered mode and a flag, and not skipped.
 An unknown flag prints the usage and reads nothing.
 If bb cannot list its projects, the report says so in a note and still prints every entry.
-`--apply` is refused.
-Nothing writes the stored project config, so a project stays in `no-mistakes` mode with `yolo` off until the owner decides on an apply path.
-That decision is open (D-078).
+Without `--apply` the command stays this dry run.
+The apply path that this decision left open (D-078) is decided in D-148.
 
 ### D-089: The branch-protection command prints and never runs (Decided in the task brief)
 
@@ -1595,3 +1594,44 @@ The run was repeated with the other lab quiet, and the isolation check was clean
 This is the case that the earlier lane's notes warn about, and the check is left as it is: it cannot tell a neighbor's lab from a leak of its own.
 
 The result files that stay are the ones from runs that exited 0 with a clean isolation report.
+
+## Feature 014: registry apply
+
+### D-148: `import-registry --apply --project <name>` writes the stored config of one project (Decided in the task brief)
+
+The captain asked for the apply path that D-078 and D-088 left open, so that projects move off firstmate one at a time (`docs/CUTOVER.md`).
+The dry run stays the default and does not change.
+
+- **Explicit and single.**
+  Only `--apply` writes, and `--apply` needs `--project <name>`.
+  `--project` without `--apply`, `--apply` without `--project`, a repeated `--project`, and any other malformed call print the usage with exit code 2 before the command reads anything.
+  The command never applies all projects.
+- **One project, found by name.**
+  The name is compared without regard to letter case with exactly one registry line and exactly one bb project.
+  No registry line, two registry lines, no bb project, two bb projects, and a bb project list that fails each refuse with exit code 1 and write nothing.
+- **Flagged means refused.**
+  A line that the dry run has flagged (an unknown mode, an unexpected token, an unclosed bracket) is never written.
+  A bare `yolo` token is one of those cases: it is never read as `+yolo`, so it never turns the bypass on.
+  A flag on another project's line does not matter.
+- **What is written.**
+  The line's delivery mode, its `yolo` value, and its branch prefix go into the stored config.
+  `no-mistakes-prod-only` is written as `no-mistakes` and the output prints the note.
+  A blank prefix (`branch=`) is stored as null, and a line with no `branch=` token gets the registry default `fm/` that the report shows.
+  The registry value replaces the stored value, in both directions: a stored `yolo` that the line does not carry is turned off, and the output says so.
+  A `+yolo` token is the owner's own setting in firstmate, so copying it adds no grant that the owner did not give.
+- **What is left.**
+  `baseBranch` and `defaultMachine` stay as stored, because the registry has neither, and `baseBranch` decides the landed-work check at teardown (D-078).
+  The forge is printed and not stored, because the config has no field for it.
+- **Idempotent.**
+  The apply is idempotent: it compares each field with the stored value and calls the store only when one differs.
+  A rerun writes nothing, prints every field as unchanged, says `Nothing was written.`, and exits 0.
+  The write is one `putProjectConfig` call inside one store transaction, so a failed write changes nothing and exits 1.
+- **No event, no approval, no task change.**
+  The config is a cache row with no event in the log today (D-037), so the apply writes no event and no approval, and changes no task.
+  A task keeps the mode it was created with, and only tasks created later use the new mode.
+  The command reads the `--file` and writes nothing outside the store: it never touches firstmate's registry or tasks, and runs no process.
+
+Gap: the apply leaves no record of who ran it or when beyond one info log line.
+A log row for a config change would need a new event kind in the state machine's log, which the brief did not ask for.
+Tasks, a cancel-queued-task tool, and tool hints stay out of scope.
+The command was tested offline only; the owner runs it against a real bb and registry as the live check (`docs/LIVE-CHECK.md`).

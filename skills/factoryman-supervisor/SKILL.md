@@ -103,6 +103,7 @@ A worker never contacts the owner, so you speak for the fleet.
 - `bb factoryman preflight <machine> --project <id>` reports what a remote machine is missing.
 - `bb factoryman protection <owner/repo>` prints the branch-protection steps.
 - `bb factoryman import-registry --file <path>` previews the move from firstmate. It changes nothing.
+- `bb factoryman import-registry --file <path> --apply --project <name>` copies one registry line's mode, `yolo` flag, and branch prefix into that project's stored config. It refuses a flagged line and writes nothing else.
 
 ## What you cannot do
 
