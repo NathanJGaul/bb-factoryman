@@ -184,9 +184,22 @@ describe("decide with a fake decider", () => {
     const [request] = requests[0]!;
     expect(request).toMatchObject({ threadId: "thr-sup", rendererId: DECISION_RENDERER_ID });
     expect(request.title).toContain("t1");
-    expect(readDecisionPayload(request.payload)).toEqual(decisionRequest("t1", LIVE_KEY, live, { kind: "answer", answer: { action: "fix", findingIds: ["review-2"], instructions: "Use a parameterized query." } }));
-    const plan = { kind: "answer" as const, answer: { action: "fix" as const, findingIds: ["review-2"], instructions: "Use a parameterized query." } };
-    expect(decider.calls[2]?.args).toEqual(["t1", plan.answer, "supervisor", decisionEvidence(plan, LIVE_KEY, live, "Go ahead.")]);
+    expect(readDecisionPayload(request.payload)).toEqual({
+      taskId: "t1",
+      key: LIVE_KEY,
+      kind: "gate",
+      step: "review",
+      status: "awaiting_approval",
+      outcome: "",
+      findings: live.gate!.findings,
+      answer: { action: "fix", findingIds: ["review-2"], instructions: "Use a parameterized query." },
+    });
+    expect(decider.calls[2]?.args).toEqual([
+      "t1",
+      { action: "fix", findingIds: ["review-2"], instructions: "Use a parameterized query." },
+      "supervisor",
+      `answered the gate: fix review-2 (instructions: Use a parameterized query.). The owner approved this answer in the decision form (key ${LIVE_KEY}).\nComment: Go ahead.`,
+    ]);
     expect(result.text).toMatch(/Task t1 is now/);
     expect(result.text).toContain("fix review-2");
   });
@@ -206,7 +219,7 @@ describe("decide with a fake decider", () => {
     ["a failed run", finished("failed", { error: "ci failed" })],
     ["a cancelled run", finished("cancelled")],
     ["checks-passed with a pull request", finished("checks-passed", { prUrl: PR })],
-  ])("[A1812] refuses a call on %s, opens no form, and sends nothing", async (_name, other) => {
+  ])("[U1848] refuses a call on %s, opens no form, and sends nothing", async (_name, other) => {
     const { t, decider } = await parked();
     decider.views = [{ ok: true, view: other }];
     for (const action of ["rerun", "approve"] as const) {
@@ -240,8 +253,8 @@ describe("decide with a fake decider", () => {
 
   it("[U1823] sends nothing when the machine would refuse resolve after the owner approved, because the task left needs_decision", async () => {
     const { t, decider } = await parked();
-    decider.onCurrent = (count) => {
-      if (count === 2) void t.runtime.apply("t1", { type: "resolve", actor: "system", evidence: "A person answered in no-mistakes." });
+    decider.onCurrent = async (count) => {
+      if (count === 2) await t.runtime.apply("t1", { type: "resolve", actor: "system", evidence: "A person answered in no-mistakes." });
     };
     const result = await decide(t.runtime, decider, SUPERVISOR, FIX);
     expect(result.ok).toBe(false);

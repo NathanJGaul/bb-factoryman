@@ -129,3 +129,15 @@ Correction to cycle 5: the full run on that cycle's code had one red, `test/acce
 ## Verification note: the leak baseline for T001
 
 - `pnpm test` was run once on `5971817` with `TMPDIR=/home/nathanjgaul/.cache/tmp`: 3159 `bb-fake-plugin-host-*` directories before and 3159 after, and 4057 entries before and 4056 after. `/tmp` held 1672 such directories and was not touched by the run. The old directories are leftovers from before the private-`TMPDIR` fix (D-121). The feature adds none. T001 is ticked on this evidence.
+
+## Remediation of the verification findings 2 to 8, 10, and 11 (test refactors, no behavior change)
+
+- T039 (finding 2): `[U1821]` now compares the payload and the `resolve` evidence with literal values, not with the output of `decisionRequest` and `decisionEvidence`.
+- T040 (finding 3): the wrong-state refusal text lives in `src/tools/decide-text.ts` (a leaf module with no imports, because the lab is type-checked under Node's type stripping, and the first attempt to import `decide.ts` into the lab failed `tsc6 -p tools/tsconfig.json` with TS1294). The tool and the fake lab both use it, and `[A1805]` pins the real text as a literal.
+- T041 (finding 4): the `refused` helper takes `expected` as a required argument.
+- T042 (finding 5): `[U1806]` is a table with an `expectedText` column. A first attempt replaced a slice of the file and removed `[U195]` to `[U199]` by mistake; the suite count (2254 instead of 2259) showed it, the file was restored from git, and the edit was redone on the one test. No existing test was lost.
+- T043 (finding 6): `FakeDecider.onCurrent` may return a promise, and `[U1823]` awaits the write.
+- T044 (finding 7): `[U1841]` matches `Version: 1.5.0` and the in-scope sentence only, and the stays-out check stays in `[A1819]`.
+- T045 (findings 8, 10, 11): the S9 test is `[U1847]` and the unit refusal test is `[U1848]` (both are rows of the list), `[U1812]` asserts exactly two `start` calls, and the traces of the list were corrected (US5.3 now sits on `A1816`).
+- Gate script -> 159 files, 2259 tests, OK.
+- commit: `test: clear the HIGH smells that the verification found`

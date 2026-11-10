@@ -15,13 +15,13 @@ export class FakeDecider implements Decider {
   answerResult: AnswerResult = { ok: true };
   rerunResult: AnswerResult = { ok: true };
   /** Runs inside `current` before it returns, so a test can change the world between two reads. */
-  onCurrent: ((count: number) => void) | null = null;
+  onCurrent: ((count: number) => void | Promise<void>) | null = null;
   private reads = 0;
 
   async current(taskId: string): Promise<LiveView> {
     this.calls.push({ method: "current", args: [taskId] });
     this.reads += 1;
-    this.onCurrent?.(this.reads);
+    await this.onCurrent?.(this.reads);
     return this.views.length > 1 ? this.views.shift()! : this.views[0]!;
   }
 

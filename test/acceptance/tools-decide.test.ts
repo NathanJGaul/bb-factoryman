@@ -136,12 +136,12 @@ describe("factoryman_decide over the real no-mistakes adapter", () => {
 
 describe("factoryman_decide refuses before it opens a form", () => {
   /** Every refusal leaves the validator without an answer, opens no form, and changes neither the state nor the log. */
-  async function refused(world: World, validator: FakeValidator, args: unknown, caller?: { threadId: string; projectId?: string }, expected?: RegExp) {
+  async function refused(world: World, validator: FakeValidator, args: unknown, caller: { threadId: string; projectId?: string } | undefined, expected: RegExp) {
     const before = rows(world).length;
     const stateBefore = state(world);
     const result = await world.call("factoryman_decide", args, caller);
     expect(result.isError, result.text).toBe(true);
-    if (expected !== undefined) expect(result.text).toMatch(expected);
+    expect(result.text).toMatch(expected);
     expect(answers(validator)).toEqual([]);
     expect(world.host.harness.inspection.pendingInteractions).toEqual([]);
     expect(state(world)).toBe(stateBefore);
@@ -181,7 +181,9 @@ describe("factoryman_decide refuses before it opens a form", () => {
     track(working);
     working.setProject({ deliveryMode: "no-mistakes" });
     await working.call("factoryman_dispatch", DISPATCH);
-    await refused(working, new FakeValidator(), { taskId: "t1", key: KEY, action: "approve" }, undefined, /illegal_transition.*working.*needs_decision/);
+    const wrongState = await refused(working, new FakeValidator(), { taskId: "t1", key: KEY, action: "approve" }, undefined, /illegal_transition.*working.*needs_decision/);
+    // The conformance lab's fake tool builds this text from the same function, and U1839 pins the same string there.
+    expect(wrongState.text).toBe("Refused (illegal_transition): Task t1 is working. A decision needs needs_decision.");
 
     const scout = await loadWorld({ validator: new FakeValidator() });
     track(scout);

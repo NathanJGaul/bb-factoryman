@@ -171,7 +171,7 @@ describe("S8 refusals", () => {
 describe("S9 role change", () => {
   const ALL = ["S9.start-command", "S9.start-tools", "S9.unstamped-no-tools", "S9.stamp-advice", "S9.tools-after-step"];
 
-  it("[U1837] fails the S9 tool checks when the started or the stamped supervisor lacks factoryman_decide", async () => {
+  it("[U1847] fails the S9 tool checks when the started or the stamped supervisor lacks factoryman_decide", async () => {
     expect(failedIds(await run("S9", { supervisorLacksDecide: true }))).toEqual(["S9.start-tools", "S9.tools-after-step"]);
   });
 

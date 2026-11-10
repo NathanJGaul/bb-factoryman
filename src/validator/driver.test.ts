@@ -74,21 +74,19 @@ describe("ValidationDriver.step in validating", () => {
     expect(lines.filter((line) => line.startsWith("Decision key:"))).toHaveLength(1);
   });
 
-  it("[U1806] ends the evidence of a finished run that parks the task with the key line, and keeps the outcome text", async () => {
-    for (const [outcome, overrides] of [
-      ["passed-with-override", { prUrl: PR }],
-      ["passed-with-skips", { prUrl: PR }],
-      ["passed", { prUrl: PR }],
-      ["checks-passed", {}],
-    ] as const) {
-      const { t, driver, validator } = await validating();
-      const finished = done(outcome, overrides);
-      validator.script("start", [ok(finished)]);
-      await driver.step("t1");
-      const evidence = lastEvent(t).evidence ?? "";
-      expect(evidence, outcome).toContain(outcome === "checks-passed" ? "no pull request" : outcome);
-      expect(evidence.split("\n").at(-1), outcome).toBe(`Decision key: ${decisionKey(finished)}`);
-    }
+  it.each([
+    ["passed-with-override", { prUrl: PR }, "passed-with-override"],
+    ["passed-with-skips", { prUrl: PR }, "passed-with-skips"],
+    ["passed", { prUrl: PR }, "finished as passed"],
+    ["checks-passed", {}, "no pull request"],
+  ] as const)("[U1806] ends the evidence of a %s run that parks the task with the key line, and keeps the outcome text", async (outcome, overrides, expectedText) => {
+    const { t, driver, validator } = await validating();
+    const finished = done(outcome, overrides);
+    validator.script("start", [ok(finished)]);
+    await driver.step("t1");
+    const evidence = lastEvent(t).evidence ?? "";
+    expect(evidence).toContain(expectedText);
+    expect(evidence.split("\n").at(-1)).toBe(`Decision key: ${decisionKey(finished)}`);
   });
 
   it("[U195] applies validated with the pull request for checks-passed, and the task becomes review_ready", async () => {
@@ -328,7 +326,7 @@ describe("ValidationDriver.current, answer evidence, and rerun", () => {
     await driver.rerun("t1", "supervisor", "The owner approved a new run.");
     validator.script("start", [ok(view())]);
     expect(await driver.step("t1")).toBe("continue");
-    expect(calls(validator, "start").length).toBeGreaterThanOrEqual(2);
+    expect(calls(validator, "start")).toHaveLength(2);
     expect(state(t)).toBe("validating");
   });
 });

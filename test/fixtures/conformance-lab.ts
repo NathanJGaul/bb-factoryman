@@ -2,6 +2,7 @@ import { deliveryModeOf, type DeliveryMode, type Driver } from "../../tools/conf
 import { resolveDriver } from "../../tools/conformance/drivers/index.ts";
 import { roleAdvice } from "../../src/harness/advice";
 import { contractFor } from "../../src/harness/contracts";
+import { notWaitingText } from "../../src/tools/decide-text";
 import type { DispatchOptions, EventRow, Lab, Offers, ProviderState, TaskRow, ThreadFacts, ToolResult, Wake, Who } from "../../tools/conformance/port.ts";
 
 /** Ways to make the fake lab misbehave, so a scenario test can show that the scenario notices. */
@@ -202,7 +203,7 @@ export class FakeLab implements Lab {
         this.transition(task, "resolve", "validating", "The fault accepted the decision.", "supervisor");
         return { text: `Task ${taskId} is now validating.`, isError: false };
       }
-      return { text: `Refused (illegal_transition): Task ${taskId} is ${task.state}. A decision needs needs_decision.`, isError: true };
+      return { text: `Refused (illegal_transition): ${notWaitingText(taskId, task.state)}`, isError: true };
     }
     return { text: "The fake lab has no pipeline to answer.", isError: true };
   }
