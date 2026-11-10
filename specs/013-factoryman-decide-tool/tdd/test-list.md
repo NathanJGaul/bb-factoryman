@@ -63,14 +63,14 @@ The headings were written (commit `docs(decisions)`), and the suite was green ag
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| U1805 | The evidence of the `finding` event for a gate keeps its earlier lines and ends with the line `Decision key: <key>` (`[U187]` is updated to expect the extra line) | FR-005 | example | PENDING | `src/validator/driver.test.ts::[U1805]`, `[U187]` |
-| U1806 | The evidence for a finished run that parks the task (override, skips, passed, no pull request) ends with the key line, and still holds the outcome text | FR-005, FR-007 | example | PENDING | `src/validator/driver.test.ts::[U1806]` |
-| U1807 | The park after five validator errors has no key line | FR-005 | example | PENDING | `src/validator/driver.test.ts::[U1807]` |
-| U1808 | `current` returns the view from `validator.status` with the worktree path and the host of the task (a remote task too) and writes no event | FR-004 | example | PENDING | `src/validator/driver.test.ts::[U1808]` |
-| U1809 | `current` returns `ok: false` with a message when the worktree path is unreadable, the status call fails, or its output is unreadable | FR-004 | example | PENDING | `src/validator/driver.test.ts::[U1809]` |
-| U1810 | `answer` with an `evidence` argument records that text on `resolve`, and without one keeps the default text | FR-012 | example | PENDING | `src/validator/driver.test.ts::[U1810]` |
-| U1811 | `rerun` in `needs_decision` records `resolve` with the actor and the evidence, calls no validator operation, and clears the baseline; outside `needs_decision` it returns `ok: false` and the machine logs the refusal | FR-013 | example | PENDING | `src/validator/driver.test.ts::[U1811]` |
-| U1812 | After `rerun` the loop calls `start` | FR-013 | example | PENDING | `src/validator/driver.test.ts::[U1812]` |
+| U1805 | The evidence of the `finding` event for a gate keeps its earlier lines and ends with the line `Decision key: <key>` (`[U187]` is updated to expect the extra line) | FR-005 | example | DONE | `src/validator/driver.test.ts::[U1805]`, `[U187]` |
+| U1806 | The evidence for a finished run that parks the task (override, skips, passed, no pull request) ends with the key line, and still holds the outcome text | FR-005, FR-007 | example | DONE | `src/validator/driver.test.ts::[U1806]` |
+| U1807 | The park after five validator errors has no key line | FR-005 | example | DONE | `src/validator/driver.test.ts::[U1807]` |
+| U1808 | `current` returns the view from `validator.status` with the worktree path and the host of the task (a remote task too) and writes no event | FR-004 | example | DONE | `src/validator/driver.test.ts::[U1808]` |
+| U1809 | `current` returns `ok: false` with a message when the worktree path is unreadable, the status call fails, or its output is unreadable | FR-004 | example | DONE | `src/validator/driver.test.ts::[U1809]` |
+| U1810 | `answer` with an `evidence` argument records that text on `resolve`, and without one keeps the default text | FR-012 | example | DONE | `src/validator/driver.test.ts::[U1810]` |
+| U1811 | `rerun` in `needs_decision` records `resolve` with the actor and the evidence, calls no validator operation, and clears the baseline; outside `needs_decision` it returns `ok: false` and the machine logs the refusal | FR-013 | example | DONE | `src/validator/driver.test.ts::[U1811]` |
+| U1812 | After `rerun` the loop calls `start` | FR-013 | example | DONE | `src/validator/driver.test.ts::[U1812]` |
 | U1844 | The loop never answers a gate while it follows a run | FR-015 | example | DONE | `src/validator/driver.test.ts::[U194]` |
 
 ### `src/approval/contract.ts`
