@@ -84,3 +84,19 @@ Commands run from the repository root.
 
 MVP is Phase 2 and Phase 3 (the pure plan and the happy path).
 Phases 4 to 8 then add the rerun, the refusals, the dry-run pin, the isolation checks, and the docs.
+
+## Phase 10: TDD remediation
+
+The verification of `tdd/verification.md` returned `FAIL`.
+The feature is not done until the owner waives finding 1 (the test-after acceptance tests, recorded as D-149) and findings 2 and 3 are cleared.
+These tasks change tests and the list, and they change no behavior of the command.
+
+- [ ] T016 Finding 2 (HIGH), `src/limits/registry-apply.ts:27` and `src/limits/registry-apply.test.ts` `[U1902]`: add a case where the `--project` name is a substring of another registry name and of another bb project name (`gadgets` against `prod gadgets`), and expect the exact match to win and the other project's row to stay as stored; add the same through the plugin in `test/acceptance/registry-apply.test.ts` `[A1907]`. Proof: the V1 mutant (`includes` in `same`) fails the new test, and `pnpm vitest run src/limits/registry-apply.test.ts test/acceptance/registry-apply.test.ts` passes on the real code.
+- [ ] T017 Finding 3 (HIGH), `src/limits/registry-apply.test.ts:62`: replace `if (result.ok) return;` with a helper that throws unless the result is a refusal, as `planOf` does for a plan. Proof: `pnpm vitest run src/limits/registry-apply.test.ts` passes and `pnpm run typecheck` is clean.
+- [ ] T018 Finding 4 (MED), `test/acceptance/registry-apply.test.ts` `[A1908]` and `src/tools/supervisor-command.test.ts` `[U1905]`: assert that the fake bb port's calls are `listProjects` and nothing else. Proof: both tests pass, and a mutant that calls `bb.setThreadMetadata` in the apply fails them.
+- [ ] T019 Finding 5 (MED), `src/tools/supervisor-command.test.ts`: add a test that `--file a --file b` reads `b` only, and that `--apply` twice is accepted. Proof: `pnpm vitest run src/tools/supervisor-command.test.ts` passes.
+- [ ] T020 Finding 6 (MED), `test/acceptance/registry-apply.test.ts` `[A1903]` and `[A1905]`: split each into one test per behavior (conditional policy, no bracket, empty prefix and forge; rerun, one differing field, yolo off), reusing the file's helpers. Proof: `pnpm vitest run test/acceptance/registry-apply.test.ts` passes with the new test count.
+- [ ] T021 Finding 7 (MED), `test/acceptance/registry-apply.test.ts:173`: take a snapshot of the down-world's own tables before the call and compare with it. Proof: the file passes.
+- [ ] T022 Findings 8, 9, and 10 (LOW), `tdd/test-list.md`: set `spec_criteria: 30`, mark `A1911` `DROPPED` with the reason (a hand measurement in a shared `/tmp`; cycle 7), and remove it from `tasks.md` T013's claim. The commit on red stays in the history; the note stays in the log.
+- [ ] T023 Finding 12 (LOW): record in `docs/DECISIONS.md` D-149 that the write-failure path is tested at the command function only, and why. Proof: `pnpm vitest run test/acceptance/decision-log.test.ts` passes.
+- [ ] T024 Finding 1: write D-149 in `docs/DECISIONS.md` (the nine acceptance behaviors were written after the code, and nine mutants stand in for their reds). The owner decides whether to waive it. Do not report the feature done as clean until Firstmate relays the answer or the report says plainly that the waiver is pending.
