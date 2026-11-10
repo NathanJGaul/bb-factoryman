@@ -101,7 +101,7 @@ bblab x bb plugin list | grep -A3 bb-factoryman      # running, with services an
 bblab x bb plugin logs bb-factoryman | tail -3       # "bb-factoryman loaded"
 ```
 
-The plugin registers two services (`factoryman-startup`, `factoryman-machines`), the `bb factoryman` command, five agent tools, and four read RPC methods.
+The plugin registers two services (`factoryman-startup`, `factoryman-machines`), the `bb factoryman` command, six agent tools, and four read RPC methods.
 Check that `bb plugin list` shows both services running.
 
 Check that bb sees both plugin skills:
