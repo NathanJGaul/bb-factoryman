@@ -10,11 +10,11 @@
     "version": "0.49.0"
   },
   "plugin": {
-    "commit": "1a890a9",
+    "commit": "092dc9f",
     "dirty": false
   },
-  "startedAt": "2026-11-10T03:35:15.461Z",
-  "finishedAt": "2026-11-10T03:38:51.699Z",
+  "startedAt": "2026-11-10T04:00:42.942Z",
+  "finishedAt": "2026-11-10T04:04:20.473Z",
   "offline": true,
   "isolation": {
     "clean": true,
@@ -95,7 +95,7 @@
           "id": "S4.branch-commit",
           "title": "The task branch holds the one commit the worker made",
           "ok": true,
-          "evidence": "git rev-list --count main..fm/t-02965cd9: 1"
+          "evidence": "git rev-list --count main..fm/t-4354bd26: 1"
         },
         {
           "id": "S4.review-ready",
@@ -131,7 +131,7 @@
           "id": "S5.supervisor-tools",
           "title": "The supervisor is offered its five tools and not the report tool",
           "ok": true,
-          "evidence": "tools: factoryman_decide, factoryman_dispatch, factoryman_merge, factoryman_status, factoryman_teardown (thread thr_wtdmzkfca2)"
+          "evidence": "tools: factoryman_decide, factoryman_dispatch, factoryman_merge, factoryman_status, factoryman_teardown (thread thr_32srgqdv3f)"
         },
         {
           "id": "S5.supervisor-skills",
@@ -179,7 +179,7 @@
           "id": "S7.cause",
           "title": "The failure evidence holds the harness's cause text (CONFORMANCE-CAUSE-401)",
           "ok": true,
-          "evidence": "evidence: worker thread failed: provider error (category connection-failed, HTTP 401). Provider-reported cause: \"unexpected status 401 Unauthorized: CONFORMANCE-CAUSE-401, url: http://127.0.0.1:34621/v1/responses\"\nRemedy: Sign in to the provider on the machine that runs the worker, then dispatch the task agai"
+          "evidence": "evidence: worker thread failed: provider error (category connection-failed, HTTP 401). Provider-reported cause: \"unexpected status 401 Unauthorized: CONFORMANCE-CAUSE-401, url: http://127.0.0.1:37201/v1/responses\"\nRemedy: Sign in to the provider on the machine that runs the worker, then dispatch the task agai"
         }
       ]
     },
@@ -209,7 +209,7 @@
           "id": "S8.decide-wrong-state",
           "title": "A decision on a working ship task is refused, names needs_decision, records no resolve, and changes nothing",
           "ok": true,
-          "evidence": "tool error true; 0 resolve row(s); state working; text: Refused (illegal_transition): Task t-fd13d778 is working. A decision needs needs_decision."
+          "evidence": "tool error true; 0 resolve row(s); state working; text: Refused (illegal_transition): Task t-eb4fc531 is working. A decision needs needs_decision."
         }
       ]
     },
@@ -221,7 +221,7 @@
           "id": "S9.start-command",
           "title": "`bb factoryman supervisor start` spawns a supervisor and names its thread",
           "ok": true,
-          "evidence": "exit 0: Started factoryman supervisor thread thr_tzpb2epcpa with the profile harness (codex, mock-1).\nThe role is set at spawn, so the thread has the five supervisor tools and the factoryman-supervisor skill "
+          "evidence": "exit 0: Started factoryman supervisor thread thr_wk63j5a39c with the profile harness (codex, mock-1).\nThe role is set at spawn, so the thread has the five supervisor tools and the factoryman-supervisor skill "
         },
         {
           "id": "S9.start-tools",
@@ -239,7 +239,7 @@
           "id": "S9.stamp-advice",
           "title": "The stamp command tells the person to clear the thread, because this harness needs it",
           "ok": true,
-          "evidence": "Thread thr_a4km7yyxfx is now a factoryman supervisor.\nThis harness (codex) applies a new role only when its session is rebuilt.\nRun `bb thread clear thr_a4km7yyxfx` so the thread gets the five supervisor tools and the factoryman-supervisor skill."
+          "evidence": "Thread thr_inanaxy6bz is now a factoryman supervisor.\nThis harness (codex) applies a new role only when its session is rebuilt.\nRun `bb thread clear thr_inanaxy6bz` so the thread gets the five supervisor tools and the factoryman-supervisor skill."
         },
         {
           "id": "S9.tools-after-step",
@@ -268,7 +268,7 @@
           "id": "S11.dirty-kept",
           "title": "The dirty worktree is still there",
           "ok": true,
-          "evidence": "worktree: /var/tmp/bblab-decide-tool/data/plugins/environment-git-worktree/host-data/worktrees/thr_jb383viad3-1/work"
+          "evidence": "worktree: /var/tmp/bblab-decide-tool/data/plugins/environment-git-worktree/host-data/worktrees/thr_5epjwnktcm-1/work"
         },
         {
           "id": "S11.clean-removed",
@@ -292,7 +292,7 @@
           "id": "S12.delivered",
           "title": "The wake arrives",
           "ok": true,
-          "evidence": "1 wake(s) for t-200eded5"
+          "evidence": "1 wake(s) for t-79c02976"
         },
         {
           "id": "S12.once",
