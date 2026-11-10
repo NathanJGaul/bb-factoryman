@@ -1558,3 +1558,15 @@ S8 dispatches its own silent ship task for the decision probe.
 `[U1839]` pins both refusals.
 The tool did not change.
 The runs that followed the fix are the ones in `conformance/results/`.
+
+### D-146: The decision form was not opened in a real bb, and no scenario reaches `needs_decision` (Limit)
+
+Task T032 asked for one look at the decision form in the isolated lab, with screenshots, "if the lab allows it".
+It was not done.
+Opening the form needs a lab project in `no-mistakes` mode, a worker that hands off, and a stand-in for the no-mistakes command that prints a gate, and the earlier approval-form check showed that this takes a lane of its own.
+The tier 1 and tier 1.5 runs cannot show the form either, because their project is `local-only` or `direct-PR` (D-142).
+
+What stands in for the look: the form uses the same classes, the same in-flight guard, and the same reply contract as the merge form that the lab did check (`data/bb-factoryman-approval-form/lab-check.md`), and 26 jsdom tests and 4 acceptance tests cover its content.
+jsdom has no layout and no styles, so the list of findings, the scroll box, and the "Answer that will be sent" block have not been seen in a real bb, in either theme or at a narrow width.
+The owner should run that check before the first real decision: queue a task into `needs_decision` in the lab and open the form.
+A defect in the look would change `src/app/decision-approval-form.tsx` only.

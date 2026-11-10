@@ -159,3 +159,9 @@ Correction to cycle 5: the full run on that cycle's code had one red, `test/acce
 - an earlier first run on `15de3f2` failed `S8.decide-wrong-state` (D-145, cycle 13). Its partial result was reverted, and it is not among the committed files.
 - `docs/HARNESS-SUPPORT.md` was regenerated with `pnpm run conformance:docs`; it lists no known gap.
 - limit (D-146): the lab has no no-mistakes pipeline, so no scenario reaches `needs_decision`, and the decision form was not opened in a real bb (T032).
+
+## Final gate (tasks T029, T031, T046)
+
+- `pnpm run check` on the final code: type check and lint clean, 159 files, 2260 tests passed, 46 s. The `bb-fake-plugin-host-*` count under `${TMPDIR}` was 3159 before and 3159 after, equal to the baseline of T001.
+- Quickstart: step 1 is the run above; step 2 `test/acceptance/tools-decide.test.ts` -> 38 passed; step 3 `src/app/decision-approval-form.test.tsx` -> 26 passed; step 4 (`-t "yes"` on the adapter and tool tests) -> 3 passed; step 5 is the five conformance runs above; step 6 the document tests -> passed inside the run.
+- T032 (the form in the isolated lab) was not done; D-146 records the limit.

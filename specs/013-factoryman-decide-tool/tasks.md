@@ -106,9 +106,9 @@ Commands run from the repository root.
 ## Phase 10: Polish and cross-cutting
 
 - [X] T029 Run `pnpm run check` and confirm lint, type check, and the whole suite pass with no new warning, and that the leak count of [A1820] equals the baseline of T001. [A1820] is covered by the existing `test/acceptance/tmpdir-leak.test.ts`; this task only confirms that no new helper makes a directory outside the test's private `TMPDIR`.
-- [ ] T030 Update `.specify/memory/tdd-profile.md` with a note for feature 013 (new fixtures and test files, the baseline counts), and `specs/013-factoryman-decide-tool/quickstart.md` if a command changed during the work.
-- [ ] T031 Run the quickstart scenarios 1 to 6 once on the final code and record the results in `tdd/cycle-log.md`.
-- [ ] T032 If the lab allows it, run the decision form once in the isolated lab (`bblab` with the pinned bb 0.49.0) with the stub agent and a fake `no-mistakes`, take screenshots of the form, and record what was seen. If the lab cannot host it, record that as a limit in `docs/DECISIONS.md` and the report: jsdom shows no layout.
+- [X] T030 Update `.specify/memory/tdd-profile.md` with a note for feature 013 (new fixtures and test files, the baseline counts), and `specs/013-factoryman-decide-tool/quickstart.md` if a command changed during the work.
+- [X] T031 Run the quickstart scenarios 1 to 6 once on the final code and record the results in `tdd/cycle-log.md`.
+- [X] T032 (not done, recorded as a limit in D-146) If the lab allows it, run the decision form once in the isolated lab (`bblab` with the pinned bb 0.49.0) with the stub agent and a fake `no-mistakes`, take screenshots of the form, and record what was seen. If the lab cannot host it, record that as a limit in `docs/DECISIONS.md` and the report: jsdom shows no layout.
 
 ## Dependencies
 
@@ -157,5 +157,5 @@ These tasks change tests and one fixture text builder, and they change no behavi
 - [X] T043 [US3] Finding 6 (MED), `src/tools/decide.test.ts:244` and `test/fixtures/decider.ts`: let `onCurrent` return a promise and have `FakeDecider.current` await it, then await the `apply` in the test. Proof: `pnpm vitest run src/tools/decide.test.ts` passes.
 - [X] T044 [US6] Finding 7 (MED), `test/acceptance/decide-docs.test.ts:55`, `:57`, `:83`: match `Version: 1.5.0` and the presence of D-136 and not the whole version line, and keep the stays-out check in `[A1819]` only. Proof: `pnpm vitest run test/acceptance/decide-docs.test.ts` passes.
 - [X] T045 Findings 8, 10, and 11 (LOW): give the S9 test its own ID (`[U1847]`) and the unit `[A1812]` its own (`[U1848]`) in the test list and the tests, assert `toBe(2)` in `[U1812]`, and change the trace of the live-check row. Proof: `pnpm vitest run tools/conformance/scenarios/scenarios.test.ts src/tools/decide.test.ts src/validator/driver.test.ts` passes, and the IDs in `tdd/test-list.md` are unique.
-- [ ] T046 Finding 9: reopen T029 until `pnpm run check` has run on the final code with the leak count of T001 unchanged (the baseline was measured in the verification: 3159 before and 3159 after).
+- [X] T046 Finding 9: reopen T029 until `pnpm run check` has run on the final code with the leak count of T001 unchanged (the baseline was measured in the verification: 3159 before and 3159 after).
 - [ ] T047 Finding 1: the owner decides whether to waive the eleven test-after behaviors, as in D-099, D-122, and D-133. Do not mark the feature done in the report until Firstmate relays the answer. If the owner declines, re-derive each red by hand on the final code (remove the check, see the test fail, restore) and record it.
