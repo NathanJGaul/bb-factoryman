@@ -3,7 +3,7 @@ import type { RegistryEntry } from "./registry";
 
 export type ApplyRefusalCode = "no_entry" | "ambiguous_entry" | "flagged" | "unknown_project" | "ambiguous_project";
 export type ApplyRefusal = { ok: false; code: ApplyRefusalCode; message: string };
-export type FieldChange = { field: "deliveryMode" | "yolo" | "branchPrefix"; from: unknown; to: unknown; changed: boolean };
+export type FieldChange = { field: "deliveryMode" | "yolo" | "branchPrefix" | "baseBranch"; from: unknown; to: unknown; changed: boolean };
 export type ApplyPlan = {
   ok: true;
   projectId: string;
@@ -12,6 +12,8 @@ export type ApplyPlan = {
   untouched: Array<{ field: "baseBranch" | "defaultMachine"; value: string | null }>;
   notes: string[];
   forge: string;
+  /** True when the result is a `local-only` project with no base branch, so merge and teardown refuse (D-150). */
+  needsBaseBranch: boolean;
   next: ProjectConfig | null;
 };
 
@@ -22,9 +24,31 @@ export interface ApplyInput {
   projects: ReadonlyArray<{ id: string; name: string }>;
   /** The stored config of a bb project, or the default when it has no row. */
   stored: (projectId: string) => ProjectConfig;
+  /** The `--base-branch` value, already checked with `checkBranchName`. Absent means leave the stored value (D-150). */
+  baseBranch?: string;
 }
 
 const same = (a: string, b: string): boolean => a.trim().toLowerCase() === b.trim().toLowerCase();
+
+const FORBIDDEN_CHARACTERS = "~^:?*[\\";
+const hasForbiddenCharacter = (name: string): boolean =>
+  [...name].some((char) => char.trim() === "" || char.charCodeAt(0) < 0x20 || char.charCodeAt(0) === 0x7f || FORBIDDEN_CHARACTERS.includes(char));
+
+/**
+ * Check a `--base-branch` value against the `git check-ref-format` rules that matter for a branch name (D-150).
+ * It returns the broken rule, or null when the name is valid. It runs no process and never changes the value.
+ */
+export function checkBranchName(name: string): string | null {
+  if (name.trim() === "") return "A branch name cannot be empty or blank.";
+  if (name.startsWith("-")) return "A branch name cannot start with `-`, because git would read it as an option.";
+  if (hasForbiddenCharacter(name)) return "A branch name cannot hold whitespace, a control character, or any of ~ ^ : ? * [ \\.";
+  if (name === "@") return "A branch name cannot be the single character `@`.";
+  if (name.includes("..")) return "A branch name cannot hold `..`.";
+  if (name.includes("@{")) return "A branch name cannot hold `@{`.";
+  if (name.includes("//") || name.startsWith("/") || name.endsWith("/")) return "A branch name cannot start or end with `/` or hold `//`.";
+  if (name.endsWith(".") || name.endsWith(".lock")) return "A branch name cannot end with `.` or `.lock`.";
+  return null;
+}
 
 function refuse(code: ApplyRefusalCode, message: string): ApplyRefusal {
   return { ok: false, code, message };
@@ -50,8 +74,11 @@ export function planApply(input: ApplyInput): ApplyPlan | ApplyRefusal {
 
   const current = input.stored(project.id);
   const target = { deliveryMode: entry.mode, yolo: entry.yolo, branchPrefix: entry.branchPrefix === "" ? null : entry.branchPrefix };
-  const change = (field: FieldChange["field"]): FieldChange => ({ field, from: current[field], to: target[field], changed: current[field] !== target[field] });
+  const change = (field: Exclude<FieldChange["field"], "baseBranch">): FieldChange => ({ field, from: current[field], to: target[field], changed: current[field] !== target[field] });
   const changes = [change("deliveryMode"), change("yolo"), change("branchPrefix")];
+  const given = input.baseBranch;
+  if (given !== undefined) changes.push({ field: "baseBranch", from: current.baseBranch, to: given, changed: current.baseBranch !== given });
+  const resultingBase = given ?? current.baseBranch;
   const notes = [...entry.notes];
   return {
     ok: true,
@@ -59,11 +86,12 @@ export function planApply(input: ApplyInput): ApplyPlan | ApplyRefusal {
     entryName: entry.name,
     changes,
     untouched: [
-      { field: "baseBranch", value: current.baseBranch },
+      ...(given === undefined ? [{ field: "baseBranch" as const, value: current.baseBranch }] : []),
       { field: "defaultMachine", value: current.defaultMachine },
     ],
     notes,
     forge: entry.forge,
-    next: changes.some((entryChange) => entryChange.changed) ? { ...current, projectId: project.id, ...target } : null,
+    needsBaseBranch: entry.mode === "local-only" && resultingBase === null,
+    next: changes.some((entryChange) => entryChange.changed) ? { ...current, projectId: project.id, ...target, baseBranch: resultingBase } : null,
   };
 }

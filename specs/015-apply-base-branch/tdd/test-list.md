@@ -38,9 +38,9 @@ Acceptance tests are written before the code they cover (D-149).
 
 | id | behavior | traces | kind | state | test |
 | --- | --- | --- | --- | --- | --- |
-| U1501 | `checkBranchName` is null for `main`, `release/1.0`, `feature/a_b-c`, and `v1.2`, and gives a reason for each of: empty, blank, leading or trailing space, `-x`, `--x`, `a b`, tab, newline, `a..b`, `a~b`, `a^b`, `a:b`, `a?b`, `a*b`, `a[b`, `a\b`, `a@{b`, `a//b`, `/a`, `a/`, `a.`, `a.lock`, `@` | US3.3, FR-003 | example | TODO | |
-| U1502 | `planApply` with `baseBranch: "main"` lists `baseBranch` in `changes` with stored and target values, flags `changed` only when they differ, omits it from `untouched`, and puts it in `next` | US1.1, US1.2, US1.3, FR-004, FR-005 | example | TODO | |
-| U1503 | `needsBaseBranch` is true for a `local-only` result with no stored or given base branch, false when a stored or given one exists, and false for `direct-PR` and `no-mistakes` with none; without the flag `untouched` still lists `baseBranch` | US2.1, US2.2, US2.3, FR-006, FR-007 | example | TODO | |
+| U1501 | `checkBranchName` is null for `main`, `release/1.0`, `feature/a_b-c`, and `v1.2`, and gives a reason for each of: empty, blank, leading or trailing space, `-x`, `--x`, `a b`, tab, newline, `a..b`, `a~b`, `a^b`, `a:b`, `a?b`, `a*b`, `a[b`, `a\b`, `a@{b`, `a//b`, `/a`, `a/`, `a.`, `a.lock`, `@` | US3.3, FR-003 | example | DONE | `src/limits/registry-apply.test.ts::[U1501]` |
+| U1502 | `planApply` with `baseBranch: "main"` lists `baseBranch` in `changes` with stored and target values, flags `changed` only when they differ, omits it from `untouched`, and puts it in `next` | US1.1, US1.2, US1.3, FR-004, FR-005 | example | DONE | `src/limits/registry-apply.test.ts::[U1502]` |
+| U1503 | `needsBaseBranch` is true for a `local-only` result with no stored or given base branch, false when a stored or given one exists, and false for `direct-PR` and `no-mistakes` with none; without the flag `untouched` still lists `baseBranch` | US2.1, US2.2, US2.3, FR-006, FR-007 | example | DONE | `src/limits/registry-apply.test.ts::[U1503]` |
 
 ### `src/tools/supervisor-command.ts`
 

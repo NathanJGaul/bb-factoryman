@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { defaultProjectConfig } from "../store/store";
 import type { ProjectConfig } from "../store/types";
 import { parseRegistry } from "./registry";
-import { planApply, type ApplyPlan, type ApplyRefusal } from "./registry-apply";
+import { checkBranchName, planApply, type ApplyPlan, type ApplyRefusal } from "./registry-apply";
 
 const entries = (...lines: string[]) => parseRegistry(lines.join("\n")).entries;
 const stored = (patch: Partial<ProjectConfig> = {}) => (id: string): ProjectConfig => ({ ...defaultProjectConfig(id), ...patch });
@@ -119,5 +119,79 @@ describe("planApply", () => {
   it("[U1903] treats a null stored prefix and an empty registry prefix as equal", () => {
     const plan = planOf(planApply({ name: "gizmos", entries: entries("- gizmos [no-mistakes branch=] - d"), projects: gizmos, stored: stored() }));
     expect(plan.next).toBeNull();
+  });
+});
+
+describe("checkBranchName", () => {
+  it.each(["main", "release/1.0", "feature/a_b-c", "v1.2", "Trunk"])("[U1501] accepts %j", (name) => {
+    expect(checkBranchName(name)).toBeNull();
+  });
+
+  it.each([
+    ["", "empty"],
+    ["   ", "blank"],
+    [" main", "leading space"],
+    ["main ", "trailing space"],
+    ["-x", "leading dash"],
+    ["--x", "leading dashes"],
+    ["a b", "space inside"],
+    ["a\tb", "tab"],
+    ["a\nb", "newline"],
+    ["a..b", "double dot"],
+    ["a~b", "tilde"],
+    ["a^b", "caret"],
+    ["a:b", "colon"],
+    ["a?b", "question mark"],
+    ["a*b", "asterisk"],
+    ["a[b", "bracket"],
+    ["a\\b", "backslash"],
+    ["a@{b", "at brace"],
+    ["a//b", "double slash"],
+    ["/a", "leading slash"],
+    ["a/", "trailing slash"],
+    ["a.", "trailing dot"],
+    ["a.lock", "lock suffix"],
+    ["@", "single at"],
+  ])("[U1501] refuses %j (%s) with a reason", (name) => {
+    const reason = checkBranchName(name);
+    expect(typeof reason).toBe("string");
+    expect(reason).not.toBe("");
+  });
+});
+
+describe("planApply with a base branch", () => {
+  const plan = (line: string, baseBranch: string | undefined, patch: Partial<ProjectConfig> = {}) =>
+    planOf(planApply({ name: "gizmos", entries: entries(line), projects: gizmos, stored: stored(patch), ...(baseBranch === undefined ? {} : { baseBranch }) }));
+
+  it("[U1502] lists the base branch as a change, drops it from untouched, and puts it in next", () => {
+    const result = plan("- gizmos [local-only] - d", "main", { deliveryMode: "local-only", branchPrefix: "fm/" });
+    expect(result.changes.find((change) => change.field === "baseBranch")).toEqual({ field: "baseBranch", from: null, to: "main", changed: true });
+    expect(result.untouched).toEqual([{ field: "defaultMachine", value: null }]);
+    expect(result.next).toMatchObject({ baseBranch: "main" });
+  });
+
+  it("[U1502] replaces a stored base branch and flags it changed only when the value differs", () => {
+    const line = "- gizmos [local-only] - d";
+    const differs = plan(line, "main", { deliveryMode: "local-only", branchPrefix: "fm/", baseBranch: "develop" });
+    expect(differs.changes.find((change) => change.field === "baseBranch")).toEqual({ field: "baseBranch", from: "develop", to: "main", changed: true });
+    const equal = plan(line, "main", { deliveryMode: "local-only", branchPrefix: "fm/", baseBranch: "main" });
+    expect(equal.changes.find((change) => change.field === "baseBranch")).toMatchObject({ changed: false });
+    expect(equal.next).toBeNull();
+  });
+
+  it.each([
+    ["a local-only result with no base branch", "- gizmos [local-only] - d", undefined, {}, true],
+    ["a local-only result with a stored base branch", "- gizmos [local-only] - d", undefined, { baseBranch: "main" }, false],
+    ["a local-only result with a given base branch", "- gizmos [local-only] - d", "main", {}, false],
+    ["a direct-PR result with no base branch", "- gizmos [direct-PR] - d", undefined, {}, false],
+    ["a no-mistakes result with no base branch", "- gizmos [no-mistakes] - d", undefined, {}, false],
+  ])("[U1503] needsBaseBranch is decided for %s", (_label, line, flag, patch, expected) => {
+    expect(plan(line, flag, patch).needsBaseBranch).toBe(expected);
+  });
+
+  it("[U1503] without the flag the plan keeps base branch in untouched and out of changes", () => {
+    const result = plan("- gizmos [local-only] - d", undefined, { baseBranch: "trunk" });
+    expect(result.untouched).toEqual([{ field: "baseBranch", value: "trunk" }, { field: "defaultMachine", value: null }]);
+    expect(result.changes.map((change) => change.field)).toEqual(["deliveryMode", "yolo", "branchPrefix"]);
   });
 });
