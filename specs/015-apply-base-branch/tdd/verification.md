@@ -108,3 +108,10 @@ Every criterion reaches a test through the real entry point (`runCli` of the fak
 - A fresh-context smell pass.
 - Mutation across the whole of `src/`; only the feature's two source files were mutated, and only by hand.
 - How a real `bb factoryman import-registry` prints in a terminal. That is the owner's live check.
+
+## Resolution
+
+Findings 1 and 2 were cleared in cycle 4 (`tdd/cycle-log.md`) by adding the missing cases to `[U1504]` and `[A1504]`.
+Mutants V2 and V9 now fail 2 and 4 tests, and the suite is green again (`pnpm run check`: 164 files, 2417 tests).
+The two tests passed on their first run, so they are test-after, with the mutants as their proof; the cycle log says so.
+The verdict above stays `FAIL` as the audit's own record at the time. `/speckit.converge` records the state after the fix.

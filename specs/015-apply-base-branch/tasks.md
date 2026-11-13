@@ -49,9 +49,9 @@ Commands run from the repository root.
 
 ## Phase 7: Polish and cross-cutting
 
-- [ ] T010 Run `pnpm run check` and record the result in `tdd/cycle-log.md`.
-- [ ] T011 After `/speckit.tdd.verify`, run the deliberate mutants for the highest-risk behaviors (store the flag without validation, write `baseBranch` without the flag, drop the `local-only` warning, write on a no-op, skip the usage error without `--apply`) and record the result.
-- [ ] T012 Run the whole outer loop: [A1501] to [A1507] are green through their real entry points and `pnpm run check` passes. Record the result in `tdd/cycle-log.md`.
+- [X] T010 Run `pnpm run check` and record the result in `tdd/cycle-log.md`.
+- [X] T011 After `/speckit.tdd.verify`, run the deliberate mutants for the highest-risk behaviors (store the flag without validation, write `baseBranch` without the flag, drop the `local-only` warning, write on a no-op, skip the usage error without `--apply`) and record the result.
+- [X] T012 Run the whole outer loop: [A1501] to [A1507] are green through their real entry points and `pnpm run check` passes. Record the result in `tdd/cycle-log.md`.
 
 ## Dependencies
 
@@ -74,5 +74,5 @@ The verification in `tdd/verification.md` returned `FAIL`.
 The feature is not done until findings 1 and 2 are cleared.
 These tasks add tests and change no behavior of the command.
 
-- [ ] T013 Finding 1 (HIGH), `src/tools/supervisor-command.test.ts` `[U1504]` and `test/acceptance/registry-apply-base-branch.test.ts` `[A1504]`: add the call `import-registry --file <path> --base-branch main` (no `--apply`, no `--project`) to both tables, expecting the usage, exit 2, and no read. Proof: both files pass, and removing the `(baseBranch !== null && !apply)` clause in `parseImportArgs` makes them fail.
-- [ ] T014 Finding 2 (MEDIUM), `src/tools/supervisor-command.test.ts` `[U1504]` and `test/acceptance/registry-apply-base-branch.test.ts` `[A1504]`: add `--base-branch " main"` and `--base-branch "main "` to the refusal rows, expecting exit 2 and an unchanged store. Proof: both files pass, and trimming the value in `parseImportArgs` makes them fail.
+- [X] T013 Finding 1 (HIGH), `src/tools/supervisor-command.test.ts` `[U1504]` and `test/acceptance/registry-apply-base-branch.test.ts` `[A1504]`: add the call `import-registry --file <path> --base-branch main` (no `--apply`, no `--project`) to both tables, expecting the usage, exit 2, and no read. Proof: both files pass, and removing the `(baseBranch !== null && !apply)` clause in `parseImportArgs` makes them fail.
+- [X] T014 Finding 2 (MEDIUM), `src/tools/supervisor-command.test.ts` `[U1504]` and `test/acceptance/registry-apply-base-branch.test.ts` `[A1504]`: add `--base-branch " main"` and `--base-branch "main "` to the refusal rows, expecting exit 2 and an unchanged store. Proof: both files pass, and trimming the value in `parseImportArgs` makes them fail.

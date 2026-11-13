@@ -538,6 +538,23 @@ describe("bb factoryman import-registry --apply --base-branch", () => {
     expect(t.runtime.deps.store.getProjectConfig("proj-loco")).toEqual(defaultProjectConfig("proj-loco"));
   });
 
+  it("[U1504] prints the usage for --base-branch with neither --apply nor --project, and reads nothing", async () => {
+    const t = baseBranchRuntime();
+    const result = await runFactorymanCommand(t.runtime, ["import-registry", "--file", "/reg/projects.md", "--base-branch", "main"]);
+    expect(result.exitCode).toBe(2);
+    expect(result.stderr).toContain(USAGE_LINE);
+    expect(t.files.reads).toEqual([]);
+  });
+
+  it.each([" main", "main "])("[U1504] refuses the name %j with surrounding space and stores nothing", async (name) => {
+    const t = baseBranchRuntime();
+    const result = await apply(t, "--apply", "--project", "loco", "--base-branch", name);
+    expect(result.exitCode).toBe(2);
+    expect(result.stderr).toContain("whitespace");
+    expect(t.files.reads).toEqual([]);
+    expect(t.runtime.deps.store.getProjectConfig("proj-loco")).toEqual(defaultProjectConfig("proj-loco"));
+  });
+
   it("[U1504] accepts --base-branch before the other flags", async () => {
     const t = baseBranchRuntime();
     const result = await apply(t, "--base-branch", "main", "--apply", "--project", "loco");

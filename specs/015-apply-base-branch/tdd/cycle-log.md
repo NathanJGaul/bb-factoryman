@@ -36,3 +36,10 @@ Append only. Newest last. Every entry's `red` block is the evidence that the tes
 - note: D-150's own text was added in cycle 1 (see its note), so only the three pointers were red here.
 - suite: `pnpm test` -> 164 files, 2411 tests passed. `eslint .` and `tsc6 --noEmit` clean.
 - refactor: none needed
+
+## Cycle 4: remediation of verification findings 1 and 2 (tests added after the code, proven with the surviving mutants)
+
+- test: `[U1504]` and `[A1504]` gained the call with neither `--apply` nor `--project` (finding 1) and the values `" main"` and `"main "` (finding 2), in `src/tools/supervisor-command.test.ts` and `test/acceptance/registry-apply-base-branch.test.ts`
+- red: these tests pass against the correct code, because the behavior already existed. Admitted as test-after. The red is the mutant: with `(baseBranch !== null && !apply)` removed from `parseImportArgs`, `pnpm vitest run src/tools/supervisor-command.test.ts test/acceptance/registry-apply-base-branch.test.ts` -> `Tests  2 failed | 91 passed (93)`. With the value trimmed in `parseImportArgs` -> `Tests  4 failed | 89 passed (93)`. Both mutants were restored with `git checkout` and the files pass again (93 passed).
+- suite: `pnpm run check` -> type check, lint, and 164 files, 2417 tests passed, 0 failed (46 s)
+- refactor: none needed
