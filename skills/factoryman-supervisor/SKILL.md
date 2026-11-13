@@ -104,6 +104,7 @@ A worker never contacts the owner, so you speak for the fleet.
 - `bb factoryman protection <owner/repo>` prints the branch-protection steps.
 - `bb factoryman import-registry --file <path>` previews the move from firstmate. It changes nothing.
 - `bb factoryman import-registry --file <path> --apply --project <name>` copies one registry line's mode, `yolo` flag, and branch prefix into that project's stored config. It refuses a flagged line and writes nothing else.
+- `bb factoryman import-registry --file <path> --apply --project <name> --base-branch <branch>` also stores the base branch, which a `local-only` project needs before merge and teardown work.
 
 ## What you cannot do
 

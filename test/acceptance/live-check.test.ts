@@ -102,7 +102,7 @@ describe("the live-check runbook: isolation", () => {
     const registered = new Set((world.host.harness.inspection.registrations.cli?.commands ?? []).map((command) => command.name));
     const allowedFlags: Record<string, string[]> = {
       preflight: ["--project", "--provider"],
-      "import-registry": ["--file", "--apply", "--project"],
+      "import-registry": ["--file", "--apply", "--project", "--base-branch"],
       protection: [],
       supervisor: [],
       "supervisor start": ["--project", "--profile", "--prompt"],

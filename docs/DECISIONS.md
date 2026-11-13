@@ -310,6 +310,7 @@ The worker keeps running during `awaiting_approval`, so the pull request can cha
 
 `.bb/factoryman/` config loading is milestone 9, and the design lists no tool or command that sets a project's mode or `yolo` flag.
 Until then every project resolves to `no-mistakes` with `yolo` off, which is the safe default, and the other two modes are reachable only through tests.
+Since D-148 the registry apply writes the mode, and since D-150 the apply can write the base branch from an explicit flag.
 
 ### D-038: `@toon-format/toon` is a runtime dependency (Gap)
 
@@ -655,7 +656,7 @@ It can set:
 A scan rejects the keys `yolo`, `gates`, `gate`, `skip`, `skipGates`, `skipChecks`, `approval`, `approvals`, `requireApproval`, `disable`, `disabled`, `teardown`, `evidence`, `merge`, `bypass`, and `override` at any depth, with a message that names hard rule 7.
 It rejects `baseBranch` too, because the base branch decides the landed-work check at teardown: a file that an agent wrote could set it to the task's own branch and make unlanded work look landed.
 Every other unknown key fails the strict schema.
-So `yolo` and `baseBranch` come from the stored project config only. Since D-148 the registry apply can write `yolo` from a `+yolo` token and never writes `baseBranch` (D-037).
+So `yolo` and `baseBranch` come from the stored project config only. Since D-148 the registry apply can write `yolo` from a `+yolo` token. Since D-150 it can write `baseBranch` from an explicit `--base-branch` flag that the owner types, and it never reads one from a file or infers one.
 Config cannot define new task kinds or delivery modes, because a new mode would add transitions and could loosen a gate.
 It selects among the three modes only.
 
@@ -1621,6 +1622,7 @@ The dry run stays the default and does not change.
   A `+yolo` token is the owner's own setting in firstmate, so copying it adds no grant that the owner did not give.
 - **What is left.**
   `baseBranch` and `defaultMachine` stay as stored, because the registry has neither, and `baseBranch` decides the landed-work check at teardown (D-078).
+  D-150 later added an explicit `--base-branch` flag that writes `baseBranch`.
   The forge is printed and not stored, because the config has no field for it.
 - **Idempotent.**
   The apply is idempotent: it compares each field with the stored value and calls the store only when one differs.
@@ -1654,3 +1656,35 @@ The write-failure refusal (spec scenario 3.10) is tested through `runFactorymanC
 `runFactorymanCommand` is the function that bb's command handler calls, so the code path is the real one.
 Making the real SQLite store fail would need a fault injection in the fake host that no test uses today, and the transaction rollback it relies on is the store's own contract (`test/store-contract.ts`).
 
+
+## Feature 015: apply a base branch
+
+### D-150: `import-registry --apply` takes an explicit `--base-branch <name>` (Decided in the task brief)
+
+The captain agreed on 2026-11-12 to fix the base-branch gap that the manual test plan found (finding 1, cases C-03 and E-01).
+After `import-registry --apply`, a `local-only` project had no base branch, so the local merge and the landed-work check refused with "A local-only project needs a base branch ... and none is configured." and the owner had to write `project_config.base_branch` with SQL.
+D-037, D-078, and D-148 left the field unwritten, because the registry has no base branch and a file in the checkout must not set it.
+
+- **An explicit flag.**
+  `--apply --project <name> --base-branch <name>` stores the value as the project's `baseBranch`, in the same single `putProjectConfig` call as the other fields.
+  The owner types it on the command line, which an agent cannot write.
+  This extends D-148 and contradicts neither D-037 nor D-078: `workflow.json` still cannot set `baseBranch`, and the registry grammar does not change.
+- **No flag, no change.**
+  Without the flag the stored value stays and the output lists it as unchanged, as before.
+  The command never infers a base branch from the checkout, from `git`, or from bb, because an inferred value would change the landed-work check without the owner seeing it.
+- **The flag needs `--apply`.**
+  `--base-branch` without `--apply`, with no value, with a `--` value, or twice is a usage error (exit 2) before the file is read.
+- **The value is checked, not trimmed.**
+  `checkBranchName` refuses a blank value, a leading `-`, whitespace or a control character, any of `~ ^ : ? * [ \`, `..`, `@{`, `//`, a leading or trailing `/`, a trailing `.` or `.lock`, and `@` alone.
+  A refusal exits 2, names the rule, reads nothing, and writes nothing.
+  The check runs no process, so it does not prove that the branch exists.
+  Merge and teardown read the real checkout later and refuse on a wrong name.
+- **Any mode may take it.**
+  The store has one base branch per project and dispatch starts worktrees from it for every mode, so the flag is valid for `direct-PR` and `no-mistakes` too.
+- **The output shows the gap.**
+  When the resulting mode is `local-only` and the resulting base branch is none, the output ends with a `Warning:` line that says merge and teardown refuse until the owner reruns the command with `--base-branch <name>`.
+  The line also appears on a rerun that writes nothing.
+- **Unchanged.**
+  The apply still writes no event, no approval, and no task change, runs no process, and leaves `defaultMachine` and the forge alone.
+
+The command was tested offline only; the owner runs it against a real bb as the live check (`docs/LIVE-CHECK.md`).
