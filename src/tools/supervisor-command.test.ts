@@ -508,3 +508,91 @@ describe("bb factoryman dispatch", () => {
     expect((await runFactorymanCommand(t.runtime, ["nope"])).stderr).toContain(`${INIT_LINE}\n`);
   });
 });
+
+function baseBranchRuntime() {
+  const t = applyRuntime();
+  t.files.files.set("/reg/projects.md", ["- loco [local-only] - Local clone (added 2026-01-02)", "- gizmos [direct-PR] - Direct (added 2026-01-03)"].join("\n"));
+  t.bb.projectList = [
+    { id: "proj-loco", name: "loco" },
+    { id: "proj-gizmos", name: "gizmos" },
+  ];
+  return t;
+}
+
+const USAGE_LINE = "Usage: bb factoryman import-registry --file <path> --apply --project <name> [--base-branch <name>]";
+
+describe("bb factoryman import-registry --apply --base-branch", () => {
+  it.each([
+    ["without --apply", ["--project", "loco", "--base-branch", "main"]],
+    ["with no value", ["--apply", "--project", "loco", "--base-branch"]],
+    ["with a flag as its value", ["--apply", "--project", "loco", "--base-branch", "--apply"]],
+    ["given twice", ["--apply", "--project", "loco", "--base-branch", "main", "--base-branch", "dev"]],
+    ["with a blank value", ["--apply", "--project", "loco", "--base-branch", " "]],
+  ])("[U1504] prints the usage for --base-branch %s, and reads and writes nothing", async (_label, flags) => {
+    const t = baseBranchRuntime();
+    const result = await apply(t, ...flags);
+    expect(result.exitCode).toBe(2);
+    expect(result.stderr).toContain(USAGE_LINE);
+    expect(t.files.reads).toEqual([]);
+    expect(t.bb.callsTo("listProjects")).toEqual([]);
+    expect(t.runtime.deps.store.getProjectConfig("proj-loco")).toEqual(defaultProjectConfig("proj-loco"));
+  });
+
+  it("[U1504] accepts --base-branch before the other flags", async () => {
+    const t = baseBranchRuntime();
+    const result = await apply(t, "--base-branch", "main", "--apply", "--project", "loco");
+    expect(result.exitCode).toBe(0);
+    expect(t.runtime.deps.store.getProjectConfig("proj-loco").baseBranch).toBe("main");
+  });
+
+  it.each([
+    ["-x", /start with `-`/],
+    ["a b", /whitespace/],
+    ["a..b", /`\.\.`/],
+    ["a/", /`\/`/],
+    ["x.lock", /`\.lock`/],
+  ])("[U1504] refuses the name %j with exit 2, the broken rule, and no read or write", async (name, rule) => {
+    const t = baseBranchRuntime();
+    const result = await apply(t, "--apply", "--project", "loco", "--base-branch", name);
+    expect(result.exitCode).toBe(2);
+    expect(result.stderr).toMatch(rule);
+    expect(result.stderr).toContain(USAGE_LINE);
+    expect(t.files.reads).toEqual([]);
+    expect(t.runtime.deps.store.getProjectConfig("proj-loco")).toEqual(defaultProjectConfig("proj-loco"));
+  });
+
+  it("[U1505] lists the base branch as written with the old and new value, and as unchanged on a rerun", async () => {
+    const t = baseBranchRuntime();
+    const first = await apply(t, "--apply", "--project", "loco", "--base-branch", "main");
+    expect(first.exitCode).toBe(0);
+    expect(first.stdout).toMatch(/written:\n(.*\n)*? {2}baseBranch: \(none\) -> main\n/);
+    expect(first.stdout).not.toContain("baseBranch: (none) (not in the registry)");
+    expect(t.runtime.deps.store.getProjectConfig("proj-loco")).toMatchObject({ deliveryMode: "local-only", baseBranch: "main" });
+    const again = await apply(t, "--apply", "--project", "loco", "--base-branch", "main");
+    expect(again.stdout).toContain("Nothing was written.");
+    expect(again.stdout).toMatch(/unchanged:\n(.*\n)*? {2}baseBranch: main\n/);
+    expect(again.stdout).not.toContain("written:");
+  });
+
+  it("[U1506] ends a local-only apply that has no base branch with the exact warning", async () => {
+    const t = baseBranchRuntime();
+    const result = await apply(t, "--apply", "--project", "loco");
+    expect(result.stdout).toContain("\nWarning: this project is local-only and has no base branch, so merge and teardown refuse until you run this command again with --base-branch <name>.\n");
+    const direct = await apply(t, "--apply", "--project", "gizmos");
+    expect(direct.stdout).not.toContain("Warning:");
+  });
+
+  it("[U1507] leaves the stored config unchanged and exits 1 when the write fails with the flag present", async () => {
+    const t = baseBranchRuntime();
+    const store = t.runtime.deps.store;
+    const put = store.putProjectConfig.bind(store);
+    store.putProjectConfig = (config) => {
+      put(config);
+      throw new Error("disk full");
+    };
+    const result = await apply(t, "--apply", "--project", "loco", "--base-branch", "main");
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toContain("disk full");
+    expect(store.getProjectConfig("proj-loco")).toEqual(defaultProjectConfig("proj-loco"));
+  });
+});

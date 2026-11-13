@@ -3,7 +3,7 @@ import { pickMachine } from "../dispatch/placement";
 import { preflightReport, reportText } from "../machines/preflight";
 import { protectionSteps } from "../limits/protection";
 import { parseRegistry, type RegistryEntry } from "../limits/registry";
-import { planApply, type ApplyPlan } from "../limits/registry-apply";
+import { checkBranchName, planApply, type ApplyPlan } from "../limits/registry-apply";
 import { errorText, type Runtime } from "../runtime";
 import { roleAdvice } from "../harness/advice";
 import { GENERIC_CONTRACT, contractFor } from "../harness/contracts";
@@ -16,7 +16,7 @@ export interface CommandResult {
   stderr?: string;
 }
 
-const IMPORT_USAGE = "Usage: bb factoryman import-registry --file <path>\n" + "Usage: bb factoryman import-registry --file <path> --apply --project <name>\n";
+const IMPORT_USAGE = "Usage: bb factoryman import-registry --file <path>\n" + "Usage: bb factoryman import-registry --file <path> --apply --project <name> [--base-branch <name>]\n";
 
 const USAGE =
   "Usage: bb factoryman supervisor <thread-id>\n" +
@@ -136,10 +136,11 @@ function reportLine(entry: RegistryEntry, projectId: string | undefined): string
 }
 
 /** The arguments of `import-registry`, or null when the call is malformed. */
-function parseImportArgs(args: string[]): { file: string; apply: boolean; project: string | null } | null {
+function parseImportArgs(args: string[]): { file: string; apply: boolean; project: string | null; baseBranch: string | null } | null {
   let file: string | null = null;
   let apply = false;
   let project: string | null = null;
+  let baseBranch: string | null = null;
   const valueAt = (i: number): string | null => {
     const value = args[i + 1];
     return value === undefined || value.trim() === "" || value.startsWith("--") ? null : value;
@@ -152,14 +153,20 @@ function parseImportArgs(args: string[]): { file: string; apply: boolean; projec
     } else if (args[i] === "--project" && project === null && valueAt(i) !== null) {
       project = args[i + 1] as string;
       i += 1;
+    } else if (args[i] === "--base-branch" && baseBranch === null && valueAt(i) !== null) {
+      baseBranch = args[i + 1] as string;
+      i += 1;
     } else return null;
   }
   // Apply names exactly one project. A project without --apply is a half-formed apply, not a filtered dry run (D-148).
-  if (file === null || apply !== (project !== null)) return null;
-  return { file, apply, project };
+  // A base branch is part of an apply, so it needs --apply too (D-150).
+  if (file === null || apply !== (project !== null) || (baseBranch !== null && !apply)) return null;
+  return { file, apply, project, baseBranch };
 }
 
 const show = (value: unknown): string => (value === null ? "(none)" : typeof value === "boolean" ? (value ? "on" : "off") : String(value));
+
+const NEEDS_BASE_BRANCH_WARNING = "Warning: this project is local-only and has no base branch, so merge and teardown refuse until you run this command again with --base-branch <name>.";
 
 function applyReport(plan: ApplyPlan): string {
   const written = plan.changes.filter((change) => change.changed);
@@ -168,6 +175,7 @@ function applyReport(plan: ApplyPlan): string {
   if (written.length > 0) lines.push("written:", ...written.map((change) => `  ${change.field}: ${show(change.from)} -> ${show(change.to)}`));
   lines.push("unchanged:", ...kept.map((change) => `  ${change.field}: ${show(change.from)}`), ...plan.untouched.map((item) => `  ${item.field}: ${show(item.value)} (not in the registry)`));
   if (written.length === 0) lines.push("Nothing was written.");
+  if (plan.needsBaseBranch) lines.push(NEEDS_BASE_BRANCH_WARNING);
   if (plan.notes.length > 0) lines.push("Notes:", ...plan.notes.map((note) => `- ${plan.entryName}: ${note}`));
   lines.push(`Forge ${plan.forge} is not stored.`);
   return `${lines.join("\n")}\n`;
@@ -180,7 +188,9 @@ function applyReport(plan: ApplyPlan): string {
 async function importRegistry(rt: Runtime, args: string[]): Promise<CommandResult> {
   const parsed = parseImportArgs(args);
   if (parsed === null) return { exitCode: 2, stderr: IMPORT_USAGE };
-  const { file, project: applyTo } = parsed;
+  const { file, project: applyTo, baseBranch } = parsed;
+  const badName = baseBranch === null ? null : checkBranchName(baseBranch);
+  if (badName !== null) return { exitCode: 2, stderr: `Invalid --base-branch ${JSON.stringify(baseBranch)}: ${badName}\n${IMPORT_USAGE}` };
 
   let text: string | null;
   try {
@@ -191,7 +201,7 @@ async function importRegistry(rt: Runtime, args: string[]): Promise<CommandResul
   if (text === null) return { exitCode: 1, stderr: `Could not read ${file}: the file does not exist.\n` };
 
   const { entries, skipped } = parseRegistry(text);
-  if (applyTo !== null) return applyRegistry(rt, applyTo, entries);
+  if (applyTo !== null) return applyRegistry(rt, applyTo, entries, baseBranch);
   let projects: Array<{ id: string; name: string }> = [];
   let projectsNote: string | null = null;
   try {
@@ -217,7 +227,7 @@ async function importRegistry(rt: Runtime, args: string[]): Promise<CommandResul
 }
 
 /** Write the stored config of the one bb project named `name` from its registry line. It refuses on any doubt (D-148). */
-async function applyRegistry(rt: Runtime, name: string, entries: RegistryEntry[]): Promise<CommandResult> {
+async function applyRegistry(rt: Runtime, name: string, entries: RegistryEntry[], baseBranch: string | null): Promise<CommandResult> {
   const { bb, store, log } = rt.deps;
   let projects: Array<{ id: string; name: string }>;
   try {
@@ -226,7 +236,7 @@ async function applyRegistry(rt: Runtime, name: string, entries: RegistryEntry[]
     log.warn(`Could not list the bb projects for the registry apply: ${errorText(error)}`);
     return { exitCode: 1, stderr: `The bb projects could not be listed (${errorText(error)}), so nothing was written.\n` };
   }
-  const plan = planApply({ name, entries, projects, stored: (id) => store.getProjectConfig(id) });
+  const plan = planApply({ name, entries, projects, stored: (id) => store.getProjectConfig(id), ...(baseBranch === null ? {} : { baseBranch }) });
   if (!plan.ok) return { exitCode: 1, stderr: `${plan.message}\n` };
   const next = plan.next;
   if (next !== null) {
