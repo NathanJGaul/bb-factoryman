@@ -26,3 +26,13 @@ Append only. Newest last. Every entry's `red` block is the evidence that the tes
 - note: `[A1502]` first failed on an error in the test itself (`unpushedCommits` 0, because the checkout was on `main` while `worktreeReport` ran). The test was corrected to read the report on the task branch. The code was not changed for it.
 - suite: `pnpm test` -> 163 files, 2407 tests passed. `pnpm exec eslint src test` and `tsc6 --noEmit` clean.
 - refactor: none needed
+
+## Cycle 3: A1506, A1507 the help and the documents (one group, 4 failing cases)
+
+- test: `test/acceptance/registry-apply-base-branch-docs.test.ts` `[A1506]` (1) and `[A1507]` (3), and the expected flag list of `import-registry` in `test/acceptance/live-check.test.ts` `[A1109]` (now lists `--base-branch`, a changed requirement, no assertion weakened)
+- red: `pnpm vitest run test/acceptance/registry-apply-base-branch-docs.test.ts` -> `Tests  4 failed (4)`. Decisive lines: `expected 'bb factoryman import-registry --file …' to contain '--apply --project <name> [--base-branch <name>]'`, `expected '# Cutover from firstmate...' to contain '--apply --project <name> --base-branch <branch>'`, `D-037: expected ' Nothing writes a project config yet …' to contain 'D-150'`, `expected '# Live check runbook...' to contain '--base-branch'`
+- green: usage and summary in `src/server.ts`, `docs/CUTOVER.md`, pointers in `docs/DECISIONS.md` (D-037, D-078, D-148), `docs/LIVE-CHECK.md`, and the supervisor skill. 4 passed.
+- note: the full run then failed two existing tests that pin the documents' shape (`[A1108]` counts the live-check rows, `[A1116]` rejects an unknown quoted name in the skill). The new live-check text went into the existing apply row, and the skill names the flag inside a `bb factoryman ...` command. Neither test changed.
+- note: D-150's own text was added in cycle 1 (see its note), so only the three pointers were red here.
+- suite: `pnpm test` -> 164 files, 2411 tests passed. `eslint .` and `tsc6 --noEmit` clean.
+- refactor: none needed

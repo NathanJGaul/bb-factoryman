@@ -44,8 +44,8 @@ Commands run from the repository root.
 
 ## Phase 6: User story 4 - The docs and help match the behavior (P2)
 
-- [ ] T008 [US4] Write [A1506] in `test/acceptance/registry-apply-base-branch.test.ts` and `test/acceptance/live-check.test.ts`: the server's `import-registry` registration usage and the live-check expected flag list show `--base-branch`. Update `src/server.ts` and `test/acceptance/live-check.test.ts`. Covers [A1506].
-- [ ] T009 [US4] Write [A1507] in `test/acceptance/registry-apply-base-branch-docs.test.ts`: `docs/CUTOVER.md` shows `--base-branch`, says a `local-only` project needs it, and no longer says the base branch is never written; `docs/DECISIONS.md` has D-150 and D-037, D-078, and D-148 point to it. See it fail, then update `docs/CUTOVER.md`, `docs/DECISIONS.md` (D-150), `docs/LIVE-CHECK.md`, and `skills/factoryman-supervisor/SKILL.md`. Covers [A1507].
+- [X] T008 [US4] Write [A1506] in `test/acceptance/registry-apply-base-branch.test.ts` and `test/acceptance/live-check.test.ts`: the server's `import-registry` registration usage and the live-check expected flag list show `--base-branch`. Update `src/server.ts` and `test/acceptance/live-check.test.ts`. Covers [A1506].
+- [X] T009 [US4] Write [A1507] in `test/acceptance/registry-apply-base-branch-docs.test.ts`: `docs/CUTOVER.md` shows `--base-branch`, says a `local-only` project needs it, and no longer says the base branch is never written; `docs/DECISIONS.md` has D-150 and D-037, D-078, and D-148 point to it. See it fail, then update `docs/CUTOVER.md`, `docs/DECISIONS.md` (D-150), `docs/LIVE-CHECK.md`, and `skills/factoryman-supervisor/SKILL.md`. Covers [A1507].
 
 ## Phase 7: Polish and cross-cutting
 
