@@ -67,3 +67,12 @@ Commands run from the repository root.
 
 MVP is Phase 2 and Phase 3 (the pure check and the happy path).
 Phases 4 to 6 then add the warning, the refusals, and the docs.
+
+## Phase 8: TDD remediation
+
+The verification in `tdd/verification.md` returned `FAIL`.
+The feature is not done until findings 1 and 2 are cleared.
+These tasks add tests and change no behavior of the command.
+
+- [ ] T013 Finding 1 (HIGH), `src/tools/supervisor-command.test.ts` `[U1504]` and `test/acceptance/registry-apply-base-branch.test.ts` `[A1504]`: add the call `import-registry --file <path> --base-branch main` (no `--apply`, no `--project`) to both tables, expecting the usage, exit 2, and no read. Proof: both files pass, and removing the `(baseBranch !== null && !apply)` clause in `parseImportArgs` makes them fail.
+- [ ] T014 Finding 2 (MEDIUM), `src/tools/supervisor-command.test.ts` `[U1504]` and `test/acceptance/registry-apply-base-branch.test.ts` `[A1504]`: add `--base-branch " main"` and `--base-branch "main "` to the refusal rows, expecting exit 2 and an unchanged store. Proof: both files pass, and trimming the value in `parseImportArgs` makes them fail.
