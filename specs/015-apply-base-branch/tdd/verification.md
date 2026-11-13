@@ -104,7 +104,7 @@ Every criterion reaches a test through the real entry point (`runCli` of the fak
 
 ## What was not audited
 
-- Test speed beyond the suite total, and flakiness across repeated runs (the suite ran green five times in this audit).
+- Test speed beyond the suite total, and flakiness across repeated runs (no flaky failure was seen in the runs of this audit).
 - A fresh-context smell pass.
 - Mutation across the whole of `src/`; only the feature's two source files were mutated, and only by hand.
 - How a real `bb factoryman import-registry` prints in a terminal. That is the owner's live check.
